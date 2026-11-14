@@ -266,10 +266,18 @@ void LimeSeqGrid::paint (Graphics& g)
                     g.setColour ((lane == 6 ? theme::accentG : theme::accentB).withMultipliedAlpha (beyond ? 0.3f : 0.9f));
                     g.fillRect (Rectangle<float>::leftTopRightBottom (c.getX() + 1, top, c.getRight() - 1, c.getBottom()));
                 }
-                if (lane == 4)   // Tie centre line (= root note when VEL -> tune)
+                if ((lane == 4 || lane == 5) && v > 0.001f && big && (int) getParam (proc.apvts, b (lane == 4 ? tie : pod, lv::vel)) == 1)
                 {
-                    g.setColour (theme::textDim.withAlpha (0.25f));
-                    g.drawHorizontalLine ((int) c.getCentreY(), c.getX(), c.getRight());
+                    // sample selected by the column height (1 = bottom of the list)
+                    const auto set = proc.library.set (lane == 4 ? SampleLibrary::tie : SampleLibrary::pod);
+                    const int n = jmin (128, set->size());
+                    if (n > 0)
+                    {
+                        const int notch = jlimit (1, n, (int) std::ceil (v * (float) n - 1.0e-4f));
+                        g.setColour (Colours::black.withAlpha (0.75f));
+                        g.setFont (theme::font (10.0f, true));
+                        g.drawText (String (notch), c.withHeight (14.0f).translated (0.0f, jmax (0.0f, c.getBottom() - c.getHeight() * v - c.getY())), Justification::centred);
+                    }
                 }
             }
             if (st == ps)
@@ -306,6 +314,12 @@ void LimeSeqGrid::edit (int row, int st, const MouseEvent& e, bool first)
     {
         const auto rb = rowBounds (row);
         float v = jlimit (0.0f, 1.0f, (rb.getBottom() - (float) e.y) / rb.getHeight());
+        if ((lane == 4 || lane == 5) && (int) getParam (proc.apvts, b (lane == 4 ? tie : pod, lv::vel)) == 1)
+        {
+            // Tie / Pod with VEL = wav: one notch per sample of the module's list (max 128); notch 1 = bottom of the list
+            const int n = jmin (128, proc.library.set (lane == 4 ? SampleLibrary::tie : SampleLibrary::pod)->size());
+            if (n > 0 && v > 0.0f) v = (float) jlimit (1, n, (int) std::ceil (v * (float) n)) / (float) n;
+        }
         if (e.mods.isRightButtonDown()) v = 0.0f;
         P.value[(size_t) (lane - 4)][(size_t) st].store (v);
     }
@@ -397,6 +411,7 @@ LimeSeqPanel::LimeSeqPanel (TwinboxProcessor& p, bool b2) : Panel ("Sequencer", 
         grid.repaint();
     };
     for (auto* c : std::initializer_list<Component*> { &chainOn, &lock, &chainLen, &copyBtn, &pasteBtn, &grid }) addAndMakeVisible (c);
+    for (auto* lb : laneBtns) lb->toFront (false);   // the lane buttons sit over the grid's label column: keep them clickable
     startTimerHz (10);
 }
 
@@ -670,8 +685,8 @@ LimeModulePanel::LimeModulePanel (TwinboxProcessor& p, int v, bool b2) : Control
             break;
         default: // pod
             row ({ K (lv::gain, "Gain"), K (lv::vamt, "V>A"), K (lv::pan, "Pan"), W, K (lv::tune, "Tune"), K (lv::st, "St") });
-            row ({ K (lv::att, "A"), K (lv::dcy, "D"), K (lv::zap, "Zap"), nullptr, nullptr });
-            row ({ combo (b (v, lv::vel)), seg (b (v, lv::ft)), K (lv::cut, "Cut"), K (lv::res, "Res"), nullptr });
+            row ({ K (lv::att, "A"), K (lv::dcy, "D"), K (lv::zap, "Zap"), nullptr, nullptr, nullptr });
+            row ({ combo (b (v, lv::vel)), seg (b (v, lv::ft)), K (lv::cut, "Cut"), K (lv::res, "Res"), nullptr, nullptr });
             break;
     }
 }

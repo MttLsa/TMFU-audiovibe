@@ -16,6 +16,7 @@ namespace
             if (! f.getFileName().startsWithChar ('.')) files.add (f);
         struct Cmp { static int compareElements (const File& a, const File& b) { return a.getFileName().compareNatural (b.getFileName()); } } cmp;
         files.sort (cmp);
+        if (files.size() > 128) files.removeRange (128, files.size() - 128);   // max 128 samples per module
         return files;
     }
 }

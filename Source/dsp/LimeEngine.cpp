@@ -114,7 +114,6 @@ void LimeEngine::trigger (int target, float vel, float laneValue, int forcedInde
         if ((srcSel == 5 || srcSel == voice) && G (vk[(size_t) pulp][kOn], 0) > 0.5f)
         {
             float pv = vel;
-            if (voice == tie || voice == pod) pv = jmax (0.05f, laneValue);
             pulpV.active = true; pulpV.t = 0; pulpV.vel = pv;
             hits[(size_t) tPulp].fetch_add (1);
         }
@@ -129,7 +128,9 @@ void LimeEngine::trigger (int target, float vel, float laneValue, int forcedInde
     if (voice <= hat) dest = (int) G (k[kMod], 0);
     else dest = (int) G (k[kVel], 0);
     if (forcedIndex >= 0) dest = 0;                       // pitch-window audition: plain sample
-    const float v = forcedIndex >= 0 ? 1.0f : laneValue;   // Tie/Pod step value 0..1
+    // Tie / Pod step value: velocity (V>A + VEL destination) - or, with VEL = wav, the sample selector (see below)
+    const float v = (forcedIndex >= 0 || laneValue < 0.0f) ? 1.0f : laneValue;
+    const bool wavMode = (voice == tie || voice == pod) && dest == 1;
 
     int wav = (int) G (k[kWav], 0);
     float tune = G (k[kTune], 0) + p (bTune)->load();
@@ -159,7 +160,7 @@ void LimeEngine::trigger (int target, float vel, float laneValue, int forcedInde
         const bool isTie = voice == tie;
         switch (dest)
         {
-            case 1: wav += (int) (v * 8.0f); break;
+            case 1: break;   // wav: the column height selects the sample (below)
             case 2: tune += std::round ((v - 0.5f) * 24.0f); velTune = true; velDegrees = (int) std::round ((v - 0.5f) * 14.0f); break;
             case 3: att = jlimit (0.0f, 1.0f, att + v); break;
             case 4: dcyPct = jlimit (0.0f, 100.0f, dcyPct * (0.25f + 1.5f * v)); break;
@@ -169,7 +170,15 @@ void LimeEngine::trigger (int target, float vel, float laneValue, int forcedInde
             default: break;
         }
         const float vamt = G (k[kVamt], 70) * 0.01f;
-        vel *= 1.0f - vamt * (1.0f - v);
+        if (! wavMode) vel *= 1.0f - vamt * (1.0f - v);
+    }
+    // VEL = wav (Tie / Pod lane): the column height selects the sample of the list (notch 1 at the bottom = last sample
+    // of the list, top notch = first sample), independent of the WAV knob. MIDI / audition (laneValue < 0) use WAV.
+    if (wavMode && forcedIndex < 0 && laneValue > 0.0f)
+    {
+        const int n = jmin (128, set->size());
+        const int notch = jlimit (1, n, (int) std::ceil (laneValue * (float) n - 1.0e-4f));
+        wav = n - notch;
     }
     if (forcedIndex >= 0) wav = forcedIndex;
     wav = ((wav % set->size()) + set->size()) % set->size();
@@ -405,13 +414,13 @@ void LimeEngine::process (float* L, float* R, int n, const BlockTime& bt, const 
     std::array<Ev, 1024> ev;
     int nev = 0;
     auto push = [&] (Ev e) { if (nev < (int) ev.size()) ev[(size_t) nev++] = e; };
-    for (auto& e : midi) push ({ e.offset, e.target, e.velocity, 0.5f + 0.5f * e.velocity, false });
+    for (auto& e : midi) push ({ e.offset, e.target, e.velocity, -1.0f, false });
     for (int t = 0; t < numTargets; ++t)
-        if (const int a = auditionQ[(size_t) t].exchange (0); a > 0) push ({ 0, t, (float) a / 1000.0f, 0.75f, false });
+        if (const int a = auditionQ[(size_t) t].exchange (0); a > 0) push ({ 0, t, (float) a / 1000.0f, -1.0f, false });
     {
         static const int targetOfModule[] { tKick, tSnare, tCHat, tTie, tPod };
         for (int m = 0; m < 5; ++m)
-            if (const int idx = auditionIdx[(size_t) m].exchange (-1); idx >= 0) push ({ 0, targetOfModule[m], 1.0f, 0.75f, false, idx });
+            if (const int idx = auditionIdx[(size_t) m].exchange (-1); idx >= 0) push ({ 0, targetOfModule[m], 1.0f, -1.0f, false, idx });
     }
 
     const int wanted = jlimit (0, NP - 1, (int) p (bPattern)->load());

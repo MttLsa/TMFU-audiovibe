@@ -387,6 +387,50 @@ int main (int argc, char** argv)
             dir.deleteRecursively();
         }
 
+        // 3c) Tie lane: column height selects the sample (notch 1 = bottom of the list = last file)
+        {
+            auto dir = File::getSpecialLocation (File::tempDirectory).getChildFile ("twinbox_height_test");
+            dir.deleteRecursively(); dir.createDirectory();
+            const double freqs[] { 440.0, 523.25, 659.26 };   // "1 tone" = top of the list ... "3 tone" = bottom
+            for (int i = 0; i < 3; ++i)
+            {
+                AudioBuffer<float> tone (1, 44100);
+                for (int j = 0; j < 44100; ++j) tone.setSample (0, j, 0.5f * (float) std::sin (2 * MathConstants<double>::pi * freqs[i] * j / 44100.0));
+                WavAudioFormat wav;
+                std::unique_ptr<AudioFormatWriter> w (wav.createWriterFor (new FileOutputStream (dir.getChildFile (String (i + 1) + " tone.wav")), 44100, 1, 24, {}, 0));
+                w->writeFromAudioSampleBuffer (tone, 0, tone.getNumSamples());
+            }
+            p.library.setUserFolder (SampleLibrary::tie, dir);
+            Thread::sleep (30); while (p.library.isLoading()) Thread::sleep (5);
+            setP (p, params::b (params::tie, params::lv::wav), 1);                    // WAV knob on the middle sample: must be ignored
+            setP (p, params::b (params::tie, params::lv::vel), 1);                    // VEL = wav
+            auto playStep = [&] (float value) -> float
+            {
+                auto& P = p.lime.pattern (0);
+                P.clear();
+                P.value[LimeEngine::laneTie][0].store (value);
+                setP (p, params::bPattern, 0);
+                p.setPlayConfigDetails (0, 2, 44100, 512); p.prepareToPlay (44100, 512);
+                setP (p, params::gXfade, 100); setP (p, params::bFxMix, 0); setP (p, params::b (params::tie, params::lv::dcy), 100);
+                for (int v : { params::kick, params::snare, params::hat, params::pod, params::pulp }) setP (p, params::b (v, params::lv::on), 0);
+                setP (p, params::gRun, 1);
+                Sample out; out.sourceRate = 44100;
+                AudioBuffer<float> buf (2, 512); MidiBuffer m;
+                for (int b2 = 0; b2 < 40; ++b2) { p.processBlock (buf, m); for (int i = 0; i < 512; ++i) out.L.push_back (buf.getSample (0, i)); }
+                setP (p, params::gRun, 0);
+                float c; return SampleLibrary::detectPitch (out, c);
+            };
+            const float bottom = playStep (1.0f / 3.0f), top = playStep (1.0f);
+            setP (p, params::b (params::tie, params::lv::vel), 0);                    // VEL = -- : height is velocity, WAV knob plays
+            const float velMode = playStep (1.0f / 3.0f);
+            p.library.setSource (SampleLibrary::tie, SampleLibrary::twinbox);
+            Thread::sleep (30); while (p.library.isLoading()) Thread::sleep (5);
+            dir.deleteRecursively();
+            report ("Tie column height selects sample", std::abs (bottom - 76.0f) < 0.4f && std::abs (top - 69.0f) < 0.4f && std::abs (velMode - 72.0f) < 0.4f,
+                    "VEL=wav: notch 1 -> " + SampleLibrary::noteName (bottom) + " (last file), top -> " + SampleLibrary::noteName (top)
+                    + " (first file); VEL=--: WAV knob -> " + SampleLibrary::noteName (velMode));
+        }
+
         // 4) loading a preset keeps every module's on/off state (incl. Pulp)
         setP (p, params::b (params::kick, params::lv::on), 0); setP (p, params::b (params::pulp, params::lv::on), 1);
         PresetLibrary::applyB (p, PresetLibrary::get().items (1)[5], true, true, false);
@@ -472,6 +516,17 @@ int main (int argc, char** argv)
         snapWin (new LimeFxWindowContent (p), 1300, 860, "win_B_fx.png");
         snapWin (new PresetBrowser (p, 1), 820, 700, "win_B_browser.png");
         snapWin (new PitchWindowContent (p, params::tie), 760, 640, "win_B_pitch.png");
+        {
+            LimeSeqPanel panel (p, false);
+            panel.setSize (650, 260);
+            panel.setVisible (true);
+            int ok = 0;
+            for (auto* c : panel.getChildren())
+                if (auto* tb = dynamic_cast<TextButton*> (c))
+                    if (tb->getButtonText() == "TIE" || tb->getButtonText() == "POD" || tb->getButtonText() == "MOD")
+                        if (panel.getComponentAt (tb->getBounds().getCentre()) == tb) ++ok;
+            report ("seq lane buttons clickable", ok == 3, String (ok) + "/3 buttons on top of the grid");
+        }
         ed.reset();
     }
     std::printf (ok ? "ALL TESTS PASSED\n" : "SOME TESTS FAILED\n");

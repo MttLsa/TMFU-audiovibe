@@ -266,6 +266,29 @@ def b_kit(genre, r):
     P["b_dly_gain"] = -60.0                         # delay return at minimum by default (raise it by hand)
     return P, smp
 
+def lanes_to_samples(preset, genre, r):
+    """Tie / Pod lanes: the column height selects the sample of the module list (notch 1 = bottom = last sample).
+    Every note points to the kit's sample, sometimes alternated with 1-2 other samples of the same genre."""
+    for module, lane in (("Tie", "tie"), ("Pod", "pod")):
+        files = sorted(it["file"][:-4] for it in manifest["modules"][module])
+        n = len(files)
+        main = preset["samples"][module]
+        alts = [f for f in files if f != main and any(genre in it["tags"] for it in manifest["modules"][module] if it["file"][:-4] == f)]
+        r.shuffle(alts)
+        choices = [main] + alts[:2]
+        for pat in preset["patterns"]:
+            out = []
+            for v in pat[lane]:
+                if v <= 0.001:
+                    out.append(0.0); continue
+                # louder / higher original steps keep the main sample, the others alternate
+                name = main if (v >= 0.45 or r.random() < 0.6) else r.choice(choices)
+                i = files.index(name)
+                out.append(round((n - i) / n, 4))
+            pat[lane] = out
+        preset["params"]["b_%s_vel" % lane] = 1          # VEL = wav: the lane selects the samples
+    return preset
+
 def b_preset(genre, idx, r):
     lo, hi = BPM[genre]
     length = r.choice([32, 32, 64]) if genre == "rominimal" else (r.choice([16, 16, 32]) if genre in ("minimal", "microhouse", "techno") else 16)
@@ -277,7 +300,8 @@ def b_preset(genre, idx, r):
     if genre == "rominimal" and r.random() < 0.5:
         lanes["b_mod_len"] = r.choice([24, 48, 64])
     kit.update(lanes)
-    return {"name": NAMES[genre][idx], "genre": LABEL[genre], "bpm": r.randint(lo, hi), "params": kit, "samples": smp, "patterns": pats}
+    preset = {"name": NAMES[genre][idx], "genre": LABEL[genre], "bpm": r.randint(lo, hi), "params": kit, "samples": smp, "patterns": pats}
+    return lanes_to_samples(preset, genre, r)
 
 
 # ------------------------------------------------------------------------------- Section A (Microtonic kit)
