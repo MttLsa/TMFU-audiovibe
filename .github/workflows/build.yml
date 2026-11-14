@@ -2,8 +2,9 @@ name: build
 
 on:
   push:
-  pull_request:
-  workflow_dispatch:
+    branches: [ main ]
+    paths-ignore: [ "docs/**", "README.md" ]   # documentation changes do not trigger a build
+  workflow_dispatch:                            # manual start from the Actions tab
 
 jobs:
   build:
@@ -13,10 +14,6 @@ jobs:
         include:
           - os: macos-15        # builds AU + VST3 + .pkg installer (universal: Intel x86_64 + Apple Silicon)
             name: macOS
-          - os: windows-2022    # builds VST3
-            name: Windows
-          - os: ubuntu-24.04    # builds VST3
-            name: Linux
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
