@@ -39,5 +39,10 @@ cat > "$OUT/distribution.xml" <<XML
 XML
 
 productbuild --distribution "$OUT/distribution.xml" --package-path "$OUT" "$OUT/Twinbox-${VERSION}-macOS.pkg"
-lipo -info "$OUT/au/Library/Audio/Plug-Ins/Components/Twinbox.component/Contents/MacOS/Twinbox"
+for BIN in "$OUT/au/Library/Audio/Plug-Ins/Components/Twinbox.component/Contents/MacOS/Twinbox" \
+           "$OUT/vst3/Library/Audio/Plug-Ins/VST3/Twinbox.vst3/Contents/MacOS/Twinbox"; do
+  ARCHS="$(lipo -archs "$BIN")"
+  echo "$BIN -> $ARCHS"
+  [[ "$ARCHS" == *x86_64* && "$ARCHS" == *arm64* ]] || { echo "ERROR: not a universal (Intel + Apple Silicon) binary"; exit 1; }
+done
 echo "Installer: $OUT/Twinbox-${VERSION}-macOS.pkg"

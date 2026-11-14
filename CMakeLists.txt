@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.22)
+# macOS: universal binary (Intel x86_64 + Apple Silicon arm64). Must be set before project().
+set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum macOS version")
+set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "macOS architectures")
+
 project(TWINBOX VERSION 1.0.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-if(APPLE)
-  set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "")
-  set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "")
-endif()
 
 # JUCE: uses ./JUCE if present (or -DJUCE_DIR=/path/to/JUCE), otherwise downloads JUCE 8.0.4
 set(JUCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/JUCE" CACHE PATH "Path to JUCE")
