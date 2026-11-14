@@ -84,7 +84,7 @@ namespace params
                           *cd = "cd", *od = "od", *link = "link",
                           *vamt = "vamt", *port = "port", *att = "a", *fm = "fm", *mp = "mp", *noise = "noise", *vel = "vel",
                           *zap = "zap",
-                          *trkLo = "lo", *trkHi = "hi", *tieSrc = "tie", *osc = "osc",
+                          *trkLo = "lo", *trkHi = "hi", *src = "src", *inGain = "in", *osc = "osc",
                           *comb = "comb", *fb = "fb", *freq = "freq";
     }
 

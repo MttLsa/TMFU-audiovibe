@@ -37,7 +37,13 @@ public:
     void drawButtonBackground (juce::Graphics&, juce::Button&, const juce::Colour&, bool over, bool down) override;
     void drawButtonText (juce::Graphics&, juce::TextButton&, bool over, bool down) override;
     void drawComboBox (juce::Graphics&, int w, int h, bool down, int bx, int by, int bw, int bh, juce::ComboBox&) override;
-    juce::Font getComboBoxFont (juce::ComboBox&) override { return theme::font (12.0f); }
+    juce::Font getComboBoxFont (juce::ComboBox& b) override { return theme::font (juce::jlimit (10.0f, 12.0f, b.getHeight() * 0.6f)); }
+    void positionComboBoxText (juce::ComboBox& b, juce::Label& label) override
+    {
+        label.setBounds (2, 1, juce::jmax (8, b.getWidth() - 16), b.getHeight() - 2);
+        label.setFont (getComboBoxFont (b));
+        label.setBorderSize ({ 0, 3, 0, 0 });
+    }
     juce::Font getPopupMenuFont() override { return theme::font (13.0f); }
     juce::Font getTextButtonFont (juce::TextButton&, int h) override { return theme::font (juce::jmin (12.5f, h * 0.6f)); }
     juce::Label* createSliderTextBox (juce::Slider&) override;

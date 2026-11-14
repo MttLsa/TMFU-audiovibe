@@ -121,8 +121,8 @@ void TwinLookAndFeel::drawComboBox (Graphics& g, int w, int h, bool, int, int, i
     g.setColour (theme::outline);
     g.drawRoundedRectangle (r, 2.5f, 1.0f);
     Path p;
-    const float ax = (float) w - 10.0f, ay = (float) h * 0.5f;
-    p.addTriangle (ax - 4, ay - 2, ax + 4, ay - 2, ax, ay + 3);
+    const float ax = (float) w - 8.0f, ay = (float) h * 0.5f;
+    p.addTriangle (ax - 3, ay - 1.5f, ax + 3, ay - 1.5f, ax, ay + 2.5f);
     g.setColour (theme::textDim);
     g.fillPath (p);
 }

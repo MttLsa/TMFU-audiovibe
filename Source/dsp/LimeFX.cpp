@@ -122,6 +122,55 @@ void TapeDelay::process (const float* inL, const float* inR, float* outL, float*
 }
 
 //==============================================================================
+void GentleSat::prepare (double sr)
+{
+    fs = sr; driveSm = 0.0f;
+    for (int c = 0; c < 2; ++c)
+    {
+        prevIn[c] = dcX[c] = dcY[c] = 0.0f;
+        for (auto* f : { &up[c][0], &up[c][1], &down[c][0], &down[c][1] }) { f->reset(); f->set (sr * 0.45, sr * 2.0, 0.6); }
+    }
+}
+
+// Soft-knee curve: linear for small signals, smooth rounding of peaks (no hard corners),
+// plus a small asymmetric (even-harmonic) term for "warmth".
+inline float GentleSat::shape (float u, float even) const
+{
+    // y = u / (1 + |u|^4)^(1/4): practically linear below ~0.5, smooth rounding above, asymptote at 1
+    const float a2 = u * u;
+    const float y = u / std::sqrt (std::sqrt (1.0f + a2 * a2));
+    return y + even * a2;
+}
+
+void GentleSat::process (float* L, float* R, int n, float amount)
+{
+    if (amount < 0.0005f && driveSm < 0.01f) return;
+    // 0 % = 0 dB, 5 % ~ +0.4 dB, 25 % ~ +3 dB, 50 % ~ +7 dB, 100 % = +18 dB of drive into the curve.
+    // The curve is linear for small signals and only rounds the peaks, so low settings stay transparent
+    // (no oversampling filters in the path -> no phase change); output is level-compensated.
+    const float targetDb = std::pow (amount, 1.3f) * 18.0f;
+    const float even = 0.04f * amount;
+    const float dcA = 1.0f - (float) (2.0 * kPi * 5.0 / fs);
+    for (int i = 0; i < n; ++i)
+    {
+        driveSm += 0.0015f * (targetDb - driveSm);
+        const float g = dbToGain (driveSm);
+        const float comp = 1.0f / g;
+        for (int c = 0; c < 2; ++c)
+        {
+            float& x = c == 0 ? L[i] : R[i];
+            // parallel blend: the saturated path fades in with the knob (5 % ~ 15 % wet)
+            const float wet = jmin (1.0f, amount * 3.0f);
+            const float added = (shape (x * g, even) * comp - x) * wet;   // only what the saturator adds
+            // DC blocker on the added part only (the clean signal is never filtered -> no phase change)
+            const float d = added - dcX[c] + dcA * dcY[c];
+            dcX[c] = added; dcY[c] = d;
+            x += d;
+        }
+    }
+}
+
+//==============================================================================
 void XFx::prepare (double sr)
 {
     fs = sr;
@@ -373,18 +422,19 @@ void XFx::process (float* L, float* R, int n, const FxContext& c, int mode, floa
         case 19: case 20: case 21:   // chop / slice / freeze (tempo-synced loop buffer)
         {
             const int segLen = jmax (64, (int) (six * jlimit (1, 16, len16)));
+            juce::ignoreUnused (play, rec);
             const int bar = jmin (loop.size - 1, (int) (six * 16));
             for (int i = 0; i < n; ++i)
             {
                 const double p = c.ppq + c.ppqPerSample * i;
                 const long long sixIdx = (long long) std::floor (p * 4.0);
-                if (rec) loop.l[(size_t) writePos] = L[i], loop.r[(size_t) writePos] = R[i];
+                loop.l[(size_t) writePos] = L[i]; loop.r[(size_t) writePos] = R[i];
                 writePos = (writePos + 1) % loop.size;
                 float ol = L[i], orr = R[i];
                 if (mode == 19)        // chop: repeat the last LEN slice at rate X
                 {
                     const int rep = jmax (16, (int) (segLen / (1 + (int) (x * 7.0f))));
-                    if (sixIdx != lastSlice && (sixIdx % jmax (1, len16)) == 0) { lastSlice = sixIdx; loopPos = 0; loopLen = rep; frozen = play; }
+                    if (sixIdx != lastSlice && (sixIdx % jmax (1, len16)) == 0) { lastSlice = sixIdx; loopPos = 0; loopLen = rep; frozen = true; }
                     if (frozen && y > 0.05f)
                     {
                         const int rp = (writePos - 1 - loopLen + (loopPos % loopLen) + loop.size * 2) % loop.size;
@@ -401,7 +451,7 @@ void XFx::process (float* L, float* R, int n, const FxContext& c, int mode, floa
                         sliceMap[(size_t) s16] = rnd() < x ? (int) (rnd() * 16.0f) : (int) s16;
                         loopPos = 0;
                     }
-                    if (play && sliceMap[(size_t) s16] != (int) s16)
+                    if (sliceMap[(size_t) s16] != (int) s16)
                     {
                         const int src = (writePos - bar + sliceMap[(size_t) s16] * (int) six + loopPos + loop.size * 2) % loop.size;
                         ol = loop.l[(size_t) src]; orr = loop.r[(size_t) src];
@@ -410,7 +460,7 @@ void XFx::process (float* L, float* R, int n, const FxContext& c, int mode, floa
                 }
                 else                   // freeze: hold a LEN loop while X > 50 % (or Play)
                 {
-                    const bool wantFreeze = x > 0.5f && play;
+                    const bool wantFreeze = x > 0.5f;
                     if (wantFreeze && ! frozen) { frozen = true; loopLen = segLen; loopPos = 0; spinPos = writePos; }
                     if (! wantFreeze) frozen = false;
                     if (frozen)

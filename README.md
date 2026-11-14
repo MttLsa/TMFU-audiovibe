@@ -1,4 +1,4 @@
-# TWINBOX — groovebox ibrida VST3 / AU (v2.0)
+# TWINBOX — groovebox ibrida VST3 / AU (v2.1)
 
 Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in un solo plugin:
 
@@ -42,6 +42,7 @@ Parametri, nomi e organizzazione vengono dall'analisi del file originale (dettag
 - SWING, **1/2** (metà tempo), START, lunghezze LEN / TIE / POD / MOD con **Stretch**.
 
 **OUT**: DIRT, GAIN, TUNE, NORM con AMP / REL / SM.
+- **DIRT** è una saturazione morbida, nello stile "gentle saturation": curva lineare sui segnali deboli che arrotonda solo i picchi, armoniche pari leggere, compensazione di livello. A valori bassi è quasi trasparente.
 
 **GLOBAL**: CLK, BPM.
 
@@ -49,15 +50,15 @@ Parametri, nomi e organizzazione vengono dall'analisi del file originale (dettag
 
 | Voce | Controlli |
 |---|---|
-| **Kick** | GAIN, ACC, PAN, TUNE, ST, H, D, SAT, SHP, SM, MOD (`-- / wav / tune / cut`), LO (low cut), CUT, RES |
+| **Kick** | GAIN, ACC, PAN, **WAV** (selezione campione), TUNE, ST, H, D, SAT, SHP, SM, MOD (`-- / wav / tune / cut`), LO (low cut), CUT, RES |
 | **Snare** | come il Kick, con filtro LP/BP/HP al posto del low cut, MOD anche su `flam`, e il controllo FLAM |
 | **Hat** | GAIN, ACC, PAN, TUNE, CD, OD, LINK, MOD, CUT (passa-alto), RES. Un solo campione; il partner "open" è opzionale |
 | **Tie** | voce tonale: GAIN, V>A, PAN, TUNE, PORT, ST, A, D, FM, MP, NOISE, SAT, VEL (`wav / tune / att / dcy / st / fm / cut`), filtro LP/BP/HP, CUT, RES |
 | **Pod** | GAIN, V>A, PAN, TUNE, ST, A, D, ZAP, VEL (`wav / tune / att / dcy / zap / cut`), filtro, CUT, RES |
-| **Pulp** | oscillatore che segue l'intonazione: TUNE, PORT, GAIN, PAN, LO, HI, TIE, D, OSC (Sine / Input / Noise), filtro comb COMB, FB, FREQ, FM, CUT |
+| **Pulp** | oscillatore che segue l'intonazione: TUNE, PORT, GAIN, PAN, **sorgente d'ingresso** (Kick / Snare / Hat / Tie / Pod / All), **IN GAIN**, LO, HI, D, OSC (Sine / Input / Noise), filtro comb COMB, FB, FREQ, FM, CUT. Pulp viene riattivato dai colpi della sorgente scelta e ne segue l'altezza |
 
 **Effetti**
-- **XFX**: off, highpass, bandpass, lowpass, phaser, vowel, flanger, fm, reson, feedback, reflex, reverb, ufo, rainman, distort, ringmod, lofi, pitchshift, gate, chop, slice, freeze, spin. Si controlla con un pad XY, più DLY, GAIN, LO, HI, SPD, LEN, SM e i tasti ▶ / ●.
+- **XFX**: il pad XY ha un **registratore di movimento**. Con **● REC** acceso, trascina il pad: il movimento viene registrato in un loop lungo **LEN** (da 1/16 a 4 battute), alla velocità **SPD**. **▶ PLAY** lo ripete a tempo, e **SM** ammorbidisce la riproduzione. Modi disponibili: off, highpass, bandpass, lowpass, phaser, vowel, flanger, fm, reson, feedback, reflex, reverb, ufo, rainman, distort, ringmod, lofi, pitchshift, gate, chop, slice, freeze, spin. Si controlla con un pad XY, più DLY, GAIN, LO, HI, SPD, LEN, SM e i tasti ▶ / ●.
 - **DELAY**: ONE, TWO (in sedicesimi), FB, GAIN, LFO, FM, DM, WIDE, CUT, RES, LO.
 - **MIX**: FX MIX, MOD INPUT, MOD MIX.
 - **EQ**: HI, MID, LO, AMP, SPLIT.
@@ -75,7 +76,7 @@ Ogni pannello si apre in una **finestra grande** (⤢):
 
 ## Campioni: cartelle per modulo
 
-Ogni sampler (Kick, Snare, Hat, Tie, Pod) legge **una cartella**, e il menu mostra solo i file di quella cartella.
+Ogni sampler (Kick, Snare, Hat, Tie, Pod) ha la manopola **WAV** e un menu per scegliere il campione. Legge **una cartella**, e il menu mostra solo i file di quella cartella.
 
 | Pulsante | Cartella |
 |---|---|
@@ -108,6 +109,7 @@ Ogni sezione ha un pulsante **BROWSER**. I preset sono 16 per ciascuno degli 8 g
 - **Sezione A**: kit di 8 drum patch con nomi + pattern (fino a 64 step), swing e fill rate. Il pattern viene caricato nello slot corrente.
 - **Sezione B**: snapshot completo (campioni, voci, effetti, lunghezze, swing, Remix) + pattern A–D.
 - Opzioni: caricare solo il kit, solo i pattern, e impostare il tempo.
+- I livelli degli effetti dei preset B sono calibrati: ogni effetto (Delay, xFx, Magic) aggiunge al massimo **+2,5 dB** RMS rispetto al segnale dry. Il ricalcolo si fa con `TwinboxTest <out> "" calibrate resources/presets_B.json resources/presets_B.json`.
 
 Il Rominimal segue i riferimenti indicati (Villalobos, Bauch, Barac, Ohm Hourani, Sublee, Zavor, 118–130 BPM):
 - groove lunghi da 32 o 64 step;
@@ -142,7 +144,7 @@ JUCE 8.0.4 viene scaricato in automatico.
 Il workflow `.github/workflows/build.yml`:
 - compila le tre piattaforme;
 - su macOS verifica l'AU con `auval`;
-- produce l'installer **`Twinbox-2.0.0-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
+- produce l'installer **`Twinbox-2.1.0-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
 
 Gli script che generano campioni e preset (`resources/`) sono `tools/gen_samples.py` e `tools/gen_presets.py`.
 

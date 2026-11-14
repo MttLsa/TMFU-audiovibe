@@ -182,7 +182,8 @@ Layout createLayout()
         {
             addFloat (l, id (lv::trkLo),  P + "Track Low", logRange (20.f, 2000.f, 150.f), 40.f, hzText);
             addFloat (l, id (lv::trkHi),  P + "Track High", logRange (50.f, 5000.f, 600.f), 800.f, hzText);
-            addFloat (l, id (lv::tieSrc), P + "Tie (track source)", pctR, 100.f, pctText);
+            addChoice (l, id (lv::src), P + "Input Source", StringArray { "Kick", "Snare", "Hat", "Tie", "Pod", "All" }, 3);
+            addFloat  (l, id (lv::inGain), P + "Input Gain", NormalisableRange<float> (-24.f, 24.f), 0.f, dbText);
             addFloat (l, id (lv::dcy),    P + "Decay", pctR, 40.f, pctText);
             addFloat (l, id (lv::osc),    P + "Osc (Sine-Input-Noise)", pctR, 0.f,
                       [] (float x, int) { return x < 25 ? String ("Sine") : (x < 75 ? String ("Input") : String ("Noise")); });
@@ -259,11 +260,13 @@ Layout createLayout()
     addFloat  (l, bXGain,  "B xFx Gain", NormalisableRange<float> (-60.f, 6.f), 0.f, dbText);
     addFloat  (l, bXLo,    "B xFx Low Cut", logRange (20.f, 2000.f, 150.f), 20.f, hzText);
     addFloat  (l, bXHi,    "B xFx High Cut", logRange (500.f, 20000.f, 5000.f), 20000.f, hzText);
-    addFloat  (l, bXSpd,   "B xFx Speed", pctR, 50.f, pctText);
-    addFloat  (l, bXLen,   "B xFx Length", NormalisableRange<float> (1.f, 16.f, 1.f), 4.f, [] (float x, int) { return String (roundToInt (x)) + "/16"; });
-    addBool   (l, bXPlay,  "B xFx Play", true);
-    addBool   (l, bXRec,   "B xFx Rec", true);
-    addFloat  (l, bXSm,    "B xFx Smooth", pctR, 20.f, pctText);
+    addFloat  (l, bXSpd,   "B xFx Speed (XY playback/record)", pctR, 50.f,
+               [] (float x, int) { return String (std::pow (2.0f, (x - 50.0f) / 25.0f), 2) + "x"; });
+    addFloat  (l, bXLen,   "B xFx Length (XY loop)", NormalisableRange<float> (1.f, 64.f, 1.f), 16.f,
+               [] (float x, int) { const int v = roundToInt (x); return v % 16 == 0 ? String (v / 16) + (v == 16 ? " bar" : " bars") : String (v) + "/16"; });
+    addBool   (l, bXPlay,  "B xFx Play (XY motion)", false);
+    addBool   (l, bXRec,   "B xFx Rec (XY motion)", false);
+    addFloat  (l, bXSm,    "B xFx Smooth (XY interpolation)", pctR, 20.f, pctText);
 
     addFloat  (l, bFxMix,  "B FX Mix", pctR, 50.f, [] (float x, int) { return x < 1 ? String ("dry") : (x > 99 ? String ("wet") : String (roundToInt (x)) + " %"); });
     addBool   (l, bModInput, "B Mod > FX Input", false);

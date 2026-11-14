@@ -10,10 +10,10 @@ static constexpr double kPi = juce::MathConstants<double>::pi;
 namespace
 {
     enum K { kOn, kGain, kPan, kAcc, kVamt, kWav, kTune, kPort, kSt, kHold, kDcy, kSat, kShp, kSm, kAtt, kCd, kOd, kLink,
-             kFm, kMp, kNoise, kZap, kMod, kVel, kLo, kFt, kFlam, kCut, kRes, kTrkLo, kTrkHi, kTieSrc, kOsc, kComb, kFb, kFreq, kCount };
+             kFm, kMp, kNoise, kZap, kMod, kVel, kLo, kFt, kFlam, kCut, kRes, kTrkLo, kTrkHi, kSrc, kIn, kOsc, kComb, kFb, kFreq, kCount };
     const char* keyNames[kCount] { lv::on, lv::gain, lv::pan, lv::acc, lv::vamt, lv::wav, lv::tune, lv::port, lv::st, lv::hold, lv::dcy,
                                    lv::sat, lv::shp, lv::sm, lv::att, lv::cd, lv::od, lv::link, lv::fm, lv::mp, lv::noise, lv::zap,
-                                   lv::mod, lv::vel, lv::lo, lv::ft, lv::flam, lv::cut, lv::res, lv::trkLo, lv::trkHi, lv::tieSrc,
+                                   lv::mod, lv::vel, lv::lo, lv::ft, lv::flam, lv::cut, lv::res, lv::trkLo, lv::trkHi, lv::src, lv::inGain,
                                    lv::osc, lv::comb, lv::fb, lv::freq };
     inline float G (std::atomic<float>* a, float def) { return a != nullptr ? a->load() : def; }
     inline float decayTau (float pct) { return (float) (0.005 * std::pow (800.0, pct * 0.01)); }   // 5 ms … 4 s
@@ -68,9 +68,9 @@ void LimeEngine::prepare (double sampleRate, int blockSize)
     for (auto& vv : voices) for (auto& v : vv) v.active = false;
     pulpV.active = false;
     pulpV.comb.prepare ((int) (sr * 0.1));
-    envFilter.prepare (sr); eq.prepare (sr); magic.prepare (sr); delay.prepare (sr); xfx.prepare (sr);
+    envFilter.prepare (sr); eq.prepare (sr); magic.prepare (sr); delay.prepare (sr); xfx.prepare (sr); dirtSat.prepare (sr);
     const size_t n = (size_t) jmax (blockSize, 4096);
-    for (auto* b : { &dryL, &dryR, &tieL, &tieR, &sendL, &sendR, &dlyL, &dlyR, &xL, &xR }) b->assign (n, 0.0f);
+    for (auto* b : { &dryL, &dryR, &tieL, &tieR, &sendL, &sendR, &dlyL, &dlyR, &xL, &xR, &srcMono }) b->assign (n, 0.0f);
     lastLoop = -1;
 }
 
@@ -102,6 +102,17 @@ void LimeEngine::trigger (int target, float vel, float laneValue)
     {
         pulpV.active = true; pulpV.t = 0; pulpV.vel = vel;
         return;
+    }
+    // Pulp is (re)triggered by the hits of its selected input source
+    {
+        const int srcSel = (int) G (vk[(size_t) pulp][kSrc], 3);
+        if ((srcSel == 5 || srcSel == voice) && G (vk[(size_t) pulp][kOn], 0) > 0.5f)
+        {
+            float pv = vel;
+            if (voice == tie || voice == pod) pv = jmax (0.05f, laneValue);
+            pulpV.active = true; pulpV.t = 0; pulpV.vel = pv;
+            hits[(size_t) tPulp].fetch_add (1);
+        }
     }
 
     auto set = library.set (moduleOf (voice));
@@ -354,8 +365,8 @@ void LimeEngine::renderPulp (const float* src, float* dl, float* dr, int n)
 //==============================================================================
 void LimeEngine::process (float* L, float* R, int n, const BlockTime& bt, const std::vector<TriggerEvent>& midi)
 {
-    if ((int) dryL.size() < n) for (auto* b : { &dryL, &dryR, &tieL, &tieR, &sendL, &sendR, &dlyL, &dlyR, &xL, &xR }) b->assign ((size_t) n, 0.0f);
-    for (auto* b : { &dryL, &dryR, &tieL, &tieR }) std::fill (b->begin(), b->begin() + n, 0.0f);
+    if ((int) dryL.size() < n) for (auto* b : { &dryL, &dryR, &tieL, &tieR, &sendL, &sendR, &dlyL, &dlyR, &xL, &xR, &srcMono }) b->assign ((size_t) n, 0.0f);
+    for (auto* b : { &dryL, &dryR, &tieL, &tieR, &srcMono }) std::fill (b->begin(), b->begin() + n, 0.0f);
 
     struct Ev { int offset; int target; float vel; float value; bool isMod; };
     std::array<Ev, 1024> ev;
@@ -435,7 +446,6 @@ void LimeEngine::process (float* L, float* R, int n, const BlockTime& bt, const 
                 else if (v > 0.001f)
                 {
                     push ({ off, laneIdx == laneTie ? tTie : tPod, 1.0f, v, false });
-                    if (laneIdx == laneTie) push ({ off, tPulp, v, v, false });   // Pulp follows the Tie sequence
                 }
             });
         };
@@ -461,21 +471,34 @@ void LimeEngine::process (float* L, float* R, int n, const BlockTime& bt, const 
         }
         const int next = ei < nev ? jmin (n, ev[(size_t) ei].offset) : n;
         const int cnt = jmax (1, next - pos);
+        const int srcSel = (int) G (vk[(size_t) pulp][kSrc], 3);      // 0..4 = Kick..Pod, 5 = All
         for (int vIdx = 0; vIdx < 5; ++vIdx)
+        {
+            const bool isSrc = srcSel == 5 || srcSel == vIdx;
+            if (isSrc)
+            {
+                std::fill (tieL.begin() + pos, tieL.begin() + pos + cnt, 0.0f);
+                std::fill (tieR.begin() + pos, tieR.begin() + pos + cnt, 0.0f);
+            }
             for (auto& v : voices[(size_t) vIdx])
             {
-                if (vIdx == tie) renderSampleVoice (vIdx, v, tieL.data() + pos, tieR.data() + pos, cnt);
-                else             renderSampleVoice (vIdx, v, dryL.data() + pos, dryR.data() + pos, cnt);
+                if (isSrc) renderSampleVoice (vIdx, v, tieL.data() + pos, tieR.data() + pos, cnt);
+                else       renderSampleVoice (vIdx, v, dryL.data() + pos, dryR.data() + pos, cnt);
             }
+            if (isSrc)
+                for (int i = pos; i < pos + cnt; ++i)
+                {
+                    dryL[(size_t) i] += tieL[(size_t) i]; dryR[(size_t) i] += tieR[(size_t) i];
+                    srcMono[(size_t) i] += 0.5f * (tieL[(size_t) i] + tieR[(size_t) i]);
+                }
+        }
         pos += cnt;
     }
-    // Pulp tracks a blend of the Tie voice and the whole drum bus
+    // Pulp: tracks / processes the selected input source (Kick, Snare, Hat, Tie, Pod or All) scaled by Input Gain
     {
-        const float tieAmt = G (vk[(size_t) pulp][kTieSrc], 100) * 0.01f;
-        for (int i = 0; i < n; ++i)
-            sendL[(size_t) i] = (tieL[(size_t) i] + tieR[(size_t) i]) * 0.5f * tieAmt + (dryL[(size_t) i] + dryR[(size_t) i]) * 0.5f * (1.0f - tieAmt);
-        for (int i = 0; i < n; ++i) { dryL[(size_t) i] += tieL[(size_t) i]; dryR[(size_t) i] += tieR[(size_t) i]; }
-        renderPulp (sendL.data(), dryL.data(), dryR.data(), n);
+        const float inGain = juce::Decibels::decibelsToGain (G (vk[(size_t) pulp][kIn], 0), -60.0f);
+        for (int i = 0; i < n; ++i) srcMono[(size_t) i] *= inGain;
+        renderPulp (srcMono.data(), dryL.data(), dryR.data(), n);
     }
 
     // ---------------- FX chain
@@ -500,39 +523,94 @@ void LimeEngine::process (float* L, float* R, int n, const BlockTime& bt, const 
         xL[(size_t) i] = sendL[(size_t) i] * (1.0f - xDly) + dlyL[(size_t) i] * xDly;
         xR[(size_t) i] = sendR[(size_t) i] * (1.0f - xDly) + dlyR[(size_t) i] * xDly;
     }
-    xfx.process (xL.data(), xR.data(), n, c, (int) p (bXMode)->load(), p (bXParam)->load(), p (bXAdd)->load(), p (bXSpd)->load(),
-                 (int) p (bXLen)->load(), p (bXLo)->load(), p (bXHi)->load(), p (bXPlay)->load() > 0.5f, p (bXRec)->load() > 0.5f,
-                 p (bXSm)->load());
+    // ---- XY motion recorder: loop of LEN sixteenths, SPD = speed, SM = interpolation
+    float xyX = p (bXParam)->load() * 0.01f, xyY = p (bXAdd)->load() * 0.01f;
+    {
+        const double speed = std::pow (2.0, (p (bXSpd)->load() - 50.0) / 25.0);
+        const double loopBeats = jlimit (1.0, 64.0, (double) p (bXLen)->load()) / 4.0;
+        const double ppqNow = bt.playing ? bt.ppqStart : xyFreePpq;
+        if (! bt.playing) xyFreePpq += bt.ppqPerSample * n;
+        double pos = std::fmod (ppqNow * speed, loopBeats) / loopBeats;
+        if (pos < 0) pos += 1.0;
+        xyPos.store ((float) pos);
+        const int idx = jlimit (0, xyN - 1, (int) (pos * xyN));
+        const bool rec = p (bXRec)->load() > 0.5f, play = p (bXPlay)->load() > 0.5f;
+        const bool touching = xyTouching.load();
+        if (xyClearReq.exchange (false)) xyHas.store (false);
+        if (rec && touching)
+        {
+            const float tx = xyTouchX.load(), ty = xyTouchY.load();
+            const int tc = xyTouchCount.load();
+            if (tc != xyLastTouchCount)          // new gesture while REC is on: start a fresh recording
+            {
+                xyLastTouchCount = tc;
+                xyBufX.fill (tx); xyBufY.fill (ty);
+                xyLastIdx = idx;
+            }
+            // write every slot passed since the last block (no gaps, handles wrap-around)
+            int i = xyLastIdx < 0 ? idx : xyLastIdx;
+            for (int guard = 0; guard <= xyN; ++guard)
+            {
+                xyBufX[(size_t) i] = tx; xyBufY[(size_t) i] = ty;
+                if (i == idx) break;
+                i = (i + 1) % xyN;
+            }
+            xyLastIdx = idx;
+            xyHas.store (true);
+            xyX = tx; xyY = ty;
+        }
+        else xyLastIdx = -1;
+        xyRecNow.store (rec && touching);
+        const bool playing = play && xyHas.load() && ! touching;
+        xyPlayback.store (playing);
+        if (playing)
+        {
+            const double fpos = pos * xyN;
+            const int i0 = (int) fpos % xyN, i1 = (i0 + 1) % xyN;
+            const float fr = (float) (fpos - std::floor (fpos));
+            const float tx = xyBufX[(size_t) i0] + fr * (xyBufX[(size_t) i1] - xyBufX[(size_t) i0]);
+            const float ty = xyBufY[(size_t) i0] + fr * (xyBufY[(size_t) i1] - xyBufY[(size_t) i0]);
+            const float smc = (float) std::exp (-(double) n / (sr * (0.002 + p (bXSm)->load() * 0.01 * 0.25)));
+            xySmX = tx + (xySmX - tx) * smc;
+            xySmY = ty + (xySmY - ty) * smc;
+            xyX = xySmX; xyY = xySmY;
+        }
+        else { xySmX = xyX; xySmY = xyY; }
+        xyCurX.store (xyX); xyCurY.store (xyY);
+    }
+    xfx.process (xL.data(), xR.data(), n, c, (int) p (bXMode)->load(), xyX * 100.0f, xyY * 100.0f, p (bXSpd)->load(),
+                 (int) p (bXLen)->load(), p (bXLo)->load(), p (bXHi)->load(), true, true, p (bXSm)->load());
 
     const float dlyGain = juce::Decibels::decibelsToGain (p (bDlyGain)->load(), -60.0f);
     const float xGain = juce::Decibels::decibelsToGain (p (bXGain)->load(), -60.0f);
     float fxMix = p (bFxMix)->load() * 0.01f;
     if (modMixOn) fxMix *= modHeld;
     const float dryAmt = jmin (1.0f, 2.0f - 2.0f * fxMix), wetAmt = jmin (1.0f, 2.0f * fxMix);
-    const float dirt = p (bDirt)->load() * 0.01f;
     const bool norm = p (bNorm)->load() > 0.5f;
     const float nAmp = p (bNormAmp)->load() * 0.01f, nRel = p (bNormRel)->load() * 0.01f, nSm = p (bNormSm)->load() * 0.01f;
     const float relC = (float) std::exp (-1.0 / (sr * (0.02 + nRel * 1.5)));
     // fixed -8 dB of section headroom (6 voices + FX summing), then OUT Gain (= Level B)
-    const float gain = 0.4f * juce::Decibels::decibelsToGain (p (bGain)->load(), -60.0f);
+    constexpr float headroom = 0.4f;   // fixed -8 dB section headroom, applied BEFORE Dirt so Dirt sees output-level signals
+    const float gain = juce::Decibels::decibelsToGain (p (bGain)->load(), -60.0f);
     const float target = 0.25f + 0.6f * nAmp;
     for (int i = 0; i < n; ++i)
     {
-        float l = dl[i] * dryAmt + (dlyL[(size_t) i] * dlyGain + xL[(size_t) i] * xGain) * wetAmt;
-        float r = dr[i] * dryAmt + (dlyR[(size_t) i] * dlyGain + xR[(size_t) i] * xGain) * wetAmt;
-        if (dirt > 0.001f)
-        {
-            const float d = 1.0f + dirt * 20.0f, bias = 0.2f * dirt, comp = 1.0f / (1.0f + dirt * 2.5f);
-            l = (std::tanh (l * d + bias) - std::tanh (bias)) * comp * 1.7f;
-            r = (std::tanh (r * d + bias) - std::tanh (bias)) * comp * 1.7f;
-        }
+        dl[i] = dl[i] * dryAmt + (dlyL[(size_t) i] * dlyGain + xL[(size_t) i] * xGain) * wetAmt;
+        dr[i] = dr[i] * dryAmt + (dlyR[(size_t) i] * dlyGain + xR[(size_t) i] * xGain) * wetAmt;
+    }
+    for (int i = 0; i < n; ++i) { dl[i] *= headroom; dr[i] *= headroom; }
+    dirtSat.process (dl, dr, n, p (bDirt)->load() * 0.01f);     // DIRT: gentle saturation
+    for (int i = 0; i < n; ++i)
+    {
+        float l = dl[i], r = dr[i];
         if (norm)
         {
+            l /= headroom; r /= headroom;   // Norm keeps working on the pre-headroom scale
             const float pk = jmax (std::abs (l), std::abs (r));
             normEnv = pk > normEnv ? normEnv + (0.5f - 0.45f * nSm) * (pk - normEnv) : normEnv * relC;
             const float g = normEnv > target ? target / normEnv : 1.0f;
-            l = std::tanh (l * g * (1.0f + nAmp * 1.5f)) * 0.95f;
-            r = std::tanh (r * g * (1.0f + nAmp * 1.5f)) * 0.95f;
+            l = std::tanh (l * g * (1.0f + nAmp * 1.5f)) * 0.95f * headroom;
+            r = std::tanh (r * g * (1.0f + nAmp * 1.5f)) * 0.95f * headroom;
         }
         L[i] += l * gain;
         R[i] += r * gain;
@@ -565,10 +643,25 @@ void LimeEngine::loadDefaultPatterns()
     set (3, laneSnare, "----X--x-x--X-xX");
 }
 
+void LimeEngine::xyTouch (float x, float y, bool down)
+{
+    xyTouchX.store (jlimit (0.0f, 1.0f, x));
+    xyTouchY.store (jlimit (0.0f, 1.0f, y));
+    if (down && ! xyTouching.load()) xyTouchCount.fetch_add (1);
+    xyTouching.store (down);
+}
+
 juce::ValueTree LimeEngine::saveState() const
 {
     juce::ValueTree vt ("LIME_PATTERNS");
     vt.setProperty ("version", 2, nullptr);
+    if (xyHas.load())
+    {
+        juce::MemoryBlock mb;
+        mb.append (xyBufX.data(), sizeof (float) * xyN);
+        mb.append (xyBufY.data(), sizeof (float) * xyN);
+        vt.setProperty ("xymotion", mb.toBase64Encoding(), nullptr);
+    }
     for (int pi = 0; pi < NP; ++pi)
     {
         juce::ValueTree pt ("P");
@@ -590,6 +683,16 @@ juce::ValueTree LimeEngine::saveState() const
 void LimeEngine::loadState (const juce::ValueTree& vt)
 {
     if (! vt.isValid() || (int) vt.getProperty ("version", 1) < 2) return;
+    {
+        juce::MemoryBlock mb;
+        if (mb.fromBase64Encoding (vt.getProperty ("xymotion").toString()) && mb.getSize() == sizeof (float) * xyN * 2)
+        {
+            memcpy (xyBufX.data(), mb.getData(), sizeof (float) * xyN);
+            memcpy (xyBufY.data(), static_cast<const char*> (mb.getData()) + sizeof (float) * xyN, sizeof (float) * xyN);
+            xyHas.store (true);
+        }
+        else xyHas.store (false);
+    }
     for (int pi = 0; pi < NP && pi < vt.getNumChildren(); ++pi)
     {
         auto pt = vt.getChild (pi);

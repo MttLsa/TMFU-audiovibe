@@ -62,6 +62,56 @@ int main (int argc, char** argv)
     const File outDir (argc > 1 ? argv[1] : ".");
     const File ens (argc > 2 ? argv[2] : "");
     bool ok = true;
+    if (argc > 5 && String (argv[3]) == "calibrate")
+    {
+        // For every Section B preset: limit the level increase that each FX (Delay, xFx, Magic) adds over the dry
+        // signal to +2.5 dB (RMS), by lowering that FX's return gain / mix. Writes the corrected preset file.
+        auto root = JSON::parse (File (argv[4]));
+        auto* arr = root.getProperty ("presets", var()).getArray();
+        if (arr == nullptr) { std::printf ("bad preset file\n"); return 1; }
+        const float limitDb = 2.5f;
+        auto measure = [] (const var& pv, std::function<void (TwinboxProcessor&)> tweak)
+        {
+            TwinboxProcessor p;
+            waitLibrary (p);
+            PresetLibrary::Item it { pv.getProperty ("name", "").toString(), "", (int) pv.getProperty ("bpm", 124), pv };
+            PresetLibrary::applyB (p, it, true, true, true);
+            setP (p, params::gRun, 1); setP (p, params::gXfade, 100);
+            tweak (p);
+            return render (p, 4.0).rms;
+        };
+        int changed = 0;
+        for (auto& pv : *arr)
+        {
+            auto* prm = pv.getProperty ("params", var()).getDynamicObject();
+            if (prm == nullptr) continue;
+            auto get = [prm] (const char* id, float def) { return prm->hasProperty (id) ? (float) prm->getProperty (id) : def; };
+            const double dry = measure (pv, [] (TwinboxProcessor& p) { setP (p, params::bFxMix, 0); setP (p, params::bMagMix, 0); });
+            String log;
+            struct Fx { const char* id; bool isMix; std::function<void (TwinboxProcessor&)> isolate; };
+            const Fx fxs[] = {
+                { params::bDlyGain, false, [] (TwinboxProcessor& p) { setP (p, params::bXGain, -60); setP (p, params::bMagMix, 0); } },
+                { params::bXGain,   false, [] (TwinboxProcessor& p) { setP (p, params::bDlyGain, -60); setP (p, params::bMagMix, 0); } },
+                { params::bMagMix,  true,  [] (TwinboxProcessor& p) { setP (p, params::bDlyGain, -60); setP (p, params::bXGain, -60); } },
+            };
+            for (auto& fx : fxs)
+            {
+                for (int iter = 0; iter < 10; ++iter)
+                {
+                    const double wet = measure (pv, fx.isolate);
+                    const double inc = 20.0 * std::log10 (jmax (1e-9, wet) / jmax (1e-9, dry));
+                    if (inc <= limitDb) { log << " " << fx.id << " +" << String (inc, 1) << "dB"; break; }
+                    if (fx.isMix) prm->setProperty (fx.id, jmax (0.0f, get (fx.id, 0) * 0.7f - 1.0f));
+                    else          prm->setProperty (fx.id, jmax (-60.0f, get (fx.id, String (fx.id) == String (params::bDlyGain) ? -6.0f : 0.0f) - (float) (inc - limitDb) - 1.0f));
+                    ++changed;
+                }
+            }
+            std::printf ("%-24s%s\n", pv.getProperty ("name", "").toString().toRawUTF8(), log.toRawUTF8());
+        }
+        File (argv[5]).replaceWithText (JSON::toString (root, true));
+        std::printf ("calibrated, %d adjustments\n", changed);
+        return 0;
+    }
     if (argc > 3 && String (argv[3]) == "fuzz")
     {
         Random rnd (12345);
@@ -129,6 +179,59 @@ int main (int argc, char** argv)
             if (st.nans > 0 || st.peak > 8.0f || st.peak < 0.001f) { ++bad; info << params::xfxModeNames()[m] << "(" << st.peak << ") "; }
         }
         report ("xFx all 23 modes", bad == 0, bad ? info : String ("all modes finite and audible"));
+    }
+
+    // ---------------------------------------------------------------- DIRT must be gentle; XY motion record/playback
+    {
+        auto renderDirt = [] (float dirt, AudioBuffer<float>& out)
+        {
+            TwinboxProcessor p;
+            waitLibrary (p);
+            setP (p, params::gRun, 1); setP (p, params::gXfade, 100); setP (p, params::bDirt, dirt);
+            const int bs = 512; p.setPlayConfigDetails (0, 2, 48000, bs); p.prepareToPlay (48000, bs);
+            out.setSize (2, 48000 * 3); AudioBuffer<float> buf (2, bs); MidiBuffer m;
+            for (int pos = 0; pos + bs <= out.getNumSamples(); pos += bs)
+            {
+                p.processBlock (buf, m);
+                for (int c = 0; c < 2; ++c) out.copyFrom (c, pos, buf, c, 0, bs);
+            }
+        };
+        AudioBuffer<float> clean, clean2, d5, d100;
+        renderDirt (0, clean); renderDirt (0, clean2); renderDirt (5, d5); renderDirt (100, d100);
+        auto diff = [] (const AudioBuffer<float>& a, const AudioBuffer<float>& b2)
+        {
+            double e = 0, d = 0;
+            for (int i = 0; i < a.getNumSamples(); ++i) { e += a.getSample (0, i) * a.getSample (0, i); const double x = b2.getSample (0, i) - a.getSample (0, i); d += x * x; }
+            return 10.0 * std::log10 (jmax (1e-12, d / jmax (1e-12, e)));
+        };
+        const double base = diff (clean, clean2);
+        const double diffDb = diff (clean, d5);
+        std::printf ("   dirt: baseline clean-vs-clean %.1f dB, clean-vs-5%% %.1f dB\n", base, diffDb);
+        const float pk100 = d100.getMagnitude (0, d100.getNumSamples());
+        report ("dirt 5% is gentle", diffDb < -30.0, "change vs clean " + String (diffDb, 1) + " dB; dirt 100% peak " + String (Decibels::gainToDecibels (pk100), 1) + " dBFS");
+
+        TwinboxProcessor p;
+        waitLibrary (p);
+        setP (p, params::gRun, 1); setP (p, params::bXMode, 10); setP (p, params::bXLen, 16); setP (p, params::bXRec, 1);
+        const int bs = 256; p.setPlayConfigDetails (0, 2, 48000, bs); p.prepareToPlay (48000, bs);
+        AudioBuffer<float> buf (2, bs); MidiBuffer m;
+        const int barBlocks = (int) (48000.0 * 60.0 / 124.0 * 4.0 / bs);   // one bar at 124 BPM
+        for (int i = 0; i < barBlocks; ++i)          // record a ramp 0 -> 1 over one bar
+        {
+            p.lime.xyTouch ((float) i / (float) barBlocks, 1.0f - (float) i / (float) barBlocks, true);
+            p.processBlock (buf, m);
+        }
+        p.lime.xyTouch (1.0f, 0.0f, false);
+        setP (p, params::bXRec, 0); setP (p, params::bXPlay, 1);
+        float minX = 1, maxX = 0; bool playing = true;
+        for (int i = 0; i < barBlocks; ++i)
+        {
+            p.processBlock (buf, m);
+            playing = playing && p.lime.xyPlayingBack();
+            minX = jmin (minX, p.lime.xyCurrentX()); maxX = jmax (maxX, p.lime.xyCurrentX());
+        }
+        report ("xFx XY motion rec/play", playing && minX < 0.15f && maxX > 0.85f,
+                "playback X range " + String (minX, 2) + " .. " + String (maxX, 2));
     }
 
     // ---------------------------------------------------------------- presets

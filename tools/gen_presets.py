@@ -213,7 +213,7 @@ def b_kit(genre, r):
     v("kick", "d", 65); v("snare", "d", 50); v("hat", "cd", 35); v("hat", "od", 65); v("tie", "d", 60); v("pod", "d", 55)
     v("tie", "vamt", 60); v("pod", "vamt", 80)
     v("tie", "pan", -15); v("pod", "pan", r.choice([-30, 25, 35])); v("hat", "pan", r.choice([-8, 8, 12]))
-    fx = {"b_fx_mix": 50, "b_dly_one": 3, "b_dly_two": 4, "b_dly_fb": 35, "b_dly_gain": -12, "b_dly_cut": 5000, "b_dly_wide": 70,
+    fx = {"b_fx_mix": 50, "b_dly_one": 3, "b_dly_two": 4, "b_dly_fb": 35, "b_dly_gain": -16, "b_x_gain": -12, "b_dly_cut": 5000, "b_dly_wide": 70,
           "b_x_mode": 0, "b_dirt": 0, "b_norm": 0, "b_eq_amp": 0, "b_mag_mix": 0, "b_flt_cut": 20000, "b_swing": 0,
           "b_remix": 0, "b_remix_rate": 0, "b_tie_str": 0, "b_pod_str": 0, "b_mod_str": 0}
     if genre == "techno":

@@ -109,6 +109,22 @@ private:
     int shownIndex = -1;
 };
 
+// WAV knob: steps through the samples of the module's current folder (shows the sample name)
+class WavKnob : public juce::Component, public juce::SettableTooltipClient, private juce::Timer
+{
+public:
+    WavKnob (TwinboxProcessor& p, int module, juce::Colour accent);
+    ~WavKnob() override { stopTimer(); }
+    void resized() override;
+    void paint (juce::Graphics&) override;
+private:
+    void timerCallback() override;
+    TwinboxProcessor& proc; int module;
+    juce::Slider slider;
+    juce::String name;
+    int size = 0;
+};
+
 // Waveform display of the currently selected sample of a module
 class WaveView : public juce::Component, private juce::Timer
 {
@@ -134,21 +150,25 @@ private:
     std::unique_ptr<Toggle> power;
 };
 
-// XY pad bound to two parameters (xFx Parameter X / Additional)
-class XYPad : public juce::Component
+// XY pad bound to two parameters (xFx Parameter X / Additional) + XY motion recorder display
+class XYPad : public juce::Component, public juce::SettableTooltipClient, private juce::Timer
 {
 public:
-    XYPad (juce::AudioProcessorValueTreeState& s, const juce::String& xId, const juce::String& yId);
+    XYPad (TwinboxProcessor& p, const juce::String& xId, const juce::String& yId);
+    ~XYPad() override { stopTimer(); }
     void paint (juce::Graphics&) override;
     void mouseDown (const juce::MouseEvent& e) override { set (e); }
     void mouseDrag (const juce::MouseEvent& e) override { set (e); }
     void mouseUp (const juce::MouseEvent&) override;
 private:
+    void timerCallback() override;
     void set (const juce::MouseEvent& e);
+    TwinboxProcessor& proc;
     juce::RangedAudioParameter *px, *py;
     std::unique_ptr<juce::ParameterAttachment> ax, ay;
     float vx = 0.5f, vy = 0.5f;
     bool dragging = false;
+    std::vector<juce::Point<float>> trail;
 };
 
 // -------------------------------------------------------------------------------------------------

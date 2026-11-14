@@ -71,6 +71,19 @@ private:
     double fs = 44100.0; DelayLine dl; double lfo = 0.0; float tL = 0, tR = 0; TptSvf lp[2], hp[2];
 };
 
+// DIRT: gentle saturation (smooth soft-knee curve, mild even harmonics, 2x oversampled, level compensated)
+class GentleSat
+{
+public:
+    void prepare (double sr);
+    void process (float* L, float* R, int n, float amount);   // amount 0..1
+private:
+    float shape (float u, float even) const;
+    double fs = 44100.0;
+    float driveSm = 0.0f, prevIn[2] {}, dcX[2] {}, dcY[2] {};
+    TptSvf up[2][2], down[2][2];
+};
+
 // XFX: 23-mode multi effect (mode, X/Y pad, SPD, LEN, LO, HI, play/rec, SM)
 class XFx
 {

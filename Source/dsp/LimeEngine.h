@@ -53,6 +53,16 @@ public:
     void audition (int target, float vel = 1.0f);
     void remixNow()               { remixNowFlag.store (true); }
 
+    // xFx XY motion recorder (REC records pad movements in a tempo-synced loop of LEN, PLAY loops them)
+    void xyTouch (float x, float y, bool down);          // from the UI pad (0..1)
+    bool  xyPlayingBack() const { return xyPlayback.load(); }
+    bool  xyRecording() const   { return xyRecNow.load(); }
+    bool  xyHasMotion() const   { return xyHas.load(); }
+    float xyCurrentX() const    { return xyCurX.load(); }
+    float xyCurrentY() const    { return xyCurY.load(); }
+    float xyLoopPos() const     { return xyPos.load(); }
+    void  xyClear()             { xyClearReq.store (true); }
+
     juce::ValueTree saveState() const;
     void loadState (const juce::ValueTree& vt);
     void loadDefaultPatterns();
@@ -99,8 +109,16 @@ private:
     } pulpV;
 
     // FX
-    EnvFilter envFilter; EqSat eq; Magic magic; TapeDelay delay; XFx xfx;
-    std::vector<float> dryL, dryR, tieL, tieR, sendL, sendR, dlyL, dlyR, xL, xR;
+    EnvFilter envFilter; EqSat eq; Magic magic; TapeDelay delay; XFx xfx; GentleSat dirtSat;
+    static constexpr int xyN = 1024;
+    std::array<float, xyN> xyBufX {}, xyBufY {};
+    std::atomic<bool> xyHas { false }, xyTouching { false }, xyPlayback { false }, xyRecNow { false }, xyClearReq { false };
+    std::atomic<int> xyTouchCount { 0 };
+    std::atomic<float> xyTouchX { 0.5f }, xyTouchY { 0.5f }, xyCurX { 0.5f }, xyCurY { 0.5f }, xyPos { 0.0f };
+    int xyLastTouchCount = 0, xyLastIdx = -1;
+    float xySmX = 0.5f, xySmY = 0.5f;
+    double xyFreePpq = 0.0;
+    std::vector<float> dryL, dryR, tieL, tieR, sendL, sendR, dlyL, dlyR, xL, xR, srcMono;
     float normEnv = 0.0f, modSmooth = 0.0f;
 
     // sequencer state

@@ -121,18 +121,21 @@ std::unique_ptr<ControlPanel> makeLimePanel (TwinboxProcessor& p, const String& 
     {
         c.setTitle ("PULP");
         c.row ({ c.knob (b (pulp, lv::tune), "Tune"), c.knob (b (pulp, lv::port), "Port"), c.knob (b (pulp, lv::gain), "Gain"), c.knob (b (pulp, lv::pan), "Pan"), c.toggle (b (pulp, lv::on), "On") });
-        c.row ({ c.knob (b (pulp, lv::trkLo), "Lo"), c.knob (b (pulp, lv::trkHi), "Hi"), c.knob (b (pulp, lv::tieSrc), "Tie"), c.knob (b (pulp, lv::dcy), "D"), c.knob (b (pulp, lv::osc), "Osc") });
+        auto* src = c.combo (b (pulp, lv::src));
+        src->setTooltip ("Pulp input source: the module whose hits trigger Pulp and whose pitch / audio it follows (or All)");
+        c.row ({ src, c.knob (b (pulp, lv::inGain), "In Gain"), c.knob (b (pulp, lv::trkLo), "Lo"), c.knob (b (pulp, lv::trkHi), "Hi"), c.knob (b (pulp, lv::dcy), "D"), c.knob (b (pulp, lv::osc), "Osc") });
         c.row ({ c.knob (b (pulp, lv::comb), "Comb"), c.knob (b (pulp, lv::fb), "FB"), c.knob (b (pulp, lv::freq), "Freq"), c.knob (b (pulp, lv::fm), "FM"), c.knob (b (pulp, lv::cut), "Cut") });
     }
     else if (which == "xfx")
     {
         c.setTitle ("XFX");
         auto* mode = c.combo (bXMode);
-        auto* pad = new XYPad (p.apvts, bXParam, bXAdd);
+        auto* pad = new XYPad (p, bXParam, bXAdd);
         c.owned.add (pad); c.addAndMakeVisible (pad);
         auto* dly = c.knob (bXDly, "Dly"); auto* gain = c.knob (bXGain, "Gain"); auto* lo = c.knob (bXLo, "Lo"); auto* hi = c.knob (bXHi, "Hi");
         auto* spd = c.knob (bXSpd, "Spd"); auto* len = c.knob (bXLen, "Len"); auto* sm = c.knob (bXSm, "Sm");
-        auto* play = c.toggle (bXPlay, juce::String::fromUTF8 ("\xe2\x96\xb6")); auto* rec = c.toggle (bXRec, juce::String::fromUTF8 ("\xe2\x97\x8f"));
+        auto* play = c.toggle (bXPlay, juce::String::fromUTF8 ("\xe2\x96\xb6 PLAY")); auto* rec = c.toggle (bXRec, juce::String::fromUTF8 ("\xe2\x97\x8f REC"));
+        rec->setColour (TextButton::buttonOnColourId, Colours::red.withAlpha (0.8f));
         c.customLayout = [=] (ControlPanel& panel)
         {
             auto r = panel.content();
@@ -524,6 +527,65 @@ void SampleSelector::resized()
     box.setBounds (r.reduced (1, 0));
 }
 
+WavKnob::WavKnob (TwinboxProcessor& p, int m, Colour accent) : proc (p), module (m)
+{
+    slider.setSliderStyle (Slider::RotaryHorizontalVerticalDrag);
+    slider.setTextBoxStyle (Slider::NoTextBox, false, 0, 0);
+    slider.setColour (Slider::rotarySliderFillColourId, accent);
+    slider.setRotaryParameters (MathConstants<float>::pi * 1.2f, MathConstants<float>::pi * 2.8f, true);
+    slider.setMouseDragSensitivity (300);
+    slider.setRange (0, 1, 1);
+    slider.onValueChange = [this]
+    {
+        if (size > 0) setParam (proc.apvts, b (module, lv::wav), (float) jlimit (0, size - 1, (int) slider.getValue()));
+    };
+    slider.onDragStart = [this] { proc.apvts.getParameter (b (module, lv::wav))->beginChangeGesture(); };
+    slider.onDragEnd   = [this] { proc.apvts.getParameter (b (module, lv::wav))->endChangeGesture(); };
+    addAndMakeVisible (slider);
+    setTooltip ("WAV: sample select (steps through the samples of the current folder)");
+    startTimerHz (15);
+    timerCallback();
+}
+
+void WavKnob::timerCallback()
+{
+    auto set = proc.library.set (module);
+    const int n = set->size();
+    if (n != size)
+    {
+        size = n;
+        slider.setRange (0, jmax (1, n - 1), 1);
+    }
+    if (n == 0) { name = "-"; repaint(); return; }
+    const int idx = ((int) getParam (proc.apvts, b (module, lv::wav))) % n;
+    if (! slider.isMouseButtonDown() && (int) slider.getValue() != idx) slider.setValue (idx, dontSendNotification);
+    const auto nm = set->names[idx];
+    if (nm != name) { name = nm; repaint(); }
+}
+
+void WavKnob::resized()
+{
+    auto r = getLocalBounds();
+    const int capH = jlimit (10, 16, getHeight() / 6);
+    r.removeFromTop (capH); r.removeFromBottom (capH);
+    const int d = jmin (r.getWidth(), r.getHeight());
+    slider.setBounds (r.withSizeKeepingCentre (d, d));
+}
+
+void WavKnob::paint (Graphics& g)
+{
+    const int capH = jlimit (10, 16, getHeight() / 6);
+    const float fh = jlimit (9.5f, 14.0f, (float) capH * 0.85f);
+    g.setFont (theme::font (fh));
+    g.setColour (theme::textDim);
+    g.drawFittedText ("Wav", 0, 0, getWidth(), capH, Justification::centred, 1, 0.7f);
+    g.setColour (slider.isMouseOverOrDragging() ? slider.findColour (Slider::rotarySliderFillColourId) : theme::text);
+    // show the sample name without the numeric prefix ("K03 Warehouse 9" -> "Warehouse 9")
+    String shown = name;
+    if (shown.length() > 4 && CharacterFunctions::isDigit (shown[1]) && shown[3] == ' ') shown = shown.substring (4);
+    g.drawFittedText (shown, 0, getHeight() - capH, getWidth(), capH, Justification::centred, 1, 0.6f);
+}
+
 void WaveView::paint (Graphics& g)
 {
     auto r = getLocalBounds().toFloat();
@@ -565,31 +627,34 @@ LimeModulePanel::LimeModulePanel (TwinboxProcessor& p, int v, bool b2) : Control
     if (big) { wave = std::make_unique<WaveView> (p, v); addAndMakeVisible (*wave); }
 
     auto K = [this] (const char* key, const char* cap) -> Component* { return knob (b (voice, key), cap); };
+    auto* wavKnob = new WavKnob (p, v, accent);
+    owned.add (wavKnob); addAndMakeVisible (wavKnob);
+    Component* W = wavKnob;
     auto T = [this] (const char* key, const char* cap) -> Component* { return toggle (b (voice, key), cap); };
     switch (v)
     {
         case kick:
-            row ({ K (lv::gain, "Gain"), K (lv::acc, "Acc"), K (lv::pan, "Pan"), K (lv::tune, "Tune"), K (lv::st, "St") });
+            row ({ K (lv::gain, "Gain"), K (lv::acc, "Acc"), K (lv::pan, "Pan"), W, K (lv::tune, "Tune"), K (lv::st, "St") });
             row ({ K (lv::hold, "H"), K (lv::dcy, "D"), K (lv::sat, "Sat"), K (lv::shp, "Shp"), K (lv::sm, "Sm") });
             row ({ combo (b (v, lv::mod)), T (lv::lo, "Lo"), K (lv::cut, "Cut"), K (lv::res, "Res"), nullptr });
             break;
         case snare:
-            row ({ K (lv::gain, "Gain"), K (lv::acc, "Acc"), K (lv::pan, "Pan"), K (lv::tune, "Tune"), K (lv::st, "St") });
+            row ({ K (lv::gain, "Gain"), K (lv::acc, "Acc"), K (lv::pan, "Pan"), W, K (lv::tune, "Tune"), K (lv::st, "St") });
             row ({ K (lv::hold, "H"), K (lv::dcy, "D"), K (lv::sat, "Sat"), K (lv::shp, "Shp"), K (lv::sm, "Sm") });
             row ({ combo (b (v, lv::mod)), seg (b (v, lv::ft)), K (lv::cut, "Cut"), K (lv::res, "Res"), K (lv::flam, "Flam") });
             break;
         case hat:
-            row ({ K (lv::gain, "Gain"), K (lv::acc, "Acc"), K (lv::pan, "Pan"), K (lv::tune, "Tune") });
-            row ({ K (lv::cd, "CD"), K (lv::od, "OD"), T (lv::link, "Link"), nullptr });
+            row ({ K (lv::gain, "Gain"), K (lv::acc, "Acc"), K (lv::pan, "Pan"), W, K (lv::tune, "Tune") });
+            row ({ K (lv::cd, "CD"), K (lv::od, "OD"), T (lv::link, "Link"), nullptr, nullptr });
             row ({ combo (b (v, lv::mod)), K (lv::cut, "Cut"), K (lv::res, "Res"), nullptr });
             break;
         case tie:
-            row ({ K (lv::gain, "Gain"), K (lv::vamt, "V>A"), K (lv::pan, "Pan"), K (lv::tune, "Tune"), K (lv::port, "Port") });
+            row ({ K (lv::gain, "Gain"), K (lv::vamt, "V>A"), K (lv::pan, "Pan"), W, K (lv::tune, "Tune"), K (lv::port, "Port") });
             row ({ K (lv::st, "St"), K (lv::att, "A"), K (lv::dcy, "D"), K (lv::fm, "FM"), K (lv::mp, "MP") });
             row ({ combo (b (v, lv::vel)), K (lv::noise, "Noise"), K (lv::sat, "Sat"), seg (b (v, lv::ft)), K (lv::cut, "Cut"), K (lv::res, "Res") });
             break;
         default: // pod
-            row ({ K (lv::gain, "Gain"), K (lv::vamt, "V>A"), K (lv::pan, "Pan"), K (lv::tune, "Tune"), K (lv::st, "St") });
+            row ({ K (lv::gain, "Gain"), K (lv::vamt, "V>A"), K (lv::pan, "Pan"), W, K (lv::tune, "Tune"), K (lv::st, "St") });
             row ({ K (lv::att, "A"), K (lv::dcy, "D"), K (lv::zap, "Zap"), nullptr, nullptr });
             row ({ combo (b (v, lv::vel)), seg (b (v, lv::ft)), K (lv::cut, "Cut"), K (lv::res, "Res"), nullptr });
             break;
@@ -614,12 +679,27 @@ void LimeModulePanel::resized()
 //==============================================================================
 //  XYPad
 //==============================================================================
-XYPad::XYPad (AudioProcessorValueTreeState& s, const String& xId, const String& yId)
-    : px (s.getParameter (xId)), py (s.getParameter (yId))
+XYPad::XYPad (TwinboxProcessor& p, const String& xId, const String& yId)
+    : proc (p), px (p.apvts.getParameter (xId)), py (p.apvts.getParameter (yId))
 {
-    ax = std::make_unique<ParameterAttachment> (*px, [this] (float v) { vx = px->convertTo0to1 (v); repaint(); });
-    ay = std::make_unique<ParameterAttachment> (*py, [this] (float v) { vy = py->convertTo0to1 (v); repaint(); });
+    ax = std::make_unique<ParameterAttachment> (*px, [this] (float v) { if (! proc.lime.xyPlayingBack()) { vx = px->convertTo0to1 (v); repaint(); } });
+    ay = std::make_unique<ParameterAttachment> (*py, [this] (float v) { if (! proc.lime.xyPlayingBack()) { vy = py->convertTo0to1 (v); repaint(); } });
     ax->sendInitialUpdate(); ay->sendInitialUpdate();
+    setTooltip ("Drag to move X / Y.  REC on + drag = record the movement (loop length = LEN).  PLAY = loop the recorded movement.");
+    startTimerHz (30);
+}
+
+void XYPad::timerCallback()
+{
+    if (proc.lime.xyPlayingBack() || proc.lime.xyRecording())
+    {
+        vx = proc.lime.xyCurrentX(); vy = proc.lime.xyCurrentY();
+        trail.push_back ({ vx, vy });
+        if (trail.size() > 40) trail.erase (trail.begin());
+        repaint();
+    }
+    else if (! trail.empty()) { trail.clear(); repaint(); }
+    else repaint (getWidth() - 60, 0, 60, 18);
 }
 
 void XYPad::paint (Graphics& g)
@@ -633,27 +713,47 @@ void XYPad::paint (Graphics& g)
         g.drawVerticalLine ((int) (r.getX() + r.getWidth() * i / 4), r.getY(), r.getBottom());
         g.drawHorizontalLine ((int) (r.getY() + r.getHeight() * i / 4), r.getX(), r.getRight());
     }
+    // trail of the recorded / played motion
+    for (size_t i = 0; i < trail.size(); ++i)
+    {
+        const float a = (float) (i + 1) / (float) trail.size();
+        g.setColour (theme::accentB.withAlpha (0.35f * a));
+        g.fillEllipse (r.getX() + trail[i].x * r.getWidth() - 2.0f, r.getBottom() - trail[i].y * r.getHeight() - 2.0f, 4.0f, 4.0f);
+    }
     const float x = r.getX() + vx * r.getWidth(), y = r.getBottom() - vy * r.getHeight();
     g.setColour (theme::accentB);
     g.drawRect (Rectangle<float> (x - 6, y - 6, 12, 12), 2.0f);
+    // loop position bar
+    if (proc.lime.xyHasMotion())
+    {
+        g.setColour (theme::accentB.withAlpha (0.5f));
+        g.fillRect (r.getX(), r.getBottom() - 2.0f, r.getWidth() * proc.lime.xyLoopPos(), 2.0f);
+    }
+    g.setFont (theme::font (10.0f, true));
+    const bool recArmed = proc.apvts.getRawParameterValue (bXRec)->load() > 0.5f;
+    if (proc.lime.xyRecording())          { g.setColour (Colours::red);   g.drawText ("REC", r.reduced (4, 2).toNearestInt(), Justification::topRight); }
+    else if (proc.lime.xyPlayingBack())   { g.setColour (theme::accentB); g.drawText ("PLAY", r.reduced (4, 2).toNearestInt(), Justification::topRight); }
+    else if (recArmed)                    { g.setColour (Colours::red.withAlpha (0.6f)); g.drawText ("REC ARMED", r.reduced (4, 2).toNearestInt(), Justification::topRight); }
     g.setColour (theme::textDim);
     g.setFont (theme::font (10.0f));
-    g.drawText ("X " + String (roundToInt (vx * 100)) + "  Y " + String (roundToInt (vy * 100)), r.reduced (4, 2).toNearestInt(), Justification::bottomRight);
+    g.drawText ("X " + String (roundToInt (vx * 100)) + "  Y " + String (roundToInt (vy * 100)), r.reduced (4, 4).toNearestInt(), Justification::bottomRight);
 }
 
 void XYPad::set (const MouseEvent& e)
 {
-    if (! dragging) { ax->beginGesture(); ay->beginGesture(); dragging = true; }
+    if (! dragging) { ax->beginGesture(); ay->beginGesture(); dragging = true; trail.clear(); }
     vx = jlimit (0.0f, 1.0f, (float) e.x / (float) getWidth());
     vy = jlimit (0.0f, 1.0f, 1.0f - (float) e.y / (float) getHeight());
     ax->setValueAsPartOfGesture (px->convertFrom0to1 (vx));
     ay->setValueAsPartOfGesture (py->convertFrom0to1 (vy));
+    proc.lime.xyTouch (vx, vy, true);
     repaint();
 }
 
 void XYPad::mouseUp (const MouseEvent&)
 {
     if (dragging) { ax->endGesture(); ay->endGesture(); dragging = false; }
+    proc.lime.xyTouch (vx, vy, false);
 }
 
 //==============================================================================
