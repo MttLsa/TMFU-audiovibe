@@ -153,6 +153,7 @@ void SampleLibrary::reload (int m)
                     auto it = cache.find (f.getFileName());
                     if (it != cache.end() && it->second.first == sizeKey) { ms->pitch = it->second.second.first; ms->pitchConf = it->second.second.second; }
                     else { ms->pitch = detectPitch (*ms, ms->pitchConf); cacheDirty = true; }
+                    ms->namePitch = pitchFromName (ms->name, ms->pitch);
                     newCache.add (f.getFileName() + "\t" + sizeKey + "\t" + String (ms->pitch, 3) + "\t" + String (ms->pitchConf, 3));
                 }
                 set->samples.push_back (s);
@@ -211,6 +212,86 @@ String SampleLibrary::noteName (float midi)
     const int r = roundToInt (midi);
     const int cents = roundToInt ((midi - (float) r) * 100.0f);
     return String (n[((r % 12) + 12) % 12]) + String (r / 12 - 2) + (cents == 0 ? String() : (cents > 0 ? " +" : " ") + String (cents) + "c");
+}
+
+float SampleLibrary::pitchFromName (const String& fileName, float nearPitch)
+{
+    // split into tokens on separators and camel-case / letter-digit boundaries are kept inside tokens
+    StringArray tokens;
+    tokens.addTokens (fileName.replaceCharacters ("_-.,()[]{}+&'", "             "), " ", "");
+    tokens.removeEmptyStrings();
+
+    auto qualityOk = [] (String rest) -> bool
+    {
+        // allowed chord-quality / mode suffixes after the root ("m", "min", "maj7", "sus4", "add9", "dim", "aug", "7", "m9", ...)
+        static const char* words[] { "minor", "minore", "major", "maggiore", "magg", "maj", "min", "dim", "aug", "sus", "add", "m", "M" };
+        while (rest.isNotEmpty())
+        {
+            bool matched = false;
+            for (auto* w : words)
+                if (rest.startsWith (w)) { rest = rest.substring ((int) strlen (w)); matched = true; break; }
+            if (! matched)
+            {
+                if (CharacterFunctions::isDigit (rest[0])) { rest = rest.substring (1); matched = true; }
+                else if (rest[0] == '#' || rest[0] == 'b' || rest[0] == 'o') { rest = rest.substring (1); matched = true; }
+            }
+            if (! matched) return false;
+        }
+        return true;
+    };
+
+    float best = -1.0f;
+    for (int ti = tokens.size(); --ti >= 0;)   // the key is usually at the end of the name
+    {
+        String t = tokens[ti].trim();
+        if (t.isEmpty()) continue;
+        int pc = -1; int len = 0;
+        // solfege (Do Re Mi Fa Sol La Si), case-insensitive
+        static const std::pair<const char*, int> solf[] { { "sol", 7 }, { "do", 0 }, { "re", 2 }, { "mi", 4 }, { "fa", 5 }, { "la", 9 }, { "si", 11 } };
+        for (auto& sf : solf)
+            if (t.startsWithIgnoreCase (sf.first) && (t.length() == (int) strlen (sf.first) || ! CharacterFunctions::isLetter (t[(int) strlen (sf.first)])
+                                                       || t.substring ((int) strlen (sf.first)).startsWithIgnoreCase ("m")))
+            { pc = sf.second; len = (int) strlen (sf.first); break; }
+        // letter names A-G: uppercase, or lowercase only when followed by an accidental / digit / quality
+        if (pc < 0)
+        {
+            const juce_wchar c = t[0];
+            const juce_wchar up = CharacterFunctions::toUpperCase (c);
+            if (up >= 'A' && up <= 'G' && (c == up || t.length() > 1))
+            {
+                static const int base[] { 9, 11, 0, 2, 4, 5, 7 };   // A B C D E F G
+                pc = base[up - 'A']; len = 1;
+                if (c != up && t.length() > 1 && ! (t[1] == '#' || t[1] == 'b' || CharacterFunctions::isDigit (t[1]) || t[1] == 'm')) pc = -1;
+            }
+        }
+        if (pc < 0) continue;
+        String rest = t.substring (len);
+        // accidental
+        if (rest.startsWith ("#") || rest.startsWithIgnoreCase ("sharp") || rest.startsWith (String::fromUTF8 ("\xe2\x99\xaf")))
+        { pc += 1; rest = rest.startsWith ("#") ? rest.substring (1) : (rest.startsWithIgnoreCase ("sharp") ? rest.substring (5) : rest.substring (1)); }
+        else if (rest.startsWith ("b") && ! rest.startsWith ("bass") && ! rest.startsWith ("bpm")) { pc -= 1; rest = rest.substring (1); }
+        else if (rest.startsWithIgnoreCase ("flat")) { pc -= 1; rest = rest.substring (4); }
+        else if (rest.startsWith (String::fromUTF8 ("\xe2\x99\xad"))) { pc -= 1; rest = rest.substring (1); }
+        pc = (pc + 12) % 12;
+        // octave: a plain number (C3 = 60, Ableton convention) - "C7"-style numbers > 8 are chord extensions
+        int octave = -100;
+        if (rest.isNotEmpty() && (rest.containsOnly ("-0123456789")))
+        {
+            const int o = rest.getIntValue();
+            if (o >= -2 && o <= 8 && rest.length() <= 2) { octave = o; rest.clear(); }
+        }
+        // a following word may carry the quality ("Re minore", "A minor")
+        if (rest.isNotEmpty() && ! qualityOk (rest)) continue;
+        if (octave > -100) best = (float) ((octave + 2) * 12 + pc);
+        else
+        {
+            const float ref = nearPitch >= 0.0f ? nearPitch : 60.0f;
+            float n = (float) pc + 12.0f * std::round ((ref - (float) pc) / 12.0f);
+            best = n;
+        }
+        break;
+    }
+    return best;
 }
 
 // YIN fundamental estimation on a few windows after the attack; median of the confident estimates

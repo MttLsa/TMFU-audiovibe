@@ -346,6 +346,47 @@ int main (int argc, char** argv)
         report ("SCALE + MANUAL pitch (measured)", okScale && okManual,
                 "sample " + SampleLibrary::noteName (src) + " -> scale D Major " + SampleLibrary::noteName (scaled) + ", manual +5 " + SampleLibrary::noteName (manual));
 
+        // 3b) key from file name: parser + measured effect
+        {
+            struct C { const char* name; float expect; };
+            const C cases[] { { "pad chord Db", 61 }, { "T09 Rhodes Cm9", 60 }, { "Bass_F#2", 54 }, { "Kick C1", 36 }, { "La minore", 57 },
+                              { "Sol# lead", 56 }, { "Am7 stab", 57 }, { "120bpm Ebmaj7", 63 }, { "loop_Bb", 58 }, { "pad chord db", 61 },
+                              { "Kick", -1 }, { "T05 Dub Chord m7", -1 }, { "Cello", -1 }, { "Glass Bell", -1 }, { "Sub Bass", -1 }, { "Remix", -1 } };
+            String fails;
+            for (auto& c : cases)
+            {
+                const float got = SampleLibrary::pitchFromName (c.name);
+                if (std::abs (got - c.expect) > 0.01f) fails << c.name << "=" << String (got) << "  ";
+            }
+            report ("key from file name: parser", fails.isEmpty(), fails.isEmpty() ? String ("16 names parsed correctly") : fails);
+
+            // user folder with a 440 Hz tone deliberately named "Db": NAME off -> A4 stays A (C Major); NAME on -> Db -> D (+1)
+            auto dir = File::getSpecialLocation (File::tempDirectory).getChildFile ("twinbox_name_test");
+            dir.deleteRecursively(); dir.createDirectory();
+            {
+                AudioBuffer<float> tone (1, 44100);
+                for (int i = 0; i < 44100; ++i) tone.setSample (0, i, 0.5f * (float) std::sin (2 * MathConstants<double>::pi * 440.0 * i / 44100.0) * std::exp (-i / 30000.0f));
+                WavAudioFormat wav;
+                std::unique_ptr<AudioFormatWriter> w (wav.createWriterFor (new FileOutputStream (dir.getChildFile ("test tone Db.wav")), 44100, 1, 24, {}, 0));
+                w->writeFromAudioSampleBuffer (tone, 0, tone.getNumSamples());
+            }
+            p.library.setUserFolder (SampleLibrary::tie, dir);
+            Thread::sleep (30); while (p.library.isLoading()) Thread::sleep (5);
+            setP (p, params::b (params::tie, params::lv::scale), 1);
+            setP (p, params::bScaleRoot, 0); setP (p, params::bScaleType, 0);       // C Major
+            setP (p, params::b (params::tie, params::lv::nameKey), 0);
+            const float offPitch = renderAudition (0, 0.6);
+            setP (p, params::b (params::tie, params::lv::nameKey), 1);
+            const float onPitch = renderAudition (0, 0.6);
+            setP (p, params::b (params::tie, params::lv::nameKey), 0);
+            setP (p, params::b (params::tie, params::lv::scale), 0);
+            p.library.setSource (SampleLibrary::tie, SampleLibrary::twinbox);
+            Thread::sleep (30); while (p.library.isLoading()) Thread::sleep (5);
+            report ("key from file name: measured", std::abs (offPitch - 69.0f) < 0.35f && std::abs (onPitch - 70.0f) < 0.35f,
+                    "A4 tone named 'Db', C Major: NAME off " + SampleLibrary::noteName (offPitch) + ", NAME on " + SampleLibrary::noteName (onPitch));
+            dir.deleteRecursively();
+        }
+
         // 4) loading a preset keeps every module's on/off state (incl. Pulp)
         setP (p, params::b (params::kick, params::lv::on), 0); setP (p, params::b (params::pulp, params::lv::on), 1);
         PresetLibrary::applyB (p, PresetLibrary::get().items (1)[5], true, true, false);

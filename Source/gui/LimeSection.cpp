@@ -631,6 +631,11 @@ LimeModulePanel::LimeModulePanel (TwinboxProcessor& p, int v, bool b2) : Control
         scaleBtn->attach (p.apvts, b (v, lv::scale));
         scaleBtn->setTooltip ("SCALE on: every sample is re-pitched to the shared Root / Scale (from its detected pitch). Off = MANUAL per-sample pitch");
         addAndMakeVisible (*scaleBtn);
+        nameBtn = std::make_unique<Toggle> ("NAME", theme::accentB);
+        nameBtn->attach (p.apvts, b (v, lv::nameKey));
+        nameBtn->setTooltip ("NAME on: the sample key is read from the file name (e.g. 'pad chord Db', 'Rhodes Cm9', 'Bass F#2'); "
+                             "if the name has no key the audio analysis is used. Off: audio analysis only");
+        addAndMakeVisible (*nameBtn);
         noteBtn.setTooltip ("Per-sample pitch window: detected notes, play and -32..+32 st knobs (MANUAL mode)");
         noteBtn.onClick = [this] { if (onOpenPitch) onOpenPitch(); };
         addAndMakeVisible (noteBtn);
@@ -679,6 +684,7 @@ void LimeModulePanel::resized()
     {
         noteBtn.setBounds (getWidth() - 70, 2, 22, headerH - 4);
         scaleBtn->setBounds (getWidth() - (big ? 128 : 118), 3, big ? 54 : 46, headerH - 6);
+        nameBtn->setBounds (scaleBtn->getX() - (big ? 50 : 42), 3, big ? 46 : 40, headerH - 6);
     }
     auto r = content();
     selector->setBounds (r.removeFromTop (big ? 28 : 20));
@@ -723,17 +729,22 @@ void PitchWindowContent::Row::paint (Graphics& g)
     g.drawText (String (index + 1).paddedLeft ('0', 3), 40, 0, 34, getHeight(), Justification::centredLeft);
     g.setColour (theme::text);
     g.setFont (theme::font (13.0f));
-    g.drawText (smp->name, 78, 0, getWidth() - 78 - 330, getHeight(), Justification::centredLeft);
-    // detected pitch
-    g.setFont (theme::font (12.0f, true));
-    if (smp->pitch >= 0) { g.setColour (theme::accentB); g.drawText (SampleLibrary::noteName (smp->pitch), getWidth() - 320, 0, 110, getHeight(), Justification::centredLeft); }
-    else { g.setColour (theme::textDim); g.drawText ("no pitch", getWidth() - 320, 0, 110, getHeight(), Justification::centredLeft); }
+    g.drawText (smp->name, 78, 0, getWidth() - 78 - 370, getHeight(), Justification::centredLeft);
+    // detected pitch: audio analysis and file-name key; the one in use is highlighted
+    const bool nameOn = owner.proc.apvts.getRawParameterValue (b (owner.module, lv::nameKey))->load() > 0.5f;
+    const bool usingName = nameOn && smp->namePitch >= 0;
+    g.setFont (theme::font (12.0f, ! usingName));
+    g.setColour (smp->pitch >= 0 ? (usingName ? theme::textDim : theme::accentB) : theme::textDim);
+    g.drawText ("audio " + (smp->pitch >= 0 ? SampleLibrary::noteName (smp->pitch) : String ("no pitch")), getWidth() - 360, 0, 110, getHeight(), Justification::centredLeft);
+    g.setFont (theme::font (12.0f, usingName));
+    g.setColour (usingName ? theme::accentB : theme::textDim);
+    g.drawText ("name " + (smp->namePitch >= 0 ? SampleLibrary::noteName (smp->namePitch) : String ("-")), getWidth() - 248, 0, 80, getHeight(), Justification::centredLeft);
 }
 
 void PitchWindowContent::Row::resized()
 {
     play.setBounds (6, 4, 28, getHeight() - 8);
-    knob.setBounds (getWidth() - 200, 1, 190, getHeight() - 2);
+    knob.setBounds (getWidth() - 162, 1, 156, getHeight() - 2);
 }
 
 PitchWindowContent::PitchWindowContent (TwinboxProcessor& p, int m) : proc (p), module (m)
@@ -746,6 +757,10 @@ PitchWindowContent::PitchWindowContent (TwinboxProcessor& p, int m) : proc (p), 
         for (auto* r : rows) r->knob.setValue (0.0, sendNotificationSync);
     };
     addAndMakeVisible (resetAll);
+    nameKey.attach (proc.apvts, b (m, lv::nameKey));
+    nameKey.setTooltip ("Read the key of each sample from its file name (fallback: audio analysis)");
+    nameKey.onClick = [this] { for (auto* r : rows) r->repaint(); };
+    addAndMakeVisible (nameKey);
     proc.library.addChangeListener (this);
     rebuild();
     startTimerHz (8);
@@ -780,7 +795,7 @@ void PitchWindowContent::paint (Graphics& g)
     auto set = proc.library.set (module);
     g.setColour (theme::text);
     g.setFont (theme::font (14.0f, true));
-    g.drawText (String (limeVoiceName (module)) + "  -  " + String (set->size()) + " samples", 12, 8, getWidth() - 200, 20, Justification::centredLeft);
+    g.drawText (String (limeVoiceName (module)) + "  -  " + String (set->size()) + " samples", 12, 8, getWidth() - 330, 20, Justification::centredLeft);
     g.setColour (theme::textDim);
     g.setFont (theme::font (11.5f));
     g.drawText (set->folder.getFullPathName(), 12, 28, getWidth() - 24, 16, Justification::centredLeft);
@@ -798,6 +813,7 @@ void PitchWindowContent::resized()
     auto r = getLocalBounds();
     r.removeFromTop (68);
     resetAll.setBounds (getWidth() - 150, 8, 138, 24);
+    nameKey.setBounds (getWidth() - 310, 8, 152, 24);
     viewport.setBounds (r.reduced (8, 4));
     const int w = viewport.getWidth() - viewport.getScrollBarThickness();
     list.setSize (w, rows.size() * 34);

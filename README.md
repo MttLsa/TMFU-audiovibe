@@ -1,4 +1,4 @@
-# TWINBOX — groovebox ibrida VST3 / AU (v2.2)
+# TWINBOX — groovebox ibrida VST3 / AU (v2.3)
 
 Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in un solo plugin:
 
@@ -8,7 +8,7 @@ Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in 
 | **B — Groovebox** (in basso) | NI Reaktor **Limelite 1.3** | 6 voci (Kick, Snare, Hat, Tie, Pod, **Pulp**), sequencer A–D fino a **64 step** con catena di pattern e motore **Remix**, effetti Filter / EQ / Magic / Delay / xFx (23 modi) / Mix / Out |
 | **GLOBAL CONTROL** (a destra, comprimibile) | — | Crossfader A↔B, filtro master **Cutoff** (manopola grande) HP/BP/LP + **Resonance**, Master, Tempo / Run |
 
-📖 **Manuale d'uso completo (PDF):** [docs/Twinbox_Manuale_v2.2.0.pdf](docs/Twinbox_Manuale_v2.2.0.pdf)
+📖 **Manuale d'uso completo (PDF):** [docs/Twinbox_Manuale_v2.3.0.pdf](docs/Twinbox_Manuale_v2.3.0.pdf)
 
 ![Interfaccia principale](docs/gui_main.png)
 
@@ -80,6 +80,7 @@ Ogni pannello si apre in una **finestra grande** (⤢):
 
 - Al caricamento di una cartella Twinbox **rileva l'intonazione di ogni campione** in background (algoritmo YIN). Il risultato è nota + cent, oppure "no pitch". Il risultato viene memorizzato in un file nascosto `.twinbox_pitch.txt` nella cartella. L'audio non si interrompe: i nuovi campioni entrano in uso solo a analisi finita (128 campioni Legacy in circa 0,4 s, poi 0,04 s grazie al file).
 - **SCALE** nell'intestazione della sezione B: Root e Scala, condivisi da Tie e Pod. Le scale sono le stesse del dispositivo Scale di Ableton Live.
+- Il pulsante **NAME** di Tie e Pod (presente anche nella finestra ♪) legge la tonalità **dal nome del file**. Esempi: "pad chord Db" → D♭, "Rhodes Cm9" → C, "Bass F#2" → F#2, "La minore" → A; sono riconosciuti C#/Db, sharp/flat, i nomi solfeggio Do…Si e l'ottava (C3 = 60). Serve per accordi e suoni che l'analisi audio non riesce a intonare. Se il nome non contiene una tonalità si usa l'analisi audio. Con NAME spento vale solo l'analisi audio.
 - Il pulsante **SCALE** di Tie e Pod porta ogni campione intonato sulla nota della scala più vicina. Con VEL = tune, le melodie delle corsie si muovono per gradi della scala.
 - Con SCALE spento si è in **modalità MANUAL**. L'icona **♪** apre la finestra con tutti i campioni della cartella: per ognuno ci sono la nota rilevata, un pulsante ▶ e un knob da −32 a +32 semitoni, indipendente dal Tune del modulo. Il knob agisce in tempo reale anche durante la riproduzione, e le impostazioni vengono salvate nel progetto.
 
@@ -155,7 +156,7 @@ JUCE 8.0.4 viene scaricato in automatico.
 Il workflow `.github/workflows/build.yml`:
 - compila le tre piattaforme;
 - su macOS verifica l'AU con `auval`;
-- produce l'installer **`Twinbox-2.2.0-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
+- produce l'installer **`Twinbox-2.3.0-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
 
 Gli script che generano campioni e preset (`resources/`) sono `tools/gen_samples.py` e `tools/gen_presets.py`.
 

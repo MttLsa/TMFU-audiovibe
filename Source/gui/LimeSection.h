@@ -148,7 +148,7 @@ private:
     int voice; bool big;
     std::unique_ptr<SampleSelector> selector;
     std::unique_ptr<WaveView> wave;
-    std::unique_ptr<Toggle> power, scaleBtn;
+    std::unique_ptr<Toggle> power, scaleBtn, nameBtn;
     juce::TextButton noteBtn { juce::String::fromUTF8 ("\xe2\x99\xaa") };
 };
 
@@ -180,6 +180,7 @@ private:
     juce::Component list;
     juce::OwnedArray<Row> rows;
     juce::TextButton resetAll { "Reset all to 0" };
+    Toggle nameKey { "KEY FROM FILE NAME", theme::accentB };
     bool scaleWasOn = false;
 };
 

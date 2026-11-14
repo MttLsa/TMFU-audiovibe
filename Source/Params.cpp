@@ -166,6 +166,7 @@ Layout createLayout()
         }
         if (v == pod) addFloat (l, id (lv::zap), P + "Zap", bip, 0.f, pctText);
         if (v == tie || v == pod) addBool (l, id (lv::scale), P + "Scale", false);
+        if (v == tie || v == pod) addBool (l, id (lv::nameKey), P + "Key From File Name", false);
         if (v == kick || v == hat) addChoice (l, id (lv::mod), P + "Mod Dest", StringArray { "--", "wav", "tune", "cut" }, 0);
         if (v == snare) addChoice (l, id (lv::mod), P + "Mod Dest", StringArray { "--", "wav", "tune", "cut", "flam" }, 0);
         if (v == tie) addChoice (l, id (lv::vel), P + "Vel Dest", StringArray { "--", "wav", "tune", "att", "dcy", "st", "fm", "cut" }, 0);

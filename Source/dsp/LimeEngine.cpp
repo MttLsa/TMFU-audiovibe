@@ -10,11 +10,11 @@ static constexpr double kPi = juce::MathConstants<double>::pi;
 namespace
 {
     enum K { kOn, kGain, kPan, kAcc, kVamt, kWav, kTune, kPort, kSt, kHold, kDcy, kSat, kShp, kSm, kAtt, kCd, kOd, kLink,
-             kFm, kMp, kNoise, kZap, kMod, kVel, kLo, kFt, kFlam, kCut, kRes, kTrkLo, kTrkHi, kSrc, kIn, kOsc, kComb, kFb, kFreq, kScale, kCount };
+             kFm, kMp, kNoise, kZap, kMod, kVel, kLo, kFt, kFlam, kCut, kRes, kTrkLo, kTrkHi, kSrc, kIn, kOsc, kComb, kFb, kFreq, kScale, kName, kCount };
     const char* keyNames[kCount] { lv::on, lv::gain, lv::pan, lv::acc, lv::vamt, lv::wav, lv::tune, lv::port, lv::st, lv::hold, lv::dcy,
                                    lv::sat, lv::shp, lv::sm, lv::att, lv::cd, lv::od, lv::link, lv::fm, lv::mp, lv::noise, lv::zap,
                                    lv::mod, lv::vel, lv::lo, lv::ft, lv::flam, lv::cut, lv::res, lv::trkLo, lv::trkHi, lv::src, lv::inGain,
-                                   lv::osc, lv::comb, lv::fb, lv::freq, lv::scale };
+                                   lv::osc, lv::comb, lv::fb, lv::freq, lv::scale, lv::nameKey };
     inline float G (std::atomic<float>* a, float def) { return a != nullptr ? a->load() : def; }
     inline float decayTau (float pct) { return (float) (0.005 * std::pow (800.0, pct * 0.01)); }   // 5 ms … 4 s
     inline int   moduleOf (int voice) { return voice; }                                             // kick..pod map 1:1
@@ -194,12 +194,15 @@ void LimeEngine::trigger (int target, float vel, float laneValue, int forcedInde
     if (voice == tie || voice == pod)
     {
         const bool scaleOn = G (k[kScale], 0) > 0.5f;
-        if (scaleOn && smp->pitch >= 0.0f)
+        // pitch source: key from the file name (if enabled and present), otherwise the audio analysis
+        const bool useName = G (k[kName], 0) > 0.5f && smp->namePitch >= 0.0f;
+        const float srcPitch = useName ? smp->namePitch : smp->pitch;
+        if (scaleOn && srcPitch >= 0.0f)
         {
             const int root = (int) p (bScaleRoot)->load(), type = (int) p (bScaleType)->load();
-            int q = quantizeToScale (smp->pitch + tuneBase, root, type);
+            int q = quantizeToScale (srcPitch + tuneBase, root, type);
             if (velTune) q = stepScale (q, velDegrees, root, type);
-            tune = (float) q - smp->pitch;
+            tune = (float) q - srcPitch;
         }
         else if (! scaleOn)
         {
