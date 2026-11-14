@@ -11,8 +11,8 @@ namespace params
 {
     constexpr int numMicroChannels = 8;
     constexpr int numMicroPatterns = 12;   // A … L
-    constexpr int numSteps         = 16;
-    constexpr int numLimePatterns  = 8;    // snapshot slots 1 … 8
+    constexpr int numSteps         = 64;   // max steps per pattern (both sections)
+    constexpr int numLimePatterns  = 4;    // patterns A … D (as in Limelite)
 
     // ---------------- Section A : per-channel drum patch ----------------
     // Suffixes, combined as "a<ch>_<suffix>" with ch = 1..8
@@ -65,88 +65,74 @@ namespace params
     inline const char* aFill     = "a_fill";
     inline const char* aMorph    = "a_morph";
     inline const char* aLevel    = "a_level";
+    inline const char* bLevelAlias = "b_gain";   // Section B master = OUT Gain
 
-    // ---------------- Section B ----------------
-    enum LimePart { kick = 0, snare, hat, tie, pod, numLimeParts };
-    inline const char* limePartName (int p)
-    {
-        static const char* n[] { "Kick", "Snare", "Hat", "Tie", "Pod" };
-        return n[p];
-    }
-    inline const char* limePartKey (int p)
-    {
-        static const char* n[] { "kick", "snare", "hat", "tie", "pod" };
-        return n[p];
-    }
-    inline juce::String b (int part, const char* suffix) { return juce::String ("b_") + limePartKey (part) + "_" + suffix; }
+    // ---------------- Section B (Limelite 1.3 architecture) ----------------
+    constexpr int numLimeSteps   = 64;
+    constexpr int numLimeVoices  = 6;
+    enum LimeVoice { kick = 0, snare, hat, tie, pod, pulp };
+    inline const char* limeVoiceName (int v) { static const char* n[] { "Kick", "Snare", "Hat", "Tie", "Pod", "Pulp" }; return n[v]; }
+    inline const char* limeVoiceKey  (int v) { static const char* n[] { "kick", "snare", "hat", "tie", "pod", "pulp" }; return n[v]; }
+    inline juce::String b (int voice, const char* key) { return juce::String ("b_") + limeVoiceKey (voice) + "_" + key; }
 
-    // per-part suffixes (not every part uses every suffix, see Params.cpp)
-    namespace lm
+    // per-voice keys (see Params.cpp for which voice owns which key)
+    namespace lv
     {
-        inline const char* smp     = "smp";      // sample (hat: closed)
-        inline const char* smpOpen = "smpo";     // hat: open sample
-        inline const char* tune    = "tune";
-        inline const char* dcy     = "dcy";      // hat: closed decay
-        inline const char* dcyOpen = "dcyo";     // hat: open decay
-        inline const char* link    = "link";     // hat: choke link
-        inline const char* fmode   = "fmode";    // snare: LP/BP/HP
-        inline const char* cut     = "cut";
-        inline const char* res     = "res";
-        inline const char* lowcut  = "lowcut";   // kick
-        inline const char* fmFreq  = "fmfreq";   // tie
-        inline const char* fmAmt   = "fmamt";    // tie
-        inline const char* zap     = "zap";      // pod
-        inline const char* zapDcy  = "zapdcy";   // pod
-        inline const char* lvl     = "lvl";
-        inline const char* pan     = "pan";
-        inline const char* send    = "send";
-        inline const char* mute    = "mute";
+        inline const char *on = "on", *gain = "gain", *acc = "acc", *pan = "pan", *wav = "wav", *tune = "tune",
+                          *st = "st", *hold = "h", *dcy = "d", *sat = "sat", *shp = "shp", *sm = "sm", *mod = "mod",
+                          *lo = "lo", *ft = "ft", *cut = "cut", *res = "res", *flam = "flam",
+                          *cd = "cd", *od = "od", *link = "link",
+                          *vamt = "vamt", *port = "port", *att = "a", *fm = "fm", *mp = "mp", *noise = "noise", *vel = "vel",
+                          *zap = "zap",
+                          *trkLo = "lo", *trkHi = "hi", *tieSrc = "tie", *osc = "osc",
+                          *comb = "comb", *fb = "fb", *freq = "freq";
     }
 
-    inline const char* bPattern  = "b_pattern";
-    inline const char* bLen      = "b_len";
-    inline const char* bTieLen   = "b_tie_len";
-    inline const char* bPodLen   = "b_pod_len";
-    inline const char* bModLen   = "b_mod_len";
-    inline const char* bTieStr   = "b_tie_str";
-    inline const char* bPodStr   = "b_pod_str";
-    inline const char* bModStr   = "b_mod_str";
-    inline const char* bShuffle  = "b_shuffle";
-    inline const char* bAccent   = "b_accent";
-    inline const char* bGain     = "b_gain";
-    inline const char* bPitch    = "b_pitch";
-    inline const char* bDirt     = "b_dirt";
-    inline const char* bNorm     = "b_norm";
-    inline const char* bLfoRate  = "b_lfo_rate";
-    inline const char* bLfoFM    = "b_lfo_fm";
-    inline const char* bLfoDM    = "b_lfo_dm";
-    inline const char* bDlyTime  = "b_dly_time";
-    inline const char* bDlyFb    = "b_dly_fb";
-    inline const char* bDlyDamp  = "b_dly_damp";
-    inline const char* bDlyLvl   = "b_dly_lvl";
-    inline const char* bFltCut   = "b_flt_cut";
-    inline const char* bFltRes   = "b_flt_res";
-    inline const char* bModDest  = "b_mod_dest";
-    inline const char* bModAmt   = "b_mod_amt";
+    // sequencer / remix / global B
+    inline const char* bPattern = "b_pattern";   // A-D
+    inline const char* bLen     = "b_len";
+    inline const char* bStart   = "b_start";
+    inline const char* bTieLen  = "b_tie_len";
+    inline const char* bPodLen  = "b_pod_len";
+    inline const char* bModLen  = "b_mod_len";
+    inline const char* bTieStr  = "b_tie_str";
+    inline const char* bPodStr  = "b_pod_str";
+    inline const char* bModStr  = "b_mod_str";
+    inline const char* bSwing   = "b_swing";
+    inline const char* bHalf    = "b_half";
+    inline const char* bChainOn = "b_chain_on";
+    inline const char* bChainLen= "b_chain_len";
+    inline juce::String bChainSlot (int i) { return "b_chain_" + juce::String (i + 1); }
+    inline const char* bLock    = "b_lock";
+    inline const char* bRemix   = "b_remix";      // remix pattern 0..127
+    inline const char* bRemixRate = "b_remix_rate";
+    inline const char* bShift   = "b_shift";
+    // OUT
+    inline const char* bDirt = "b_dirt", *bGain = "b_gain", *bTune = "b_tune", *bNorm = "b_norm", *bNormAmp = "b_norm_amp",
+                      *bNormRel = "b_norm_rel", *bNormSm = "b_norm_sm";
+    // FILTER
+    inline const char* bFltCut = "b_flt_cut", *bFltTrk = "b_flt_trk", *bFltSm = "b_flt_sm", *bFltMod = "b_flt_mod";
+    // EQ
+    inline const char* bEqHi = "b_eq_hi", *bEqMid = "b_eq_mid", *bEqLo = "b_eq_lo", *bEqAmp = "b_eq_amp", *bEqSplit = "b_eq_split";
+    // MAGIC
+    inline const char* bMagPitch = "b_mag_pitch", *bMagGrain = "b_mag_gr", *bMagMod = "b_mag_mod", *bMagRmx = "b_mag_rmx",
+                      *bMagMix = "b_mag_mix", *bMagNotch = "b_mag_notch";
+    // DELAY
+    inline const char* bDlyOne = "b_dly_one", *bDlyTwo = "b_dly_two", *bDlyFb = "b_dly_fb", *bDlyGain = "b_dly_gain",
+                      *bDlyLfo = "b_dly_lfo", *bDlyFM = "b_dly_fm", *bDlyDM = "b_dly_dm", *bDlyWide = "b_dly_wide",
+                      *bDlyCut = "b_dly_cut", *bDlyRes = "b_dly_res", *bDlyLo = "b_dly_lo";
+    // XFX
+    inline const char* bXMode = "b_x_mode", *bXParam = "b_x_x", *bXAdd = "b_x_y", *bXDly = "b_x_dly", *bXGain = "b_x_gain",
+                      *bXLo = "b_x_lo", *bXHi = "b_x_hi", *bXSpd = "b_x_spd", *bXLen = "b_x_len", *bXPlay = "b_x_play",
+                      *bXRec = "b_x_rec", *bXSm = "b_x_sm";
+    // MIX
+    inline const char* bFxMix = "b_fx_mix", *bModInput = "b_mod_input", *bModMix = "b_mod_mix";
 
-    inline const juce::StringArray& delayTimeNames()
+    inline const juce::StringArray& xfxModeNames()
     {
-        static const juce::StringArray s { "1/32", "1/16T", "1/16", "1/8T", "1/16D", "1/8", "1/4T", "1/8D", "1/4", "1/4D", "1/2" };
-        return s;
-    }
-    inline double delayTimeBeats (int idx)
-    {
-        static const double v[] { 0.125, 1.0 / 6.0, 0.25, 1.0 / 3.0, 0.375, 0.5, 2.0 / 3.0, 0.75, 1.0, 1.5, 2.0 };
-        return v[juce::jlimit (0, 10, idx)];
-    }
-
-    enum ModDest { mdOff = 0, mdKickTune, mdKickDecay, mdSnareTune, mdSnareDecay, mdSnareCut, mdHatTune, mdHatDecay,
-                   mdTieTune, mdTieFM, mdPodTune, mdPodZap, mdFilter, mdDelaySend, mdDelayFb, numModDest };
-    inline const juce::StringArray& modDestNames()
-    {
-        static const juce::StringArray s { "Off", "Kick Tune", "Kick Decay", "Snare Tune", "Snare Decay", "Snare Cutoff",
-                                           "Hat Tune", "Hat Decay", "Tie Tune", "Tie FM", "Pod Tune", "Pod Zap",
-                                           "Filter Cutoff", "Delay Send", "Delay Feedback" };
+        static const juce::StringArray s { "off", "highpass", "bandpass", "lowpass", "phaser", "vowel", "flanger", "fm", "reson",
+                                           "feedback", "reflex", "reverb", "ufo", "rainman", "distort", "ringmod", "lofi",
+                                           "pitchshift", "gate", "chop", "slice", "freeze", "spin" };
         return s;
     }
 
@@ -159,6 +145,5 @@ namespace params
     inline const char* gTempo  = "g_tempo";
     inline const char* gRun    = "g_run";
 
-    juce::AudioProcessorValueTreeState::ParameterLayout createLayout (int numBankSamples, const juce::StringArray& sampleNames,
-                                                                     const int defaultSample[numLimeParts], int defaultHatOpen);
+    juce::AudioProcessorValueTreeState::ParameterLayout createLayout();
 }

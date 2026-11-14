@@ -19,7 +19,7 @@ int MicroStepGrid::editPattern() const
 Rectangle<float> MicroStepGrid::cellRect (int rowIndex, int step) const
 {
     const float lw = (float) labelW();
-    const float cw = ((float) getWidth() - lw) / (float) numSteps;
+    const float cw = ((float) getWidth() - lw) / (float) visible();
     const int groups = all ? numMicroChannels : 1;
     const float gap = all ? 6.0f : 0.0f;
     const float rh = ((float) getHeight() - gap * (float) (groups - 1)) / (float) numRows();
@@ -36,8 +36,8 @@ bool MicroStepGrid::cellAt (Point<int> pt, int& ch, int& row, int& step) const
         auto rr = cellRect (r, 0);
         if (pt.y >= rr.getY() && pt.y < rr.getBottom())
         {
-            const float cw = ((float) getWidth() - (float) labelW()) / (float) numSteps;
-            step = jlimit (0, numSteps - 1, (int) (((float) pt.x - (float) labelW()) / cw));
+            const float cw = ((float) getWidth() - (float) labelW()) / (float) visible();
+            step = page * visible() + jlimit (0, visible() - 1, (int) (((float) pt.x - (float) labelW()) / cw));
             ch = all ? r / 3 : channel;
             row = r % 3;
             return true;
@@ -75,9 +75,10 @@ void MicroStepGrid::paint (Graphics& g)
             g.drawText (rowNames[sub], 2, (int) first.getY(), labelW() - 6, (int) first.getHeight(), Justification::centredLeft);
 
         const bool muted = proc.apvts.getRawParameterValue (a (ch, mt::mute))->load() > 0.5f;
-        for (int s = 0; s < numSteps; ++s)
+        for (int ci = 0; ci < visible(); ++ci)
         {
-            auto c = cellRect (r, s).reduced (sub == 0 ? 1.5f : 3.0f, sub == 0 ? 1.5f : 2.5f);
+            const int s = page * visible() + ci;
+            auto c = cellRect (r, ci).reduced (sub == 0 ? 1.5f : 3.0f, sub == 0 ? 1.5f : 2.5f);
             const uint8_t f = P.steps[(size_t) ch][(size_t) s].load();
             const bool on = (f & (1 << sub)) != 0;
             Colour col = (s / 4) % 2 == 0 ? theme::stepBeat : theme::stepOff;
@@ -136,8 +137,8 @@ void MicroStepGrid::mouseDown (const MouseEvent& e)
 void MicroStepGrid::mouseDrag (const MouseEvent& e)
 {
     if (dragRow < 0) return;
-    const float cw = ((float) getWidth() - (float) labelW()) / (float) numSteps;
-    const int step = jlimit (0, numSteps - 1, (int) (((float) e.x - (float) labelW()) / cw));
+    const float cw = ((float) getWidth() - (float) labelW()) / (float) visible();
+    const int step = page * visible() + jlimit (0, visible() - 1, (int) (((float) e.x - (float) labelW()) / cw));
     if (step == lastDragStep) return;
     lastDragStep = step;
     auto& cell = proc.micro.pattern (editPattern()).steps[(size_t) dragCh][(size_t) step];
@@ -286,6 +287,13 @@ MicroPatternWindowContent::MicroPatternWindowContent (TwinboxProcessor& p, std::
     fill.attach (proc.apvts, aFill);
     grid.onChannelClicked = std::move (onChannel);
     for (auto* c : std::initializer_list<Component*> { &lenBox, &swing, &fillRate, &fill, &grid }) addAndMakeVisible (c);
+    for (int i = 0; i < 2; ++i)
+    {
+        auto* b = pages.add (new TextButton ("Steps " + String (i * 32 + 1) + "-" + String ((i + 1) * 32)));
+        b->setColour (TextButton::buttonOnColourId, theme::header.brighter (0.3f));
+        b->onClick = [this, i] { grid.setPage (i); };
+        addAndMakeVisible (b);
+    }
     startTimerHz (10);
 }
 
@@ -294,6 +302,7 @@ void MicroPatternWindowContent::timerCallback()
     const int pat = (int) proc.apvts.getRawParameterValue (aPattern)->load();
     for (int i = 0; i < pats.size(); ++i) pats[i]->setToggleState (i == pat, dontSendNotification);
     if (! lenBox.isMouseButtonDown()) lenBox.setValue (proc.micro.pattern (pat).length.load(), dontSendNotification);
+    for (int i = 0; i < pages.size(); ++i) pages[i]->setToggleState (i == grid.getPage(), dontSendNotification);
 }
 
 void MicroPatternWindowContent::paint (Graphics& g)
@@ -319,7 +328,11 @@ void MicroPatternWindowContent::resized()
     swing.setBounds (top.removeFromLeft (80));
     fill.setBounds (top.removeFromRight (80).withSizeKeepingCentre (80, 30));
     fillRate.setBounds (top.reduced (8, 6));
-    r.removeFromTop (10);
+    r.removeFromTop (6);
+    auto pg = r.removeFromTop (26);
+    pg.removeFromLeft (110);
+    for (auto* b : pages) b->setBounds (pg.removeFromLeft (140).reduced (2, 0));
+    r.removeFromTop (6);
     grid.setBounds (r);
 }
 
@@ -445,6 +458,16 @@ MicroSection::MicroSection (TwinboxProcessor& p) : proc (p), patch (p), grid (p,
         refreshPatternControls();
     };
     for (auto* c : { &clearBtn, &copyPat, &pastePat }) addAndMakeVisible (c);
+    for (int i = 0; i < 4; ++i)
+    {
+        auto* b = pageBtns.add (new TextButton (String (i * 16 + 1) + "-" + String ((i + 1) * 16)));
+        b->setColour (TextButton::buttonOnColourId, theme::header.brighter (0.3f));
+        b->onClick = [this, i] { grid.setPage (i); };
+        addAndMakeVisible (b);
+    }
+    browserBtn.setTooltip ("Genre preset browser (128 kits + patterns)");
+    browserBtn.onClick = [this] { if (onOpenBrowser) onOpenBrowser(); };
+    addAndMakeVisible (browserBtn);
 
     selectChannel (0);
     startTimerHz (30);
@@ -496,6 +519,11 @@ void MicroSection::timerCallback()
         b->setToggleState (i == pat, dontSendNotification);
         b->setColour (TextButton::buttonColourId, (proc.isPlaying() && i == playing && i != pat) ? theme::accentA.withAlpha (0.35f) : theme::panel2);
     }
+    for (int i = 0; i < pageBtns.size(); ++i)
+    {
+        pageBtns[i]->setToggleState (i == grid.getPage(), dontSendNotification);
+        pageBtns[i]->setAlpha (i * 16 < proc.micro.pattern (pat).length.load() ? 1.0f : 0.4f);
+    }
     if (pat != lastPattern) { lastPattern = pat; refreshPatternControls(); }
     else if ((int) lenBox.getValue() != proc.micro.pattern (pat).length.load()) refreshPatternControls();
 
@@ -541,6 +569,8 @@ void MicroSection::resized()
     header.removeFromLeft (190);
     auto pats = header.removeFromLeft (12 * 30).withTrimmedTop (12);
     for (auto* b : patternButtons) b->setBounds (pats.removeFromLeft (30).reduced (1, 2));
+    header.removeFromLeft (14);
+    browserBtn.setBounds (header.removeFromLeft (90).withTrimmedTop (12).reduced (1, 2));
     header.removeFromRight (16);
     level.setBounds (header.removeFromRight (64).expanded (0, 4));
     header.removeFromRight (16);
@@ -580,5 +610,9 @@ void MicroSection::resized()
     copyPat.setBounds (cpp.removeFromLeft (cpp.getWidth() / 2).withTrimmedRight (2));
     pastePat.setBounds (cpp.withTrimmedLeft (2));
     pc.removeFromLeft (8);
+    auto pages = pc.removeFromBottom (20);
+    pages.removeFromLeft (56);
+    for (auto* b : pageBtns) b->setBounds (pages.removeFromLeft (64).reduced (1, 0));
+    pc.removeFromBottom (3);
     grid.setBounds (pc);
 }

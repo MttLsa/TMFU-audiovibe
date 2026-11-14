@@ -11,6 +11,9 @@ public:
     MicroStepGrid (TwinboxProcessor& p, bool allChannels);
     ~MicroStepGrid() override { stopTimer(); }
     void setChannel (int ch) { channel = ch; repaint(); }
+    void setPage (int p) { page = p; repaint(); }
+    int  getPage() const { return page; }
+    int  visible() const { return all ? 32 : 16; }
     void paint (juce::Graphics&) override;
     void mouseDown (const juce::MouseEvent&) override;
     void mouseDrag (const juce::MouseEvent&) override;
@@ -26,7 +29,7 @@ private:
 
     TwinboxProcessor& proc;
     bool all;
-    int channel = 0;
+    int channel = 0, page = 0;
     int lastStep = -2;
     int dragRow = -1, dragCh = -1; bool dragSet = false; int lastDragStep = -1;
 };
@@ -83,6 +86,7 @@ private:
     Segmented fillRate { theme::accentA };
     Toggle fill { "FILL" };
     MicroStepGrid grid;
+    juce::OwnedArray<juce::TextButton> pages;
 };
 
 class MicroSection : public juce::Component, private juce::Timer
@@ -137,6 +141,11 @@ private:
     Toggle fill { "FILL" };
     juce::TextButton clearBtn { "Clear" }, copyPat { "Copy Pat" }, pastePat { "Paste Pat" };
     int patClip = -1;
+    juce::OwnedArray<juce::TextButton> pageBtns;
+    juce::TextButton browserBtn { "BROWSER" };
+public:
+    std::function<void()> onOpenBrowser;
+private:
     int lastPattern = -1;
 
     std::unique_ptr<ExpandWindow> patternWindow, patchWindow;

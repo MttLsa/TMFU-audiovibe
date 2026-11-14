@@ -118,7 +118,7 @@ public:
 
     struct Pattern
     {
-        std::atomic<int> length { NS };
+        std::atomic<int> length { 16 };
         std::array<std::array<std::atomic<uint8_t>, NS>, NC> steps;
         Pattern() { clear(); }
         void clear() { for (auto& c : steps) for (auto& s : c) s.store (0); }

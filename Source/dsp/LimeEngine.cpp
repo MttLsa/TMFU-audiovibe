@@ -2,395 +2,537 @@
 #include <algorithm>
 
 using namespace params;
+using juce::jlimit;
+using juce::jmax;
+using juce::jmin;
+static constexpr double kPi = juce::MathConstants<double>::pi;
 
 namespace
 {
-    const char* partSuffixes[] = { lm::smp, lm::smpOpen, lm::tune, lm::dcy, lm::dcyOpen, lm::link, lm::fmode, lm::cut, lm::res,
-                                   lm::lowcut, lm::fmFreq, lm::fmAmt, lm::zap, lm::zapDcy, lm::lvl, lm::pan, lm::send, lm::mute };
-    enum { iSmp, iSmpOpen, iTune, iDcy, iDcyOpen, iLink, iFmode, iCut, iRes, iLowcut, iFmFreq, iFmAmt, iZap, iZapDcy, iLvl, iPan, iSend, iMute, iCount };
+    enum K { kOn, kGain, kPan, kAcc, kVamt, kWav, kTune, kPort, kSt, kHold, kDcy, kSat, kShp, kSm, kAtt, kCd, kOd, kLink,
+             kFm, kMp, kNoise, kZap, kMod, kVel, kLo, kFt, kFlam, kCut, kRes, kTrkLo, kTrkHi, kTieSrc, kOsc, kComb, kFb, kFreq, kCount };
+    const char* keyNames[kCount] { lv::on, lv::gain, lv::pan, lv::acc, lv::vamt, lv::wav, lv::tune, lv::port, lv::st, lv::hold, lv::dcy,
+                                   lv::sat, lv::shp, lv::sm, lv::att, lv::cd, lv::od, lv::link, lv::fm, lv::mp, lv::noise, lv::zap,
+                                   lv::mod, lv::vel, lv::lo, lv::ft, lv::flam, lv::cut, lv::res, lv::trkLo, lv::trkHi, lv::tieSrc,
+                                   lv::osc, lv::comb, lv::fb, lv::freq };
+    inline float G (std::atomic<float>* a, float def) { return a != nullptr ? a->load() : def; }
+    inline float decayTau (float pct) { return (float) (0.005 * std::pow (800.0, pct * 0.01)); }   // 5 ms … 4 s
+    inline int   moduleOf (int voice) { return voice; }                                             // kick..pod map 1:1
+}
 
-    int slotToPart (int slot)
+
+LimeEngine::LimeEngine (SampleLibrary& lib) : library (lib)
+{
+    loadDefaultPatterns();
+    // Remix table: 127 deterministic re-orderings of a 16-step bar (index 0 = straight)
+    uint32_t s = 0x9e3779b9u;
+    auto rnd = [&s] { s ^= s << 13; s ^= s >> 17; s ^= s << 5; return s; };
+    for (int r = 0; r < 128; ++r)
     {
-        static const int m[] { kick, snare, hat, hat, tie, pod };
-        return m[slot];
+        auto& m = remixTable[(size_t) r];
+        for (int i = 0; i < 16; ++i) m[(size_t) i] = (int8_t) i;
+        if (r == 0) continue;
+        const int type = r % 8;
+        const int seg = 1 << (1 + (r / 8) % 3);          // 2, 4 or 8 step segments
+        for (int i = 0; i < 16; ++i)
+        {
+            const int segStart = (i / seg) * seg, inSeg = i % seg;
+            switch (type)
+            {
+                case 0: m[(size_t) i] = (int8_t) (12 + (i % 4)); break;                                   // repeat last beat
+                case 1: m[(size_t) i] = (int8_t) (segStart + (seg - 1 - inSeg)); break;                   // reverse segments
+                case 2: m[(size_t) i] = (int8_t) (i < 8 ? i : (8 + (i % 2))); break;                      // stutter end
+                case 3: m[(size_t) i] = (int8_t) (i / 2); break;                                          // half time
+                case 4: m[(size_t) i] = (int8_t) ((i * 2) % 16); break;                                   // double time
+                case 5: m[(size_t) i] = (int8_t) (segStart == 0 ? inSeg : ((rnd() % 4) * 4 + inSeg) % 16); break; // shuffle beats
+                case 6: m[(size_t) i] = (int8_t) (i >= 12 ? 12 + (i % 2) : i); break;                     // roll fill
+                default: m[(size_t) i] = (int8_t) ((rnd() % 3 == 0) ? (int) (rnd() % 16) : i); break;     // random swaps
+            }
+        }
     }
 }
 
-LimeEngine::LimeEngine()
-{
-    loadDefaultPatterns();
-}
-
-std::atomic<float>* LimeEngine::raw (const juce::String& id)
-{
-    return state->getRawParameterValue (id);
-}
+std::atomic<float>* LimeEngine::p (const juce::String& id) const { return state->getRawParameterValue (id); }
 
 void LimeEngine::bind (juce::AudioProcessorValueTreeState& apvts)
 {
     state = &apvts;
-    for (int pt = 0; pt < numLimeParts; ++pt)
-        for (int i = 0; i < iCount; ++i)
-            pr[(size_t) pt].p[i] = apvts.getRawParameterValue (b (pt, partSuffixes[i]));   // nullptr if part lacks it
-
-    pPattern = raw (bPattern); pLen = raw (bLen); pTieLen = raw (bTieLen); pPodLen = raw (bPodLen); pModLen = raw (bModLen);
-    pTieStr = raw (bTieStr); pPodStr = raw (bPodStr); pModStr = raw (bModStr); pShuffle = raw (bShuffle); pAccent = raw (bAccent);
-    pGain = raw (bGain); pPitch = raw (bPitch); pDirt = raw (bDirt); pNorm = raw (bNorm);
-    pLfoRate = raw (bLfoRate); pLfoFM = raw (bLfoFM); pLfoDM = raw (bLfoDM);
-    pDlyTime = raw (bDlyTime); pDlyFb = raw (bDlyFb); pDlyDamp = raw (bDlyDamp); pDlyLvl = raw (bDlyLvl);
-    pFltCut = raw (bFltCut); pFltRes = raw (bFltRes); pModDest = raw (bModDest); pModAmt = raw (bModAmt);
+    for (int v = 0; v < numLimeVoices; ++v)
+        for (int k = 0; k < kCount; ++k)
+            vk[(size_t) v][(size_t) k] = apvts.getRawParameterValue (b (v, keyNames[k]));   // nullptr if the voice lacks it
 }
 
-void LimeEngine::prepare (double sampleRate)
+void LimeEngine::prepare (double sampleRate, int blockSize)
 {
     sr = sampleRate;
-    const size_t dlen = (size_t) (sr * 4.5);
-    dlyL.assign (dlen, 0.0f); dlyR.assign (dlen, 0.0f);
-    dlyW = 0; dlyTimeSm = 0.0f;
-    fltL.reset(); fltR.reset();
-    for (auto& s : voices) for (auto& v : s) v.active = false;
-    busDL.assign (8192, 0.f); busDR.assign (8192, 0.f); busSL.assign (8192, 0.f); busSR.assign (8192, 0.f);
+    for (auto& vv : voices) for (auto& v : vv) v.active = false;
+    pulpV.active = false;
+    pulpV.comb.prepare ((int) (sr * 0.1));
+    envFilter.prepare (sr); eq.prepare (sr); magic.prepare (sr); delay.prepare (sr); xfx.prepare (sr);
+    const size_t n = (size_t) jmax (blockSize, 4096);
+    for (auto* b : { &dryL, &dryR, &tieL, &tieR, &sendL, &sendR, &dlyL, &dlyR, &xL, &xR }) b->assign (n, 0.0f);
+    lastLoop = -1;
 }
 
-SamplePtr LimeEngine::sampleFor (int slot) const
+void LimeEngine::audition (int target, float vel)
 {
-    if (auto u = std::atomic_load (&user[(size_t) slot])) return u;
-    const int part = slotToPart (slot);
-    auto* p = slot == slotHatOpen ? pr[(size_t) part].p[iSmpOpen] : pr[(size_t) part].p[iSmp];
-    return SampleBank::get()[p != nullptr ? (int) p->load() : 0];
+    if (target >= 0 && target < numTargets) auditionQ[(size_t) target].store (jlimit (1, 1000, (int) (vel * 1000.0f)));
 }
 
-void LimeEngine::setUserSample (int slot, SamplePtr s)
+void LimeEngine::readParams() {}
+
+int LimeEngine::remap (int pos, int len) const
 {
-    std::atomic_store (&user[(size_t) slot], s);
-    if (s == nullptr) userPaths[(size_t) slot].clear();
+    const int r = (int) p (bRemix)->load();
+    if (! remixThisLoop || r <= 0) return pos;
+    const int block = (pos / 16) * 16;
+    const int src = block + remixTable[(size_t) r][(size_t) (pos % 16)];
+    return src < len ? src : pos;
 }
 
-void LimeEngine::audition (int slot, float vel)
+//==============================================================================
+void LimeEngine::trigger (int target, float vel, float laneValue)
 {
-    if (slot >= 0 && slot < numSlots) auditionQ[(size_t) slot].store (juce::jlimit (1, 1000, (int) (vel * 1000.0f)));
-}
+    const int voice = target <= tSnare ? target : (target <= tOHat ? hat : (target == tTie ? tie : (target == tPod ? pod : pulp)));
+    const auto& k = vk[(size_t) voice];
+    if (G (k[kOn], 1.0f) < 0.5f) return;
+    hits[(size_t) target].fetch_add (1);
 
-void LimeEngine::readParams()
-{
-    for (int pt = 0; pt < numLimeParts; ++pt)
+    if (voice == pulp)
     {
-        auto& r = pr[(size_t) pt].p;
-        auto g = [&] (int i, float def) { return r[i] != nullptr ? r[i]->load() : def; };
-        auto& p = pp[(size_t) pt];
-        p.smp = (int) g (iSmp, 0); p.smpOpen = (int) g (iSmpOpen, 0);
-        p.tune = g (iTune, 0); p.dcy = g (iDcy, 50); p.dcyOpen = g (iDcyOpen, 50); p.link = g (iLink, 1) > 0.5f;
-        p.fmode = (int) g (iFmode, 0); p.cut = g (iCut, pt == hat ? 20.f : 20000.f); p.res = g (iRes, 0);
-        p.lowcut = g (iLowcut, 0) > 0.5f; p.fmFreq = g (iFmFreq, 100); p.fmAmt = g (iFmAmt, 0);
-        p.zap = g (iZap, 0); p.zapDcy = g (iZapDcy, 30);
-        p.lvl = g (iLvl, 0); p.pan = g (iPan, 0); p.send = g (iSend, 0); p.mute = g (iMute, 0) > 0.5f;
+        pulpV.active = true; pulpV.t = 0; pulpV.vel = vel;
+        return;
     }
-}
 
-void LimeEngine::trigger (int slot, float vel)
-{
-    const int part = slotToPart (slot);
-    const auto& p = pp[(size_t) part];
-    if (p.mute) return;
+    auto set = library.set (moduleOf (voice));
+    if (set->size() == 0) return;
 
-    // Hat "Link": closed & open behave like one monophonic hi-hat (each chokes the other)
-    if (part == hat && p.link)
+    // modulation sources: Mod lane (Kick/Snare/Hat) or step value (Tie/Pod)
+    const float m = modHeld;
+    int dest = 0;
+    if (voice <= hat) dest = (int) G (k[kMod], 0);
+    else dest = (int) G (k[kVel], 0);
+    const float v = laneValue;   // Tie/Pod step value 0..1
+
+    int wav = (int) G (k[kWav], 0);
+    float tune = G (k[kTune], 0) + p (bTune)->load();
+    float start = G (k[kSt], 0) * 0.01f * 0.9f;
+    float cut = G (k[kCut], 20000.0f);
+    float dcyPct = voice == hat ? G (target == tOHat ? k[kOd] : k[kCd], 50) : G (k[kDcy], 50);
+    float att = G (k[kAtt], 0) * 0.01f;
+    float fm = G (k[kFm], 0), zap = G (k[kZap], 0);
+    float flamMs = G (k[kFlam], 0) * 0.6f;
+
+    if (voice <= hat)
     {
-        const int other = slot == slotHatClosed ? slotHatOpen : slotHatClosed;
-        for (auto& v : voices[(size_t) other]) if (v.active) v.fading = true;
-    }
-    // retrigger: fade out the previous voice of this slot (declick), start a new one
-    for (auto& v : voices[(size_t) slot]) if (v.active) v.fading = true;
-
-    auto& v = voices[(size_t) slot][(size_t) nextVoice[(size_t) slot]];
-    nextVoice[(size_t) slot] = (nextVoice[(size_t) slot] + 1) % voicesPerSlot;
-
-    v.smp = sampleFor (slot);
-    if (v.smp == nullptr || v.smp->data.empty()) return;
-    v.active = true; v.fading = false; v.fade = 1.0f;
-    v.pos = 0.0; v.t = 0.0; v.fmPhase = 0.0;
-    v.slot = slot;
-    v.flt.reset(); v.hp.reset();
-
-    // per-trigger values, with Mod-lane sample & hold
-    const float m = modSmooth;    // -1 … +1 scaled by amount
-    const int dest = (int) pModDest->load();
-    v.tuneSt   = p.tune;
-    v.decayPct = slot == slotHatOpen ? p.dcyOpen : p.dcy;
-    v.cutHz    = p.cut;
-    v.fmAmt    = p.fmAmt;
-    v.zap      = p.zap;
-    switch (dest)
-    {
-        case mdKickTune:   if (part == kick)  v.tuneSt += m * 12.0f; break;
-        case mdKickDecay:  if (part == kick)  v.decayPct += m * 50.0f; break;
-        case mdSnareTune:  if (part == snare) v.tuneSt += m * 12.0f; break;
-        case mdSnareDecay: if (part == snare) v.decayPct += m * 50.0f; break;
-        case mdSnareCut:   if (part == snare) v.cutHz *= std::pow (2.0f, m * 4.0f); break;
-        case mdHatTune:    if (part == hat)   v.tuneSt += m * 12.0f; break;
-        case mdHatDecay:   if (part == hat)   v.decayPct += m * 50.0f; break;
-        case mdTieTune:    if (part == tie)   v.tuneSt += m * 12.0f; break;
-        case mdTieFM:      if (part == tie)   v.fmAmt += m * 100.0f; break;
-        case mdPodTune:    if (part == pod)   v.tuneSt += m * 12.0f; break;
-        case mdPodZap:     if (part == pod)   v.zap += m * 100.0f; break;
-        default: break;
-    }
-    v.decayPct = juce::jlimit (0.0f, 100.0f, v.decayPct);
-    v.fmAmt = juce::jlimit (0.0f, 100.0f, v.fmAmt);
-    v.zap = juce::jlimit (-100.0f, 100.0f, v.zap);
-    v.gain = vel;
-    hits[(size_t) slot].fetch_add (1);
-}
-
-void LimeEngine::renderVoice (Voice& v, float* dL, float* dR, float* sL, float* sR, int n)
-{
-    if (! v.active) return;
-    const int part = slotToPart (v.slot);
-    const auto& p = pp[(size_t) part];
-    const auto& data = v.smp->data;
-    const double len = (double) data.size();
-    const double baseRate = v.smp->sourceRate / sr * std::pow (2.0, (v.tuneSt + pPitch->load()) / 12.0);
-
-    // decay: 0..99 % -> exponential time constant 8 ms … 2.5 s; 100 % -> full sample (no envelope)
-    const bool fullLen = v.decayPct >= 99.5f;
-    const double tau = 0.008 * std::pow (312.0, v.decayPct / 100.0);
-
-    // filters
-    const double q = 0.5 + p.res * 0.01 * 9.5;
-    int fmode = 0;
-    if (part == snare) fmode = p.fmode;
-    if (part == hat)   fmode = 2;
-    v.flt.set (part == hat ? p.cut : v.cutHz, sr, q);
-    const bool useFilter = part == hat ? p.cut > 25.0f : v.cutHz < 19500.0f;
-    if (part == kick && p.lowcut) v.hp.set (90.0, sr, 0.7);
-
-    const double fmHz = p.fmFreq;
-    const double fmDepth = v.fmAmt * 0.01 * 2.0;     // ±2 octaves
-    const double zapTau = 0.004 * std::pow (100.0, p.zapDcy * 0.01);
-    const double zapOct = v.zap * 0.01 * 4.0;         // ±4 octaves
-
-    const float lvl = juce::Decibels::decibelsToGain (p.lvl, -60.0f) * v.gain;
-    const float panN = (p.pan * 0.01f + 1.0f) * 0.25f * juce::MathConstants<float>::pi;
-    const float gl = std::cos (panN) * 1.41421356f * lvl, gr = std::sin (panN) * 1.41421356f * lvl;
-    float send = p.send * 0.01f;
-    if ((int) pModDest->load() == mdDelaySend) send = juce::jlimit (0.0f, 1.0f, send + modSmooth);
-
-    for (int i = 0; i < n; ++i)
-    {
-        double rate = baseRate;
-        if (part == tie && fmDepth > 0.0)
+        switch (dest)
         {
-            v.fmPhase += fmHz / sr;
-            rate *= std::pow (2.0, fmDepth * std::sin (2.0 * juce::MathConstants<double>::pi * v.fmPhase));
+            case 1: wav += (int) (m * 8.0f); break;
+            case 2: tune += m * 12.0f; break;
+            case 3: cut *= std::pow (2.0f, voice == hat ? m * 4.0f : -m * 5.0f); break;
+            case 4: flamMs += m * 50.0f; break;
+            default: break;
         }
-        if (part == pod && std::abs (zapOct) > 1.0e-9)
-            rate *= std::pow (2.0, zapOct * std::exp (-v.t / zapTau));
-
-        const int i0 = (int) v.pos;
-        if (i0 >= (int) len - 1) { v.active = false; break; }
-        const float fr = (float) (v.pos - i0);
-        float x = data[(size_t) i0] + fr * (data[(size_t) i0 + 1] - data[(size_t) i0]);
-
-        const float env = fullLen ? 1.0f : (float) std::exp (-v.t / tau);
-        x *= env;
-        if (useFilter) x = v.flt.process (x, fmode);
-        if (part == kick && p.lowcut) x = v.hp.process (x, 2);
-        if (v.fading)
-        {
-            v.fade *= 0.992f;
-            x *= v.fade;
-            if (v.fade < 1.0e-3f) { v.active = false; break; }
-        }
-
-        dL[i] += x * gl;  dR[i] += x * gr;
-        sL[i] += x * gl * send;  sR[i] += x * gr * send;
-
-        v.pos += rate;
-        v.t += 1.0 / sr;
-        if (! fullLen && env < 1.0e-4f) { v.active = false; break; }
-    }
-}
-
-void LimeEngine::process (float* L, float* R, int numSamples, const BlockTime& bt, const std::vector<TriggerEvent>& midiEvents)
-{
-    readParams();
-    if (bt.bpm > 1.0) bpm = bt.bpm;
-
-    if ((int) busDL.size() < numSamples)
-    {
-        busDL.assign ((size_t) numSamples, 0.f); busDR.assign ((size_t) numSamples, 0.f);
-        busSL.assign ((size_t) numSamples, 0.f); busSR.assign ((size_t) numSamples, 0.f);
-    }
-    std::fill (busDL.begin(), busDL.begin() + numSamples, 0.f);
-    std::fill (busDR.begin(), busDR.begin() + numSamples, 0.f);
-    std::fill (busSL.begin(), busSL.begin() + numSamples, 0.f);
-    std::fill (busSR.begin(), busSR.begin() + numSamples, 0.f);
-
-    // ---------------- events
-    struct Ev { int offset; int slot; float vel; float mod; bool isMod; };
-    std::array<Ev, 512> ev;
-    int nev = 0;
-    auto push = [&] (Ev e) { if (nev < (int) ev.size()) ev[(size_t) nev++] = e; };
-
-    for (auto& e : midiEvents) push ({ e.offset, e.target, e.velocity, 0.f, false });
-    for (int s = 0; s < numSlots; ++s)
-        if (const int a = auditionQ[(size_t) s].exchange (0); a > 0) push ({ 0, s, (float) a / 1000.0f, 0.f, false });
-
-    const int wanted = juce::jlimit (0, NP - 1, (int) pPattern->load());
-    const int mainLen = juce::jlimit (1, NS, (int) pLen->load());
-    const double shuffle = pShuffle->load() * 0.01;
-    const float acc = pAccent->load() * 0.01f;
-    auto velFor = [acc] (uint8_t f) { return (f & accent) ? 1.0f : 1.0f - 0.6f * acc; };
-
-    if (! bt.playing)
-    {
-        currentPattern.store (wanted);
-        for (auto& s : laneSteps) s.store (-1);
     }
     else
     {
-        // main lane: Kick / Snare / Hat
-        forEachOnset (bt, 0.25, shuffle, [&] (long long k, double ppq)
+        // Tie: --, wav, tune, att, dcy, st, fm, cut   Pod: --, wav, tune, att, dcy, zap, cut
+        const bool isTie = voice == tie;
+        switch (dest)
         {
-            if (k % mainLen == 0 || bt.justStarted) currentPattern.store (wanted);
-            const int step = (int) (k % mainLen);
+            case 1: wav += (int) (v * 8.0f); break;
+            case 2: tune += std::round ((v - 0.5f) * 24.0f); break;
+            case 3: att = jlimit (0.0f, 1.0f, att + v); break;
+            case 4: dcyPct = jlimit (0.0f, 100.0f, dcyPct * (0.25f + 1.5f * v)); break;
+            case 5: if (isTie) start = jlimit (0.0f, 0.9f, start + v * 0.5f); else zap = jlimit (-100.0f, 100.0f, zap + (v - 0.5f) * 200.0f); break;
+            case 6: if (isTie) fm = jlimit (0.0f, 100.0f, fm + v * 100.0f); else cut *= std::pow (2.0f, (v - 0.5f) * 6.0f); break;
+            case 7: if (isTie) cut *= std::pow (2.0f, (v - 0.5f) * 6.0f); break;
+            default: break;
+        }
+        const float vamt = G (k[kVamt], 70) * 0.01f;
+        vel *= 1.0f - vamt * (1.0f - v);
+    }
+    wav = ((wav % set->size()) + set->size()) % set->size();
+    SamplePtr smp = set->samples[(size_t) wav];
+    if (target == tOHat && (size_t) wav < set->openPartner.size() && set->openPartner[(size_t) wav] != nullptr)
+        smp = set->openPartner[(size_t) wav];
+
+    // Hat link: closed cuts open
+    if (voice == hat && target == tCHat && G (k[kLink], 1) > 0.5f)
+        for (auto& o : voices[(size_t) hat]) if (o.active) o.fading = true;
+
+    const int slot = voice;
+    for (auto& o : voices[(size_t) slot]) if (o.active && ! (voice == hat && target == tOHat)) o.fading = true;
+    auto& nv = voices[(size_t) slot][(size_t) nextVoice[(size_t) slot]];
+    nextVoice[(size_t) slot] ^= 1;
+
+    nv.smp = smp;
+    nv.active = true; nv.fading = false; nv.fade = 1.0f; nv.t = 0; nv.fmPhase = 0;
+    nv.pos = start * (double) smp->length();
+    nv.rateTarget = smp->sourceRate / sr * std::pow (2.0, tune / 12.0);
+    if (voice == tie)
+    {
+        const float port = G (k[kPort], 0) * 0.01f;
+        nv.rate = port > 0.001f ? tiePrevRate : nv.rateTarget;
+        tiePrevRate = nv.rateTarget;
+    }
+    else nv.rate = nv.rateTarget;
+    nv.gain = vel;
+    nv.fullLen = dcyPct >= 99.5f;
+    nv.tau = decayTau (dcyPct);
+    nv.holdS = (voice <= snare) ? (float) (std::pow (G (k[kHold], 0) * 0.01, 2.0) * 0.8) : 0.0f;
+    nv.attS = (float) (att * att * 0.5);
+    nv.fmAmt = fm; nv.zap = zap; nv.cut = cut;
+    nv.prevShape[0] = nv.prevShape[1] = 0;
+    for (auto& f : nv.flt) f.reset();
+    for (auto& f : nv.hp) f.reset();
+
+    // snare flam: second hit a few ms later on the other declick voice
+    if (voice == snare && flamMs > 1.0f)
+    {
+        auto& fv = voices[(size_t) snare][(size_t) nextVoice[(size_t) snare]];
+        fv = nv;
+        fv.pos -= flamMs * 0.001 * smp->sourceRate;   // negative position = pre-delay
+        fv.gain *= 0.7f;
+    }
+}
+
+//==============================================================================
+void LimeEngine::renderSampleVoice (int voice, Voice& v, float* dl, float* dr, int n)
+{
+    if (! v.active || v.smp == nullptr) return;
+    const auto& k = vk[(size_t) voice];
+    const auto& S = *v.smp;
+    const int len = S.length();
+    const bool st = S.stereo();
+
+    const float gain = juce::Decibels::decibelsToGain (G (k[kGain], 0), -60.0f) * v.gain;
+    const float panN = (G (k[kPan], 0) * 0.01f + 1.0f) * 0.25f * juce::MathConstants<float>::pi;
+    const float gl = std::cos (panN) * 1.41421356f * gain, gr = std::sin (panN) * 1.41421356f * gain;
+    const float res = G (k[kRes], 0);
+    const double q = 0.55 + res * 0.01 * 9.0;
+    int fmode = 0;
+    if (voice == snare || voice == tie || voice == pod) fmode = (int) G (k[kFt], 0);
+    if (voice == hat) fmode = 2;
+    const bool useFilter = voice == hat ? v.cut > 25.0f : (v.cut < 19500.0f || res > 1.0f);
+    if (useFilter) { v.flt[0].set (v.cut, sr, q); v.flt[1].set (v.cut, sr, q); }
+    const bool lowcut = voice == kick && G (k[kLo], 0) > 0.5f;
+    if (lowcut) { v.hp[0].set (80.0, sr, 0.8); v.hp[1].set (80.0, sr, 0.8); }
+
+    const bool shaping = voice <= snare;
+    const float shp = G (k[kShp], 0) * 0.01f, sm = G (k[kSm], 0) * 0.01f * 0.85f, sat = G (k[kSat], 0) * 0.01f;
+    const float pw = std::pow (2.0f, -shp * 1.6f);
+    const float drive = 1.0f + sat * 12.0f, satNorm = 1.0f / std::tanh (drive);
+    const float noise = voice == tie ? G (k[kNoise], 0) * 0.01f : 0.0f;
+    const float tieSat = voice == tie ? G (k[kSat], 0) * 0.01f : 0.0f;
+    const double portCoef = voice == tie ? 1.0 - std::exp (-1.0 / (sr * (0.002 + std::pow (G (k[kPort], 0) * 0.01, 2.0) * 0.6))) : 1.0;
+    const double fmRatio = voice == tie ? std::pow (2.0, G (k[kMp], 12) / 12.0) : 1.0;
+    const double fmDepth = v.fmAmt * 0.01 * 1.5;
+    const double zapTau = 0.004 + 0.06 * (1.0 - std::abs (v.zap) * 0.01);
+    const double zapOct = v.zap * 0.01 * 4.0;
+    uint32_t nrng = 0xabcdef ^ (uint32_t) (v.t * 1000.0);
+
+    for (int i = 0; i < n; ++i)
+    {
+        v.rate += (v.rateTarget - v.rate) * portCoef;
+        double rate = v.rate;
+        if (fmDepth > 0.0)
+        {
+            v.fmPhase += 261.63 * rate * fmRatio / (S.sourceRate / sr) / sr;
+            rate *= std::pow (2.0, fmDepth * std::sin (2.0 * kPi * v.fmPhase));
+        }
+        if (voice == pod && std::abs (zapOct) > 1.0e-9) rate *= std::pow (2.0, zapOct * std::exp (-v.t / zapTau));
+
+        float xl = 0, xr = 0;
+        if (v.pos >= 0.0)
+        {
+            const int i0 = (int) v.pos;
+            if (i0 >= len - 1) { v.active = false; break; }
+            const float fr = (float) (v.pos - i0);
+            xl = S.L[(size_t) i0] + fr * (S.L[(size_t) i0 + 1] - S.L[(size_t) i0]);
+            xr = st ? S.R[(size_t) i0] + fr * (S.R[(size_t) i0 + 1] - S.R[(size_t) i0]) : xl;
+        }
+        // envelope: attack, hold, decay
+        float env = 1.0f;
+        if (v.t < v.attS) env = (float) (v.t / jmax (1.0e-4f, v.attS));
+        else if (! v.fullLen && v.t > v.attS + v.holdS) env = std::exp (-(float) (v.t - v.attS - v.holdS) / v.tau);
+        if (noise > 0.0f)
+        {
+            nrng ^= nrng << 13; nrng ^= nrng >> 17; nrng ^= nrng << 5;
+            const float nz = ((float) nrng / 4294967295.0f * 2.0f - 1.0f) * noise * 0.5f;
+            xl += nz; xr += nz;
+        }
+        xl *= env; xr *= env;
+        if (shaping && (std::abs (shp) > 0.01f || sm > 0.01f || sat > 0.01f))
+        {
+            for (int c = 0; c < 2; ++c)
+            {
+                float& x = c == 0 ? xl : xr;
+                if (std::abs (shp) > 0.01f) x = std::copysign (std::pow (std::abs (x), pw), x);
+                if (sm > 0.01f) { x = x * (1.0f - sm) + v.prevShape[c] * sm; v.prevShape[c] = x; }
+                if (sat > 0.01f) x = std::tanh (x * drive) * satNorm;
+            }
+        }
+        if (tieSat > 0.01f) { const float d = 1.0f + tieSat * 10.0f; xl = std::tanh (xl * d) / std::tanh (d); xr = std::tanh (xr * d) / std::tanh (d); }
+        if (useFilter) { xl = v.flt[0].process (xl, fmode); xr = v.flt[1].process (xr, fmode); }
+        if (lowcut)    { xl = v.hp[0].process (xl, 2);      xr = v.hp[1].process (xr, 2); }
+        if (v.fading)
+        {
+            v.fade *= 0.993f;
+            xl *= v.fade; xr *= v.fade;
+            if (v.fade < 1.0e-3f) { v.active = false; break; }
+        }
+        dl[i] += xl * gl;
+        dr[i] += xr * gr;
+        v.pos += rate;
+        v.t += 1.0 / sr;
+        if (! v.fullLen && env < 1.0e-4f && v.t > v.attS + v.holdS) { v.active = false; break; }
+    }
+}
+
+void LimeEngine::renderPulp (const float* src, float* dl, float* dr, int n)
+{
+    const auto& k = vk[(size_t) pulp];
+    if (G (k[kOn], 1) < 0.5f) return;
+    const float lo = G (k[kTrkLo], 40), hi = G (k[kTrkHi], 800);
+    const float hpA = (float) std::exp (-2.0 * kPi * lo / sr), lpA = (float) (1.0 - std::exp (-2.0 * kPi * hi / sr));
+    const float tune = G (k[kTune], 0), dcy = decayTau (G (k[kDcy], 40));
+    const float portC = (float) (1.0 - std::exp (-1.0 / (sr * (0.002 + std::pow (G (k[kPort], 0) * 0.01, 2.0) * 0.5))));
+    const float osc = G (k[kOsc], 0) * 0.01f;
+    const float combMix = G (k[kComb], 0) * 0.01f, combFb = G (k[kFb], 50) * 0.01f * 0.97f;
+    const float combFreq = G (k[kFreq], 220), combFm = G (k[kFm], 0) * 0.01f, combCut = G (k[kCut], 8000);
+    const float gain = juce::Decibels::decibelsToGain (G (k[kGain], 0), -60.0f);
+    const float panN = (G (k[kPan], 0) * 0.01f + 1.0f) * 0.25f * juce::MathConstants<float>::pi;
+    const float gl = std::cos (panN) * 1.41421356f * gain, gr = std::sin (panN) * 1.41421356f * gain;
+    pulpV.combLp.set (combCut, sr, 0.7);
+
+    for (int i = 0; i < n; ++i)
+    {
+        // ---- pitch tracking (band-limited zero crossings)
+        const float in = src[i];
+        pulpV.hpS = hpA * (pulpV.hpS + in - pulpV.hpPrev); pulpV.hpPrev = in;
+        pulpV.lpS += lpA * (pulpV.hpS - pulpV.lpS);
+        ++pulpV.sinceCross;
+        if (pulpV.lastIn <= 0.0f && pulpV.lpS > 0.0f && std::abs (pulpV.lpS) > 1.0e-4f)
+        {
+            const float f = (float) sr / (float) jmax (1, pulpV.sinceCross);
+            if (f >= lo && f <= hi) pulpV.tracked += 0.3f * (f - pulpV.tracked);
+            pulpV.sinceCross = 0;
+        }
+        pulpV.lastIn = pulpV.lpS;
+        pulpV.freqTarget = pulpV.tracked * std::pow (2.0f, tune / 12.0f);
+        pulpV.freq += (pulpV.freqTarget - pulpV.freq) * portC;
+
+        float y = 0.0f;
+        if (pulpV.active)
+        {
+            pulpV.phase += pulpV.freq / sr; if (pulpV.phase >= 1.0) pulpV.phase -= 1.0;
+            const float sine = (float) std::sin (2.0 * kPi * pulpV.phase);
+            pulpV.rng ^= pulpV.rng << 13; pulpV.rng ^= pulpV.rng >> 17; pulpV.rng ^= pulpV.rng << 5;
+            const float nz = (float) pulpV.rng / 4294967295.0f * 2.0f - 1.0f;
+            const float s = osc < 0.5f ? sine * (1.0f - osc * 2.0f) + in * 3.0f * (osc * 2.0f)
+                                       : in * 3.0f * (2.0f - osc * 2.0f) + nz * (osc * 2.0f - 1.0f);
+            const float env = std::exp (-(float) pulpV.t / dcy) * jmin (1.0f, (float) pulpV.t * 2000.0f);
+            y = s * env * pulpV.vel;
+            pulpV.t += 1.0 / sr;
+            if (env < 1.0e-4f && pulpV.t > 0.01) pulpV.active = false;
+        }
+        // ---- comb filter (frequency follows the tracked pitch by FM amount)
+        if (combMix > 0.001f)
+        {
+            const float cf = combFreq * std::pow (2.0f, combFm * std::log2 (jmax (20.0f, pulpV.tracked) / 220.0f));
+            const float d = jlimit (2.0f, (float) pulpV.comb.size - 4.0f, (float) sr / jmax (20.0f, cf));
+            const float c = pulpV.comb.readL (d);
+            pulpV.comb.push (y + pulpV.combLp.process (c, 0) * combFb, 0.0f);
+            y = y * (1.0f - combMix) + c * combMix;
+        }
+        dl[i] += y * gl;
+        dr[i] += y * gr;
+    }
+}
+
+//==============================================================================
+void LimeEngine::process (float* L, float* R, int n, const BlockTime& bt, const std::vector<TriggerEvent>& midi)
+{
+    if ((int) dryL.size() < n) for (auto* b : { &dryL, &dryR, &tieL, &tieR, &sendL, &sendR, &dlyL, &dlyR, &xL, &xR }) b->assign ((size_t) n, 0.0f);
+    for (auto* b : { &dryL, &dryR, &tieL, &tieR }) std::fill (b->begin(), b->begin() + n, 0.0f);
+
+    struct Ev { int offset; int target; float vel; float value; bool isMod; };
+    std::array<Ev, 1024> ev;
+    int nev = 0;
+    auto push = [&] (Ev e) { if (nev < (int) ev.size()) ev[(size_t) nev++] = e; };
+    for (auto& e : midi) push ({ e.offset, e.target, e.velocity, 0.5f + 0.5f * e.velocity, false });
+    for (int t = 0; t < numTargets; ++t)
+        if (const int a = auditionQ[(size_t) t].exchange (0); a > 0) push ({ 0, t, (float) a / 1000.0f, 0.75f, false });
+
+    const int wanted = jlimit (0, NP - 1, (int) p (bPattern)->load());
+    const int mainLen = jlimit (1, NS, (int) p (bLen)->load());
+    const int startStep = jlimit (1, NS, (int) p (bStart)->load()) - 1;
+    const bool half = p (bHalf)->load() > 0.5f;
+    const double stepPpq = half ? 0.5 : 0.25;
+    const double swing = p (bSwing)->load() * 0.01;
+    const bool chainOn = p (bChainOn)->load() > 0.5f;
+    const int chainLen = jlimit (1, 8, (int) p (bChainLen)->load());
+    static const int rateBars[] { 0, 2, 4, 8, 12, 16 };
+    const int remixRate = rateBars[jlimit (0, 5, (int) p (bRemixRate)->load())];
+    const int shift = (int) p (bShift)->load();
+    auto accVel = [this] (int voice, uint8_t f) { const float a = G (vk[(size_t) voice][kAcc], 50) * 0.01f; return f >= 2 ? 1.0f : 1.0f - 0.6f * a; };
+
+    if (! bt.playing)
+    {
+        currentPattern.store (chainOn ? (int) p (bChainSlot (0))->load() : wanted);
+        for (auto& s : laneSteps) s.store (-1);
+        lastLoop = -1; remixing.store (false); remixThisLoop = false;
+    }
+    else
+    {
+        forEachOnset (bt, stepPpq, swing, [&] (long long k, double ppq)
+        {
+            const long long loop = k / mainLen;
+            if (loop != lastLoop || bt.justStarted)
+            {
+                lastLoop = loop;
+                if (chainOn)
+                {
+                    const int ci = (int) (loop % chainLen);
+                    chainIndex.store (ci);
+                    currentPattern.store ((int) p (bChainSlot (ci))->load());
+                }
+                else currentPattern.store (wanted);
+                if (remixNowFlag.exchange (false)) nowPending = true;
+                remixThisLoop = nowPending || (remixRate > 0 && ((loop + 1) % remixRate) == 0);
+                nowPending = false;
+                remixing.store (remixThisLoop);
+            }
+            int pos = (int) (k % mainLen);
+            pos = ((pos + startStep + shift) % mainLen + mainLen) % mainLen;
+            const int step = remap (pos, mainLen);
+            remixPos = remixThisLoop ? (float) (step - pos) / 16.0f : 0.0f;
             laneSteps[0].store (step);
             auto& pat = patterns[(size_t) currentPattern.load()];
             const int off = bt.toSample (ppq);
-            for (int lane = laneKick; lane <= laneHat; ++lane)
+            static const int voiceOf[] { kick, snare, hat, hat };
+            static const int targetOf[] { tKick, tSnare, tCHat, tOHat };
+            for (int l = 0; l < numTrigLanes; ++l)
             {
-                const uint8_t f = pat.steps[(size_t) lane][(size_t) step].load();
-                if (! (f & trig)) continue;
-                int slot = lane == laneKick ? slotKick : (lane == laneSnare ? slotSnare : ((f & open) ? slotHatOpen : slotHatClosed));
-                push ({ off, slot, velFor (f), 0.f, false });
+                const uint8_t f = pat.trig[(size_t) l][(size_t) step].load();
+                if (f) push ({ off, targetOf[l], accVel (voiceOf[l], f), 0.0f, false });
             }
         });
 
-        // Tie / Pod / Mod lanes: own length, optional stretch to the main length
-        auto lane = [&] (int laneIdx, std::atomic<float>* lenP, std::atomic<float>* strP, int uiIdx, bool isMod)
+        auto lane = [&] (int laneIdx, const char* lenId, const char* strId, int uiIdx)
         {
-            const int len = juce::jlimit (1, NS, (int) lenP->load());
-            const bool stretch = strP->load() > 0.5f;
-            const double stepPpq = stretch ? 0.25 * (double) mainLen / (double) len : 0.25;
-            forEachOnset (bt, stepPpq, stretch ? 0.0 : shuffle, [&] (long long k, double ppq)
+            const int len = jlimit (1, NS, (int) p (lenId)->load());
+            const bool stretch = p (strId)->load() > 0.5f;
+            const double sp = stretch ? stepPpq * (double) mainLen / (double) len : stepPpq;
+            forEachOnset (bt, sp, stretch ? 0.0 : swing, [&] (long long k, double ppq)
             {
                 const int step = (int) (k % len);
                 laneSteps[(size_t) uiIdx].store (step);
-                auto& pat = patterns[(size_t) currentPattern.load()];
+                const float v = patterns[(size_t) currentPattern.load()].value[(size_t) laneIdx][(size_t) step].load();
                 const int off = bt.toSample (ppq);
-                if (isMod)
-                    push ({ off, -1, 0.f, pat.mod[(size_t) step].load(), true });
-                else
+                if (laneIdx == laneMod) push ({ off, -1, 0.0f, v, true });
+                else if (v > 0.001f)
                 {
-                    const uint8_t f = pat.steps[(size_t) laneIdx][(size_t) step].load();
-                    if (f & trig) push ({ off, laneIdx == laneTie ? slotTie : slotPod, velFor (f), 0.f, false });
+                    push ({ off, laneIdx == laneTie ? tTie : tPod, 1.0f, v, false });
+                    if (laneIdx == laneTie) push ({ off, tPulp, v, v, false });   // Pulp follows the Tie sequence
                 }
             });
         };
-        lane (laneTie, pTieLen, pTieStr, 1, false);
-        lane (lanePod, pPodLen, pPodStr, 2, false);
-        lane (-1, pModLen, pModStr, 3, true);
+        lane (laneTie, bTieLen, bTieStr, 1);
+        lane (lanePod, bPodLen, bPodStr, 2);
+        lane (laneMod, bModLen, bModStr, 3);
     }
 
-    // mod events first at equal offsets so triggers on the same step see the new value
-    std::stable_sort (ev.begin(), ev.begin() + nev, [] (const Ev& x, const Ev& y)
+    std::stable_sort (ev.begin(), ev.begin() + nev, [] (const Ev& a, const Ev& b2)
     {
-        return x.offset != y.offset ? x.offset < y.offset : (x.isMod && ! y.isMod);
+        return a.offset != b2.offset ? a.offset < b2.offset : (a.isMod && ! b2.isMod);
     });
 
-    const float modAmt = pModAmt->load() * 0.01f;
+    // ---------------- voices
     int pos = 0, ei = 0;
-    while (pos < numSamples)
+    while (pos < n)
     {
         while (ei < nev && ev[(size_t) ei].offset <= pos)
         {
             const auto& e = ev[(size_t) ei++];
-            if (e.isMod) { modHeld = e.mod; modNow.store (e.mod); modSmooth = (modHeld * 2.0f - 1.0f) * modAmt; }
-            else if (e.slot >= 0 && e.slot < numSlots) trigger (e.slot, e.vel);
+            if (e.isMod) { modHeld = e.value; modNow.store (e.value); }
+            else trigger (e.target, e.vel, e.value);
         }
-        modSmooth = (modHeld * 2.0f - 1.0f) * modAmt;
-        const int next = ei < nev ? juce::jmin (numSamples, ev[(size_t) ei].offset) : numSamples;
-        const int n = juce::jmax (1, next - pos);
-        for (auto& slotVoices : voices)
-            for (auto& v : slotVoices)
-                renderVoice (v, busDL.data() + pos, busDR.data() + pos, busSL.data() + pos, busSR.data() + pos, n);
-        pos += n;
+        const int next = ei < nev ? jmin (n, ev[(size_t) ei].offset) : n;
+        const int cnt = jmax (1, next - pos);
+        for (int vIdx = 0; vIdx < 5; ++vIdx)
+            for (auto& v : voices[(size_t) vIdx])
+            {
+                if (vIdx == tie) renderSampleVoice (vIdx, v, tieL.data() + pos, tieR.data() + pos, cnt);
+                else             renderSampleVoice (vIdx, v, dryL.data() + pos, dryR.data() + pos, cnt);
+            }
+        pos += cnt;
+    }
+    // Pulp tracks a blend of the Tie voice and the whole drum bus
+    {
+        const float tieAmt = G (vk[(size_t) pulp][kTieSrc], 100) * 0.01f;
+        for (int i = 0; i < n; ++i)
+            sendL[(size_t) i] = (tieL[(size_t) i] + tieR[(size_t) i]) * 0.5f * tieAmt + (dryL[(size_t) i] + dryR[(size_t) i]) * 0.5f * (1.0f - tieAmt);
+        for (int i = 0; i < n; ++i) { dryL[(size_t) i] += tieL[(size_t) i]; dryR[(size_t) i] += tieR[(size_t) i]; }
+        renderPulp (sendL.data(), dryL.data(), dryR.data(), n);
     }
 
-    // ---------------- FX chain: Delay -> Filter -> Dirt -> Norm -> Gain
-    const int dest = (int) pModDest->load();
-    const double lfoHz = pLfoRate->load();
-    const float lfoFM = pLfoFM->load() * 0.01f, lfoDM = pLfoDM->load() * 0.01f;
+    // ---------------- FX chain
+    FxContext c; c.sr = sr; c.bpm = bt.bpm; c.ppq = bt.ppqStart; c.ppqPerSample = bt.ppqPerSample; c.playing = bt.playing;
+    float* dl = dryL.data(); float* dr = dryR.data();
+    envFilter.process (dl, dr, n, p (bFltCut)->load(), p (bFltTrk)->load(), p (bFltSm)->load(), p (bFltMod)->load(), modHeld);
+    eq.process (dl, dr, n, p (bEqHi)->load(), p (bEqMid)->load(), p (bEqLo)->load(), p (bEqAmp)->load(), p (bEqSplit)->load());
+    const float magSemis = jlimit (-24.0f, 24.0f, p (bMagPitch)->load() + p (bMagMod)->load() * 0.01f * modHeld * 12.0f
+                                                 + p (bMagRmx)->load() * 0.01f * remixPos * 24.0f);
+    magic.process (dl, dr, n, magSemis, p (bMagGrain)->load(), p (bMagMix)->load() * 0.01f, p (bMagNotch)->load());
 
-    const double beats = delayTimeBeats ((int) pDlyTime->load());
-    const float baseDly = (float) juce::jlimit (16.0, (double) dlyL.size() - 4.0, beats * 60.0 / juce::jmax (20.0, bpm) * sr);
-    float fb = pDlyFb->load() * 0.01f;
-    if (dest == mdDelayFb) fb = juce::jlimit (0.0f, 0.95f, fb + modSmooth * 0.5f);
-    const float damp = 0.05f + 0.94f * (1.0f - pDlyDamp->load() * 0.01f);
-    const float dlyLvl = juce::Decibels::decibelsToGain (pDlyLvl->load(), -60.0f);
-    if (dlyTimeSm <= 0.0f) dlyTimeSm = baseDly;
-
-    float cutBase = pFltCut->load();
-    if (dest == mdFilter) cutBase *= std::pow (2.0f, modSmooth * 4.0f);
-    const double fq = 0.6 + pFltRes->load() * 0.01 * 9.0;
-    const float dirt = pDirt->load() * 0.01f;
-    const bool norm = pNorm->load() > 0.5f;
-    const float gain = juce::Decibels::decibelsToGain (pGain->load(), -60.0f);
-    const int dsz = (int) dlyL.size();
-    const double lfoInc = lfoHz / sr;
-
-    for (int i = 0; i < numSamples; ++i)
+    const bool modIn = p (bModInput)->load() > 0.5f, modMixOn = p (bModMix)->load() > 0.5f;
+    const float sendGain = modIn ? modHeld : 1.0f;
+    for (int i = 0; i < n; ++i) { sendL[(size_t) i] = dl[i] * sendGain; sendR[(size_t) i] = dr[i] * sendGain; }
+    delay.process (sendL.data(), sendR.data(), dlyL.data(), dlyR.data(), n, c,
+                   (int) p (bDlyOne)->load(), (int) p (bDlyTwo)->load(), p (bDlyFb)->load(), p (bDlyLfo)->load(),
+                   p (bDlyFM)->load(), p (bDlyDM)->load(), p (bDlyWide)->load(), p (bDlyCut)->load(), p (bDlyRes)->load(),
+                   p (bDlyLo)->load() > 0.5f);
+    const float xDly = p (bXDly)->load() * 0.01f;
+    for (int i = 0; i < n; ++i)
     {
-        lfoPhase += lfoInc;
-        if (lfoPhase >= 1.0) lfoPhase -= 1.0;
-        const float lfo = (float) std::sin (2.0 * juce::MathConstants<double>::pi * lfoPhase);
+        xL[(size_t) i] = sendL[(size_t) i] * (1.0f - xDly) + dlyL[(size_t) i] * xDly;
+        xR[(size_t) i] = sendR[(size_t) i] * (1.0f - xDly) + dlyR[(size_t) i] * xDly;
+    }
+    xfx.process (xL.data(), xR.data(), n, c, (int) p (bXMode)->load(), p (bXParam)->load(), p (bXAdd)->load(), p (bXSpd)->load(),
+                 (int) p (bXLen)->load(), p (bXLo)->load(), p (bXHi)->load(), p (bXPlay)->load() > 0.5f, p (bXRec)->load() > 0.5f,
+                 p (bXSm)->load());
 
-        // delay with LFO time modulation (DM)
-        const float target = baseDly * (1.0f + 0.25f * lfoDM * lfo);
-        dlyTimeSm += 0.0005f * (target - dlyTimeSm);
-        float rp = (float) dlyW - dlyTimeSm;
-        while (rp < 0) rp += (float) dsz;
-        const int r0 = (int) rp; const float rf = rp - (float) r0; const int r1 = (r0 + 1) % dsz;
-        const float yL = dlyL[(size_t) r0] + rf * (dlyL[(size_t) r1] - dlyL[(size_t) r0]);
-        const float yR = dlyR[(size_t) r0] + rf * (dlyR[(size_t) r1] - dlyR[(size_t) r0]);
-        dampL += damp * (yL - dampL);
-        dampR += damp * (yR - dampR);
-        // ping-pong cross feedback
-        dlyL[(size_t) dlyW] = busSL[(size_t) i] + dampR * fb;
-        dlyR[(size_t) dlyW] = busSR[(size_t) i] + dampL * fb;
-        dlyW = (dlyW + 1) % dsz;
-
-        float l = busDL[(size_t) i] + yL * dlyLvl;
-        float r = busDR[(size_t) i] + yR * dlyLvl;
-
-        // filter (LFO FM = cutoff modulation)
-        if ((i & 15) == 0)
-        {
-            const double c = juce::jlimit (30.0, 20000.0, (double) cutBase * std::pow (2.0, 3.0 * lfoFM * lfo));
-            fltL.set (c, sr, fq); fltR.set (c, sr, fq);
-        }
-        if (cutBase < 19500.0f || lfoFM > 0.0f)
-        {
-            l = fltL.process (l, 0);
-            r = fltR.process (r, 0);
-        }
-
-        // Dirt: asymmetric saturation
+    const float dlyGain = juce::Decibels::decibelsToGain (p (bDlyGain)->load(), -60.0f);
+    const float xGain = juce::Decibels::decibelsToGain (p (bXGain)->load(), -60.0f);
+    float fxMix = p (bFxMix)->load() * 0.01f;
+    if (modMixOn) fxMix *= modHeld;
+    const float dryAmt = jmin (1.0f, 2.0f - 2.0f * fxMix), wetAmt = jmin (1.0f, 2.0f * fxMix);
+    const float dirt = p (bDirt)->load() * 0.01f;
+    const bool norm = p (bNorm)->load() > 0.5f;
+    const float nAmp = p (bNormAmp)->load() * 0.01f, nRel = p (bNormRel)->load() * 0.01f, nSm = p (bNormSm)->load() * 0.01f;
+    const float relC = (float) std::exp (-1.0 / (sr * (0.02 + nRel * 1.5)));
+    // fixed -8 dB of section headroom (6 voices + FX summing), then OUT Gain (= Level B)
+    const float gain = 0.4f * juce::Decibels::decibelsToGain (p (bGain)->load(), -60.0f);
+    const float target = 0.25f + 0.6f * nAmp;
+    for (int i = 0; i < n; ++i)
+    {
+        float l = dl[i] * dryAmt + (dlyL[(size_t) i] * dlyGain + xL[(size_t) i] * xGain) * wetAmt;
+        float r = dr[i] * dryAmt + (dlyR[(size_t) i] * dlyGain + xR[(size_t) i] * xGain) * wetAmt;
         if (dirt > 0.001f)
         {
-            const float d = 1.0f + dirt * 14.0f, bias = 0.15f * dirt;
-            const float comp = 1.0f / (1.0f + dirt * 2.0f);
-            l = (std::tanh (l * d + bias) - std::tanh (bias)) * comp * 1.6f;
-            r = (std::tanh (r * d + bias) - std::tanh (bias)) * comp * 1.6f;
+            const float d = 1.0f + dirt * 20.0f, bias = 0.2f * dirt, comp = 1.0f / (1.0f + dirt * 2.5f);
+            l = (std::tanh (l * d + bias) - std::tanh (bias)) * comp * 1.7f;
+            r = (std::tanh (r * d + bias) - std::tanh (bias)) * comp * 1.7f;
         }
-        // Norm: loudness maximiser (fast compressor + soft clip)
         if (norm)
         {
-            const float pk = juce::jmax (std::abs (l), std::abs (r));
-            normEnv = pk > normEnv ? normEnv + 0.3f * (pk - normEnv) : normEnv * 0.9997f;
-            const float g = normEnv > 0.35f ? 0.35f / normEnv : 1.0f;
-            l = std::tanh (l * g * 2.4f) * 0.9f;
-            r = std::tanh (r * g * 2.4f) * 0.9f;
+            const float pk = jmax (std::abs (l), std::abs (r));
+            normEnv = pk > normEnv ? normEnv + (0.5f - 0.45f * nSm) * (pk - normEnv) : normEnv * relC;
+            const float g = normEnv > target ? target / normEnv : 1.0f;
+            l = std::tanh (l * g * (1.0f + nAmp * 1.5f)) * 0.95f;
+            r = std::tanh (r * g * (1.0f + nAmp * 1.5f)) * 0.95f;
         }
         L[i] += l * gain;
         R[i] += r * gain;
@@ -400,82 +542,69 @@ void LimeEngine::process (float* L, float* R, int numSamples, const BlockTime& b
 //==============================================================================
 void LimeEngine::loadDefaultPatterns()
 {
-    for (auto& p : patterns) p.clear();
+    for (auto& pt : patterns) pt.clear();
     auto set = [this] (int pat, int lane, const char* s)
     {
-        // '-' off, 'x' hit, 'X' accent, 'o' open hat, 'O' accented open hat
         for (int i = 0; i < NS && s[i]; ++i)
-        {
-            uint8_t v = 0;
-            switch (s[i]) { case 'x': v = trig; break; case 'X': v = trig | accent; break;
-                            case 'o': v = trig | open; break; case 'O': v = trig | open | accent; break; default: break; }
-            patterns[(size_t) pat].steps[(size_t) lane][(size_t) i].store (v);
-        }
+            patterns[(size_t) pat].trig[(size_t) lane][(size_t) i].store ((uint8_t) (s[i] == 'X' ? 2 : (s[i] == 'x' ? 1 : 0)));
     };
-    auto setMod = [this] (int pat, std::initializer_list<float> vals)
+    auto vals = [this] (int pat, int lane, std::initializer_list<float> v)
     {
-        int i = 0;
-        for (float v : vals) if (i < NS) patterns[(size_t) pat].mod[(size_t) i++].store (v);
+        int i = 0; for (float x : v) if (i < NS) patterns[(size_t) pat].value[(size_t) lane][(size_t) i++].store (x);
     };
     set (0, laneKick,  "X---x---X---x---");
-    set (0, laneSnare, "----X-------X---");
-    set (0, laneHat,   "x-o-x-o-x-o-x-ox");
-    set (0, laneTie,   "--x----x--x-----");
-    set (0, lanePod,   "------x-------x-");
-    setMod (0, { 0.5f, 0.7f, 0.3f, 0.9f, 0.5f, 0.2f, 0.8f, 0.6f, 0.5f, 0.7f, 0.3f, 0.9f, 0.5f, 0.2f, 0.8f, 0.6f });
-
-    set (1, laneKick,  "X--x--X---x--x--");
-    set (1, laneSnare, "----X-------X-x-");
-    set (1, laneHat,   "xxoxxxoxxxoxxxox");
-    set (1, laneTie,   "x--x--x--x--x---");
-    set (1, lanePod,   "--------X-------");
-
-    set (2, laneKick,  "X-------X-x-----");
-    set (2, laneSnare, "----X-------X---");
-    set (2, laneHat,   "--o---o---o---o-");
-    set (2, laneTie,   "-x-x-x-x-x-x-x-x");
-    set (2, lanePod,   "X---------------");
+    set (0, laneSnare, "----X-------X--x");
+    set (0, laneCHat,  "x-xxx-x-x-xxx-x-");
+    set (0, laneOHat,  "--x---x---x---x-");
+    vals (0, laneTie, { 0, 0, .5f, 0, 0, 0, 0, .7f, 0, 0, .5f, 0, 0, .62f, 0, 0 });
+    vals (0, lanePod, { 0, 0, 0, 0, 0, 0, .8f, 0, 0, 0, 0, 0, 0, 0, .5f, 0 });
+    vals (0, laneMod, { .1f, .3f, .5f, .7f, .9f, .7f, .5f, .3f, .1f, .3f, .5f, .7f, .9f, .7f, .5f, .3f });
+    for (int p2 = 1; p2 < NP; ++p2) patterns[(size_t) p2].copyFrom (patterns[0]);
+    set (1, laneKick, "X--x--x---X--x--");
+    set (2, laneCHat, "xxxxxxxxxxxxxxxx");
+    set (3, laneSnare, "----X--x-x--X-xX");
 }
 
 juce::ValueTree LimeEngine::saveState() const
 {
     juce::ValueTree vt ("LIME_PATTERNS");
-    for (int p = 0; p < NP; ++p)
+    vt.setProperty ("version", 2, nullptr);
+    for (int pi = 0; pi < NP; ++pi)
     {
         juce::ValueTree pt ("P");
         juce::String s;
         for (int l = 0; l < numTrigLanes; ++l)
-            for (int st = 0; st < NS; ++st)
-                s << juce::String::charToString ((juce::juce_wchar) ('0' + patterns[(size_t) p].steps[(size_t) l][(size_t) st].load()));
-        pt.setProperty ("steps", s, nullptr);
-        juce::String m;
-        for (int st = 0; st < NS; ++st) m << juce::String (patterns[(size_t) p].mod[(size_t) st].load(), 3) << (st < NS - 1 ? "," : "");
-        pt.setProperty ("mod", m, nullptr);
+            for (int st = 0; st < NS; ++st) s << juce::String::charToString ((juce::juce_wchar) ('0' + patterns[(size_t) pi].trig[(size_t) l][(size_t) st].load()));
+        pt.setProperty ("trig", s, nullptr);
+        for (int l = 0; l < numValueLanes; ++l)
+        {
+            juce::StringArray v;
+            for (int st = 0; st < NS; ++st) v.add (juce::String (patterns[(size_t) pi].value[(size_t) l][(size_t) st].load(), 3));
+            pt.setProperty ("v" + juce::String (l), v.joinIntoString (","), nullptr);
+        }
         vt.appendChild (pt, nullptr);
     }
-    for (int s = 0; s < numSlots; ++s)
-        vt.setProperty ("user" + juce::String (s), userPaths[(size_t) s], nullptr);
     return vt;
 }
 
 void LimeEngine::loadState (const juce::ValueTree& vt)
 {
-    if (! vt.isValid()) return;
-    for (int p = 0; p < NP && p < vt.getNumChildren(); ++p)
+    if (! vt.isValid() || (int) vt.getProperty ("version", 1) < 2) return;
+    for (int pi = 0; pi < NP && pi < vt.getNumChildren(); ++pi)
     {
-        auto pt = vt.getChild (p);
-        const juce::String s = pt.getProperty ("steps").toString();
+        auto pt = vt.getChild (pi);
+        const juce::String s = pt.getProperty ("trig").toString();
         for (int l = 0; l < numTrigLanes; ++l)
             for (int st = 0; st < NS; ++st)
             {
                 const int idx = l * NS + st;
-                patterns[(size_t) p].steps[(size_t) l][(size_t) st].store ((uint8_t) (idx < s.length() ? juce::jlimit (0, 7, (int) (s[idx] - '0')) : 0));
+                patterns[(size_t) pi].trig[(size_t) l][(size_t) st].store ((uint8_t) (idx < s.length() ? jlimit (0, 2, (int) (s[idx] - '0')) : 0));
             }
-        juce::StringArray m;
-        m.addTokens (pt.getProperty ("mod").toString(), ",", {});
-        for (int st = 0; st < NS; ++st)
-            patterns[(size_t) p].mod[(size_t) st].store (st < m.size() ? juce::jlimit (0.0f, 1.0f, m[st].getFloatValue()) : 0.5f);
+        for (int l = 0; l < numValueLanes; ++l)
+        {
+            juce::StringArray v; v.addTokens (pt.getProperty ("v" + juce::String (l)).toString(), ",", {});
+            for (int st = 0; st < NS; ++st)
+                patterns[(size_t) pi].value[(size_t) l][(size_t) st].store (st < v.size() ? jlimit (0.0f, 1.0f, v[st].getFloatValue()) : 0.0f);
+        }
     }
-    for (int s = 0; s < numSlots; ++s)
-        userPaths[(size_t) s] = vt.getProperty ("user" + juce::String (s)).toString();
 }

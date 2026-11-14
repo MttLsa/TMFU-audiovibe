@@ -1,0 +1,1043 @@
+{
+ "genres": [
+  "techno",
+  "minimal",
+  "microhouse",
+  "rominimal",
+  "chicago",
+  "techhouse",
+  "deephouse",
+  "breakbeat"
+ ],
+ "modules": {
+  "Kick": [
+   {
+    "file": "K01 Rumble Core.wav",
+    "tags": [
+     "techno"
+    ]
+   },
+   {
+    "file": "K02 Industrial Stomp.wav",
+    "tags": [
+     "techno"
+    ]
+   },
+   {
+    "file": "K03 Warehouse 9.wav",
+    "tags": [
+     "techno",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "K04 Berghain Floor.wav",
+    "tags": [
+     "techno"
+    ]
+   },
+   {
+    "file": "K05 Hard Lane.wav",
+    "tags": [
+     "techno"
+    ]
+   },
+   {
+    "file": "K06 Minimal Thud.wav",
+    "tags": [
+     "minimal",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "K07 Dry Point.wav",
+    "tags": [
+     "minimal"
+    ]
+   },
+   {
+    "file": "K08 Plastic Kick.wav",
+    "tags": [
+     "minimal",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "K09 Micro Click.wav",
+    "tags": [
+     "microhouse"
+    ]
+   },
+   {
+    "file": "K10 Felt Bump.wav",
+    "tags": [
+     "microhouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "K11 Wood Body.wav",
+    "tags": [
+     "microhouse"
+    ]
+   },
+   {
+    "file": "K12 Bucharest Round.wav",
+    "tags": [
+     "rominimal"
+    ]
+   },
+   {
+    "file": "K13 Soft Rubber.wav",
+    "tags": [
+     "rominimal",
+     "minimal"
+    ]
+   },
+   {
+    "file": "K14 Deep Pulse Ro.wav",
+    "tags": [
+     "rominimal"
+    ]
+   },
+   {
+    "file": "K15 Velvet Knock.wav",
+    "tags": [
+     "rominimal",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "K16 Long Sub Ro.wav",
+    "tags": [
+     "rominimal",
+     "minimal"
+    ]
+   },
+   {
+    "file": "K17 Jack 909.wav",
+    "tags": [
+     "chicago"
+    ]
+   },
+   {
+    "file": "K18 Box 707.wav",
+    "tags": [
+     "chicago"
+    ]
+   },
+   {
+    "file": "K19 Warehouse Jack.wav",
+    "tags": [
+     "chicago",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "K20 Grit Machine.wav",
+    "tags": [
+     "chicago"
+    ]
+   },
+   {
+    "file": "K21 Tech Punch.wav",
+    "tags": [
+     "techhouse"
+    ]
+   },
+   {
+    "file": "K22 Tight Groove.wav",
+    "tags": [
+     "techhouse",
+     "minimal"
+    ]
+   },
+   {
+    "file": "K23 Round 808.wav",
+    "tags": [
+     "deephouse",
+     "chicago"
+    ]
+   },
+   {
+    "file": "K24 Deep Soft.wav",
+    "tags": [
+     "deephouse"
+    ]
+   },
+   {
+    "file": "K25 Warm Felt.wav",
+    "tags": [
+     "deephouse"
+    ]
+   },
+   {
+    "file": "K26 Lofi Bump.wav",
+    "tags": [
+     "deephouse",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "K27 Break Beater.wav",
+    "tags": [
+     "breakbeat"
+    ]
+   },
+   {
+    "file": "K28 Funk Kick.wav",
+    "tags": [
+     "breakbeat"
+    ]
+   },
+   {
+    "file": "K29 Amen Low.wav",
+    "tags": [
+     "breakbeat"
+    ]
+   },
+   {
+    "file": "K30 Electro Boom.wav",
+    "tags": [
+     "breakbeat",
+     "techno"
+    ]
+   },
+   {
+    "file": "K31 Bent Tom Kick.wav",
+    "tags": [
+     "minimal",
+     "techno"
+    ]
+   },
+   {
+    "file": "K32 Ghost Kick.wav",
+    "tags": [
+     "minimal",
+     "rominimal",
+     "microhouse"
+    ]
+   }
+  ],
+  "Snare": [
+   {
+    "file": "S01 Tek Snare.wav",
+    "tags": [
+     "techno"
+    ]
+   },
+   {
+    "file": "S02 Metal Crack.wav",
+    "tags": [
+     "techno"
+    ]
+   },
+   {
+    "file": "S03 Noise Gate.wav",
+    "tags": [
+     "techno",
+     "breakbeat"
+    ]
+   },
+   {
+    "file": "S04 Warehouse Clap.wav",
+    "tags": [
+     "techno",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "S05 Min Rim.wav",
+    "tags": [
+     "minimal"
+    ]
+   },
+   {
+    "file": "S06 Dry Clap.wav",
+    "tags": [
+     "minimal",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "S07 Snap Click.wav",
+    "tags": [
+     "minimal",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "S08 Paper Snare.wav",
+    "tags": [
+     "minimal"
+    ]
+   },
+   {
+    "file": "S09 Micro Tick.wav",
+    "tags": [
+     "microhouse"
+    ]
+   },
+   {
+    "file": "S10 Glass Rim.wav",
+    "tags": [
+     "microhouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "S11 Finger Snap.wav",
+    "tags": [
+     "microhouse",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "S12 Bucharest Rim.wav",
+    "tags": [
+     "rominimal"
+    ]
+   },
+   {
+    "file": "S13 Wood Clap Ro.wav",
+    "tags": [
+     "rominimal"
+    ]
+   },
+   {
+    "file": "S14 Soft Shuffle.wav",
+    "tags": [
+     "rominimal",
+     "minimal"
+    ]
+   },
+   {
+    "file": "S15 Dust Snare.wav",
+    "tags": [
+     "rominimal",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "S16 Hollow Knock.wav",
+    "tags": [
+     "rominimal"
+    ]
+   },
+   {
+    "file": "S17 Jack Clap.wav",
+    "tags": [
+     "chicago"
+    ]
+   },
+   {
+    "file": "S18 909 Snare.wav",
+    "tags": [
+     "chicago",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "S19 Box Snare.wav",
+    "tags": [
+     "chicago"
+    ]
+   },
+   {
+    "file": "S20 Clap Stack.wav",
+    "tags": [
+     "chicago",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "S21 Tech Clap.wav",
+    "tags": [
+     "techhouse"
+    ]
+   },
+   {
+    "file": "S22 Tight Snare.wav",
+    "tags": [
+     "techhouse",
+     "minimal"
+    ]
+   },
+   {
+    "file": "S23 Deep Clap.wav",
+    "tags": [
+     "deephouse"
+    ]
+   },
+   {
+    "file": "S24 Soft Rim.wav",
+    "tags": [
+     "deephouse"
+    ]
+   },
+   {
+    "file": "S25 Velvet Snare.wav",
+    "tags": [
+     "deephouse"
+    ]
+   },
+   {
+    "file": "S26 Break Snare.wav",
+    "tags": [
+     "breakbeat"
+    ]
+   },
+   {
+    "file": "S27 Ghost Snare.wav",
+    "tags": [
+     "breakbeat",
+     "minimal"
+    ]
+   },
+   {
+    "file": "S28 Crack Break.wav",
+    "tags": [
+     "breakbeat"
+    ]
+   },
+   {
+    "file": "S29 Electro Snare.wav",
+    "tags": [
+     "breakbeat",
+     "techno"
+    ]
+   },
+   {
+    "file": "S30 Lofi Clap.wav",
+    "tags": [
+     "breakbeat",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "S31 Room Rim.wav",
+    "tags": [
+     "techhouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "S32 Flam Clap.wav",
+    "tags": [
+     "minimal",
+     "microhouse"
+    ]
+   }
+  ],
+  "Hat": [
+   {
+    "file": "H01 808 Metal.wav",
+    "tags": [
+     "chicago",
+     "techno"
+    ]
+   },
+   {
+    "file": "H02 909 Noise.wav",
+    "tags": [
+     "chicago",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "H03 Tick.wav",
+    "tags": [
+     "minimal",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "H04 Dark Hat.wav",
+    "tags": [
+     "techno",
+     "minimal"
+    ]
+   },
+   {
+    "file": "H05 Shaker.wav",
+    "tags": [
+     "deephouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "H06 Steel.wav",
+    "tags": [
+     "techno"
+    ]
+   },
+   {
+    "file": "H07 Micro Dust.wav",
+    "tags": [
+     "microhouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "H08 Ro Shuffle.wav",
+    "tags": [
+     "rominimal"
+    ]
+   },
+   {
+    "file": "H09 Ro Tsk.wav",
+    "tags": [
+     "rominimal",
+     "minimal"
+    ]
+   },
+   {
+    "file": "H10 Paper Hat.wav",
+    "tags": [
+     "minimal"
+    ]
+   },
+   {
+    "file": "H11 Wire.wav",
+    "tags": [
+     "techno",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "H12 House Tsss.wav",
+    "tags": [
+     "chicago",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "H13 Ride Bell.wav",
+    "tags": [
+     "deephouse",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "H14 Tamb.wav",
+    "tags": [
+     "chicago",
+     "deephouse",
+     "breakbeat"
+    ]
+   },
+   {
+    "file": "H15 Break Hat.wav",
+    "tags": [
+     "breakbeat"
+    ]
+   },
+   {
+    "file": "H16 Brushy.wav",
+    "tags": [
+     "breakbeat",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "H17 Clicky.wav",
+    "tags": [
+     "microhouse"
+    ]
+   },
+   {
+    "file": "H18 Grain Hat.wav",
+    "tags": [
+     "minimal",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "H19 Crash Cut.wav",
+    "tags": [
+     "techno",
+     "breakbeat"
+    ]
+   },
+   {
+    "file": "H20 Soft Open.wav",
+    "tags": [
+     "deephouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "H21 Hiss.wav",
+    "tags": [
+     "techno",
+     "minimal"
+    ]
+   },
+   {
+    "file": "H22 Rattle.wav",
+    "tags": [
+     "rominimal",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "H23 Jack Hat.wav",
+    "tags": [
+     "chicago"
+    ]
+   },
+   {
+    "file": "H24 Tech Shuffle.wav",
+    "tags": [
+     "techhouse"
+    ]
+   }
+  ],
+  "Tie": [
+   {
+    "file": "T01 Sub Bass C.wav",
+    "tags": [
+     "deephouse",
+     "techhouse",
+     "minimal"
+    ]
+   },
+   {
+    "file": "T02 Acid Pluck C.wav",
+    "tags": [
+     "chicago",
+     "techno"
+    ]
+   },
+   {
+    "file": "T03 Rubber Bass C.wav",
+    "tags": [
+     "minimal",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "T04 Ro Bass Pluck.wav",
+    "tags": [
+     "rominimal"
+    ]
+   },
+   {
+    "file": "T05 Dub Chord m7.wav",
+    "tags": [
+     "minimal",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "T06 Stab Minor.wav",
+    "tags": [
+     "chicago",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "T07 Organ Hit.wav",
+    "tags": [
+     "chicago",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "T08 Rhodes C.wav",
+    "tags": [
+     "deephouse"
+    ]
+   },
+   {
+    "file": "T09 Rhodes Cm9.wav",
+    "tags": [
+     "deephouse"
+    ]
+   },
+   {
+    "file": "T10 Marimba C.wav",
+    "tags": [
+     "rominimal",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "T11 Kalimba C.wav",
+    "tags": [
+     "rominimal",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "T12 Glass Bell.wav",
+    "tags": [
+     "minimal",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "T13 Ro Wood Tone.wav",
+    "tags": [
+     "rominimal"
+    ]
+   },
+   {
+    "file": "T14 Vox Ah.wav",
+    "tags": [
+     "microhouse",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "T15 Vox Oh.wav",
+    "tags": [
+     "microhouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "T16 Vox Ee Blip.wav",
+    "tags": [
+     "microhouse"
+    ]
+   },
+   {
+    "file": "T17 Hoover Stab.wav",
+    "tags": [
+     "techno",
+     "breakbeat"
+    ]
+   },
+   {
+    "file": "T18 Tek Drone C.wav",
+    "tags": [
+     "techno"
+    ]
+   },
+   {
+    "file": "T19 Reese C.wav",
+    "tags": [
+     "breakbeat",
+     "techno"
+    ]
+   },
+   {
+    "file": "T20 Electro Zap Bass.wav",
+    "tags": [
+     "breakbeat"
+    ]
+   },
+   {
+    "file": "T21 Funk Bass C.wav",
+    "tags": [
+     "breakbeat",
+     "chicago"
+    ]
+   },
+   {
+    "file": "T22 Tech Bass Stab.wav",
+    "tags": [
+     "techhouse"
+    ]
+   },
+   {
+    "file": "T23 Pad Swell Cm.wav",
+    "tags": [
+     "deephouse",
+     "minimal"
+    ]
+   },
+   {
+    "file": "T24 Piano Chord.wav",
+    "tags": [
+     "chicago",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "T25 Mallet Low.wav",
+    "tags": [
+     "minimal",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "T26 Bleep C.wav",
+    "tags": [
+     "techno",
+     "minimal"
+    ]
+   },
+   {
+    "file": "T27 Sine Ping.wav",
+    "tags": [
+     "microhouse",
+     "minimal"
+    ]
+   },
+   {
+    "file": "T28 Guitar Pluck.wav",
+    "tags": [
+     "deephouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "T29 Ro Dub Tone.wav",
+    "tags": [
+     "rominimal"
+    ]
+   },
+   {
+    "file": "T30 Siren Tone.wav",
+    "tags": [
+     "breakbeat",
+     "techno"
+    ]
+   },
+   {
+    "file": "T31 Hollow Stab.wav",
+    "tags": [
+     "techhouse",
+     "minimal"
+    ]
+   },
+   {
+    "file": "T32 Clav C.wav",
+    "tags": [
+     "chicago",
+     "breakbeat"
+    ]
+   }
+  ],
+  "Pod": [
+   {
+    "file": "P01 Conga Hi.wav",
+    "tags": [
+     "rominimal",
+     "deephouse",
+     "chicago"
+    ]
+   },
+   {
+    "file": "P02 Conga Lo.wav",
+    "tags": [
+     "rominimal",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "P03 Bongo.wav",
+    "tags": [
+     "rominimal",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "P04 Tom Low.wav",
+    "tags": [
+     "chicago",
+     "techno"
+    ]
+   },
+   {
+    "file": "P05 Tom Hi.wav",
+    "tags": [
+     "chicago",
+     "breakbeat"
+    ]
+   },
+   {
+    "file": "P06 Cowbell.wav",
+    "tags": [
+     "chicago",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "P07 Clave.wav",
+    "tags": [
+     "rominimal",
+     "microhouse",
+     "minimal"
+    ]
+   },
+   {
+    "file": "P08 Woodblock.wav",
+    "tags": [
+     "rominimal",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "P09 Log Drum.wav",
+    "tags": [
+     "rominimal",
+     "minimal"
+    ]
+   },
+   {
+    "file": "P10 Agogo.wav",
+    "tags": [
+     "rominimal",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "P11 Shaker Long.wav",
+    "tags": [
+     "deephouse",
+     "rominimal",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "P12 Tabla Na.wav",
+    "tags": [
+     "rominimal",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "P13 Ro Click Perc.wav",
+    "tags": [
+     "rominimal"
+    ]
+   },
+   {
+    "file": "P14 Ro Water Drop.wav",
+    "tags": [
+     "rominimal",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "P15 Ro Metal Tic.wav",
+    "tags": [
+     "rominimal",
+     "minimal"
+    ]
+   },
+   {
+    "file": "P16 Glitch Blip.wav",
+    "tags": [
+     "microhouse",
+     "minimal"
+    ]
+   },
+   {
+    "file": "P17 Bit Click.wav",
+    "tags": [
+     "microhouse"
+    ]
+   },
+   {
+    "file": "P18 Vinyl Crackle.wav",
+    "tags": [
+     "microhouse",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "P19 Zip.wav",
+    "tags": [
+     "microhouse",
+     "minimal"
+    ]
+   },
+   {
+    "file": "P20 Noise Burst.wav",
+    "tags": [
+     "techno",
+     "breakbeat"
+    ]
+   },
+   {
+    "file": "P21 Sweep Up.wav",
+    "tags": [
+     "techno",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "P22 Metal Hit.wav",
+    "tags": [
+     "techno",
+     "industrial",
+     "minimal"
+    ]
+   },
+   {
+    "file": "P23 Laser.wav",
+    "tags": [
+     "breakbeat",
+     "techno"
+    ]
+   },
+   {
+    "file": "P24 Zap Down.wav",
+    "tags": [
+     "breakbeat",
+     "chicago"
+    ]
+   },
+   {
+    "file": "P25 Tech Perc.wav",
+    "tags": [
+     "techhouse"
+    ]
+   },
+   {
+    "file": "P26 Rim Perc.wav",
+    "tags": [
+     "techhouse",
+     "minimal"
+    ]
+   },
+   {
+    "file": "P27 Vox Hey.wav",
+    "tags": [
+     "chicago",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "P28 Vox Uh.wav",
+    "tags": [
+     "deephouse",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "P29 Snap Perc.wav",
+    "tags": [
+     "deephouse",
+     "breakbeat"
+    ]
+   },
+   {
+    "file": "P30 Steel Pan.wav",
+    "tags": [
+     "deephouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "P31 Cabasa.wav",
+    "tags": [
+     "chicago",
+     "deephouse",
+     "breakbeat"
+    ]
+   },
+   {
+    "file": "P32 Timbale.wav",
+    "tags": [
+     "breakbeat",
+     "chicago"
+    ]
+   }
+  ]
+ }
+}

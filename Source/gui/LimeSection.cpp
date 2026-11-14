@@ -5,8 +5,6 @@ using namespace params;
 
 namespace
 {
-    const char* laneNames[] { "KICK", "SNARE", "HAT", "TIE", "POD", "MOD" };
-
     void setParam (AudioProcessorValueTreeState& s, const String& id, float value)
     {
         if (auto* p = s.getParameter (id))
@@ -16,80 +14,208 @@ namespace
             p->endChangeGesture();
         }
     }
+    float getParam (AudioProcessorValueTreeState& s, const String& id) { return s.getRawParameterValue (id)->load(); }
+    const char* laneNames[] { "KICK", "SNARE", "C-HAT", "O-HAT", "TIE", "POD", "MOD" };
+    int targetOfModule (int m) { static const int t[] { LimeEngine::tKick, LimeEngine::tSnare, LimeEngine::tCHat, LimeEngine::tTie, LimeEngine::tPod }; return t[m]; }
+}
 
-    int slotOfPart (int part, bool open = false)
+//==============================================================================
+//  ControlPanel
+//==============================================================================
+ControlPanel::ControlPanel (TwinboxProcessor& p, const String& t, Colour a) : Panel (t, a), proc (p) {}
+
+Knob* ControlPanel::knob (const String& id, const String& caption)
+{
+    auto* k = new Knob (caption, accent);
+    k->attach (proc.apvts, id);
+    owned.add (k); addAndMakeVisible (k);
+    return k;
+}
+
+Toggle* ControlPanel::toggle (const String& id, const String& caption)
+{
+    auto* t = new Toggle (caption, accent);
+    t->attach (proc.apvts, id);
+    owned.add (t); addAndMakeVisible (t);
+    return t;
+}
+
+Segmented* ControlPanel::seg (const String& id, StringArray labels, const String& caption)
+{
+    auto* s = new Segmented (accent, false);
+    if (caption.isNotEmpty()) s->setCaption (caption);
+    s->attach (proc.apvts, id, labels);
+    owned.add (s); addAndMakeVisible (s);
+    return s;
+}
+
+ComboBox* ControlPanel::combo (const String& id)
+{
+    auto* c = new ComboBox();
+    if (auto* prm = dynamic_cast<AudioParameterChoice*> (proc.apvts.getParameter (id))) c->addItemList (prm->choices, 1);
+    comboAtts.add (new AudioProcessorValueTreeState::ComboBoxAttachment (proc.apvts, id, *c));
+    c->setTooltip (proc.apvts.getParameter (id)->getName (64));
+    owned.add (c); addAndMakeVisible (c);
+    return c;
+}
+
+Slider* ControlPanel::incDec (const String& id)
+{
+    auto* s = new Slider (Slider::IncDecButtons, Slider::TextBoxLeft);
+    s->setTextBoxStyle (Slider::TextBoxLeft, false, 34, 20);
+    sliderAtts.add (new AudioProcessorValueTreeState::SliderAttachment (proc.apvts, id, *s));
+    s->setTooltip (proc.apvts.getParameter (id)->getName (64));
+    owned.add (s); addAndMakeVisible (s);
+    return s;
+}
+
+void ControlPanel::resized()
+{
+    Panel::resized();
+    if (customLayout) { customLayout (*this); return; }
+    auto r = content();
+    if (topH > 0 && ! tops.empty())
     {
-        switch (part)
-        {
-            case kick:  return LimeEngine::slotKick;
-            case snare: return LimeEngine::slotSnare;
-            case hat:   return open ? LimeEngine::slotHatOpen : LimeEngine::slotHatClosed;
-            case tie:   return LimeEngine::slotTie;
-            default:    return LimeEngine::slotPod;
-        }
+        auto t = r.removeFromTop (topH);
+        const int w = t.getWidth() / (int) tops.size();
+        for (auto* c : tops) c->setBounds (t.removeFromLeft (w).reduced (2, 1));
+        r.removeFromTop (3);
     }
+    layoutRows (r, rows);
+    for (auto& rw : rows)
+        for (auto* c : rw)
+            if (auto* cb = dynamic_cast<ComboBox*> (c)) cb->setBounds (cb->getBounds().withSizeKeepingCentre (cb->getWidth(), jmin (cb->getHeight(), 24)));
+            else if (auto* sl = dynamic_cast<Slider*> (c)) sl->setBounds (sl->getBounds().withSizeKeepingCentre (sl->getWidth(), jmin (sl->getHeight(), 24)));
+}
+
+//==============================================================================
+//  Panels factory (original control sets of Limelite 1.3)
+//==============================================================================
+std::unique_ptr<ControlPanel> makeLimePanel (TwinboxProcessor& p, const String& which, bool big)
+{
+    ignoreUnused (big);
+    auto cp = std::make_unique<ControlPanel> (p, which.toUpperCase());
+    auto& c = *cp;
+    if (which == "remix")
+    {
+        auto* now = new TextButton ("NOW!");
+        now->setTooltip ("Remix the next bar now");
+        now->onClick = [&p] { p.lime.remixNow(); };
+        c.owned.add (now); c.addAndMakeVisible (now);
+        auto* shift = c.incDec (bShift);
+        c.row ({ now, shift, c.knob (bRemix, "Remix"), c.combo (bRemixRate) });
+        c.row ({ c.knob (bSwing, "Swing"), c.toggle (bHalf, "1/2"), c.knob (bStart, "Start"), nullptr });
+        c.row ({ c.knob (bLen, "Len"), c.knob (bTieLen, "Tie"), c.knob (bPodLen, "Pod"), c.knob (bModLen, "Mod") });
+        c.row ({ nullptr, c.toggle (bTieStr, "Stretch"), c.toggle (bPodStr, "Stretch"), c.toggle (bModStr, "Stretch") });
+    }
+    else if (which == "out")
+    {
+        c.row ({ c.knob (bDirt, "Dirt"), c.knob (bGain, "Gain"), c.knob (bTune, "Tune") });
+        c.row ({ c.toggle (bNorm, "Norm"), c.knob (bNormAmp, "Amp"), c.knob (bNormRel, "Rel"), c.knob (bNormSm, "Sm") });
+    }
+    else if (which == "global")
+    {
+        c.row ({ c.toggle (gRun, "CLK"), c.knob (gTempo, "BPM") });
+    }
+    else if (which == "pulp")
+    {
+        c.setTitle ("PULP");
+        c.row ({ c.knob (b (pulp, lv::tune), "Tune"), c.knob (b (pulp, lv::port), "Port"), c.knob (b (pulp, lv::gain), "Gain"), c.knob (b (pulp, lv::pan), "Pan"), c.toggle (b (pulp, lv::on), "On") });
+        c.row ({ c.knob (b (pulp, lv::trkLo), "Lo"), c.knob (b (pulp, lv::trkHi), "Hi"), c.knob (b (pulp, lv::tieSrc), "Tie"), c.knob (b (pulp, lv::dcy), "D"), c.knob (b (pulp, lv::osc), "Osc") });
+        c.row ({ c.knob (b (pulp, lv::comb), "Comb"), c.knob (b (pulp, lv::fb), "FB"), c.knob (b (pulp, lv::freq), "Freq"), c.knob (b (pulp, lv::fm), "FM"), c.knob (b (pulp, lv::cut), "Cut") });
+    }
+    else if (which == "xfx")
+    {
+        c.setTitle ("XFX");
+        auto* mode = c.combo (bXMode);
+        auto* pad = new XYPad (p.apvts, bXParam, bXAdd);
+        c.owned.add (pad); c.addAndMakeVisible (pad);
+        auto* dly = c.knob (bXDly, "Dly"); auto* gain = c.knob (bXGain, "Gain"); auto* lo = c.knob (bXLo, "Lo"); auto* hi = c.knob (bXHi, "Hi");
+        auto* spd = c.knob (bXSpd, "Spd"); auto* len = c.knob (bXLen, "Len"); auto* sm = c.knob (bXSm, "Sm");
+        auto* play = c.toggle (bXPlay, juce::String::fromUTF8 ("\xe2\x96\xb6")); auto* rec = c.toggle (bXRec, juce::String::fromUTF8 ("\xe2\x97\x8f"));
+        c.customLayout = [=] (ControlPanel& panel)
+        {
+            auto r = panel.content();
+            auto left = r.removeFromLeft (r.getWidth() * 45 / 100);
+            mode->setBounds (left.removeFromTop (22).reduced (1, 0));
+            left.removeFromTop (3);
+            auto btns = left.removeFromBottom (22);
+            pad->setBounds (left.reduced (1, 2));
+            play->setBounds (btns.removeFromLeft (btns.getWidth() / 2).reduced (2, 0));
+            rec->setBounds (btns.reduced (2, 0));
+            layoutRows (r.withTrimmedLeft (4), { { dly, gain }, { lo, hi }, { spd, len, sm } }, 3);
+        };
+    }
+    else if (which == "delay")
+    {
+        c.row ({ c.knob (bDlyOne, "One"), c.knob (bDlyTwo, "Two"), c.knob (bDlyFb, "FB"), c.knob (bDlyGain, "Gain") });
+        c.row ({ c.knob (bDlyLfo, "LFO"), c.knob (bDlyFM, "FM"), c.knob (bDlyDM, "DM"), c.knob (bDlyWide, "Wide") });
+        c.row ({ c.knob (bDlyCut, "Cut"), c.knob (bDlyRes, "Res"), c.toggle (bDlyLo, "Lo"), nullptr });
+    }
+    else if (which == "mix")
+    {
+        c.row ({ c.knob (bFxMix, "FX Mix") });
+        c.row ({ c.toggle (bModInput, "Mod Input"), c.toggle (bModMix, "Mod Mix") });
+    }
+    else if (which == "eq")
+    {
+        c.row ({ c.knob (bEqHi, "Hi"), c.knob (bEqAmp, "Amp") });
+        c.row ({ c.knob (bEqMid, "Mid"), c.knob (bEqSplit, ">|<") });
+        c.row ({ c.knob (bEqLo, "Lo"), nullptr });
+    }
+    else if (which == "filter")
+    {
+        c.row ({ c.knob (bFltCut, "Cut"), c.knob (bFltTrk, "Trk"), c.knob (bFltSm, "Sm"), c.knob (bFltMod, "Mod") });
+    }
+    else if (which == "magic")
+    {
+        c.row ({ c.knob (bMagPitch, "Pitch"), c.knob (bMagGrain, "Gr"), c.knob (bMagMod, "Mod"), c.knob (bMagRmx, "Rmx"), c.knob (bMagMix, "Mix"), c.knob (bMagNotch, "Notch") });
+    }
+    return cp;
 }
 
 //==============================================================================
 //  LimeSeqGrid
 //==============================================================================
-LimeSeqGrid::LimeSeqGrid (TwinboxProcessor& p, bool b) : proc (p), big (b)
+LimeSeqGrid::LimeSeqGrid (TwinboxProcessor& p, bool b2) : proc (p), big (b2)
 {
     startTimerHz (30);
-    setTooltip (big ? String() : String ("Click: on/off (Hat: closed > open > off) | Right-click: accent | Mod lane: drag values"));
+    setTooltip ("Click: on/off  |  Right-click: accent  |  Drag: paint  |  Value lanes: drag the bar height (right-click = off)");
 }
 
-int LimeSeqGrid::editPattern() const { return (int) proc.apvts.getRawParameterValue (bPattern)->load(); }
-
-int LimeSeqGrid::laneLength (int lane) const
+int LimeSeqGrid::editPattern() const
 {
-    const char* id = lane <= 2 ? bLen : (lane == 3 ? bTieLen : (lane == 4 ? bPodLen : bModLen));
-    return jlimit (1, numSteps, (int) proc.apvts.getRawParameterValue (id)->load());
+    const bool chain = getParam (proc.apvts, bChainOn) > 0.5f, lockOn = getParam (proc.apvts, bLock) > 0.5f;
+    if (chain && ! lockOn && proc.isPlaying()) return proc.lime.playingPattern();
+    return (int) getParam (proc.apvts, bPattern);
 }
 
-bool LimeSeqGrid::laneStretched (int lane) const
+int LimeSeqGrid::laneLen (int lane) const
 {
-    if (lane <= 2) return false;
-    const char* id = lane == 3 ? bTieStr : (lane == 4 ? bPodStr : bModStr);
-    return proc.apvts.getRawParameterValue (id)->load() > 0.5f;
+    const char* id = lane < 4 ? bLen : (lane == 4 ? bTieLen : (lane == 5 ? bPodLen : bModLen));
+    return (int) getParam (proc.apvts, id);
 }
 
-Rectangle<int> LimeSeqGrid::laneBounds (int lane) const
+Rectangle<float> LimeSeqGrid::rowBounds (int row) const
 {
-    const float w[] { 1.0f, 1.0f, 1.0f, 0.85f, 0.85f, big ? 2.4f : 1.2f };
-    const float gap = big ? 16.0f : 6.0f;
-    float total = 0; for (float x : w) total += x;
-    const float unit = ((float) getHeight() - gap) / total;
-    float y = 0;
-    for (int i = 0; i < lane; ++i) { y += w[i] * unit; if (i == 2) y += gap; }
-    return Rectangle<float> (0.0f, y, (float) getWidth(), w[lane] * unit).toNearestInt();
+    const float lw = big ? 70.0f : 50.0f;
+    const float gap = big ? 12.0f : 5.0f;
+    const float trigH = big ? 34.0f : ((float) getHeight() - gap) * 0.62f / 4.0f;
+    if (row < 4) return { lw, (float) row * trigH, (float) getWidth() - lw, trigH };
+    const float top = trigH * 4 + gap;
+    const float rest = (float) getHeight() - top;
+    const int nLower = big ? 3 : 1;
+    const float h = (rest - (big ? 8.0f * (nLower - 1) : 0.0f)) / (float) nLower;
+    const int i = row - 4;
+    return { lw, top + (float) i * (h + (big ? 8.0f : 0.0f)), (float) getWidth() - lw, h };
 }
 
-Rectangle<float> LimeSeqGrid::cell (int lane, int step) const
+int LimeSeqGrid::stepAtX (float x) const
 {
-    const float lw = big ? 70.0f : 44.0f;
-    const float cw = ((float) getWidth() - lw) / (float) numSteps;
-    auto lb = laneBounds (lane).toFloat();
-    float w = cw;
-    if (laneStretched (lane)) w = cw * (float) laneLength (0) / (float) laneLength (lane);
-    return { lw + (float) step * w, lb.getY(), w, lb.getHeight() };
-}
-
-int LimeSeqGrid::laneAt (int y) const
-{
-    for (int l = 0; l < 6; ++l)
-        if (laneBounds (l).contains (laneBounds (l).getX(), y)) return l;
-    return -1;
-}
-
-int LimeSeqGrid::stepAt (int lane, int x) const
-{
-    for (int s = 0; s < numSteps; ++s)
-    {
-        auto c = cell (lane, s);
-        if ((float) x >= c.getX() && (float) x < c.getRight()) return s;
-    }
-    return -1;
+    const auto r = rowBounds (0);
+    const float cw = r.getWidth() / (float) visibleSteps();
+    const int s = (int) ((x - r.getX()) / cw);
+    return s < 0 || s >= visibleSteps() ? -1 : page * visibleSteps() + s;
 }
 
 void LimeSeqGrid::paint (Graphics& g)
@@ -97,287 +223,320 @@ void LimeSeqGrid::paint (Graphics& g)
     const int pat = editPattern();
     auto& P = proc.lime.pattern (pat);
     const bool showPlay = proc.isPlaying() && proc.lime.playingPattern() == pat;
-    const float lw = big ? 70.0f : 44.0f;
+    const int vis = visibleSteps(), first = page * vis;
 
-    for (int lane = 0; lane < 6; ++lane)
+    for (int row = 0; row < rowCount(); ++row)
     {
-        auto lb = laneBounds (lane);
-        const int len = laneLength (lane);
-        const bool stretched = laneStretched (lane);
-        const int ui = lane <= 2 ? 0 : lane - 2;
-        const int ps = showPlay ? proc.lime.laneStep (ui) : -1;
-
+        const int lane = rowToLane (row);
+        const auto rb = rowBounds (row);
+        const int len = laneLen (lane);
+        const int uiLane = lane < 4 ? 0 : lane - 3;
+        const int ps = showPlay ? proc.lime.laneStep (uiLane) : -1;
         g.setColour (theme::text);
-        g.setFont (theme::font (big ? 14.0f : 10.5f, true));
-        g.drawText (laneNames[lane], 2, lb.getY(), (int) lw - 4, lb.getHeight(), Justification::centredLeft);
-        if (lane >= 3)
+        g.setFont (theme::font (big ? 13.0f : 10.0f, true));
+        if (big || row < 4) g.drawText (laneNames[lane], 2, (int) rb.getY(), (int) rb.getX() - 4, (int) rb.getHeight(), Justification::centredLeft);
+        const float cw = rb.getWidth() / (float) vis;
+        for (int i = 0; i < vis; ++i)
         {
-            g.setColour (theme::textDim);
-            g.setFont (theme::font (big ? 11.0f : 8.5f));
-            g.drawText (String (len) + (stretched ? "~" : ""), 2, lb.getBottom() - (big ? 16 : 10), (int) lw - 6, big ? 14 : 9, Justification::bottomRight);
-        }
-
-        for (int s = 0; s < numSteps; ++s)
-        {
-            if (stretched && s >= len) break;
-            auto c = cell (lane, s).reduced (big ? 2.0f : 1.0f, big ? 2.0f : 1.0f);
-            const bool beyond = s >= len;
-            Colour bgc = ((stretched ? s * laneLength (0) / jmax (1, len) : s) / 4) % 2 == 0 ? theme::stepBeat : theme::stepOff;
-            g.setColour (beyond ? bgc.withMultipliedAlpha (0.3f) : bgc);
+            const int st = first + i;
+            auto c = Rectangle<float> (rb.getX() + (float) i * cw, rb.getY(), cw, rb.getHeight()).reduced (big ? 1.5f : 1.0f);
+            const bool beyond = st >= len;
+            Colour bg = (st / 4) % 2 == 0 ? theme::stepBeat : theme::stepOff;
+            g.setColour (beyond ? bg.withMultipliedAlpha (0.3f) : bg);
             g.fillRoundedRectangle (c, 2.0f);
-
-            if (lane == 5)
+            if (lane < 4)
             {
-                const float v = P.mod[(size_t) s].load();
-                auto mid = c.getCentreY();
-                auto top = c.getY() + c.getHeight() * (1.0f - v);
-                g.setColour (theme::accentB.withAlpha (beyond ? 0.25f : 0.85f));
-                g.fillRect (Rectangle<float>::leftTopRightBottom (c.getX() + 1, jmin (mid, top), c.getRight() - 1, jmax (mid, top)).withHeight (jmax (1.5f, std::abs (top - mid))));
-                g.setColour (theme::textDim.withAlpha (0.4f));
-                g.drawHorizontalLine ((int) mid, c.getX(), c.getRight());
+                const uint8_t f = P.trig[(size_t) lane][(size_t) st].load();
+                if (f)
+                {
+                    auto sq = f >= 2 ? c.reduced (1.0f) : c.reduced (c.getWidth() * 0.2f, c.getHeight() * 0.2f);
+                    g.setColour ((lane == 3 ? theme::accentG : theme::accentB).withMultipliedAlpha (beyond ? 0.3f : 1.0f));
+                    g.fillRoundedRectangle (sq, 2.0f);
+                }
             }
             else
             {
-                const uint8_t f = P.steps[(size_t) lane][(size_t) s].load();
-                if (f & LimeEngine::trig)
+                const float v = P.value[(size_t) (lane - 4)][(size_t) st].load();
+                if (v > 0.001f)
                 {
-                    Colour on = theme::accentB;
-                    if (lane == 2 && (f & LimeEngine::open)) on = theme::accentG;
-                    if (! (f & LimeEngine::accent)) on = on.withMultipliedBrightness (0.72f);
-                    g.setColour (beyond ? on.withMultipliedAlpha (0.3f) : on);
-                    g.fillRoundedRectangle (c.reduced (1.0f), 2.0f);
-                    if (f & LimeEngine::accent)
-                    {
-                        g.setColour (Colours::black.withAlpha (0.6f));
-                        g.fillEllipse (c.getCentreX() - 2.5f, c.getY() + 3.0f, 5.0f, 5.0f);
-                    }
-                    if (lane == 2 && big)
-                    {
-                        g.setColour (Colours::black);
-                        g.setFont (theme::font (11.0f, true));
-                        g.drawText ((f & LimeEngine::open) ? "O" : "C", c, Justification::centred);
-                    }
+                    const float top = c.getBottom() - c.getHeight() * v;
+                    g.setColour ((lane == 6 ? theme::accentG : theme::accentB).withMultipliedAlpha (beyond ? 0.3f : 0.9f));
+                    g.fillRect (Rectangle<float>::leftTopRightBottom (c.getX() + 1, top, c.getRight() - 1, c.getBottom()));
+                }
+                if (lane == 4)   // Tie centre line (= root note when VEL -> tune)
+                {
+                    g.setColour (theme::textDim.withAlpha (0.25f));
+                    g.drawHorizontalLine ((int) c.getCentreY(), c.getX(), c.getRight());
                 }
             }
-            if (s == ps)
+            if (st == ps)
             {
                 g.setColour (Colours::white.withAlpha (0.6f));
-                g.drawRoundedRectangle (c, 2.0f, 1.5f);
+                g.drawRoundedRectangle (c, 2.0f, 1.4f);
             }
         }
-        if (lane == 2)
-        {
-            g.setColour (theme::outline);
-            g.fillRect (0, lb.getBottom() + (big ? 7 : 2), getWidth(), 2);
-        }
+    }
+    // remix lamp
+    if (proc.lime.remixActive() && proc.isPlaying())
+    {
+        g.setColour (theme::accentA);
+        g.fillEllipse (4.0f, (float) getHeight() - 10.0f, 6.0f, 6.0f);
     }
 }
 
-void LimeSeqGrid::applyCell (int lane, int step, const MouseEvent& e, bool first)
+void LimeSeqGrid::edit (int row, int st, const MouseEvent& e, bool first)
 {
     auto& P = proc.lime.pattern (editPattern());
-    if (lane == 5)
+    const int lane = rowToLane (row);
+    if (lane < 4)
     {
-        auto lb = laneBounds (lane).toFloat();
-        const float v = jlimit (0.0f, 1.0f, 1.0f - ((float) e.y - lb.getY()) / lb.getHeight());
-        P.mod[(size_t) step].store (e.mods.isAltDown() || e.mods.isRightButtonDown() ? 0.5f : v);
-        return;
+        auto& cell = P.trig[(size_t) lane][(size_t) st];
+        if (first)
+        {
+            const uint8_t v = cell.load();
+            if (e.mods.isRightButtonDown() || e.mods.isShiftDown()) dragVal = v >= 2 ? 1 : 2;
+            else dragVal = v ? 0 : 1;
+        }
+        cell.store (dragVal);
     }
-    auto& c = P.steps[(size_t) lane][(size_t) step];
-    if (first)
+    else
     {
-        const uint8_t v = c.load();
-        if (e.mods.isRightButtonDown())
-            dragValue = (v & LimeEngine::accent) ? (uint8_t) (v & ~LimeEngine::accent) : (uint8_t) (v | LimeEngine::accent | LimeEngine::trig);
-        else if (lane == 2)
-            dragValue = ! (v & LimeEngine::trig) ? LimeEngine::trig
-                      : (! (v & LimeEngine::open) ? (uint8_t) (LimeEngine::trig | LimeEngine::open | (v & LimeEngine::accent)) : 0);
-        else
-            dragValue = (v & LimeEngine::trig) ? 0 : LimeEngine::trig;
+        const auto rb = rowBounds (row);
+        float v = jlimit (0.0f, 1.0f, (rb.getBottom() - (float) e.y) / rb.getHeight());
+        if (e.mods.isRightButtonDown()) v = 0.0f;
+        P.value[(size_t) (lane - 4)][(size_t) st].store (v);
     }
-    c.store (dragValue);
 }
 
 void LimeSeqGrid::mouseDown (const MouseEvent& e)
 {
-    const int lane = laneAt (e.y);
-    if (lane < 0) return;
-    const int s = stepAt (lane, e.x);
-    if (s < 0) return;
-    dragLane = lane; lastDragStep = s;
-    applyCell (lane, s, e, true);
-    repaint();
+    for (int row = 0; row < rowCount(); ++row)
+        if (rowBounds (row).contains (e.position))
+        {
+            const int st = stepAtX (e.position.x);
+            if (st < 0) return;
+            dragRow = row; lastStep = st;
+            edit (row, st, e, true);
+            repaint();
+            return;
+        }
 }
 
 void LimeSeqGrid::mouseDrag (const MouseEvent& e)
 {
-    if (dragLane < 0) return;
-    const int s = stepAt (dragLane, e.x);
-    if (s < 0 || (s == lastDragStep && dragLane != 5)) return;
-    lastDragStep = s;
-    applyCell (dragLane, s, e, false);
+    if (dragRow < 0) return;
+    const int st = stepAtX (e.position.x);
+    if (st < 0 || (st == lastStep && dragRow < 4)) return;
+    lastStep = st;
+    edit (dragRow, st, e, false);
     repaint();
 }
 
 void LimeSeqGrid::timerCallback()
 {
-    bool changed = false;
+    bool changed = big;
     for (int i = 0; i < 4; ++i)
     {
         const int s = proc.isPlaying() ? proc.lime.laneStep (i) : -1;
-        if (s != lastSteps[(size_t) i]) { lastSteps[(size_t) i] = s; changed = true; }
+        if (s != lastPlay[(size_t) i]) { lastPlay[(size_t) i] = s; changed = true; }
     }
-    if (changed || big) repaint();
+    if (changed) repaint();
 }
 
 //==============================================================================
-//  LimeSeqWindowContent
+//  LimeSeqPanel
 //==============================================================================
-LimeSeqWindowContent::LimeSeqWindowContent (TwinboxProcessor& p) : proc (p), grid (p, true)
+LimeSeqPanel::LimeSeqPanel (TwinboxProcessor& p, bool b2) : Panel ("Sequencer", theme::accentB), proc (p), big (b2), grid (p, b2)
 {
-    for (int i = 0; i < numLimePatterns; ++i)
+    for (int i = 0; i < 4; ++i)
     {
-        auto* b = slots.add (new TextButton ("Pattern " + String (i + 1)));
-        b->setColour (TextButton::buttonOnColourId, theme::accentB);
-        b->onClick = [this, i] { setParam (proc.apvts, bPattern, (float) i); };
-        addAndMakeVisible (b);
+        auto* btn = patBtns.add (new TextButton (String::charToString ((juce_wchar) ('A' + i))));
+        btn->setColour (TextButton::buttonOnColourId, theme::accentB);
+        btn->setTooltip ("Edit / play pattern " + btn->getButtonText());
+        btn->onClick = [this, i] { setParam (proc.apvts, bPattern, (float) i); };
+        addAndMakeVisible (btn);
     }
-    addAndMakeVisible (grid);
-    for (int l = 0; l < 6; ++l)
+    for (int i = 0; i < grid.numPages(); ++i)
     {
-        auto& t = tools[(size_t) l];
-        t.clear.onClick = [this, l] { laneOp (l, 0); };
-        t.left.onClick  = [this, l] { laneOp (l, 1); };
-        t.right.onClick = [this, l] { laneOp (l, 2); };
-        t.rnd.onClick   = [this, l] { laneOp (l, 3); };
-        t.four.onClick  = [this, l] { laneOp (l, 4); };
-        t.clear.setTooltip ("Clear lane"); t.left.setTooltip ("Shift left"); t.right.setTooltip ("Shift right");
-        t.rnd.setTooltip ("Randomise lane"); t.four.setTooltip (l == 5 ? "Reset values to centre" : "Fill every 4th step");
-        for (auto* b : { &t.clear, &t.left, &t.right, &t.rnd, &t.four }) addAndMakeVisible (b);
+        auto* btn = pageBtns.add (new TextButton (String (i * grid.visibleSteps() + 1) + "-" + String ((i + 1) * grid.visibleSteps())));
+        btn->setColour (TextButton::buttonOnColourId, theme::header.brighter (0.3f));
+        btn->onClick = [this, i] { grid.setPage (i); };
+        addAndMakeVisible (btn);
     }
-    auto& s = proc.apvts;
-    len.attach (s, bLen); tieLen.attach (s, bTieLen); podLen.attach (s, bPodLen); modLen.attach (s, bModLen);
-    shuffle.attach (s, bShuffle); accent.attach (s, bAccent);
-    tieStr.attach (s, bTieStr); podStr.attach (s, bPodStr); modStr.attach (s, bModStr);
-    modDest.addItemList (modDestNames(), 1);
-    modDestAtt = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (s, bModDest, modDest);
-    modAmt.attach (s, bModAmt);
-    for (auto* c : std::initializer_list<Component*> { &len, &tieLen, &podLen, &modLen, &shuffle, &accent, &tieStr, &podStr, &modStr, &modDest, &modAmt })
-        addAndMakeVisible (c);
+    if (! big)
+        for (int i = 0; i < 3; ++i)
+        {
+            auto* btn = laneBtns.add (new TextButton (laneNames[4 + i]));
+            btn->setColour (TextButton::buttonOnColourId, theme::accentB.withAlpha (0.6f));
+            btn->onClick = [this, i] { grid.setLowerLane (i); };
+            addAndMakeVisible (btn);
+        }
+    for (int i = 0; i < 8; ++i)
+    {
+        auto* btn = chainBtns.add (new TextButton ("A"));
+        btn->setTooltip ("Pattern sequencer slot " + String (i + 1) + " (click to cycle A-D)");
+        btn->onClick = [this, i]
+        {
+            const int v = ((int) getParam (proc.apvts, bChainSlot (i)) + 1) % 4;
+            setParam (proc.apvts, bChainSlot (i), (float) v);
+        };
+        addAndMakeVisible (btn);
+    }
+    chainOn.attach (p.apvts, bChainOn);
+    lock.attach (p.apvts, bLock);
+    chainLen.setSliderStyle (Slider::IncDecButtons);
+    chainLen.setTextBoxStyle (Slider::TextBoxLeft, false, 22, 18);
+    chainLenAtt = std::make_unique<AudioProcessorValueTreeState::SliderAttachment> (p.apvts, bChainLen, chainLen);
+    copyBtn.onClick = [this] { clip = (int) getParam (proc.apvts, bPattern); };
+    pasteBtn.onClick = [this]
+    {
+        if (clip >= 0) proc.lime.pattern ((int) getParam (proc.apvts, bPattern)).copyFrom (proc.lime.pattern (clip));
+        grid.repaint();
+    };
+    for (auto* c : std::initializer_list<Component*> { &chainOn, &lock, &chainLen, &copyBtn, &pasteBtn, &grid }) addAndMakeVisible (c);
     startTimerHz (10);
 }
 
-void LimeSeqWindowContent::laneOp (int lane, int op)
+void LimeSeqPanel::timerCallback()
 {
-    auto& P = proc.lime.pattern ((int) proc.apvts.getRawParameterValue (bPattern)->load());
-    Random rnd;
-    if (lane == 5)
+    const int pat = (int) getParam (proc.apvts, bPattern);
+    const int playing = proc.lime.playingPattern();
+    for (int i = 0; i < patBtns.size(); ++i)
     {
-        std::array<float, numSteps> v;
-        for (int i = 0; i < numSteps; ++i) v[(size_t) i] = P.mod[(size_t) i].load();
-        for (int i = 0; i < numSteps; ++i)
-        {
-            float nv = v[(size_t) i];
-            if (op == 0 || op == 4) nv = 0.5f;
-            else if (op == 1) nv = v[(size_t) ((i + 1) % numSteps)];
-            else if (op == 2) nv = v[(size_t) ((i + numSteps - 1) % numSteps)];
-            else if (op == 3) nv = rnd.nextFloat();
-            P.mod[(size_t) i].store (nv);
-        }
+        patBtns[i]->setToggleState (i == pat, dontSendNotification);
+        patBtns[i]->setColour (TextButton::buttonColourId, proc.isPlaying() && i == playing && i != pat ? theme::accentB.withAlpha (0.35f) : theme::panel2);
     }
-    else
+    for (int i = 0; i < pageBtns.size(); ++i) pageBtns[i]->setToggleState (i == grid.getPage(), dontSendNotification);
+    for (int i = 0; i < laneBtns.size(); ++i) laneBtns[i]->setToggleState (i == grid.lowerLaneShown(), dontSendNotification);
+    const int clen = (int) getParam (proc.apvts, bChainLen);
+    const bool on = getParam (proc.apvts, bChainOn) > 0.5f;
+    for (int i = 0; i < 8; ++i)
     {
-        std::array<uint8_t, numSteps> v;
-        for (int i = 0; i < numSteps; ++i) v[(size_t) i] = P.steps[(size_t) lane][(size_t) i].load();
-        for (int i = 0; i < numSteps; ++i)
-        {
-            uint8_t nv = v[(size_t) i];
-            if (op == 0) nv = 0;
-            else if (op == 1) nv = v[(size_t) ((i + 1) % numSteps)];
-            else if (op == 2) nv = v[(size_t) ((i + numSteps - 1) % numSteps)];
-            else if (op == 3)
-            {
-                nv = rnd.nextFloat() < 0.3f ? LimeEngine::trig : 0;
-                if (nv && rnd.nextFloat() < 0.25f) nv |= LimeEngine::accent;
-                if (nv && lane == 2 && rnd.nextFloat() < 0.3f) nv |= LimeEngine::open;
-            }
-            else if (op == 4) nv = (i % 4 == 0) ? LimeEngine::trig : 0;
-            P.steps[(size_t) lane][(size_t) i].store (nv);
-        }
+        auto* b2 = chainBtns[i];
+        b2->setButtonText (String::charToString ((juce_wchar) ('A' + (int) getParam (proc.apvts, bChainSlot (i)))));
+        b2->setAlpha (i < clen ? 1.0f : 0.35f);
+        b2->setColour (TextButton::buttonColourId, on && proc.isPlaying() && proc.lime.chainSlot() == i ? theme::accentB.withAlpha (0.6f) : theme::panel2);
     }
-    grid.repaint();
 }
 
-void LimeSeqWindowContent::timerCallback()
+void LimeSeqPanel::paint (Graphics& g)
 {
-    const int pat = (int) proc.apvts.getRawParameterValue (bPattern)->load();
-    for (int i = 0; i < slots.size(); ++i) slots[i]->setToggleState (i == pat, dontSendNotification);
+    Panel::paint (g);
 }
 
-void LimeSeqWindowContent::paint (Graphics& g)
+void LimeSeqPanel::resized()
 {
-    g.fillAll (theme::bg);
-    g.setColour (theme::textDim);
-    g.setFont (theme::font (12.0f));
-    g.drawText ("Click: step on/off  |  Hat: closed > open > off  |  Right-click: accent  |  Drag: paint  |  Mod lane: drag bars (right-click = centre)",
-                12, getHeight() - 24, getWidth() - 24, 20, Justification::centredLeft);
-}
-
-void LimeSeqWindowContent::resized()
-{
-    auto r = getLocalBounds().reduced (12);
-    r.removeFromBottom (24);
-    auto top = r.removeFromTop (32);
-    const int bw = top.getWidth() / numLimePatterns;
-    for (auto* b : slots) b->setBounds (top.removeFromLeft (bw).reduced (3, 2));
-    r.removeFromTop (10);
-
-    auto bottom = r.removeFromBottom (190);
-    layoutRows (bottom, { { &len, &tieLen, &podLen, &modLen, &shuffle, &accent, &modDest, &modAmt },
-                          { nullptr, &tieStr, &podStr, &modStr, nullptr, nullptr, nullptr, nullptr } });
-    modDest.setBounds (modDest.getBounds().withSizeKeepingCentre (modDest.getWidth(), 26));
-    r.removeFromBottom (10);
-
-    auto toolsArea = r.removeFromRight (230);
-    r.removeFromRight (8);
+    Panel::resized();
+    auto r = content();
+    auto top = r.removeFromTop (big ? 28 : 20);
+    for (auto* b2 : patBtns) b2->setBounds (top.removeFromLeft (big ? 40 : 24).reduced (1, 0));
+    top.removeFromLeft (8);
+    chainOn.setBounds (top.removeFromLeft (big ? 44 : 30).reduced (1, 0));
+    chainLen.setBounds (top.removeFromLeft (big ? 80 : 62).reduced (1, 0));
+    for (auto* b2 : chainBtns) b2->setBounds (top.removeFromLeft (big ? 30 : 18).reduced (1, 0));
+    lock.setBounds (top.removeFromLeft (big ? 54 : 38).reduced (1, 0));
+    pasteBtn.setBounds (top.removeFromRight (big ? 60 : 42).reduced (1, 0));
+    copyBtn.setBounds (top.removeFromRight (big ? 60 : 40).reduced (1, 0));
+    top.removeFromRight (6);
+    for (int i = pageBtns.size(); --i >= 0;) pageBtns[i]->setBounds (top.removeFromRight (big ? 70 : 38).reduced (1, 0));
+    r.removeFromTop (4);
     grid.setBounds (r);
-    for (int l = 0; l < 6; ++l)
+    if (! big)
     {
-        auto lb = grid.laneBounds (l).translated (0, r.getY());
-        auto row = Rectangle<int> (toolsArea.getX(), lb.getY(), toolsArea.getWidth(), lb.getHeight()).withSizeKeepingCentre (toolsArea.getWidth(), jmin (28, lb.getHeight() - 4));
-        auto& t = tools[(size_t) l];
-        const int w = row.getWidth() / 5;
-        for (auto* b : { &t.clear, &t.left, &t.right, &t.rnd, &t.four }) b->setBounds (row.removeFromLeft (w).reduced (2, 0));
+        auto lower = grid.rowBounds (4).toNearestInt().translated (r.getX(), r.getY());
+        auto col = Rectangle<int> (r.getX(), lower.getY(), 48, lower.getHeight());
+        const int h = col.getHeight() / 3;
+        for (auto* b2 : laneBtns) b2->setBounds (col.removeFromTop (h).reduced (1, 1));
     }
 }
 
 //==============================================================================
-//  SampleView
+//  SampleSelector / WaveView
 //==============================================================================
-void SampleView::timerCallback()
+SampleSelector::SampleSelector (TwinboxProcessor& p, int m, bool b2) : proc (p), module (m), big (b2)
 {
-    auto s = proc.lime.sampleFor (slot);
-    const int h = proc.lime.hitCount (slot);
-    if (s.get() != last || h != lastHits || flash > 0.01f)
+    twb.setTooltip ("Factory folder: Twinbox " + SampleLibrary::moduleName (m));
+    leg.setTooltip ("Legacy folder: original Limelite samples (use IMPORT LEGACY first)");
+    usr.setTooltip ("Choose your own folder for this module");
+    play.setTooltip ("Audition");
+    for (auto* b3 : { &twb, &leg, &usr }) b3->setColour (TextButton::buttonOnColourId, theme::accentB);
+    twb.onClick = [this] { proc.library.setSource (module, SampleLibrary::twinbox); };
+    leg.onClick = [this] { proc.library.setSource (module, SampleLibrary::legacy); };
+    usr.onClick = [this] { chooseFolder(); };
+    play.onClick = [this] { proc.lime.audition (targetOfModule (module), 1.0f); };
+    box.onChange = [this]
     {
-        if (h != lastHits) flash = 1.0f; else flash *= 0.7f;
-        lastHits = h;
-        last = s.get();
-        repaint();
-    }
+        const int i = box.getSelectedItemIndex();
+        if (i >= 0 && i != shownIndex) { shownIndex = i; setParam (proc.apvts, b (module, lv::wav), (float) i); }
+    };
+    for (auto* c : std::initializer_list<Component*> { &twb, &leg, &usr, &box, &play }) addAndMakeVisible (c);
+    proc.library.addChangeListener (this);
+    refresh();
+    startTimerHz (8);
 }
 
-void SampleView::paint (Graphics& g)
+SampleSelector::~SampleSelector() { proc.library.removeChangeListener (this); stopTimer(); }
+
+void SampleSelector::chooseFolder()
+{
+    chooser = std::make_unique<FileChooser> ("Choose a folder with " + SampleLibrary::moduleName (module) + " samples",
+                                             proc.library.userFolder (module).isDirectory() ? proc.library.userFolder (module) : SampleLibrary::rootFolder());
+    chooser->launchAsync (FileBrowserComponent::openMode | FileBrowserComponent::canSelectDirectories, [this] (const FileChooser& fc)
+    {
+        auto f = fc.getResult();
+        if (f.isDirectory()) proc.library.setUserFolder (module, f);
+    });
+}
+
+void SampleSelector::refresh()
+{
+    auto set = proc.library.set (module);
+    box.clear (dontSendNotification);
+    for (int i = 0; i < set->names.size(); ++i) box.addItem (set->names[i], i + 1);
+    if (set->size() == 0) box.setText (proc.library.isLoading() ? "loading..." : "(empty folder)", dontSendNotification);
+    shownIndex = -1;
+    timerCallback();
+    const auto src = proc.library.source (module);
+    twb.setToggleState (src == SampleLibrary::twinbox, dontSendNotification);
+    leg.setToggleState (src == SampleLibrary::legacy, dontSendNotification);
+    usr.setToggleState (src == SampleLibrary::user, dontSendNotification);
+    usr.setTooltip (src == SampleLibrary::user ? "User folder: " + proc.library.userFolder (module).getFullPathName() : "Choose your own folder for this module");
+}
+
+void SampleSelector::timerCallback()
+{
+    const int n = box.getNumItems();
+    if (n == 0) return;
+    const int idx = ((int) getParam (proc.apvts, b (module, lv::wav))) % n;
+    if (idx != shownIndex) { shownIndex = idx; box.setSelectedItemIndex (idx, dontSendNotification); }
+}
+
+void SampleSelector::paint (Graphics&) {}
+
+void SampleSelector::resized()
+{
+    auto r = getLocalBounds();
+    const int bw = big ? 46 : 30;
+    twb.setBounds (r.removeFromLeft (bw).reduced (1, 0));
+    leg.setBounds (r.removeFromLeft (bw).reduced (1, 0));
+    usr.setBounds (r.removeFromLeft (big ? 34 : 24).reduced (1, 0));
+    play.setBounds (r.removeFromRight (big ? 34 : 22).reduced (1, 0));
+    box.setBounds (r.reduced (1, 0));
+}
+
+void WaveView::paint (Graphics& g)
 {
     auto r = getLocalBounds().toFloat();
     g.setColour (theme::outline);
     g.fillRoundedRectangle (r, 3.0f);
-    auto s = proc.lime.sampleFor (slot);
-    if (s == nullptr || s->data.empty()) return;
-    const auto& d = s->data;
+    auto set = proc.library.set (module);
+    if (set->size() == 0) return;
+    const int idx = ((int) getParam (proc.apvts, b (module, lv::wav))) % set->size();
+    auto s = set->samples[(size_t) idx];
+    const auto& d = s->L;
     const int w = getWidth();
     const float mid = r.getCentreY(), hh = r.getHeight() * 0.45f;
-    g.setColour (theme::accentB.withAlpha (0.6f + 0.4f * flash));
+    g.setColour (theme::accentB.withAlpha (0.75f));
     for (int x = 0; x < w; ++x)
     {
         const size_t a0 = (size_t) ((double) x / w * d.size()), a1 = jmin (d.size(), (size_t) ((double) (x + 1) / w * d.size()) + 1);
@@ -387,360 +546,208 @@ void SampleView::paint (Graphics& g)
     }
     g.setColour (theme::text);
     g.setFont (theme::font (12.0f));
-    g.drawText (s->name + "   " + String ((double) d.size() / s->sourceRate, 2) + " s", r.reduced (6, 4).toNearestInt(), Justification::topLeft);
+    g.drawText (s->name + "   " + String ((double) d.size() / s->sourceRate, 2) + " s" + (s->stereo() ? "  stereo" : ""), r.reduced (6, 4).toNearestInt(), Justification::topLeft);
+    g.setColour (theme::textDim);
+    g.drawText (set->folder.getFullPathName(), r.reduced (6, 4).toNearestInt(), Justification::bottomLeft);
 }
 
 //==============================================================================
-//  LimeSamplerPanel
+//  LimeModulePanel
 //==============================================================================
-LimeSamplerPanel::LimeSamplerPanel (TwinboxProcessor& p, int pt, bool b)
-    : Panel (limePartName (pt), theme::accentB), proc (p), part (pt), big (b)
+LimeModulePanel::LimeModulePanel (TwinboxProcessor& p, int v, bool b2) : ControlPanel (p, limeVoiceName (v)), voice (v), big (b2)
 {
-    auto& st = proc.apvts;
-    setupSlot (s1, slotOfPart (part, false), params::b (part, lm::smp));
-    if (part == hat) setupSlot (s2, slotOfPart (part, true), params::b (part, lm::smpOpen));
+    selector = std::make_unique<SampleSelector> (p, v, b2);
+    addAndMakeVisible (*selector);
+    power = std::make_unique<Toggle> ("", theme::accentB);
+    power->attach (p.apvts, b (v, lv::on));
+    power->setTooltip (String (limeVoiceName (v)) + " on / mute");
+    addAndMakeVisible (*power);
+    if (big) { wave = std::make_unique<WaveView> (p, v); addAndMakeVisible (*wave); }
 
-    auto addK = [&] (const char* suffix, const String& cap)
+    auto K = [this] (const char* key, const char* cap) -> Component* { return knob (b (voice, key), cap); };
+    auto T = [this] (const char* key, const char* cap) -> Component* { return toggle (b (voice, key), cap); };
+    switch (v)
     {
-        auto* k = knobs.add (new Knob (cap, theme::accentB));
-        k->attach (st, params::b (part, suffix));
-        addAndMakeVisible (k);
-    };
-    auto addT = [&] (const char* suffix, const String& cap)
-    {
-        auto* t = toggles.add (new Toggle (cap, theme::accentB));
-        t->attach (st, params::b (part, suffix));
-        addAndMakeVisible (t);
-    };
-
-    addK (lm::tune, "Tune");
-    if (part == hat) { addK (lm::dcy, "Decay C"); addK (lm::dcyOpen, "Decay O"); addK (lm::cut, "Color"); }
-    else             { addK (lm::dcy, "Decay"); addK (lm::cut, "Cutoff"); addK (lm::res, "Reso"); }
-    if (part == tie) { addK (lm::fmFreq, "FM Freq"); addK (lm::fmAmt, "FM Amt"); }
-    if (part == pod) { addK (lm::zap, "Zap"); addK (lm::zapDcy, "Zap Dcy"); }
-    addK (lm::lvl, "Level");
-    addK (lm::pan, "Pan");
-    addK (lm::send, "Delay");
-    if (part == kick) addT (lm::lowcut, "Low Cut");
-    if (part == hat)  addT (lm::link, "Link");
-    addT (lm::mute, "Mute");
-    if (part == snare)
-    {
-        fmode = std::make_unique<Segmented> (theme::accentB, false);
-        fmode->attach (st, params::b (part, lm::fmode));
-        addAndMakeVisible (*fmode);
-    }
-    if (big)
-    {
-        view1 = std::make_unique<SampleView> (proc, s1.slot);
-        addAndMakeVisible (*view1);
-        if (part == hat) { view2 = std::make_unique<SampleView> (proc, s2.slot); addAndMakeVisible (*view2); }
-    }
-    startTimerHz (8);
-}
-
-void LimeSamplerPanel::setupSlot (SampleSlot& s, int slot, const String& paramId)
-{
-    s.slot = slot;
-    s.box.addItemList (SampleBank::get().names(), 1);
-    s.box.setTooltip ("Factory sample (drop a WAV/AIFF file on the panel or press Load for your own)");
-    s.att = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (proc.apvts, paramId, s.box);
-    s.load.onClick = [this, slot, &s]
-    {
-        if (proc.lime.userSample (slot) != nullptr) { proc.lime.setUserSample (slot, nullptr); s.box.setEnabled (true); timerCallback(); }
-        else chooseFile (slot);
-    };
-    s.play.onClick = [this, slot] { proc.lime.audition (slot, 1.0f); };
-    s.play.setTooltip ("Audition");
-    addAndMakeVisible (s.box); addAndMakeVisible (s.load); addAndMakeVisible (s.play);
-}
-
-void LimeSamplerPanel::chooseFile (int slot)
-{
-    chooser = std::make_unique<FileChooser> ("Load sample", File(), "*.wav;*.aif;*.aiff;*.flac;*.ogg");
-    chooser->launchAsync (FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles, [this, slot] (const FileChooser& fc)
-    {
-        auto f = fc.getResult();
-        if (f.existsAsFile()) proc.loadUserSample (slot, f);
-        timerCallback();
-    });
-}
-
-void LimeSamplerPanel::filesDropped (const StringArray& files, int, int y)
-{
-    if (files.isEmpty()) return;
-    int slot = s1.slot;
-    if (part == hat && y > getHeight() / 2) slot = s2.slot;
-    proc.loadUserSample (slot, File (files[0]));
-    timerCallback();
-}
-
-void LimeSamplerPanel::timerCallback()
-{
-    for (auto* s : { &s1, &s2 })
-    {
-        if (s->att == nullptr) continue;
-        auto u = proc.lime.userSample (s->slot);
-        if (u != nullptr)
-        {
-            s->box.setEnabled (false);
-            s->box.setText ("User: " + u->name, dontSendNotification);
-            s->load.setButtonText ("Clear");
-        }
-        else
-        {
-            if (! s->box.isEnabled()) { s->box.setEnabled (true); s->att.reset(); s->att = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (proc.apvts, part == hat && s == &s2 ? params::b (part, lm::smpOpen) : params::b (part, lm::smp), s->box); }
-            s->load.setButtonText ("Load");
-        }
+        case kick:
+            row ({ K (lv::gain, "Gain"), K (lv::acc, "Acc"), K (lv::pan, "Pan"), K (lv::tune, "Tune"), K (lv::st, "St") });
+            row ({ K (lv::hold, "H"), K (lv::dcy, "D"), K (lv::sat, "Sat"), K (lv::shp, "Shp"), K (lv::sm, "Sm") });
+            row ({ combo (b (v, lv::mod)), T (lv::lo, "Lo"), K (lv::cut, "Cut"), K (lv::res, "Res"), nullptr });
+            break;
+        case snare:
+            row ({ K (lv::gain, "Gain"), K (lv::acc, "Acc"), K (lv::pan, "Pan"), K (lv::tune, "Tune"), K (lv::st, "St") });
+            row ({ K (lv::hold, "H"), K (lv::dcy, "D"), K (lv::sat, "Sat"), K (lv::shp, "Shp"), K (lv::sm, "Sm") });
+            row ({ combo (b (v, lv::mod)), seg (b (v, lv::ft)), K (lv::cut, "Cut"), K (lv::res, "Res"), K (lv::flam, "Flam") });
+            break;
+        case hat:
+            row ({ K (lv::gain, "Gain"), K (lv::acc, "Acc"), K (lv::pan, "Pan"), K (lv::tune, "Tune") });
+            row ({ K (lv::cd, "CD"), K (lv::od, "OD"), T (lv::link, "Link"), nullptr });
+            row ({ combo (b (v, lv::mod)), K (lv::cut, "Cut"), K (lv::res, "Res"), nullptr });
+            break;
+        case tie:
+            row ({ K (lv::gain, "Gain"), K (lv::vamt, "V>A"), K (lv::pan, "Pan"), K (lv::tune, "Tune"), K (lv::port, "Port") });
+            row ({ K (lv::st, "St"), K (lv::att, "A"), K (lv::dcy, "D"), K (lv::fm, "FM"), K (lv::mp, "MP") });
+            row ({ combo (b (v, lv::vel)), K (lv::noise, "Noise"), K (lv::sat, "Sat"), seg (b (v, lv::ft)), K (lv::cut, "Cut"), K (lv::res, "Res") });
+            break;
+        default: // pod
+            row ({ K (lv::gain, "Gain"), K (lv::vamt, "V>A"), K (lv::pan, "Pan"), K (lv::tune, "Tune"), K (lv::st, "St") });
+            row ({ K (lv::att, "A"), K (lv::dcy, "D"), K (lv::zap, "Zap"), nullptr, nullptr });
+            row ({ combo (b (v, lv::vel)), seg (b (v, lv::ft)), K (lv::cut, "Cut"), K (lv::res, "Res"), nullptr });
+            break;
     }
 }
 
-void LimeSamplerPanel::paint (Graphics& g)
-{
-    Panel::paint (g);
-    if (big && part == hat)
-    {
-        g.setColour (theme::textDim);
-        g.setFont (theme::font (12.0f));
-        g.drawText ("Closed", s1.box.getX() - 58, s1.box.getY(), 54, s1.box.getHeight(), Justification::centredRight);
-        g.drawText ("Open", s2.box.getX() - 58, s2.box.getY(), 54, s2.box.getHeight(), Justification::centredRight);
-    }
-}
-
-void LimeSamplerPanel::resized()
+void LimeModulePanel::resized()
 {
     Panel::resized();
+    power->setBounds (getWidth() - 46, 3, 18, headerH - 6);
     auto r = content();
-    auto sampleRow = [&] (SampleSlot& s, const String& label)
-    {
-        auto row = r.removeFromTop (big ? 28 : 22);
-        if (label.isNotEmpty() && big)
-        {
-            row.removeFromLeft (60);
-        }
-        s.play.setBounds (row.removeFromRight (big ? 34 : 24));
-        row.removeFromRight (2);
-        s.load.setBounds (row.removeFromRight (big ? 60 : 40));
-        row.removeFromRight (2);
-        s.box.setBounds (row);
-        r.removeFromTop (3);
-    };
-    sampleRow (s1, part == hat ? "Closed" : "");
-    if (part == hat) sampleRow (s2, "Open");
-
-    if (big)
-    {
-        auto views = r.removeFromTop (jmax (120, r.getHeight() / 3));
-        if (view2 != nullptr)
-        {
-            view1->setBounds (views.removeFromLeft (views.getWidth() / 2).reduced (0, 2).withTrimmedRight (3));
-            view2->setBounds (views.reduced (0, 2).withTrimmedLeft (3));
-        }
-        else view1->setBounds (views.reduced (0, 2));
-        r.removeFromTop (8);
-    }
-
-    std::vector<Component*> items;
-    for (auto* k : knobs) items.push_back (k);
-    if (fmode) items.push_back (fmode.get());
-    for (auto* t : toggles) items.push_back (t);
-    const int cols = big ? (int) (items.size() + 1) / 2 : (int) (items.size() + 1) / 2;
-    std::vector<std::vector<Component*>> rowsV (2);
-    for (size_t i = 0; i < items.size(); ++i) rowsV[i < (size_t) cols ? 0 : 1].push_back (items[i]);
-    layoutRows (r, rowsV, cols);
-    if (fmode) fmode->setBounds (fmode->getBounds().withSizeKeepingCentre (jmin (fmode->getWidth(), 100), 24));
+    selector->setBounds (r.removeFromTop (big ? 28 : 20));
+    r.removeFromTop (3);
+    if (wave) { wave->setBounds (r.removeFromTop (jmax (100, r.getHeight() / 3))); r.removeFromTop (6); }
+    layoutRows (r, rows);
+    for (auto& rw : rows)
+        for (auto* c : rw)
+            if (auto* cb = dynamic_cast<ComboBox*> (c)) cb->setBounds (cb->getBounds().withSizeKeepingCentre (cb->getWidth(), jmin (cb->getHeight(), big ? 26 : 20)));
+            else if (auto* sg = dynamic_cast<Segmented*> (c)) sg->setBounds (sg->getBounds().withSizeKeepingCentre (sg->getWidth(), jmin (sg->getHeight(), big ? 26 : 18)));
 }
 
 //==============================================================================
-//  LimeMixerView
+//  XYPad
 //==============================================================================
-LimeMixerView::LimeMixerView (TwinboxProcessor& p) : proc (p)
+XYPad::XYPad (AudioProcessorValueTreeState& s, const String& xId, const String& yId)
+    : px (s.getParameter (xId)), py (s.getParameter (yId))
 {
-    auto& s = proc.apvts;
-    for (int pt = 0; pt < numLimeParts; ++pt)
-    {
-        auto& st = strips[(size_t) pt];
-        st.fader.setSliderStyle (Slider::LinearVertical);
-        st.fader.setTextBoxStyle (Slider::TextBoxBelow, false, 70, 18);
-        st.fader.setColour (Slider::trackColourId, theme::accentB);
-        st.att = std::make_unique<AudioProcessorValueTreeState::SliderAttachment> (s, params::b (pt, lm::lvl), st.fader);
-        st.pan.attach (s, params::b (pt, lm::pan));
-        st.send.attach (s, params::b (pt, lm::send));
-        st.mute.attach (s, params::b (pt, lm::mute));
-        st.play.onClick = [this, pt] { proc.lime.audition (slotOfPart (pt), 1.0f); };
-        for (auto* c : std::initializer_list<Component*> { &st.fader, &st.pan, &st.send, &st.mute, &st.play }) addAndMakeVisible (c);
-    }
-    for (auto* pn : { &dlyP, &fltP, &lfoP, &modP, &outP }) addAndMakeVisible (pn);
-    dlyTime.attach (s, bDlyTime); dlyTime.setCaption ("Time (tempo synced)");
-    dlyFb.attach (s, bDlyFb); dlyDamp.attach (s, bDlyDamp); dlyLvl.attach (s, bDlyLvl);
-    fltCut.attach (s, bFltCut); fltRes.attach (s, bFltRes);
-    lfoRate.attach (s, bLfoRate); lfoFM.attach (s, bLfoFM); lfoDM.attach (s, bLfoDM);
-    modDest.addItemList (modDestNames(), 1);
-    modDestAtt = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (s, bModDest, modDest);
-    modAmt.attach (s, bModAmt);
-    gain.attach (s, bGain); pitch.attach (s, bPitch); dirt.attach (s, bDirt); norm.attach (s, bNorm);
-    for (auto* c : std::initializer_list<Component*> { &dlyTime, &dlyFb, &dlyDamp, &dlyLvl, &fltCut, &fltRes, &lfoRate, &lfoFM, &lfoDM,
-                                                         &modDest, &modAmt, &gain, &pitch, &dirt, &norm })
-        addAndMakeVisible (c);
-    startTimerHz (20);
+    ax = std::make_unique<ParameterAttachment> (*px, [this] (float v) { vx = px->convertTo0to1 (v); repaint(); });
+    ay = std::make_unique<ParameterAttachment> (*py, [this] (float v) { vy = py->convertTo0to1 (v); repaint(); });
+    ax->sendInitialUpdate(); ay->sendInitialUpdate();
 }
 
-void LimeMixerView::paint (Graphics& g)
+void XYPad::paint (Graphics& g)
 {
-    g.fillAll (theme::bg);
-    auto r = getLocalBounds().reduced (12);
-    auto mix = r.removeFromLeft (r.getWidth() * 5 / 11);
-    const int sw = mix.getWidth() / numLimeParts;
-    for (int pt = 0; pt < numLimeParts; ++pt)
+    auto r = getLocalBounds().toFloat();
+    g.setColour (theme::outline);
+    g.fillRoundedRectangle (r, 3.0f);
+    g.setColour (theme::header);
+    for (int i = 1; i < 4; ++i)
     {
-        auto col = mix.removeFromLeft (sw).reduced (4, 0).toFloat();
-        g.setColour (theme::panel);
-        g.fillRoundedRectangle (col, 4.0f);
-        g.setColour (theme::text);
-        g.setFont (theme::font (14.0f, true));
-        g.drawText (limePartName (pt), col.removeFromTop (26), Justification::centred);
+        g.drawVerticalLine ((int) (r.getX() + r.getWidth() * i / 4), r.getY(), r.getBottom());
+        g.drawHorizontalLine ((int) (r.getY() + r.getHeight() * i / 4), r.getX(), r.getRight());
     }
-    drawMeter (g, Rectangle<float> ((float) getWidth() - 22.0f, 40.0f, 8.0f, (float) getHeight() - 80.0f), proc.meter (1), theme::accentB);
+    const float x = r.getX() + vx * r.getWidth(), y = r.getBottom() - vy * r.getHeight();
+    g.setColour (theme::accentB);
+    g.drawRect (Rectangle<float> (x - 6, y - 6, 12, 12), 2.0f);
+    g.setColour (theme::textDim);
+    g.setFont (theme::font (10.0f));
+    g.drawText ("X " + String (roundToInt (vx * 100)) + "  Y " + String (roundToInt (vy * 100)), r.reduced (4, 2).toNearestInt(), Justification::bottomRight);
 }
 
-void LimeMixerView::resized()
+void XYPad::set (const MouseEvent& e)
 {
-    auto r = getLocalBounds().reduced (12);
-    r.removeFromRight (24);
-    auto mix = r.removeFromLeft ((getWidth() - 24) * 5 / 11);
-    const int sw = mix.getWidth() / numLimeParts;
-    for (int pt = 0; pt < numLimeParts; ++pt)
-    {
-        auto col = mix.removeFromLeft (sw).reduced (8, 0);
-        col.removeFromTop (30);
-        auto& st = strips[(size_t) pt];
-        st.play.setBounds (col.removeFromBottom (26).reduced (4, 2));
-        st.mute.setBounds (col.removeFromBottom (26).reduced (4, 2));
-        st.send.setBounds (col.removeFromBottom (80));
-        st.pan.setBounds (col.removeFromBottom (80));
-        st.fader.setBounds (col.reduced (0, 4));
-    }
-    r.removeFromLeft (12);
+    if (! dragging) { ax->beginGesture(); ay->beginGesture(); dragging = true; }
+    vx = jlimit (0.0f, 1.0f, (float) e.x / (float) getWidth());
+    vy = jlimit (0.0f, 1.0f, 1.0f - (float) e.y / (float) getHeight());
+    ax->setValueAsPartOfGesture (px->convertFrom0to1 (vx));
+    ay->setValueAsPartOfGesture (py->convertFrom0to1 (vy));
+    repaint();
+}
+
+void XYPad::mouseUp (const MouseEvent&)
+{
+    if (dragging) { ax->endGesture(); ay->endGesture(); dragging = false; }
+}
+
+//==============================================================================
+//  FX window
+//==============================================================================
+LimeFxWindowContent::LimeFxWindowContent (TwinboxProcessor& p)
+{
+    for (auto* w : { "remix", "out", "pulp", "xfx", "delay", "mix", "eq", "filter", "magic" })
+        addAndMakeVisible (panels.add (makeLimePanel (p, w, true).release()));
+}
+
+void LimeFxWindowContent::resized()
+{
+    auto r = getLocalBounds().reduced (8);
     const int h = r.getHeight() / 3;
-    auto row1 = r.removeFromTop (h), row2 = r.removeFromTop (h), row3 = r;
-    dlyP.setBounds (row1.reduced (3));
-    auto rr = row2; fltP.setBounds (rr.removeFromLeft (rr.getWidth() / 2).reduced (3)); lfoP.setBounds (rr.reduced (3));
-    auto r3 = row3; modP.setBounds (r3.removeFromLeft (r3.getWidth() / 2).reduced (3)); outP.setBounds (r3.reduced (3));
-
-    auto d = dlyP.contentInParent();
-    dlyTime.setBounds (d.removeFromTop (46).reduced (2));
-    layoutRows (d, { { &dlyFb, &dlyDamp, &dlyLvl } });
-    layoutRows (fltP.contentInParent(), { { &fltCut, &fltRes } });
-    layoutRows (lfoP.contentInParent(), { { &lfoRate, &lfoFM, &lfoDM } });
-    auto m = modP.contentInParent();
-    modDest.setBounds (m.removeFromTop (28).reduced (2));
-    layoutRows (m, { { &modAmt } });
-    layoutRows (outP.contentInParent(), { { &gain, &pitch }, { &dirt, &norm } });
+    for (int row = 0; row < 3; ++row)
+    {
+        auto rr = r.removeFromTop (h);
+        const int w = rr.getWidth() / 3;
+        for (int col = 0; col < 3; ++col)
+            panels[row * 3 + col]->setBounds ((col == 2 ? rr : rr.removeFromLeft (w)).reduced (4));
+    }
 }
 
 //==============================================================================
 //  LimeSection
 //==============================================================================
-LimeSection::LimeSection (TwinboxProcessor& p) : proc (p), grid (p, false)
+LimeSection::LimeSection (TwinboxProcessor& p) : proc (p)
 {
-    auto& s = proc.apvts;
+    browserBtn.onClick = [this] { if (onOpenBrowser) onOpenBrowser(); };
+    browserBtn.setTooltip ("Genre preset browser (128 kits + patterns)");
+    legacyBtn.onClick = [this] { importLegacy(); };
+    legacyBtn.setTooltip ("Import the original Limelite samples from your own 'Limelite 1.3.ens' into the Legacy folders");
+    levelB.attach (p.apvts, bGain);
+    for (auto* c : std::initializer_list<Component*> { &browserBtn, &legacyBtn, &levelB }) addAndMakeVisible (c);
 
-    addAndMakeVisible (seqPanel);
-    seqPanel.setExpandable ([this] { openSeqWindow(); });
-    for (int i = 0; i < numLimePatterns; ++i)
+    seq = std::make_unique<LimeSeqPanel> (p, false);
+    seq->setExpandable ([this] { openWindow ("seq", "Section B - Sequencer (64 steps)", [this] { return new LimeSeqPanel (proc, true); }, 1400, 640); });
+    addAndMakeVisible (*seq);
+
+    auto fxWin = [this] { openWindow ("fx", "Section B - Remix, Output & FX", [this] { return new LimeFxWindowContent (proc); }, 1300, 860); };
+    for (auto* pp : { &remix, &out, &global, &pulp, &xfx, &delay, &mix, &eq, &filter, &magic })
     {
-        auto* b = slots.add (new TextButton (String (i + 1)));
-        b->setColour (TextButton::buttonOnColourId, theme::accentB);
-        b->setTooltip ("Pattern " + String (i + 1) + " (switches at the end of the main sequence)");
-        b->onClick = [this, i] { setParam (proc.apvts, bPattern, (float) i); };
-        addAndMakeVisible (b);
+        const char* names[] { "remix", "out", "global", "pulp", "xfx", "delay", "mix", "eq", "filter", "magic" };
+        const auto idx = (size_t) (pp - &remix);
+        *pp = makeLimePanel (p, names[idx], false);
+        if (idx != 2) (*pp)->setExpandable (fxWin);
+        addAndMakeVisible (**pp);
     }
-    copyPat.onClick = [this] { patClip = (int) proc.apvts.getRawParameterValue (bPattern)->load(); };
-    pastePat.onClick = [this]
+    for (int v = 0; v < 5; ++v)
     {
-        if (patClip < 0) return;
-        auto& src = proc.lime.pattern (patClip);
-        auto& dst = proc.lime.pattern ((int) proc.apvts.getRawParameterValue (bPattern)->load());
-        for (int l = 0; l < LimeEngine::numTrigLanes; ++l)
-            for (int st = 0; st < numSteps; ++st) dst.steps[(size_t) l][(size_t) st].store (src.steps[(size_t) l][(size_t) st].load());
-        for (int st = 0; st < numSteps; ++st) dst.mod[(size_t) st].store (src.mod[(size_t) st].load());
-        grid.repaint();
-    };
-    addAndMakeVisible (copyPat); addAndMakeVisible (pastePat);
-    addAndMakeVisible (grid);
-
-    addAndMakeVisible (remixPanel);
-    remixPanel.setExpandable ([this] { openSeqWindow(); });
-    len.attach (s, bLen); tieLen.attach (s, bTieLen); podLen.attach (s, bPodLen); modLen.attach (s, bModLen);
-    tieStr.attach (s, bTieStr); podStr.attach (s, bPodStr); modStr.attach (s, bModStr);
-    tieStr.setTooltip ("Stretch the Tie sequence to the main length"); podStr.setTooltip ("Stretch the Pod sequence to the main length");
-    modStr.setTooltip ("Stretch the Mod sequence to the main length");
-    shuffle.attach (s, bShuffle); accent.attach (s, bAccent);
-    for (auto* c : std::initializer_list<Component*> { &len, &tieLen, &podLen, &modLen, &tieStr, &podStr, &modStr, &shuffle, &accent })
-        addAndMakeVisible (c);
-
-    addAndMakeVisible (outPanel);
-    outPanel.setExpandable ([this] { openMixerWindow(); });
-    gain.attach (s, bGain); pitch.attach (s, bPitch); dirt.attach (s, bDirt); norm.attach (s, bNorm);
-    lfoRate.attach (s, bLfoRate); lfoFM.attach (s, bLfoFM); lfoDM.attach (s, bLfoDM);
-    lfoFM.slider.setTooltip ("LFO > filter cutoff modulation"); lfoDM.slider.setTooltip ("LFO > delay time modulation");
-    for (auto* c : std::initializer_list<Component*> { &gain, &pitch, &dirt, &norm, &lfoRate, &lfoFM, &lfoDM }) addAndMakeVisible (c);
-
-    for (int pt = 0; pt < numLimeParts; ++pt)
-    {
-        auto* sp = samplers.add (new LimeSamplerPanel (proc, pt, false));
-        sp->setExpandable ([this, pt] { openSamplerWindow (pt); });
-        addAndMakeVisible (sp);
+        auto* m = modules.add (new LimeModulePanel (p, v, false));
+        m->setExpandable ([this, v] { openWindow ("mod" + String (v), String ("Section B - ") + limeVoiceName (v),
+                                                  [this, v] { return new LimeModulePanel (proc, v, true); }, 900, 640); });
+        addAndMakeVisible (m);
     }
-
-    for (auto* pn : { &dlyPanel, &fltPanel, &modPanel }) { addAndMakeVisible (pn); pn->setExpandable ([this] { openMixerWindow(); }); }
-    modPanel.setExpandable ([this] { openSeqWindow(); });
-    dlyTime.addItemList (delayTimeNames(), 1);
-    dlyTimeAtt = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (s, bDlyTime, dlyTime);
-    dlyFb.attach (s, bDlyFb); dlyDamp.attach (s, bDlyDamp); dlyLvl.attach (s, bDlyLvl);
-    fltCut.attach (s, bFltCut); fltRes.attach (s, bFltRes);
-    modDest.addItemList (modDestNames(), 1);
-    modDestAtt = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (s, bModDest, modDest);
-    modAmt.attach (s, bModAmt);
-    for (auto* c : std::initializer_list<Component*> { &dlyTime, &dlyFb, &dlyDamp, &dlyLvl, &fltCut, &fltRes, &modDest, &modAmt })
-        addAndMakeVisible (c);
-
-    startTimerHz (15);
+    startTimerHz (10);
 }
 
 LimeSection::~LimeSection() { stopTimer(); }
 
-void LimeSection::openSeqWindow()
+void LimeSection::openWindow (const String& key, const String& title, std::function<Component*()> make, int w, int h)
 {
-    if (seqWindow != nullptr) { seqWindow->toFront (true); return; }
-    seqWindow = std::make_unique<ExpandWindow> ("Section B - Sequencer", new LimeSeqWindowContent (proc), 1280, 820, [this] { seqWindow.reset(); });
+    auto& win = windows[key];
+    if (win != nullptr) { win->toFront (true); return; }
+    win = std::make_unique<ExpandWindow> (title, make(), w, h, [this, key] { windows[key].reset(); });
 }
 
-void LimeSection::openSamplerWindow (int part)
+void LimeSection::importLegacy()
 {
-    auto& w = samplerWindows[(size_t) part];
-    if (w != nullptr) { w->toFront (true); return; }
-    w = std::make_unique<ExpandWindow> (String ("Section B - ") + limePartName (part) + " Sampler",
-                                        new LimeSamplerPanel (proc, part, true), 900, 620, [this, part] { samplerWindows[(size_t) part].reset(); });
-}
-
-void LimeSection::openMixerWindow()
-{
-    if (mixerWindow != nullptr) { mixerWindow->toFront (true); return; }
-    mixerWindow = std::make_unique<ExpandWindow> ("Section B - Mixer, FX & Output", new LimeMixerView (proc), 1300, 720, [this] { mixerWindow.reset(); });
-}
-
-void LimeSection::timerCallback()
-{
-    const int pat = (int) proc.apvts.getRawParameterValue (bPattern)->load();
-    const int playing = proc.lime.playingPattern();
-    for (int i = 0; i < slots.size(); ++i)
+    chooser = std::make_unique<FileChooser> ("Select your 'Limelite 1.3.ens'", File::getSpecialLocation (File::userHomeDirectory), "*.ens");
+    chooser->launchAsync (FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles, [this] (const FileChooser& fc)
     {
-        slots[i]->setToggleState (i == pat, dontSendNotification);
-        slots[i]->setColour (TextButton::buttonColourId, (proc.isPlaying() && i == playing && i != pat) ? theme::accentB.withAlpha (0.35f) : theme::panel2);
-    }
-    repaint (getWidth() - 24, 0, 24, 50);
+        const auto f = fc.getResult();
+        if (! f.existsAsFile()) return;
+        status = "Importing Legacy samples...";
+        repaint();
+        SafePointer<LimeSection> safe (this);
+        proc.importLegacy (f, [safe] (LegacyImporter::Result r)
+        {
+            if (safe == nullptr) return;
+            safe->status = r.message;
+            safe->repaint();
+            AlertWindow::showMessageBoxAsync (r.ok ? MessageBoxIconType::InfoIcon : MessageBoxIconType::WarningIcon, "Import Legacy",
+                                              r.message + (r.ok ? "\n\nSelect LEG in a sampler to use them.\nFolder: " + SampleLibrary::rootFolder().getFullPathName() : String()));
+        },
+        [safe] (float prog)
+        {
+            MessageManager::callAsync ([safe, prog] { if (safe != nullptr) { safe->status = "Importing Legacy... " + String (roundToInt (prog * 100)) + " %"; safe->repaint(); } });
+        });
+    });
 }
+
+void LimeSection::timerCallback() { repaint (getWidth() - 24, 0, 24, 46); }
 
 void LimeSection::paint (Graphics& g)
 {
@@ -757,61 +764,47 @@ void LimeSection::paint (Graphics& g)
     g.drawText ("GROOVEBOX", 40, 10, 140, 22, Justification::centredLeft);
     g.setColour (theme::textDim);
     g.setFont (theme::font (11.0f));
-    g.drawText ("5 samplers / sequencer / FX", 40, 26, 200, 14, Justification::centredLeft);
+    g.drawText ("6 voices / sequencer / remix / FX", 40, 26, 220, 14, Justification::centredLeft);
+    if (status.isNotEmpty()) g.drawText (status, legacyBtn.getRight() + 10, 12, 420, 20, Justification::centredLeft);
     drawMeter (g, Rectangle<float> ((float) getWidth() - 16.0f, 10.0f, 6.0f, 30.0f), proc.meter (1), theme::accentB);
 }
 
 void LimeSection::resized()
 {
     auto r = getLocalBounds().reduced (8);
-    r.removeFromTop (38);
+    auto header = r.removeFromTop (40);
+    header.removeFromLeft (260);
+    browserBtn.setBounds (header.removeFromLeft (90).withSizeKeepingCentre (90, 24));
+    header.removeFromLeft (6);
+    legacyBtn.setBounds (header.removeFromLeft (120).withSizeKeepingCentre (120, 24));
+    header.removeFromRight (16);
+    levelB.setBounds (header.removeFromRight (64).expanded (0, 4));
+    r.removeFromTop (4);
     const int W = r.getWidth();
 
-    auto top = r.removeFromTop (r.getHeight() * 40 / 100);
-    seqPanel.setBounds (top.removeFromLeft (W * 46 / 100).reduced (2, 0));
-    remixPanel.setBounds (top.removeFromLeft (W * 22 / 100).reduced (2, 0));
-    outPanel.setBounds (top.reduced (2, 0));
-
-    auto sc = seqPanel.contentInParent();
-    auto sr = sc.removeFromTop (22);
-    auto cp = sr.removeFromRight (110);
-    copyPat.setBounds (cp.removeFromLeft (55).reduced (1, 0));
-    pastePat.setBounds (cp.reduced (1, 0));
-    sr.removeFromRight (6);
-    const int bw = jmin (34, sr.getWidth() / numLimePatterns);
-    for (auto* b : slots) b->setBounds (sr.removeFromLeft (bw).reduced (1, 0));
-    sc.removeFromTop (4);
-    grid.setBounds (sc);
-
-    layoutRows (remixPanel.contentInParent(), { { &len, &tieLen, &podLen, &modLen, &shuffle },
-                                        { &accent, &tieStr, &podStr, &modStr, nullptr } });
-    // place stretch toggles directly under their length knobs
-    for (auto pr : { std::pair<Component*, Component*> { &tieLen, &tieStr }, { &podLen, &podStr }, { &modLen, &modStr } })
-        pr.second->setBounds (pr.second->getBounds().withX (pr.first->getBounds().getCentreX() - pr.second->getWidth() / 2));
-
-    layoutRows (outPanel.contentInParent(), { { &gain, &pitch, &dirt, &norm }, { &lfoRate, &lfoFM, &lfoDM, nullptr } });
+    auto row1 = r.removeFromTop (r.getHeight() * 38 / 100);
+    seq->setBounds (row1.removeFromLeft (W * 47 / 100).reduced (2, 0));
+    remix->setBounds (row1.removeFromLeft (W * 26 / 100).reduced (2, 0));
+    auto outCol = row1.reduced (2, 0);
+    out->setBounds (outCol.removeFromTop (outCol.getHeight() * 64 / 100));
+    outCol.removeFromTop (4);
+    global->setBounds (outCol);
 
     r.removeFromTop (6);
-    auto fx = r.removeFromBottom (jmax (96, r.getHeight() * 32 / 100));
-    r.removeFromBottom (6);
-    const int sw = r.getWidth() / numLimeParts;
-    for (int i = 0; i < samplers.size(); ++i)
-        samplers[i]->setBounds ((i == samplers.size() - 1 ? r : r.removeFromLeft (sw)).reduced (2, 0));
+    auto row2 = r.removeFromTop (r.getHeight() * 54 / 100);
+    const int mw = row2.getWidth() / 5;
+    for (int i = 0; i < modules.size(); ++i)
+        modules[i]->setBounds ((i == modules.size() - 1 ? row2 : row2.removeFromLeft (mw)).reduced (2, 0));
 
-    dlyPanel.setBounds (fx.removeFromLeft (W * 45 / 100).reduced (2, 0));
-    fltPanel.setBounds (fx.removeFromLeft (W * 22 / 100).reduced (2, 0));
-    modPanel.setBounds (fx.reduced (2, 0));
-    {
-        auto d = dlyPanel.contentInParent();
-        auto c = d.removeFromLeft (d.getWidth() / 4).reduced (4, 0);
-        dlyTime.setBounds (c.withSizeKeepingCentre (c.getWidth(), 24));
-        layoutRows (d, { { &dlyFb, &dlyDamp, &dlyLvl } });
-    }
-    layoutRows (fltPanel.contentInParent(), { { &fltCut, &fltRes } });
-    {
-        auto m = modPanel.contentInParent();
-        auto c = m.removeFromLeft (m.getWidth() / 2).reduced (4, 0);
-        modDest.setBounds (c.withSizeKeepingCentre (c.getWidth(), 24));
-        layoutRows (m, { { &modAmt } });
-    }
+    r.removeFromTop (6);
+    auto row3 = r;
+    pulp->setBounds (row3.removeFromLeft (W * 21 / 100).reduced (2, 0));
+    xfx->setBounds (row3.removeFromLeft (W * 21 / 100).reduced (2, 0));
+    delay->setBounds (row3.removeFromLeft (W * 17 / 100).reduced (2, 0));
+    mix->setBounds (row3.removeFromLeft (W * 8 / 100).reduced (2, 0));
+    eq->setBounds (row3.removeFromLeft (W * 10 / 100).reduced (2, 0));
+    auto fm = row3.reduced (2, 0);
+    filter->setBounds (fm.removeFromTop (fm.getHeight() / 2 - 2));
+    fm.removeFromTop (4);
+    magic->setBounds (fm);
 }

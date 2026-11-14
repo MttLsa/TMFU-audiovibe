@@ -1,96 +1,131 @@
-# Twinbox — groovebox ibrida VST3 / AU
+# TWINBOX — groovebox ibrida VST3 / AU (v2.0)
 
-Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che riunisce due drum machine in un solo plugin:
+Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in un solo plugin:
 
-| Sezione | Modello di riferimento | Contenuto |
+| Sezione | Architettura di riferimento | Contenuto |
 |---|---|---|
-| **A — Drum Synth** (in alto) | Sonic Charge **Microtonic** | 8 canali di percussioni sintetiche (oscillatore + rumore), pattern A–L da 16 step con Trigger / Accent / Fill, Swing, Fill Rate, Morph |
-| **B — Groovebox** (in basso) | NI Reaktor **Limelite** | 5 campionatori (Kick, Snare, Hat, Tie, Pod), sequencer principale + finestra inferiore (Tie / Pod / Mod) con Remix (lunghezze e Stretch), Output (Gain, Pitch, Dirt, Norm, LFO FM/DM), Delay, Filtro |
-| **GLOBAL CONTROL** (a destra, comprimibile) | — | Crossfader A↔B, filtro master **Cutoff** (manopola grande) con modo HP/BP/LP e **Resonance**, Master, Tempo / Run |
+| **A — Drum Synth** (in alto) | Sonic Charge **Microtonic** | 8 canali di percussioni sintetiche, 12 pattern (A–L) fino a **64 step** con Trigger / Accent / Fill, Swing, Fill Rate, Morph |
+| **B — Groovebox** (in basso) | NI Reaktor **Limelite 1.3** | 6 voci (Kick, Snare, Hat, Tie, Pod, **Pulp**), sequencer A–D fino a **64 step** con catena di pattern e motore **Remix**, effetti Filter / EQ / Magic / Delay / xFx (23 modi) / Mix / Out |
+| **GLOBAL CONTROL** (a destra, comprimibile) | — | Crossfader A↔B, filtro master **Cutoff** (manopola grande) HP/BP/LP + **Resonance**, Master, Tempo / Run |
 
-![Interfaccia principale](docs/main.png)
+![Interfaccia principale](docs/gui_main.png)
 
 > Microtonic è un marchio di Sonic Charge; Reaktor e Limelite sono marchi di Native Instruments. Twinbox è un progetto
 > indipendente che riprende l'*architettura* e l'organizzazione dei controlli di questi strumenti. Non contiene codice,
-> grafica o campioni originali.
-
----
+> grafica o campioni originali. I campioni originali di Limelite si possono importare solo dal proprio file `.ens`
+> (vedi "Cartelle Legacy").
 
 ## Flusso del segnale
 
 ```
- Sezione A (8 voci sintetiche) ──► Level A ──┐
-                                             ├─► Mix A/B ─► Filtro Cutoff (HP/BP/LP + Resonance) ─► Master ─► Out
- Sezione B (5 sampler ► Delay ► Filtro ►     │      0 %   = 100 % A
-            Dirt ► Norm ► Gain) ─────────────┘      50 %  = 50 % A + 50 % B
-                                                    100 % = 100 % B
+ A: 8 voci sintetiche ─► Level A ───────────────────────────────┐
+                                                               ├─► Mix A/B ─► Cutoff (HP/BP/LP + Res) ─► Master
+ B: Kick Snare Hat Tie Pod Pulp ─► Filter ─► EQ/Sat ─► Magic ─┬─┘
+                                   └─► Delay ─► xFx ─► FX Mix ┘ ─► Dirt ─► Norm ─► Gain (= Level B)
 ```
 
-* Il crossfader è lineare: `out = A·(1−x) + B·x`. Al centro hai esattamente 50 % di A e 50 % di B.
-* Il filtro master è uno state-variable TPT a 2 poli (Zavalishin) con cutoff smussato: niente click quando lo muovi.
-  In LP con cutoff al massimo (o in HP al minimo) il filtro viene saltato del tutto e il segnale passa intatto.
+Il crossfader è lineare: al centro hai il 50 % di A e il 50 % di B.
 
-## Sezione A — Drum Synth (architettura Microtonic)
+## Sezione B — fedele a Limelite 1.3
 
-Ogni canale ha una *drum patch* completa, con tutti i parametri automatizzabili:
+Parametri, nomi e organizzazione vengono dall'analisi del file originale (dettagli in [`docs/limelite_analysis.md`](docs/limelite_analysis.md)).
 
-* **Oscillator**: Wave (Sine / Triangle / Saw), Osc Freq, Attack, Decay; **Pitch Mod** con modo Decay / Sine / Random, Amount (±96 semitoni) e Rate.
-* **Noise**: filtro LP / BP / HP con Freq e Q, Stereo, inviluppo Exp / Lin / Mod (Mod = raffiche tipo clap), Attack e Decay.
-* **Mixing**: Osc/Noise mix, Distort, EQ (Freq e Gain ±40 dB), Level, Pan, Choke.
-* **Velocity Sensitivity**: Osc, Noise e Mod (0–200 %).
-* **Canali**: nome rinominabile (doppio clic), Mute, ascolto ▶, Copy / Paste della patch.
-* **Pattern**: 12 pattern (A–L) da 16 step con lunghezza per pattern. Ogni step ha Trigger, Accent (velocity 127 invece di 64) e Fill.
-  Il cambio di pattern scatta alla fine del pattern in corso. Ci sono anche Swing, **Fill Rate** (Manual oppure ogni 2…8 giri) e il pulsante FILL.
-* **Morph**: `Store L` e `Store R` memorizzano due set di 8 patch; la manopola Morph interpola fra i due (i parametri a scelta commutano al 50 %).
-* **Finestre grandi** (pulsante ⤢):
-  * **Pattern Editor**: tutti gli 8 canali × Trigger/Accent/Fill insieme, con selettore di pattern, lunghezza, Swing, Fill Rate e Fill.
-  * **Drum Patch Editor**: tutte le manopole della patch in formato grande, con selettore di canale.
+**SEQUENCER**
+- Pattern A–D.
+- Griglia KICK / SNARE / C-HAT / O-HAT: clic = acceso/spento, tasto destro = accento (quadrato grande).
+- Corsie a valori TIE / POD / MOD a barre: 0 = spento, la linea centrale di TIE è la nota base.
+- 64 step in 4 pagine.
+- Catena di pattern: **ON**, lunghezza, 8 slot A–D, **LOCK**. Più COPY / PASTE.
 
-## Sezione B — Groovebox (architettura Limelite)
+**REMIX**
+- **NOW!**, **SHIFT**, **REMIX** (127 schemi di variazione), Rate (OFF / 2 / 4 / 8 / 12 / 16 battute).
+- SWING, **1/2** (metà tempo), START, lunghezze LEN / TIE / POD / MOD con **Stretch**.
 
-Organizzazione come nell'originale, su quattro aree:
+**OUT**: DIRT, GAIN, TUNE, NORM con AMP / REL / SM.
 
-1. **Sequencer** (in alto a sinistra)
-   * Finestra principale: Kick / Snare / Hat su 16 step. Sull'Hat il clic cicla chiuso → aperto → spento; il tasto destro mette l'accento.
-   * Finestra inferiore: corsie Tie e Pod, più la corsia **Mod** (un valore per step, assegnabile liberamente).
-   * Otto slot pattern con Copy / Paste.
-2. **Remix**: lunghezze Length (principale), Tie, Pod e Mod. Sotto le tre lunghezze secondarie ci sono i pulsanti **Stretch**, che allungano la sequenza fino alla lunghezza principale. Completano l'area Shuffle e Accent.
-3. **Output**: Gain, Pitch (±12 semitoni), **Dirt** (distorsione), **Norm** (massimizzatore di volume), più l'LFO con Rate, **FM** (modula il cutoff del filtro) e **DM** (modula il tempo di delay).
-4. **Sampler**:
-   * **Kick**: Tune, Decay, Cutoff (LP), Reso, Low Cut.
-   * **Snare**: gli stessi controlli del Kick, ma il filtro è LP / BP / HP.
-   * **Hat**: due campionatori (Closed e Open) con **Link**: in modalità choke l'aperto viene tagliato dal chiuso.
-   * **Tie**: FM da oscillatore (FM Freq, FM Amt).
-   * **Pod**: **Zap**, cioè FM da inviluppo di decadimento (Zap, Zap Dcy).
-   * **Comuni a tutti**: Level, Pan, mandata Delay e Mute. Ogni sampler offre la scelta del campione di fabbrica, un pulsante **Load** per i tuoi WAV / AIFF / FLAC / OGG (accetta anche il trascinamento del file) e il tasto ▶ per l'ascolto.
-5. **FX**:
-   * **Delay**: ping-pong sincronizzato al tempo, con Time, Feedback, Damp e Level.
-   * **Filter**: Cutoff e Reso.
-   * **Mod**: destinazione e quantità della corsia Mod. Le destinazioni sono Tune, Decay e Cutoff dei sampler, Tie FM, Pod Zap, Filter, Delay Send e Delay Feedback.
+**GLOBAL**: CLK, BPM.
 
-**Finestre grandi** (⤢):
+**Le voci**
 
-* **Sequencer**: griglia enorme con tutte le corsie, barre Mod alte e strumenti per corsia (Clear, shift ← →, Random, 1/4). Contiene anche lunghezze, Stretch, Shuffle, Accent e Mod.
-* **Sampler**: una finestra per ciascuno dei 5 sampler, con la forma d'onda e manopole grandi.
-* **Mixer, FX & Output**: 5 channel strip con fader, più Delay, Filter, LFO, Mod e Output.
+| Voce | Controlli |
+|---|---|
+| **Kick** | GAIN, ACC, PAN, TUNE, ST, H, D, SAT, SHP, SM, MOD (`-- / wav / tune / cut`), LO (low cut), CUT, RES |
+| **Snare** | come il Kick, con filtro LP/BP/HP al posto del low cut, MOD anche su `flam`, e il controllo FLAM |
+| **Hat** | GAIN, ACC, PAN, TUNE, CD, OD, LINK, MOD, CUT (passa-alto), RES. Un solo campione; il partner "open" è opzionale |
+| **Tie** | voce tonale: GAIN, V>A, PAN, TUNE, PORT, ST, A, D, FM, MP, NOISE, SAT, VEL (`wav / tune / att / dcy / st / fm / cut`), filtro LP/BP/HP, CUT, RES |
+| **Pod** | GAIN, V>A, PAN, TUNE, ST, A, D, ZAP, VEL (`wav / tune / att / dcy / zap / cut`), filtro, CUT, RES |
+| **Pulp** | oscillatore che segue l'intonazione: TUNE, PORT, GAIN, PAN, LO, HI, TIE, D, OSC (Sine / Input / Noise), filtro comb COMB, FB, FREQ, FM, CUT |
+
+**Effetti**
+- **XFX**: off, highpass, bandpass, lowpass, phaser, vowel, flanger, fm, reson, feedback, reflex, reverb, ufo, rainman, distort, ringmod, lofi, pitchshift, gate, chop, slice, freeze, spin. Si controlla con un pad XY, più DLY, GAIN, LO, HI, SPD, LEN, SM e i tasti ▶ / ●.
+- **DELAY**: ONE, TWO (in sedicesimi), FB, GAIN, LFO, FM, DM, WIDE, CUT, RES, LO.
+- **MIX**: FX MIX, MOD INPUT, MOD MIX.
+- **EQ**: HI, MID, LO, AMP, SPLIT.
+- **FILTER**: CUT, TRK, SM, MOD.
+- **MAGIC**: PITCH, GR, MOD, RMX, MIX, NOTCH.
+
+Ogni pannello si apre in una **finestra grande** (⤢):
+- il sequencer, con 32 step per pagina e tutte e tre le corsie a valori visibili insieme;
+- ogni sampler, con la forma d'onda;
+- una finestra unica per Remix, Out e tutti gli effetti.
 
 | | | |
 |---|---|---|
-| ![](docs/window_B_sequencer.png) | ![](docs/window_B_sampler_hat.png) | ![](docs/window_B_mixer.png) |
-| ![](docs/window_A_pattern.png) | ![](docs/window_A_patch.png) | ![](docs/global_collapsed.png) |
+| ![](docs/win_B_sequencer.png) | ![](docs/win_B_hat.png) | ![](docs/win_B_fx.png) |
+
+## Campioni: cartelle per modulo
+
+Ogni sampler (Kick, Snare, Hat, Tie, Pod) legge **una cartella**, e il menu mostra solo i file di quella cartella.
+
+| Pulsante | Cartella |
+|---|---|
+| **TWB** | `Twinbox Kick`, `Twinbox Snare`, … (libreria di fabbrica: 152 suoni sintetizzati, etichettati per genere; installata al primo avvio) |
+| **LEG** | `Legacy Kick`, `Legacy Snare`, … (campioni originali di Limelite, vedi sotto) |
+| **📁** | una cartella a tua scelta, impostabile per ogni modulo e salvata col progetto |
+
+Posizione delle cartelle:
+- macOS: `/Users/Shared/Twinbox/Samples`
+- Windows: `C:\Users\Public\Documents\Twinbox\Samples`
+- Linux: `~/Documents/Twinbox/Samples`
+
+Per l'Hat, se esiste `open/<stesso nome>.wav` dentro la cartella, viene usato per l'hat aperto.
+
+### Cartelle Legacy (omaggio a Limelite)
+
+Premi **IMPORT LEGACY** nella sezione B e seleziona il **tuo** file `Limelite 1.3.ens`. Twinbox estrae le 6 mappe di campioni originali nelle cartelle `Legacy *`, con i nomi originali:
+- Kick 128 campioni;
+- Snare 128;
+- Hat 127 chiusi + 127 aperti, abbinati;
+- Tie 128;
+- Pod 128.
+
+I campioni restano solo sul tuo computer.
+
+## Preset di genere: 128 per sezione
+
+Ogni sezione ha un pulsante **BROWSER**. I preset sono 16 per ciascuno degli 8 generi: Techno, Minimal, Microhouse, Rominimal, Chicago House, Tech House, Deep House, Breakbeat.
+
+- **Sezione A**: kit di 8 drum patch con nomi + pattern (fino a 64 step), swing e fill rate. Il pattern viene caricato nello slot corrente.
+- **Sezione B**: snapshot completo (campioni, voci, effetti, lunghezze, swing, Remix) + pattern A–D.
+- Opzioni: caricare solo il kit, solo i pattern, e impostare il tempo.
+
+Il Rominimal segue i riferimenti indicati (Villalobos, Bauch, Barac, Ohm Hourani, Sublee, Zavor, 118–130 BPM):
+- groove lunghi da 32 o 64 step;
+- poca snare;
+- percussioni legnose fuori griglia;
+- sub che rotola con portamento;
+- swing e delay dub;
+- poliritmi fra le corsie.
+
+![](docs/win_B_browser.png)
 
 ## Clock e MIDI
 
-* Con il trasporto dell'host in play, i sequencer seguono la posizione e il tempo dell'host.
-* A trasporto fermo, oppure in Standalone, il pulsante **RUN** nel pannello Global avvia il clock interno al **Tempo** impostato.
-* Mappa delle note MIDI:
-  * 36–43 (C1–G1): canali A1–A8.
-  * 48–53 (C2–F2): Kick, Snare, Hat chiuso, Hat aperto, Tie, Pod.
-* Sono circa 290 parametri, tutti automatizzabili. Lo stato salva anche pattern, nomi, morph, percorsi dei campioni utente e stato della UI.
+- Con l'host in play il sequencer segue l'host. A trasporto fermo, oppure in Standalone, usa RUN (o CLK) al tempo impostato.
+- Note MIDI della sezione A: 36–43 → canali A1–A8.
+- Note MIDI della sezione B: 48–54 → Kick, Snare, Hat chiuso, Hat aperto, Tie, Pod, Pulp.
 
 ## Compilazione
-
-Serve CMake ≥ 3.22 e un compilatore C++17. JUCE 8.0.4 viene scaricato in automatico. Se preferisci usare una copia locale, mettila in `./JUCE` oppure passa `-DJUCE_DIR=…`.
 
 ```bash
 cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -100,23 +135,18 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release --parallel
 ```
 
-I plugin compilati finiscono in `build/Twinbox_artefacts/Release/`:
+JUCE 8.0.4 viene scaricato in automatico.
+- Su macOS si ottengono **AU + VST3** universal (Intel + Apple Silicon).
+- Su Windows e Linux si ottiene il VST3.
 
-| Sistema | Formati | Dove installarli |
-|---|---|---|
-| macOS (Xcode CLT) | **AU** + VST3 + Standalone (universal arm64/x86_64) | `~/Library/Audio/Plug-Ins/Components/Twinbox.component` e `~/Library/Audio/Plug-Ins/VST3/Twinbox.vst3` |
-| Windows (VS 2022) | VST3 + Standalone | `C:\Program Files\Common Files\VST3\Twinbox.vst3` |
-| Linux | VST3 + Standalone | `~/.vst3/Twinbox.vst3` |
+Il workflow `.github/workflows/build.yml`:
+- compila le tre piattaforme;
+- su macOS verifica l'AU con `auval`;
+- produce l'installer **`Twinbox-2.0.0-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
 
-Il formato AU si può compilare solo su macOS. Il workflow `.github/workflows/build.yml` compila tutte e tre le piattaforme su GitHub Actions e su macOS esegue anche `auval`.
+Gli script che generano campioni e preset (`resources/`) sono `tools/gen_samples.py` e `tools/gen_presets.py`.
 
-Per Linux servono queste dipendenze:
-
-```bash
-sudo apt-get install libasound2-dev libfreetype-dev libx11-dev libxcomposite-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libfontconfig1-dev libgl1-mesa-dev
-```
-
-### Test offline
+### Test
 
 ```bash
 cmake -B build -DTWINBOX_BUILD_TESTS=ON
@@ -127,37 +157,21 @@ cmake --build build --target TwinboxTest
 ```
 
 ```bash
-xvfb-run ./build/TwinboxTest_artefacts/Release/TwinboxTest ./out
+xvfb-run ./build/TwinboxTest_artefacts/Release/TwinboxTest ./out [percorso/Limelite 1.3.ens] [fuzz]
 ```
 
-Il test esegue il rendering di 8 s di audio in 6 configurazioni: solo A, solo B, 50/50, LP risonante, HP e BP. Controlla che non ci siano NaN e che ci sia segnale, verifica il round-trip dello stato e salva gli screenshot di tutte le finestre.
+Cosa controlla il test:
+- il rendering della sezione A, della sezione B e del filtro master;
+- tutti i 23 modi xFx;
+- i 256 preset;
+- il salvataggio e ripristino dello stato;
+- l'importazione Legacy, se passi il file `.ens`;
+- gli screenshot di tutte le finestre.
 
-## Struttura del codice
+L'opzione `fuzz` imposta parametri a caso, a frequenze di campionamento e dimensioni di blocco diverse.
 
-```
-Source/
-  Params.h/.cpp              ID e layout di tutti i parametri
-  PluginProcessor.*          clock host/interno, MIDI, mix A/B, filtro master, morph, stato
-  PluginEditor.*             vista principale scalabile (A sopra, B sotto, Global a destra)
-  dsp/MicroEngine.*          voce sintetica, sequencer A–L, swing/fill, choke
-  dsp/LimeEngine.*           5 sampler, corsie con lunghezza/stretch, Mod lane, Delay/Filter/Dirt/Norm/LFO
-  dsp/SampleBank.*           banca di campioni di fabbrica generata proceduralmente (56 suoni)
-  dsp/Transport.h            scheduling degli step a precisione di campione (con swing)
-  gui/LookAndFeel.*          stile flat "Live-like", Knob, Segmented, Panel, ExpandWindow
-  gui/MicroSection.*         UI della sezione A + finestre Pattern e Patch
-  gui/LimeSection.*          UI della sezione B + finestre Sequencer, Sampler e Mixer
-  gui/GlobalPanel.*          GLOBAL CONTROL comprimibile + curva del filtro
-tests/TestMain.cpp           render offline e snapshot della GUI
-```
+## Note e limiti
 
-## Note di fedeltà e limiti noti
-
-* **Campioni di Limelite**: la libreria originale (circa 640 campioni NI) non è ridistribuibile. Al suo posto c'è una banca
-  di 56 suoni sintetizzati (kick, snare, clap, hat, percussioni, stab, FX). Con *Load* o il drag & drop puoi caricare i
-  tuoi campioni.
-* **Documentazione consultata**: i manuali ufficiali (Reaktor 5 Instrument Reference, cap. 3.5 Limelite; Microtonic User
-  Guide) non erano raggiungibili dall'ambiente di sviluppo. Nomi e comportamenti vengono da estratti dei manuali e da
-  guide di terze parti (Garnish), integrati con la conoscenza degli strumenti. Alcuni dettagli sono quindi
-  un'interpretazione: le curve esatte dei Rate, il comportamento del Fill Rate (qui "ogni N giri del pattern") e le
-  destinazioni della corsia Mod.
-* Il Morph di Microtonic qui interpola i parametri delle patch. Non ricostruisce le patch originali di Sonic Charge.
+- **EXT / FX** di Limelite (ingresso audio esterno, modalità solo-effetto) non sono implementati: il plugin è uno strumento senza ingresso audio.
+- I 127 schemi di Remix e alcune curve dei parametri sono ricostruzioni: le tabelle numeriche originali non sono leggibili dal file.
+- Su **Linux**, pluginval va saltuariamente in crash nel proprio codice di hosting VST3 (run loop Linux dell'host, nessun frame nel codice di Twinbox). Il plugin compilato con AddressSanitizer passa sempre la validazione.

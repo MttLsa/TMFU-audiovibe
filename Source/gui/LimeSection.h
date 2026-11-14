@@ -2,11 +2,40 @@
 #include "LookAndFeel.h"
 #include "../PluginProcessor.h"
 
-// -------------------------------------------------------------------------------------
-//  Sequencer grid for Section B
-//  Main window : Kick / Snare / Hat (16 steps, shared main length)
-//  Lower window: Tie / Pod lanes (own length, optional stretch) + Mod value lane
-// -------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+//  Generic panel that owns its controls (so the same panel can be shown small or in a big window)
+// -------------------------------------------------------------------------------------------------
+class ControlPanel : public Panel
+{
+public:
+    ControlPanel (TwinboxProcessor& p, const juce::String& title, juce::Colour accent = theme::accentB);
+    Knob*      knob (const juce::String& id, const juce::String& caption);
+    Toggle*    toggle (const juce::String& id, const juce::String& caption);
+    Segmented* seg (const juce::String& id, juce::StringArray labels = {}, const juce::String& caption = {});
+    juce::ComboBox* combo (const juce::String& id);
+    void row (std::vector<juce::Component*> r) { rows.push_back (std::move (r)); }
+    void setTopArea (int h) { topH = h; }
+    juce::Rectangle<int> topArea() const { return content().removeFromTop (topH); }
+    void resized() override;
+    void addOnTop (juce::Component* c) { tops.push_back (c); addAndMakeVisible (c); }
+    juce::OwnedArray<juce::Component> owned;
+    TwinboxProcessor& proc;
+
+protected:
+    std::vector<std::vector<juce::Component*>> rows;
+    std::vector<juce::Component*> tops;
+    juce::OwnedArray<juce::AudioProcessorValueTreeState::ComboBoxAttachment> comboAtts;
+    juce::OwnedArray<juce::AudioProcessorValueTreeState::SliderAttachment> sliderAtts;
+public:
+    juce::Slider* incDec (const juce::String& id);
+    std::function<void (ControlPanel&)> customLayout;
+protected:
+    int topH = 0;
+};
+
+// -------------------------------------------------------------------------------------------------
+//  Sequencer grid (main grid Kick/Snare/C-Hat/O-Hat + value lanes Tie/Pod/Mod), 64 steps with paging
+// -------------------------------------------------------------------------------------------------
 class LimeSeqGrid : public juce::Component, public juce::SettableTooltipClient, private juce::Timer
 {
 public:
@@ -15,142 +44,129 @@ public:
     void paint (juce::Graphics&) override;
     void mouseDown (const juce::MouseEvent&) override;
     void mouseDrag (const juce::MouseEvent&) override;
-    void mouseUp (const juce::MouseEvent&) override { dragLane = -1; }
-    juce::Rectangle<int> laneBounds (int lane) const;    // lane rows: 0 kick,1 snare,2 hat,3 tie,4 pod,5 mod
+    void mouseUp (const juce::MouseEvent&) override { dragRow = -1; }
+    void setPage (int p) { page = p; repaint(); }
+    int  getPage() const { return page; }
+    int  visibleSteps() const { return big ? 32 : 16; }
+    int  numPages() const { return params::numLimeSteps / visibleSteps(); }
+    void setLowerLane (int l) { lowerLane = l; repaint(); }   // compact view: which value lane is shown
+    int  lowerLaneShown() const { return lowerLane; }
+    juce::Rectangle<float> rowBounds (int row) const;        // rows: 0..3 trig, 4..6 value (big) or 4 (compact)
 
 private:
     void timerCallback() override;
     int  editPattern() const;
-    int  laneLength (int lane) const;
-    bool laneStretched (int lane) const;
-    juce::Rectangle<float> cell (int lane, int step) const;
-    int  stepAt (int lane, int x) const;
-    int  laneAt (int y) const;
-    void applyCell (int lane, int step, const juce::MouseEvent& e, bool first);
-
+    int  rowCount() const { return big ? 7 : 5; }
+    int  rowToLane (int row) const { return row < 4 ? row : (big ? row - 4 : lowerLane) + 4; }   // 0..3 trig, 4..6 tie/pod/mod
+    int  laneLen (int lane) const;
+    int  stepAtX (float x) const;
+    void edit (int row, int step, const juce::MouseEvent& e, bool first);
     TwinboxProcessor& proc;
     bool big;
-    int dragLane = -1, lastDragStep = -1;
-    uint8_t dragValue = 0;
-    std::array<int, 4> lastSteps { -2, -2, -2, -2 };
+    int page = 0, lowerLane = 0;
+    int dragRow = -1, lastStep = -1; uint8_t dragVal = 0;
+    std::array<int, 4> lastPlay { -2, -2, -2, -2 };
 };
 
-// Large sequencer window: pattern slots, big grid, per-lane tools, remix controls
-class LimeSeqWindowContent : public juce::Component, private juce::Timer
+class LimeSeqPanel : public Panel, private juce::Timer
 {
 public:
-    explicit LimeSeqWindowContent (TwinboxProcessor& p);
-    ~LimeSeqWindowContent() override { stopTimer(); }
-    void paint (juce::Graphics&) override;
+    LimeSeqPanel (TwinboxProcessor& p, bool big);
+    ~LimeSeqPanel() override { stopTimer(); }
     void resized() override;
+    void paint (juce::Graphics&) override;
 private:
     void timerCallback() override;
-    void laneOp (int lane, int op);    // 0 clear, 1 shift left, 2 shift right, 3 random, 4 fill every 4
     TwinboxProcessor& proc;
-    juce::OwnedArray<juce::TextButton> slots;
+    bool big;
+    juce::OwnedArray<juce::TextButton> patBtns, pageBtns, laneBtns, chainBtns;
+    Toggle chainOn { "ON", theme::accentB }, lock { "LOCK", theme::accentB };
+    juce::Slider chainLen;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> chainLenAtt;
+    juce::TextButton copyBtn { "COPY" }, pasteBtn { "PASTE" };
     LimeSeqGrid grid;
-    struct LaneTools { juce::TextButton clear { "Clr" }, left { "<" }, right { ">" }, rnd { "Rnd" }, four { "1/4" }; };
-    std::array<LaneTools, 6> tools;
-    Knob len { "Main Len", theme::accentB }, tieLen { "Tie Len", theme::accentB }, podLen { "Pod Len", theme::accentB },
-         modLen { "Mod Len", theme::accentB }, shuffle { "Shuffle", theme::accentB }, accent { "Accent", theme::accentB };
-    Toggle tieStr { "Stretch", theme::accentB }, podStr { "Stretch", theme::accentB }, modStr { "Stretch", theme::accentB };
-    juce::ComboBox modDest;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> modDestAtt;
-    Knob modAmt { "Mod Amt", theme::accentB };
+    int clip = -1;
 };
 
-// -------------------------------------------------------------------------------------
-//  Waveform display of a sampler slot
-// -------------------------------------------------------------------------------------
-class SampleView : public juce::Component, private juce::Timer
+// Sample source + selector row for a sampler module
+class SampleSelector : public juce::Component, private juce::ChangeListener, private juce::Timer
 {
 public:
-    SampleView (TwinboxProcessor& p, int s) : proc (p), slot (s) { startTimerHz (15); }
-    ~SampleView() override { stopTimer(); }
-    void paint (juce::Graphics&) override;
-private:
-    void timerCallback() override;
-    TwinboxProcessor& proc;
-    int slot;
-    const Sample* last = nullptr;
-    float flash = 0; int lastHits = 0;
-};
-
-// -------------------------------------------------------------------------------------
-//  One sampler (Kick / Snare / Hat / Tie / Pod). 'big' = large editor window version.
-// -------------------------------------------------------------------------------------
-class LimeSamplerPanel : public Panel, public juce::FileDragAndDropTarget, private juce::Timer
-{
-public:
-    LimeSamplerPanel (TwinboxProcessor& p, int part, bool big);
-    ~LimeSamplerPanel() override { stopTimer(); }
+    SampleSelector (TwinboxProcessor& p, int module, bool big);
+    ~SampleSelector() override;
     void resized() override;
     void paint (juce::Graphics&) override;
-    bool isInterestedInFileDrag (const juce::StringArray&) override { return true; }
-    void filesDropped (const juce::StringArray& files, int x, int y) override;
-
 private:
-    struct SampleSlot
-    {
-        juce::ComboBox box;
-        juce::TextButton load { "Load" };
-        juce::TextButton play { juce::String::fromUTF8 ("\xe2\x96\xb6") };
-        std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> att;
-        int slot = 0;
-    };
+    void changeListenerCallback (juce::ChangeBroadcaster*) override { refresh(); }
     void timerCallback() override;
-    void setupSlot (SampleSlot& s, int slot, const juce::String& paramId);
-    void chooseFile (int slot);
-
+    void refresh();
+    void chooseFolder();
     TwinboxProcessor& proc;
-    int part;
-    bool big;
-    SampleSlot s1, s2;
+    int module; bool big;
+    juce::TextButton twb { "TWB" }, leg { "LEG" }, usr { juce::String::fromUTF8 ("\xf0\x9f\x93\x81") }, play { juce::String::fromUTF8 ("\xe2\x96\xb6") };
+    juce::ComboBox box;
     std::unique_ptr<juce::FileChooser> chooser;
-    std::unique_ptr<SampleView> view1, view2;
-    juce::OwnedArray<Knob> knobs;
-    juce::OwnedArray<Toggle> toggles;
-    std::unique_ptr<Segmented> fmode;
+    int shownIndex = -1;
 };
 
-// -------------------------------------------------------------------------------------
-//  Large mixer / FX window: 5 channel strips + Delay, Filter, LFO, Mod, Output
-// -------------------------------------------------------------------------------------
-class LimeMixerView : public juce::Component, private juce::Timer
+// Waveform display of the currently selected sample of a module
+class WaveView : public juce::Component, private juce::Timer
 {
 public:
-    explicit LimeMixerView (TwinboxProcessor& p);
-    ~LimeMixerView() override { stopTimer(); }
+    WaveView (TwinboxProcessor& p, int m) : proc (p), module (m) { startTimerHz (10); }
+    ~WaveView() override { stopTimer(); }
     void paint (juce::Graphics&) override;
-    void resized() override;
 private:
     void timerCallback() override { repaint(); }
-    TwinboxProcessor& proc;
-    struct Strip
-    {
-        juce::Slider fader;
-        std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> att;
-        Knob pan { "Pan", theme::accentB }, send { "Delay", theme::accentB };
-        Toggle mute { "Mute", theme::accentB };
-        juce::TextButton play { juce::String::fromUTF8 ("\xe2\x96\xb6") };
-    };
-    std::array<Strip, params::numLimeParts> strips;
-    Panel dlyP { "Delay", theme::accentB }, fltP { "Filter", theme::accentB }, lfoP { "LFO", theme::accentB },
-          modP { "Mod Lane", theme::accentB }, outP { "Output", theme::accentB };
-    Segmented dlyTime { theme::accentB };
-    Knob dlyFb { "Feedback", theme::accentB }, dlyDamp { "Damp", theme::accentB }, dlyLvl { "Level", theme::accentB };
-    Knob fltCut { "Cutoff", theme::accentB }, fltRes { "Reso", theme::accentB };
-    Knob lfoRate { "Rate", theme::accentB }, lfoFM { "FM", theme::accentB }, lfoDM { "DM", theme::accentB };
-    juce::ComboBox modDest;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> modDestAtt;
-    Knob modAmt { "Amount", theme::accentB };
-    Knob gain { "Gain", theme::accentB }, pitch { "Pitch", theme::accentB }, dirt { "Dirt", theme::accentB };
-    Toggle norm { "Norm", theme::accentB };
+    TwinboxProcessor& proc; int module;
 };
 
-// -------------------------------------------------------------------------------------
+// One sampler module (Kick, Snare, Hat, Tie, Pod) — original control set
+class LimeModulePanel : public ControlPanel
+{
+public:
+    LimeModulePanel (TwinboxProcessor& p, int voice, bool big);
+    void resized() override;
+private:
+    int voice; bool big;
+    std::unique_ptr<SampleSelector> selector;
+    std::unique_ptr<WaveView> wave;
+    std::unique_ptr<Toggle> power;
+};
+
+// XY pad bound to two parameters (xFx Parameter X / Additional)
+class XYPad : public juce::Component
+{
+public:
+    XYPad (juce::AudioProcessorValueTreeState& s, const juce::String& xId, const juce::String& yId);
+    void paint (juce::Graphics&) override;
+    void mouseDown (const juce::MouseEvent& e) override { set (e); }
+    void mouseDrag (const juce::MouseEvent& e) override { set (e); }
+    void mouseUp (const juce::MouseEvent&) override;
+private:
+    void set (const juce::MouseEvent& e);
+    juce::RangedAudioParameter *px, *py;
+    std::unique_ptr<juce::ParameterAttachment> ax, ay;
+    float vx = 0.5f, vy = 0.5f;
+    bool dragging = false;
+};
+
+// -------------------------------------------------------------------------------------------------
+//  Big windows
+// -------------------------------------------------------------------------------------------------
+class LimeFxWindowContent : public juce::Component
+{
+public:
+    explicit LimeFxWindowContent (TwinboxProcessor& p);
+    void paint (juce::Graphics& g) override { g.fillAll (theme::bg); }
+    void resized() override;
+private:
+    juce::OwnedArray<Panel> panels;
+};
+
+// -------------------------------------------------------------------------------------------------
 //  Section B main view
-// -------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
 class LimeSection : public juce::Component, private juce::Timer
 {
 public:
@@ -158,45 +174,24 @@ public:
     ~LimeSection() override;
     void paint (juce::Graphics&) override;
     void resized() override;
+    std::function<void()> onOpenBrowser;
 
 private:
     void timerCallback() override;
-    void openSeqWindow();
-    void openSamplerWindow (int part);
-    void openMixerWindow();
+    void openWindow (const juce::String& key, const juce::String& title, std::function<juce::Component*()> make, int w, int h);
+    void importLegacy();
 
     TwinboxProcessor& proc;
+    juce::TextButton browserBtn { "BROWSER" }, legacyBtn { "IMPORT LEGACY" };
+    Knob levelB { "Level B", theme::accentB };
+    juce::String status;
+    std::unique_ptr<juce::FileChooser> chooser;
 
-    // top row
-    Panel seqPanel { "Sequencer", theme::accentB };
-    juce::OwnedArray<juce::TextButton> slots;
-    juce::TextButton copyPat { "Copy" }, pastePat { "Paste" };
-    int patClip = -1;
-    LimeSeqGrid grid;
-
-    Panel remixPanel { "Remix", theme::accentB };
-    Knob len { "Length", theme::accentB }, tieLen { "Tie", theme::accentB }, podLen { "Pod", theme::accentB }, modLen { "Mod", theme::accentB };
-    Toggle tieStr { "Str", theme::accentB }, podStr { "Str", theme::accentB }, modStr { "Str", theme::accentB };
-    Knob shuffle { "Shuffle", theme::accentB }, accent { "Accent", theme::accentB };
-
-    Panel outPanel { "Output", theme::accentB };
-    Knob gain { "Gain", theme::accentB }, pitch { "Pitch", theme::accentB }, dirt { "Dirt", theme::accentB };
-    Toggle norm { "Norm", theme::accentB };
-    Knob lfoRate { "LFO Rate", theme::accentB }, lfoFM { "FM", theme::accentB }, lfoDM { "DM", theme::accentB };
-
-    // sampler row
-    juce::OwnedArray<LimeSamplerPanel> samplers;
-
-    // FX row
-    Panel dlyPanel { "Delay", theme::accentB }, fltPanel { "Filter", theme::accentB }, modPanel { "Mod", theme::accentB };
-    juce::ComboBox dlyTime;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> dlyTimeAtt;
-    Knob dlyFb { "Feedback", theme::accentB }, dlyDamp { "Damp", theme::accentB }, dlyLvl { "Level", theme::accentB };
-    Knob fltCut { "Cutoff", theme::accentB }, fltRes { "Reso", theme::accentB };
-    juce::ComboBox modDest;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> modDestAtt;
-    Knob modAmt { "Amount", theme::accentB };
-
-    std::unique_ptr<ExpandWindow> seqWindow, mixerWindow;
-    std::array<std::unique_ptr<ExpandWindow>, params::numLimeParts> samplerWindows;
+    std::unique_ptr<LimeSeqPanel> seq;
+    std::unique_ptr<ControlPanel> remix, out, global, pulp, xfx, delay, mix, eq, filter, magic;
+    juce::OwnedArray<LimeModulePanel> modules;
+    std::map<juce::String, std::unique_ptr<ExpandWindow>> windows;
 };
+
+// helper used by the FX window and the main view
+std::unique_ptr<ControlPanel> makeLimePanel (TwinboxProcessor& p, const juce::String& which, bool big);

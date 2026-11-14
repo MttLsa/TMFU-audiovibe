@@ -36,8 +36,9 @@ public:
 
     // ------------------------------------------------------------------ public API for the editor
     juce::AudioProcessorValueTreeState apvts;
+    SampleLibrary library;
     MicroEngine micro;
-    LimeEngine  lime;
+    LimeEngine  lime { library };
 
     juce::String channelName (int ch) const { return microNames[(size_t) ch]; }
     void setChannelName (int ch, const juce::String& n) { microNames[(size_t) ch] = n; }
@@ -50,7 +51,9 @@ public:
     void copyChannel (int ch);
     void pasteChannel (int ch);
 
-    bool loadUserSample (int slot, const juce::File& f);
+    // Legacy import from the user's own Limelite .ens (runs on a background thread)
+    void importLegacy (const juce::File& ens, std::function<void (LegacyImporter::Result)> onDone,
+                       std::function<void (float)> progress = {});
 
     float meter (int which) const { return meters[(size_t) which].load(); }   // 0 = A, 1 = B, 2 = Out
     bool isPlaying() const { return transportPlaying.load(); }
@@ -63,7 +66,7 @@ private:
     void applyMorph (float m);
 
     std::array<juce::String, params::numMicroChannels> microNames;
-    juce::AudioFormatManager formatManager;
+    juce::ThreadPool importPool { 1 };
 
     // transport
     double sr = 44100.0;

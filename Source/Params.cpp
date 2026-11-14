@@ -66,9 +66,8 @@ namespace
     };
 }
 
-Layout createLayout (int numBankSamples, const StringArray& sampleNames, const int defaultSample[numLimeParts], int defaultHatOpen)
+Layout createLayout()
 {
-    ignoreUnused (sampleNames);
     Layout l;
 
     // ===================================================================== SECTION A
@@ -122,83 +121,153 @@ Layout createLayout (int numBankSamples, const StringArray& sampleNames, const i
                [] (float v, int) { return String (roundToInt (v * 100)) + " %"; });
     addFloat  (l, aLevel, "A Master", NormalisableRange<float> (-60.f, 6.f), 0.f, dbText);
 
-    // ===================================================================== SECTION B
-    const int maxSmp = jmax (0, numBankSamples - 1);
-    for (int pt = 0; pt < numLimeParts; ++pt)
+    // ===================================================================== SECTION B (Limelite 1.3)
+    auto pctR = NormalisableRange<float> (0.f, 100.f);
+    auto bip  = NormalisableRange<float> (-100.f, 100.f);
+    for (int v = 0; v < numLimeVoices; ++v)
     {
-        const String P = String (limePartName (pt)) + " ";
-        auto id = [pt] (const char* s) { return b (pt, s); };
-
-        addInt   (l, id (lm::smp), P + (pt == hat ? "Closed Sample" : "Sample"), 0, maxSmp, defaultSample[pt]);
-        if (pt == hat)
-            addInt (l, id (lm::smpOpen), P + "Open Sample", 0, maxSmp, defaultHatOpen);
-        addFloat (l, id (lm::tune), P + "Tune", NormalisableRange<float> (-24.f, 24.f), 0.f, stText);
-        addFloat (l, id (lm::dcy), P + (pt == hat ? "Closed Decay" : "Decay"), NormalisableRange<float> (0.f, 100.f),
-                  pt == kick ? 70.f : (pt == hat ? 40.f : 60.f), pctText);
-        if (pt == hat)
+        const String P = String (limeVoiceName (v)) + " ";
+        auto id = [v] (const char* k) { return b (v, k); };
+        const bool sampler = v != pulp;
+        addBool  (l, id (lv::on),   P + "On", true);
+        addFloat (l, id (lv::gain), P + "Gain", NormalisableRange<float> (-60.f, 6.f), v == hat ? -4.f : (v >= tie ? -5.f : 0.f), dbText);
+        addFloat (l, id (lv::pan),  P + "Pan", bip, v == tie ? -20.f : (v == pod ? 25.f : (v == pulp ? 10.f : 0.f)), panText);
+        if (v <= hat) addFloat (l, id (lv::acc), P + "Accent", pctR, 50.f, pctText);
+        if (v == tie || v == pod) addFloat (l, id (lv::vamt), P + "V>A", pctR, 70.f, pctText);
+        if (sampler)  addInt   (l, id (lv::wav), P + "Wave", 0, 255, 0);
+        addFloat (l, id (lv::tune), P + "Tune", NormalisableRange<float> (-24.f, 24.f), 0.f, stText);
+        if (v == tie || v == pulp) addFloat (l, id (lv::port), P + "Portamento", pctR, 0.f, pctText);
+        if (sampler && v != hat) addFloat (l, id (lv::st), P + "Start", pctR, 0.f, pctText);
+        if (v == kick || v == snare)
         {
-            addFloat (l, id (lm::dcyOpen), P + "Open Decay", NormalisableRange<float> (0.f, 100.f), 70.f, pctText);
-            addBool  (l, id (lm::link), P + "Link", true);
+            addFloat (l, id (lv::hold), P + "Hold", pctR, 0.f, pctText);
+            addFloat (l, id (lv::dcy),  P + "Decay", pctR, v == kick ? 65.f : 55.f, pctText);
+            addFloat (l, id (lv::sat),  P + "Saturation", pctR, 0.f, pctText);
+            addFloat (l, id (lv::shp),  P + "Shape", bip, 0.f, [] (float x, int) { return x < -33 ? String ("thin ") + String (roundToInt (x)) : (x > 33 ? String ("fat +") + String (roundToInt (x)) : String ("normal ") + String (roundToInt (x))); });
+            addFloat (l, id (lv::sm),   P + "Shape Smooth", pctR, 0.f, pctText);
         }
-        if (pt == snare)
-            addChoice (l, id (lm::fmode), P + "Filter Mode", StringArray { "LP", "BP", "HP" }, 0);
-
-        const float cutDef = pt == hat ? 20.f : 20000.f;
-        if (pt == hat)
-            addFloat (l, id (lm::cut), P + "Color (HP)", logRange (20.f, 16000.f, 1000.f), cutDef, hzText);
-        else
-            addFloat (l, id (lm::cut), P + "Cutoff", logRange (20.f, 20000.f, 1500.f), cutDef, hzText);
-        addFloat (l, id (lm::res), P + "Reso", NormalisableRange<float> (0.f, 100.f), 0.f, pctText);
-        if (pt == kick)
-            addBool (l, id (lm::lowcut), P + "Low Cut", false);
-        if (pt == tie)
+        if (v == tie || v == pod)
         {
-            addFloat (l, id (lm::fmFreq), P + "FM Freq", logRange (0.5f, 5000.f, 200.f), 120.f, hzText);
-            addFloat (l, id (lm::fmAmt), P + "FM Amount", NormalisableRange<float> (0.f, 100.f), 0.f, pctText);
+            addFloat (l, id (lv::att), P + "Attack", pctR, 0.f, pctText);
+            addFloat (l, id (lv::dcy), P + "Decay", pctR, 60.f, pctText);
         }
-        if (pt == pod)
+        if (v == hat)
         {
-            addFloat (l, id (lm::zap), P + "Zap", NormalisableRange<float> (-100.f, 100.f), 0.f, pctText);
-            addFloat (l, id (lm::zapDcy), P + "Zap Decay", NormalisableRange<float> (0.f, 100.f), 30.f, pctText);
+            addFloat (l, id (lv::cd), P + "Closed Decay", pctR, 35.f, pctText);
+            addFloat (l, id (lv::od), P + "Open Decay", pctR, 70.f, pctText);
+            addBool  (l, id (lv::link), P + "Link", true);
         }
-        addFloat (l, id (lm::lvl), P + "Level", NormalisableRange<float> (-60.f, 6.f), pt == hat ? -4.f : (pt >= tie ? -6.f : 0.f), dbText);
-        addFloat (l, id (lm::pan), P + "Pan", NormalisableRange<float> (-100.f, 100.f), pt == tie ? -25.f : (pt == pod ? 25.f : 0.f), panText);
-        addFloat (l, id (lm::send), P + "Delay Send", NormalisableRange<float> (0.f, 100.f), pt == pod ? 30.f : 0.f, pctText);
-        addBool  (l, id (lm::mute), P + "Mute", false);
+        if (v == tie)
+        {
+            addFloat (l, id (lv::fm), P + "FM", pctR, 0.f, pctText);
+            addFloat (l, id (lv::mp), P + "Mod Pitch", NormalisableRange<float> (-24.f, 48.f), 12.f, stText);
+            addFloat (l, id (lv::noise), P + "Noise", pctR, 0.f, pctText);
+            addFloat (l, id (lv::sat), P + "Saturation", pctR, 0.f, pctText);
+        }
+        if (v == pod) addFloat (l, id (lv::zap), P + "Zap", bip, 0.f, pctText);
+        if (v == kick || v == hat) addChoice (l, id (lv::mod), P + "Mod Dest", StringArray { "--", "wav", "tune", "cut" }, 0);
+        if (v == snare) addChoice (l, id (lv::mod), P + "Mod Dest", StringArray { "--", "wav", "tune", "cut", "flam" }, 0);
+        if (v == tie) addChoice (l, id (lv::vel), P + "Vel Dest", StringArray { "--", "wav", "tune", "att", "dcy", "st", "fm", "cut" }, 0);
+        if (v == pod) addChoice (l, id (lv::vel), P + "Vel Dest", StringArray { "--", "wav", "tune", "att", "dcy", "zap", "cut" }, 0);
+        if (v == kick) addBool (l, id (lv::lo), P + "Low Cut", false);
+        if (v == snare || v == tie || v == pod) addChoice (l, id (lv::ft), P + "Filter Type", StringArray { "LP", "BP", "HP" }, 0);
+        if (v == snare) addFloat (l, id (lv::flam), P + "Flam", pctR, 0.f, pctText);
+        if (sampler)
+        {
+            if (v == hat) addFloat (l, id (lv::cut), P + "Cutoff (HP)", logRange (20.f, 16000.f, 1000.f), 20.f, hzText);
+            else          addFloat (l, id (lv::cut), P + "Cutoff", logRange (20.f, 20000.f, 1500.f), 20000.f, hzText);
+            addFloat (l, id (lv::res), P + "Resonance", pctR, 0.f, pctText);
+        }
+        if (v == pulp)
+        {
+            addFloat (l, id (lv::trkLo),  P + "Track Low", logRange (20.f, 2000.f, 150.f), 40.f, hzText);
+            addFloat (l, id (lv::trkHi),  P + "Track High", logRange (50.f, 5000.f, 600.f), 800.f, hzText);
+            addFloat (l, id (lv::tieSrc), P + "Tie (track source)", pctR, 100.f, pctText);
+            addFloat (l, id (lv::dcy),    P + "Decay", pctR, 40.f, pctText);
+            addFloat (l, id (lv::osc),    P + "Osc (Sine-Input-Noise)", pctR, 0.f,
+                      [] (float x, int) { return x < 25 ? String ("Sine") : (x < 75 ? String ("Input") : String ("Noise")); });
+            addFloat (l, id (lv::comb), P + "Comb Mix", pctR, 0.f, pctText);
+            addFloat (l, id (lv::fb),   P + "Comb Feedback", pctR, 50.f, pctText);
+            addFloat (l, id (lv::freq), P + "Comb Freq", logRange (30.f, 4000.f, 300.f), 220.f, hzText);
+            addFloat (l, id (lv::fm),   P + "Comb FM", pctR, 0.f, pctText);
+            addFloat (l, id (lv::cut),  P + "Comb Cutoff", logRange (100.f, 20000.f, 3000.f), 8000.f, hzText);
+        }
     }
 
-    StringArray limePatterns;
-    for (int i = 0; i < numLimePatterns; ++i) limePatterns.add (String (i + 1));
-    addChoice (l, bPattern, "B Pattern", limePatterns, 0);
-    addInt    (l, bLen,    "B Length", 1, numSteps, 16);
-    addInt    (l, bTieLen, "B Tie Length", 1, numSteps, 16);
-    addInt    (l, bPodLen, "B Pod Length", 1, numSteps, 16);
-    addInt    (l, bModLen, "B Mod Length", 1, numSteps, 16);
+    const StringArray abcd { "A", "B", "C", "D" };
+    addChoice (l, bPattern, "B Pattern", abcd, 0);
+    addInt    (l, bLen,    "B Length", 1, numLimeSteps, 16);
+    addInt    (l, bStart,  "B Start Step", 1, numLimeSteps, 1);
+    addInt    (l, bTieLen, "B Tie Length", 1, numLimeSteps, 16);
+    addInt    (l, bPodLen, "B Pod Length", 1, numLimeSteps, 16);
+    addInt    (l, bModLen, "B Mod Length", 1, numLimeSteps, 16);
     addBool   (l, bTieStr, "B Tie Stretch", false);
     addBool   (l, bPodStr, "B Pod Stretch", false);
     addBool   (l, bModStr, "B Mod Stretch", false);
-    addFloat  (l, bShuffle, "B Shuffle", NormalisableRange<float> (0.f, 100.f), 0.f, pctText);
-    addFloat  (l, bAccent, "B Accent", NormalisableRange<float> (0.f, 100.f), 50.f, pctText);
+    addFloat  (l, bSwing,  "B Swing", pctR, 0.f, pctText);
+    addBool   (l, bHalf,   "B Half Tempo", false);
+    addBool   (l, bChainOn, "B Pattern Seq On", false);
+    addInt    (l, bChainLen, "B Pattern Seq Length", 1, 8, 4);
+    for (int i = 0; i < 8; ++i) addChoice (l, bChainSlot (i), "B Pattern Seq " + String (i + 1), abcd, i % 4);
+    addBool   (l, bLock,   "B Lock Display", false);
+    addInt    (l, bRemix,  "B Remix Pattern", 0, 127, 0);
+    addChoice (l, bRemixRate, "B Remix Rate", StringArray { "OFF", "2", "4", "8", "12", "16" }, 0);
+    addInt    (l, bShift,  "B Remix Shift", -16, 16, 0);
 
-    addFloat  (l, bGain,  "B Gain", NormalisableRange<float> (-60.f, 6.f), 0.f, dbText);
-    addFloat  (l, bPitch, "B Pitch", NormalisableRange<float> (-12.f, 12.f), 0.f, stText);
-    addFloat  (l, bDirt,  "B Dirt", NormalisableRange<float> (0.f, 100.f), 0.f, pctText);
-    addBool   (l, bNorm,  "B Norm", false);
-
-    addFloat  (l, bLfoRate, "B LFO Rate", logRange (0.02f, 20.f, 1.f), 0.5f, hzText);
-    addFloat  (l, bLfoFM, "B LFO FM", NormalisableRange<float> (0.f, 100.f), 0.f, pctText);
-    addFloat  (l, bLfoDM, "B LFO DM", NormalisableRange<float> (0.f, 100.f), 0.f, pctText);
-
-    addChoice (l, bDlyTime, "B Delay Time", delayTimeNames(), 7);
-    addFloat  (l, bDlyFb,   "B Delay Feedback", NormalisableRange<float> (0.f, 95.f), 40.f, pctText);
-    addFloat  (l, bDlyDamp, "B Delay Damp", NormalisableRange<float> (0.f, 100.f), 40.f, pctText);
-    addFloat  (l, bDlyLvl,  "B Delay Level", NormalisableRange<float> (-60.f, 6.f), -6.f, dbText);
+    addFloat  (l, bDirt, "B Dirt", pctR, 0.f, pctText);
+    addFloat  (l, bGain, "B Gain (Master)", NormalisableRange<float> (-60.f, 6.f), 0.f, dbText);
+    addFloat  (l, bTune, "B Tune", NormalisableRange<float> (-12.f, 12.f), 0.f, stText);
+    addBool   (l, bNorm, "B Norm", false);
+    addFloat  (l, bNormAmp, "B Norm Amp", pctR, 50.f, pctText);
+    addFloat  (l, bNormRel, "B Norm Release", pctR, 40.f, pctText);
+    addFloat  (l, bNormSm,  "B Norm Smooth", pctR, 30.f, pctText);
 
     addFloat  (l, bFltCut, "B Filter Cutoff", logRange (40.f, 20000.f, 1500.f), 20000.f, hzText);
-    addFloat  (l, bFltRes, "B Filter Reso", NormalisableRange<float> (0.f, 100.f), 0.f, pctText);
+    addFloat  (l, bFltTrk, "B Filter Track", bip, 0.f, pctText);
+    addFloat  (l, bFltSm,  "B Filter Smooth", pctR, 40.f, pctText);
+    addFloat  (l, bFltMod, "B Filter Mod", bip, 0.f, pctText);
 
-    addChoice (l, bModDest, "B Mod Destination", modDestNames(), 0);
-    addFloat  (l, bModAmt,  "B Mod Amount", NormalisableRange<float> (-100.f, 100.f), 50.f, pctText);
+    addFloat  (l, bEqHi,  "B EQ High", NormalisableRange<float> (-18.f, 18.f), 0.f, dbText);
+    addFloat  (l, bEqMid, "B EQ Mid", NormalisableRange<float> (-18.f, 18.f), 0.f, dbText);
+    addFloat  (l, bEqLo,  "B EQ Low", NormalisableRange<float> (-18.f, 18.f), 0.f, dbText);
+    addFloat  (l, bEqAmp, "B EQ Amp (saturator)", NormalisableRange<float> (0.f, 24.f), 0.f, dbText);
+    addFloat  (l, bEqSplit, "B EQ Split", logRange (60.f, 1000.f, 250.f), 250.f, hzText);
+
+    addFloat  (l, bMagPitch, "B Magic Pitch", NormalisableRange<float> (-12.f, 12.f), 0.f, stText);
+    addFloat  (l, bMagGrain, "B Magic Grain", pctR, 40.f, pctText);
+    addFloat  (l, bMagMod,   "B Magic Mod", bip, 0.f, pctText);
+    addFloat  (l, bMagRmx,   "B Magic Remix", bip, 0.f, pctText);
+    addFloat  (l, bMagMix,   "B Magic Mix", pctR, 0.f, pctText);
+    addFloat  (l, bMagNotch, "B Magic Notch", logRange (100.f, 10000.f, 1000.f), 1000.f, hzText);
+
+    addInt    (l, bDlyOne, "B Delay One (16ths)", 1, 16, 3);
+    addInt    (l, bDlyTwo, "B Delay Two (16ths)", 1, 16, 4);
+    addFloat  (l, bDlyFb,  "B Delay Feedback", NormalisableRange<float> (0.f, 98.f), 40.f, pctText);
+    addFloat  (l, bDlyGain,"B Delay Gain", NormalisableRange<float> (-60.f, 6.f), -6.f, dbText);
+    addFloat  (l, bDlyLfo, "B Delay LFO", logRange (0.02f, 10.f, 0.5f), 0.3f, hzText);
+    addFloat  (l, bDlyFM,  "B Delay FM", pctR, 0.f, pctText);
+    addFloat  (l, bDlyDM,  "B Delay DM", pctR, 0.f, pctText);
+    addFloat  (l, bDlyWide,"B Delay Wide", pctR, 50.f, pctText);
+    addFloat  (l, bDlyCut, "B Delay Cutoff", logRange (200.f, 20000.f, 3000.f), 6000.f, hzText);
+    addFloat  (l, bDlyRes, "B Delay Res", pctR, 10.f, pctText);
+    addBool   (l, bDlyLo,  "B Delay Low Cut", true);
+
+    addChoice (l, bXMode, "B xFx Mode", xfxModeNames(), 0);
+    addFloat  (l, bXParam, "B xFx Parameter X", pctR, 50.f, pctText);
+    addFloat  (l, bXAdd,   "B xFx Additional", pctR, 50.f, pctText);
+    addFloat  (l, bXDly,   "B xFx Delay Input", pctR, 0.f, [] (float x, int) { return x < 1 ? String ("dry") : (x > 99 ? String ("post-delay") : String (roundToInt (x)) + " %"); });
+    addFloat  (l, bXGain,  "B xFx Gain", NormalisableRange<float> (-60.f, 6.f), 0.f, dbText);
+    addFloat  (l, bXLo,    "B xFx Low Cut", logRange (20.f, 2000.f, 150.f), 20.f, hzText);
+    addFloat  (l, bXHi,    "B xFx High Cut", logRange (500.f, 20000.f, 5000.f), 20000.f, hzText);
+    addFloat  (l, bXSpd,   "B xFx Speed", pctR, 50.f, pctText);
+    addFloat  (l, bXLen,   "B xFx Length", NormalisableRange<float> (1.f, 16.f, 1.f), 4.f, [] (float x, int) { return String (roundToInt (x)) + "/16"; });
+    addBool   (l, bXPlay,  "B xFx Play", true);
+    addBool   (l, bXRec,   "B xFx Rec", true);
+    addFloat  (l, bXSm,    "B xFx Smooth", pctR, 20.f, pctText);
+
+    addFloat  (l, bFxMix,  "B FX Mix", pctR, 50.f, [] (float x, int) { return x < 1 ? String ("dry") : (x > 99 ? String ("wet") : String (roundToInt (x)) + " %"); });
+    addBool   (l, bModInput, "B Mod > FX Input", false);
+    addBool   (l, bModMix,   "B Mod > FX Mix", false);
 
     // ===================================================================== GLOBAL
     addFloat  (l, gXfade, "A/B Mix", NormalisableRange<float> (0.f, 100.f), 50.f,

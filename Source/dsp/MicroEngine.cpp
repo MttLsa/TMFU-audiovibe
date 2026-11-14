@@ -305,7 +305,7 @@ void MicroEngine::process (float* L, float* R, int numSamples, const BlockTime& 
 //==============================================================================
 void MicroEngine::loadDefaultPatterns()
 {
-    for (auto& p : patterns) { p.clear(); p.length.store (NS); }
+    for (auto& p : patterns) { p.clear(); p.length.store (16); }
     auto set = [this] (int pat, int ch, const char* s)
     {
         // '-' off, 'x' trigger, 'X' accented trigger, 'f' fill-only, 'F' accented fill

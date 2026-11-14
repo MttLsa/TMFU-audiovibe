@@ -5,33 +5,21 @@ using namespace params;
 
 namespace
 {
-    juce::AudioProcessorValueTreeState::ParameterLayout makeLayout()
-    {
-        const auto& bank = SampleBank::get();
-        const int defaults[numLimeParts] = {
-            bank.firstOfCategory ("Kick", 1),
-            bank.firstOfCategory ("Snare", 1),
-            bank.firstOfCategory ("HatC", 0),
-            bank.firstOfCategory ("Perc", 3),
-            bank.firstOfCategory ("Tonal", 3)
-        };
-        return createLayout (bank.size(), bank.names(), defaults, bank.firstOfCategory ("HatO", 0));
-    }
-
     // MIDI note map
     //   36..43  -> Section A channels 1..8
-    //   48..53  -> Section B: Kick, Snare, Hat closed, Hat open, Tie, Pod
+    //   48..54  -> Section B: Kick, Snare, Hat closed, Hat open, Tie, Pod, Pulp
     constexpr int microNoteBase = 36;
     constexpr int limeNoteBase  = 48;
 }
 
 TwinboxProcessor::TwinboxProcessor()
     : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
-      apvts (*this, nullptr, "TWINBOX", makeLayout())
+      apvts (*this, nullptr, "TWINBOX", params::createLayout())
 {
     micro.bind (apvts);
     lime.bind (apvts);
-    formatManager.registerBasicFormats();
+    library.installFactoryIfMissing();
+    library.reloadAll();
 
     static const char* names[] { "Kick", "Snare", "CH", "OH", "Clap", "Tom", "Rim", "Bell" };
     for (int i = 0; i < numMicroChannels; ++i) microNames[(size_t) i] = names[i];
@@ -64,7 +52,7 @@ void TwinboxProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     sr = sampleRate;
     micro.prepare (sampleRate);
-    lime.prepare (sampleRate);
+    lime.prepare (sampleRate, samplesPerBlock);
     bufA.setSize (2, samplesPerBlock);
     bufB.setSize (2, samplesPerBlock);
     gFilt[0].reset(); gFilt[1].reset();
@@ -122,7 +110,7 @@ void TwinboxProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mid
         const float vel = m.getFloatVelocity();
         if (note >= microNoteBase && note < microNoteBase + numMicroChannels)
             midiA.push_back ({ meta.samplePosition, note - microNoteBase, vel });
-        else if (note >= limeNoteBase && note < limeNoteBase + LimeEngine::numSlots)
+        else if (note >= limeNoteBase && note < limeNoteBase + LimeEngine::numTargets)
             midiB.push_back ({ meta.samplePosition, note - limeNoteBase, vel });
     }
 
@@ -212,14 +200,6 @@ void TwinboxProcessor::timerCallback()
         if (lastMorph >= 0.0f) applyMorph (m);
         lastMorph = m;
     }
-    // lazily load user samples restored from state
-    for (int s = 0; s < LimeEngine::numSlots; ++s)
-    {
-        const auto path = lime.userSamplePath (s);
-        if (path.isNotEmpty() && lime.userSample (s) == nullptr)
-            if (! loadUserSample (s, juce::File (path)))
-                lime.setUserSamplePath (s, {});
-    }
 }
 
 void TwinboxProcessor::copyChannel (int ch)
@@ -243,28 +223,19 @@ void TwinboxProcessor::pasteChannel (int ch)
     }
 }
 
-bool TwinboxProcessor::loadUserSample (int slot, const juce::File& f)
+void TwinboxProcessor::importLegacy (const juce::File& ens, std::function<void (LegacyImporter::Result)> onDone,
+                                     std::function<void (float)> progress)
 {
-    std::unique_ptr<juce::AudioFormatReader> reader (formatManager.createReaderFor (f));
-    if (reader == nullptr) return false;
-    const auto len = (int) juce::jmin<juce::int64> (reader->lengthInSamples, (juce::int64) (reader->sampleRate * 20.0));
-    if (len <= 1) return false;
-    juce::AudioBuffer<float> tmp ((int) reader->numChannels, len);
-    reader->read (&tmp, 0, len, 0, true, true);
-    auto s = std::make_shared<Sample>();
-    s->name = f.getFileNameWithoutExtension();
-    s->category = "User";
-    s->sourceRate = reader->sampleRate;
-    s->data.resize ((size_t) len);
-    for (int i = 0; i < len; ++i)
+    importPool.addJob ([this, ens, onDone, progress]
     {
-        float acc = 0;
-        for (int c = 0; c < tmp.getNumChannels(); ++c) acc += tmp.getSample (c, i);
-        s->data[(size_t) i] = acc / (float) juce::jmax (1, tmp.getNumChannels());
-    }
-    lime.setUserSample (slot, s);
-    lime.setUserSamplePath (slot, f.getFullPathName());
-    return true;
+        auto r = LegacyImporter::run (ens, progress);
+        juce::MessageManager::callAsync ([this, r, onDone]
+        {
+            for (int m = 0; m < SampleLibrary::numModules; ++m)
+                if (library.source (m) == SampleLibrary::legacy) library.setSource (m, SampleLibrary::legacy);
+            if (onDone) onDone (r);
+        });
+    });
 }
 
 //==============================================================================
@@ -276,6 +247,7 @@ void TwinboxProcessor::getStateInformation (juce::MemoryBlock& destData)
     root.appendChild (apvts.copyState(), nullptr);
     root.appendChild (micro.saveState(), nullptr);
     root.appendChild (lime.saveState(), nullptr);
+    root.appendChild (library.saveState(), nullptr);
 
     juce::ValueTree names ("NAMES");
     for (int i = 0; i < numMicroChannels; ++i) names.setProperty ("n" + juce::String (i), microNames[(size_t) i], nullptr);
@@ -300,8 +272,8 @@ void TwinboxProcessor::setStateInformation (const void* data, int sizeInBytes)
 
     if (auto s = root.getChildWithName (apvts.state.getType()); s.isValid()) apvts.replaceState (s);
     micro.loadState (root.getChildWithName ("MICRO_PATTERNS"));
-    for (int s = 0; s < LimeEngine::numSlots; ++s) lime.setUserSample (s, nullptr);
     lime.loadState (root.getChildWithName ("LIME_PATTERNS"));
+    library.loadState (root.getChildWithName ("SAMPLE_FOLDERS"));
 
     if (auto names = root.getChildWithName ("NAMES"); names.isValid())
         for (int i = 0; i < numMicroChannels; ++i)
