@@ -11,6 +11,7 @@
 using namespace an;
 
 static constexpr double kSr = 48000.0;
+static constexpr double kPi = 3.14159265358979323846;
 static int failures = 0;
 
 static void check (bool ok, const char* what)
@@ -77,7 +78,7 @@ int main()
         Sim s;
         s.run (1.0, [] (double) { return 0.0f; });
         check (s.eng.getState() == State::WaitingForSignal, "silence -> still waiting for signal");
-        s.run (4.0, [] (double t) { return 0.1f * (float) std::sin (2 * M_PI * 1000 * t); }, 1.0f);
+        s.run (4.0, [] (double t) { return 0.1f * (float) std::sin (2 * kPi * 1000 * t); }, 1.0f);
         std::printf ("      measured=%.2f LUFS gain=%.2f dB out peak=%.2f dBFS\n", s.eng.getLastMeasuredLufs(),
                      s.eng.getGainDb(), linToDb (s.outPeakLastSec));
         check (s.eng.getState() == State::Locked, "locked after measurement");
@@ -91,7 +92,7 @@ int main()
     {
         Sim s;
         auto presetA = [] (double t) { return 0.05f * saw (t, 110.0); };                       // quiet bright saw
-        auto presetB = [] (double t) { return 0.9f * (float) std::sin (2 * M_PI * 80 * t); };  // loud sub sine
+        auto presetB = [] (double t) { return 0.9f * (float) std::sin (2 * kPi * 80 * t); };  // loud sub sine
         s.run (5.0, presetA, 1.0f);
         const int countA = s.eng.getNormalizeCount();
         const float gainA = s.eng.getGainDb();
@@ -148,7 +149,7 @@ int main()
         s.eng.requestNormalize (TriggerSource::Midi);
         s.run (0.5, [] (double) { return 0.0f; });
         check (s.eng.getState() == State::WaitingForSignal, "MIDI trigger -> waiting for signal");
-        s.run (4.0, [] (double t) { return 0.5f * (float) std::sin (2 * M_PI * 1000 * t); }); // ~ -6 LUFS
+        s.run (4.0, [] (double t) { return 0.5f * (float) std::sin (2 * kPi * 1000 * t); }); // ~ -6 LUFS
         std::printf ("      measured=%.2f LUFS gain=%.2f dB (expected about -12)\n", s.eng.getLastMeasuredLufs(), s.eng.getGainDb());
         check (std::abs (s.eng.getGainDb() + 12.0f) < 0.3f, "-18 LUFS target reached");
         check (s.eng.getLastTrigger() == TriggerSource::Midi, "trigger source = MIDI");
@@ -163,7 +164,7 @@ int main()
         auto spiky = [&] (double t)
         {
             const double ph = std::fmod (t * 4.0, 1.0); // 4 hits per second, sharp attack
-            return (float) (0.3 * std::exp (-ph * 30.0) * std::sin (2 * M_PI * 180 * t)) + 0.002f * nd (rng);
+            return (float) (0.3 * std::exp (-ph * 30.0) * std::sin (2 * kPi * 180 * t)) + 0.002f * nd (rng);
         };
         s.run (6.0, spiky);
         std::printf ("      gain=%.2f dB  limiter GR=%.2f dB  max out=%.3f dBFS\n", s.eng.getGainDb(),
@@ -191,7 +192,7 @@ int main()
         st.maxBoostDb = 48.0f;
         Sim s (st);
         s.run (3.0, [&] (double) { return std::clamp (0.4f * nd (rng), -1.0f, 1.0f); });
-        s.run (2.0, [] (double t) { return std::sin (2 * M_PI * 50 * t) > 0 ? 1.0f : -1.0f; });
+        s.run (2.0, [] (double t) { return std::sin (2 * kPi * 50 * t) > 0 ? 1.0f : -1.0f; });
         check (s.outPeakEver <= ceiling, "noise / full-scale square never exceed -1 dBFS");
         worstPeak = std::max (worstPeak, s.outPeakEver);
     }
