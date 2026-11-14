@@ -165,6 +165,7 @@ Layout createLayout()
             addFloat (l, id (lv::sat), P + "Saturation", pctR, 0.f, pctText);
         }
         if (v == pod) addFloat (l, id (lv::zap), P + "Zap", bip, 0.f, pctText);
+        if (v == tie || v == pod) addBool (l, id (lv::scale), P + "Scale", false);
         if (v == kick || v == hat) addChoice (l, id (lv::mod), P + "Mod Dest", StringArray { "--", "wav", "tune", "cut" }, 0);
         if (v == snare) addChoice (l, id (lv::mod), P + "Mod Dest", StringArray { "--", "wav", "tune", "cut", "flam" }, 0);
         if (v == tie) addChoice (l, id (lv::vel), P + "Vel Dest", StringArray { "--", "wav", "tune", "att", "dcy", "st", "fm", "cut" }, 0);
@@ -214,6 +215,11 @@ Layout createLayout()
     addInt    (l, bRemix,  "B Remix Pattern", 0, 127, 0);
     addChoice (l, bRemixRate, "B Remix Rate", StringArray { "OFF", "2", "4", "8", "12", "16" }, 0);
     addInt    (l, bShift,  "B Remix Shift", -16, 16, 0);
+    addChoice (l, bScaleRoot, "B Scale Root", StringArray { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" }, 0);
+    {
+        StringArray names; for (auto& sc : scales()) names.add (sc.name);
+        addChoice (l, bScaleType, "B Scale", names, 1);
+    }
 
     addFloat  (l, bDirt, "B Dirt", pctR, 0.f, pctText);
     addFloat  (l, bGain, "B Gain (Master)", NormalisableRange<float> (-60.f, 6.f), 0.f, dbText);
@@ -244,7 +250,7 @@ Layout createLayout()
     addInt    (l, bDlyOne, "B Delay One (16ths)", 1, 16, 3);
     addInt    (l, bDlyTwo, "B Delay Two (16ths)", 1, 16, 4);
     addFloat  (l, bDlyFb,  "B Delay Feedback", NormalisableRange<float> (0.f, 98.f), 40.f, pctText);
-    addFloat  (l, bDlyGain,"B Delay Gain", NormalisableRange<float> (-60.f, 0.f), -16.f, dbText);
+    addFloat  (l, bDlyGain,"B Delay Gain", NormalisableRange<float> (-60.f, 0.f), -60.f, dbText);
     addFloat  (l, bDlyLfo, "B Delay LFO", logRange (0.02f, 10.f, 0.5f), 0.3f, hzText);
     addFloat  (l, bDlyFM,  "B Delay FM", pctR, 0.f, pctText);
     addFloat  (l, bDlyDM,  "B Delay DM", pctR, 0.f, pctText);

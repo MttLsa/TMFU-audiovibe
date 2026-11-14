@@ -4,6 +4,8 @@
 #include <juce_data_structures/juce_data_structures.h>
 #include <memory>
 #include <vector>
+#include <map>
+#include <atomic>
 
 // One audio sample in memory (mono or stereo, de-interleaved).
 struct Sample
@@ -11,6 +13,8 @@ struct Sample
     juce::String name;
     double sourceRate = 44100.0;
     std::vector<float> L, R;              // R empty for mono
+    float pitch = -1.0f;                  // detected fundamental as MIDI note (69 = A4); -1 = no clear pitch
+    float pitchConf = 0.0f;               // 0..1
     int length() const noexcept { return (int) L.size(); }
     bool stereo() const noexcept { return ! R.empty(); }
 };
@@ -23,6 +27,8 @@ struct SampleSet
     std::vector<SamplePtr> samples;      // main samples (Hat: closed)
     std::vector<SamplePtr> openPartner;  // Hat only: "open/<same name>" partner or nullptr
     juce::StringArray names;
+    // per-sample manual transposition in semitones (-32..+32), changeable live from the UI
+    mutable std::vector<std::atomic<float>> offsets;
     int size() const noexcept { return (int) samples.size(); }
 };
 using SampleSetPtr = std::shared_ptr<const SampleSet>;
@@ -66,6 +72,14 @@ public:
 
     int indexOf (int module, const juce::String& sampleName) const;
 
+    // manual per-sample pitch offsets (semitones), kept per folder + file name and saved with the project
+    void  setSampleOffset (int module, int index, float semitones);
+    float sampleOffset (int module, int index) const;
+
+    // pitch detection (YIN); returns MIDI note or -1 when the sample has no clear pitch
+    static float detectPitch (const Sample& s, float& confidence);
+    static juce::String noteName (float midi);   // "C#3 +12c"
+
     juce::ValueTree saveState() const;
     void loadState (const juce::ValueTree& vt);
 
@@ -77,9 +91,10 @@ private:
     std::array<Source, numModules> sources {};
     std::array<juce::File, numModules> userFolders;
     std::array<int, numModules> generation {};
+    std::map<juce::String, float> offsetMap;      // "<folder>|<file name>" -> semitones (guarded by lock)
     std::atomic<int> pending { 0 };
     juce::ThreadPool pool { 1 };
-    juce::CriticalSection lock;
+    mutable juce::CriticalSection lock;
 };
 
 // -------------------------------------------------------------------------------------------------

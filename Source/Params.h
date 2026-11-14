@@ -1,5 +1,7 @@
 #pragma once
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <algorithm>
+#include <vector>
 
 // =====================================================================================
 //  Parameter IDs
@@ -85,7 +87,7 @@ namespace params
                           *vamt = "vamt", *port = "port", *att = "a", *fm = "fm", *mp = "mp", *noise = "noise", *vel = "vel",
                           *zap = "zap",
                           *trkLo = "lo", *trkHi = "hi", *src = "src", *inGain = "in", *osc = "osc",
-                          *comb = "comb", *fb = "fb", *freq = "freq";
+                          *comb = "comb", *fb = "fb", *freq = "freq", *scale = "scale";
     }
 
     // sequencer / remix / global B
@@ -127,6 +129,63 @@ namespace params
                       *bXRec = "b_x_rec", *bXSm = "b_x_sm";
     // MIX
     inline const char* bFxMix = "b_fx_mix", *bModInput = "b_mod_input", *bModMix = "b_mod_mix";
+
+    // SCALE (shared by Tie and Pod): root + scale type, same scales as Ableton Live's Scale device
+    inline const char* bScaleRoot = "b_scale_root";
+    inline const char* bScaleType = "b_scale_type";
+    struct ScaleDef { const char* name; std::vector<int> steps; };
+    inline const std::vector<ScaleDef>& scales()
+    {
+        static const std::vector<ScaleDef> s {
+            { "Major", { 0, 2, 4, 5, 7, 9, 11 } }, { "Minor", { 0, 2, 3, 5, 7, 8, 10 } },
+            { "Dorian", { 0, 2, 3, 5, 7, 9, 10 } }, { "Mixolydian", { 0, 2, 4, 5, 7, 9, 10 } },
+            { "Lydian", { 0, 2, 4, 6, 7, 9, 11 } }, { "Phrygian", { 0, 1, 3, 5, 7, 8, 10 } },
+            { "Locrian", { 0, 1, 3, 5, 6, 8, 10 } }, { "Whole Tone", { 0, 2, 4, 6, 8, 10 } },
+            { "Half-whole Dim.", { 0, 1, 3, 4, 6, 7, 9, 10 } }, { "Whole-half Dim.", { 0, 2, 3, 5, 6, 8, 9, 11 } },
+            { "Minor Blues", { 0, 3, 5, 6, 7, 10 } }, { "Minor Pentatonic", { 0, 3, 5, 7, 10 } },
+            { "Major Pentatonic", { 0, 2, 4, 7, 9 } }, { "Harmonic Minor", { 0, 2, 3, 5, 7, 8, 11 } },
+            { "Harmonic Major", { 0, 2, 4, 5, 7, 8, 11 } }, { "Dorian #4", { 0, 2, 3, 6, 7, 9, 10 } },
+            { "Phrygian Dominant", { 0, 1, 4, 5, 7, 8, 10 } }, { "Melodic Minor", { 0, 2, 3, 5, 7, 9, 11 } },
+            { "Lydian Augmented", { 0, 2, 4, 6, 8, 9, 11 } }, { "Lydian Dominant", { 0, 2, 4, 6, 7, 9, 10 } },
+            { "Super Locrian", { 0, 1, 3, 4, 6, 8, 10 } }, { "8-Tone Spanish", { 0, 1, 3, 4, 5, 6, 8, 10 } },
+            { "Bhairav", { 0, 1, 4, 5, 7, 8, 11 } }, { "Hungarian Minor", { 0, 2, 3, 6, 7, 8, 11 } },
+            { "Hirajoshi", { 0, 2, 3, 7, 8 } }, { "In-Sen", { 0, 1, 5, 7, 10 } }, { "Iwato", { 0, 1, 5, 6, 10 } },
+            { "Kumoi", { 0, 2, 3, 7, 9 } }, { "Pelog Selisir", { 0, 1, 3, 7, 8 } }, { "Pelog Tembung", { 0, 1, 5, 7, 8 } },
+            { "Messiaen 3", { 0, 2, 3, 4, 6, 7, 8, 10, 11 } }, { "Messiaen 4", { 0, 1, 2, 5, 6, 7, 8, 11 } },
+            { "Messiaen 5", { 0, 1, 5, 6, 7, 11 } }, { "Messiaen 6", { 0, 2, 4, 5, 6, 8, 10, 11 } },
+            { "Messiaen 7", { 0, 1, 2, 3, 5, 6, 7, 8, 9, 11 } } };
+        return s;
+    }
+    inline bool inScale (int note, int root, int type)
+    {
+        const auto& st = scales()[(size_t) juce::jlimit (0, (int) scales().size() - 1, type)].steps;
+        const int pc = ((note - root) % 12 + 12) % 12;
+        return std::find (st.begin(), st.end(), pc) != st.end();
+    }
+    // nearest scale note to a (fractional) MIDI pitch
+    inline int quantizeToScale (float pitch, int root, int type)
+    {
+        const int c = juce::roundToInt (pitch);
+        for (int d = 0; d <= 12; ++d)
+        {
+            const int up = c + d, dn = c - d;
+            const bool okUp = inScale (up, root, type), okDn = inScale (dn, root, type);
+            if (okUp && okDn) return std::abs ((float) up - pitch) <= std::abs ((float) dn - pitch) ? up : dn;
+            if (okUp) return up;
+            if (okDn) return dn;
+        }
+        return c;
+    }
+    // move a scale note by n scale degrees
+    inline int stepScale (int note, int degrees, int root, int type)
+    {
+        int n = note;
+        for (int i = 0; i < std::abs (degrees); ++i)
+        {
+            do { n += degrees > 0 ? 1 : -1; } while (! inScale (n, root, type));
+        }
+        return n;
+    }
 
     inline const juce::StringArray& xfxModeNames()
     {

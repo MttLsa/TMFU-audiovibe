@@ -51,6 +51,7 @@ public:
     int  hitCount (int target) const { return hits[(size_t) target].load(); }
     float modValueNow() const     { return modNow.load(); }
     void audition (int target, float vel = 1.0f);
+    void auditionSample (int module, int index);   // play a specific sample of a module (pitch window)
     void remixNow()               { remixNowFlag.store (true); }
 
     // xFx XY motion recorder (REC records pad movements in a tempo-synced loop of LEN, PLAY loops them)
@@ -77,11 +78,12 @@ private:
         float holdS = 0, tau = 0.1f, attS = 0;
         bool fullLen = false;
         float fmAmt = 0, zap = 0, cut = 20000;
+        SampleSetPtr set; int smpIndex = -1; bool manualPitch = false; float baseShift = 0;   // live per-sample pitch
         TptSvf flt[2], hp[2];
     };
 
     void readParams();
-    void trigger (int target, float vel, float laneValue);
+    void trigger (int target, float vel, float laneValue, int forcedIndex = -1);
     void renderSampleVoice (int voice, Voice& v, float* dl, float* dr, int n);
     void renderPulp (const float* trackSrc, float* dl, float* dr, int n);
     int  remap (int pos, int len) const;
@@ -126,6 +128,7 @@ private:
     std::array<std::atomic<int>, 4> laneSteps {};
     std::array<std::atomic<int>, numTargets> hits {};
     std::array<std::atomic<int>, numTargets> auditionQ {};
+    std::array<std::atomic<int>, 5> auditionIdx { { -1, -1, -1, -1, -1 } };
     std::atomic<bool> remixing { false }, remixNowFlag { false };
     std::atomic<float> modNow { 0.0f };
     float modHeld = 0.0f, remixPos = 0.0f;

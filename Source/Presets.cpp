@@ -17,6 +17,12 @@ namespace
         }
     }
 
+    // parameters that a preset never touches: module on/off (incl. Pulp), pattern selection / chain, scale settings
+    bool keepOnPresetLoad (const String& id)
+    {
+        return id.endsWith ("_on") || id.startsWith ("b_chain") || id == params::bPattern || id.contains ("scale");
+    }
+
     std::vector<PresetLibrary::Item> parse (const char* data, int size)
     {
         std::vector<PresetLibrary::Item> out;
@@ -89,11 +95,12 @@ void PresetLibrary::applyB (TwinboxProcessor& p, const Item& it, bool kit, bool 
         // reset every voice/FX parameter of Section B to its default, then apply the preset's values
         for (auto* prm : p.getParameters())
             if (auto* rp = dynamic_cast<RangedAudioParameter*> (prm))
-                if (rp->getParameterID().startsWith ("b_") && ! rp->getParameterID().startsWith ("b_chain") && rp->getParameterID() != bPattern)
+                if (rp->getParameterID().startsWith ("b_") && ! keepOnPresetLoad (rp->getParameterID()))
                     rp->setValueNotifyingHost (rp->getDefaultValue());
         if (auto* obj = d.getProperty ("params", var()).getDynamicObject())
             for (auto& prop : obj->getProperties())
-                setNatural (s, prop.name.toString(), (float) prop.value);
+                if (! keepOnPresetLoad (prop.name.toString()))
+                    setNatural (s, prop.name.toString(), (float) prop.value);
         // samples are referenced by name inside the factory "Twinbox <Module>" folders
         if (auto* smp = d.getProperty ("samples", var()).getDynamicObject())
         {

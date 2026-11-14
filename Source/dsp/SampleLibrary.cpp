@@ -130,10 +130,31 @@ void SampleLibrary::reload (int m)
         fm.registerBasicFormats();
         auto set = std::make_shared<SampleSet>();
         set->folder = folder;
+        // pitch cache: "<file>\t<size>\t<pitch>\t<conf>" lines in a hidden file inside the folder
+        const auto cacheFile = folder.getChildFile (".twinbox_pitch.txt");
+        std::map<String, std::pair<String, std::pair<float, float>>> cache;
+        {
+            StringArray lines; lines.addLines (cacheFile.loadFileAsString());
+            for (auto& l : lines)
+            {
+                StringArray t; t.addTokens (l, "\t", {});
+                if (t.size() == 4) cache[t[0]] = { t[1], { t[2].getFloatValue(), t[3].getFloatValue() } };
+            }
+        }
+        StringArray newCache;
+        bool cacheDirty = false;
         for (auto& f : audioFilesIn (folder))
         {
             if (auto s = loadFile (fm, f))
             {
+                {
+                    auto* ms = const_cast<Sample*> (s.get());
+                    const String sizeKey = String (f.getSize());
+                    auto it = cache.find (f.getFileName());
+                    if (it != cache.end() && it->second.first == sizeKey) { ms->pitch = it->second.second.first; ms->pitchConf = it->second.second.second; }
+                    else { ms->pitch = detectPitch (*ms, ms->pitchConf); cacheDirty = true; }
+                    newCache.add (f.getFileName() + "\t" + sizeKey + "\t" + String (ms->pitch, 3) + "\t" + String (ms->pitchConf, 3));
+                }
                 set->samples.push_back (s);
                 set->names.add (s->name);
                 SamplePtr open;
@@ -145,10 +166,17 @@ void SampleLibrary::reload (int m)
                 set->openPartner.push_back (open);
             }
         }
+        if (cacheDirty) cacheFile.replaceWithText (newCache.joinIntoString ("\n"));   // silently ignored if read-only
+        set->offsets = std::vector<std::atomic<float>> ((size_t) set->size());
         bool current;
         {
             const ScopedLock sl (lock);
             current = generation[(size_t) m] == gen;
+            for (int i = 0; i < set->size(); ++i)
+            {
+                auto it = offsetMap.find (folder.getFullPathName() + "|" + set->names[i]);
+                set->offsets[(size_t) i].store (it != offsetMap.end() ? it->second : 0.0f);
+            }
         }
         if (current)
         {
@@ -157,6 +185,108 @@ void SampleLibrary::reload (int m)
         }
         --pending;
     });
+}
+
+void SampleLibrary::setSampleOffset (int m, int index, float st)
+{
+    auto s = set (m);
+    if (index < 0 || index >= s->size()) return;
+    st = jlimit (-32.0f, 32.0f, st);
+    s->offsets[(size_t) index].store (st);
+    const ScopedLock sl (lock);
+    const String key = s->folder.getFullPathName() + "|" + s->names[index];
+    if (std::abs (st) < 1.0e-4f) offsetMap.erase (key); else offsetMap[key] = st;
+}
+
+float SampleLibrary::sampleOffset (int m, int index) const
+{
+    auto s = set (m);
+    return index >= 0 && index < s->size() ? s->offsets[(size_t) index].load() : 0.0f;
+}
+
+String SampleLibrary::noteName (float midi)
+{
+    if (midi < 0) return "-";
+    static const char* n[] { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+    const int r = roundToInt (midi);
+    const int cents = roundToInt ((midi - (float) r) * 100.0f);
+    return String (n[((r % 12) + 12) % 12]) + String (r / 12 - 2) + (cents == 0 ? String() : (cents > 0 ? " +" : " ") + String (cents) + "c");
+}
+
+// YIN fundamental estimation on a few windows after the attack; median of the confident estimates
+float SampleLibrary::detectPitch (const Sample& s, float& conf)
+{
+    conf = 0.0f;
+    const auto& L = s.L;
+    // mono mix, decimated to ~22 kHz (enough for fundamentals up to 2 kHz, 4x faster analysis)
+    const int dec = s.sourceRate > 30000.0 ? (s.sourceRate > 60000.0 ? 4 : 2) : 1;
+    const double sr = s.sourceRate / dec;
+    const int n = (int) L.size() / dec;
+    if (n < 1024) return -1.0f;
+    std::vector<float> x ((size_t) n);
+    for (int i = 0; i < n; ++i)
+    {
+        float acc = 0;
+        for (int k = 0; k < dec; ++k)
+        {
+            const size_t j = (size_t) (i * dec + k);
+            acc += s.R.empty() ? L[j] : 0.5f * (L[j] + s.R[j]);
+        }
+        x[(size_t) i] = acc / (float) dec;
+    }
+    const int tauMin = jmax (2, (int) (sr / 2000.0)), tauMax = jmin (n / 3, (int) (sr / 30.0));
+    const int W = jmin (2048, n - tauMax - 1);
+    if (W < 256 || tauMax <= tauMin + 2) return -1.0f;
+    // start after the attack (peak + 15 ms)
+    int peak = 0; float pk = 0;
+    for (int i = 0; i < jmin (n, (int) (sr * 0.2)); ++i) if (std::abs (x[(size_t) i]) > pk) { pk = std::abs (x[(size_t) i]); peak = i; }
+    if (pk < 1.0e-4f) return -1.0f;
+    std::vector<float> estimates, confs;
+    std::vector<double> d ((size_t) tauMax + 1);
+    for (int w = 0; w < 3; ++w)
+    {
+        const int start = peak + (int) (sr * 0.015) + w * (W / 2);
+        if (start + W + tauMax >= n) break;
+        double energy = 0; for (int i = 0; i < W; ++i) energy += (double) x[(size_t) (start + i)] * x[(size_t) (start + i)];
+        if (energy / W < 1.0e-7) break;
+        d[0] = 1.0; double run = 0;
+        for (int tau = 1; tau <= tauMax; ++tau)
+        {
+            double sum = 0;
+            const float* a = x.data() + start; const float* b2 = a + tau;
+            for (int i = 0; i < W; ++i) { const double df = (double) a[i] - b2[i]; sum += df * df; }
+            run += sum;
+            d[(size_t) tau] = run > 0 ? sum * tau / run : 1.0;
+        }
+        int best = -1;
+        for (int tau = tauMin; tau < tauMax; ++tau)
+            if (d[(size_t) tau] < 0.15)
+            {
+                while (tau + 1 < tauMax && d[(size_t) tau + 1] < d[(size_t) tau]) ++tau;
+                best = tau; break;
+            }
+        if (best < 0) continue;
+        // parabolic interpolation
+        double t = best;
+        if (best > 1 && best < tauMax)
+        {
+            const double a = d[(size_t) best - 1], b3 = d[(size_t) best], c = d[(size_t) best + 1];
+            const double den = a - 2 * b3 + c;
+            if (std::abs (den) > 1e-12) t = best + 0.5 * (a - c) / den;
+        }
+        const double f = sr / t;
+        estimates.push_back ((float) (69.0 + 12.0 * std::log2 (f / 440.0)));
+        confs.push_back ((float) (1.0 - d[(size_t) best]));
+    }
+    if (estimates.empty()) return -1.0f;
+    std::vector<float> e = estimates; std::sort (e.begin(), e.end());
+    const float med = e[e.size() / 2];
+    // consistency check: estimates must agree within half a semitone
+    int agree = 0; float c = 0;
+    for (size_t i = 0; i < estimates.size(); ++i) if (std::abs (estimates[i] - med) < 0.5f) { ++agree; c += confs[i]; }
+    if (agree * 2 < (int) estimates.size() + 1) return -1.0f;
+    conf = c / (float) agree;
+    return med;
 }
 
 int SampleLibrary::indexOf (int m, const String& name) const
@@ -176,12 +306,25 @@ ValueTree SampleLibrary::saveState() const
         c.setProperty ("user", userFolders[(size_t) m].getFullPathName(), nullptr);
         vt.appendChild (c, nullptr);
     }
+    {
+        const ScopedLock sl (lock);
+        StringArray o;
+        for (auto& kv : offsetMap) o.add (kv.first + "=" + String (kv.second, 3));
+        vt.setProperty ("offsets", o.joinIntoString ("\n"), nullptr);
+    }
     return vt;
 }
 
 void SampleLibrary::loadState (const ValueTree& vt)
 {
     if (! vt.isValid()) return;
+    {
+        const ScopedLock sl (lock);
+        offsetMap.clear();
+        StringArray o; o.addLines (vt.getProperty ("offsets").toString());
+        for (auto& l : o)
+            if (l.containsChar ('=')) offsetMap[l.upToLastOccurrenceOf ("=", false, false)] = l.fromLastOccurrenceOf ("=", false, false).getFloatValue();
+    }
     for (int m = 0; m < numModules; ++m)
     {
         auto c = vt.getChildWithName (moduleName (m));

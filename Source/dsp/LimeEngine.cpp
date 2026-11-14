@@ -10,11 +10,11 @@ static constexpr double kPi = juce::MathConstants<double>::pi;
 namespace
 {
     enum K { kOn, kGain, kPan, kAcc, kVamt, kWav, kTune, kPort, kSt, kHold, kDcy, kSat, kShp, kSm, kAtt, kCd, kOd, kLink,
-             kFm, kMp, kNoise, kZap, kMod, kVel, kLo, kFt, kFlam, kCut, kRes, kTrkLo, kTrkHi, kSrc, kIn, kOsc, kComb, kFb, kFreq, kCount };
+             kFm, kMp, kNoise, kZap, kMod, kVel, kLo, kFt, kFlam, kCut, kRes, kTrkLo, kTrkHi, kSrc, kIn, kOsc, kComb, kFb, kFreq, kScale, kCount };
     const char* keyNames[kCount] { lv::on, lv::gain, lv::pan, lv::acc, lv::vamt, lv::wav, lv::tune, lv::port, lv::st, lv::hold, lv::dcy,
                                    lv::sat, lv::shp, lv::sm, lv::att, lv::cd, lv::od, lv::link, lv::fm, lv::mp, lv::noise, lv::zap,
                                    lv::mod, lv::vel, lv::lo, lv::ft, lv::flam, lv::cut, lv::res, lv::trkLo, lv::trkHi, lv::src, lv::inGain,
-                                   lv::osc, lv::comb, lv::fb, lv::freq };
+                                   lv::osc, lv::comb, lv::fb, lv::freq, lv::scale };
     inline float G (std::atomic<float>* a, float def) { return a != nullptr ? a->load() : def; }
     inline float decayTau (float pct) { return (float) (0.005 * std::pow (800.0, pct * 0.01)); }   // 5 ms … 4 s
     inline int   moduleOf (int voice) { return voice; }                                             // kick..pod map 1:1
@@ -81,6 +81,11 @@ void LimeEngine::audition (int target, float vel)
 
 void LimeEngine::readParams() {}
 
+void LimeEngine::auditionSample (int module, int index)
+{
+    if (module >= 0 && module < 5) auditionIdx[(size_t) module].store (index);
+}
+
 int LimeEngine::remap (int pos, int len) const
 {
     const int r = (int) p (bRemix)->load();
@@ -91,7 +96,7 @@ int LimeEngine::remap (int pos, int len) const
 }
 
 //==============================================================================
-void LimeEngine::trigger (int target, float vel, float laneValue)
+void LimeEngine::trigger (int target, float vel, float laneValue, int forcedIndex)
 {
     const int voice = target <= tSnare ? target : (target <= tOHat ? hat : (target == tTie ? tie : (target == tPod ? pod : pulp)));
     const auto& k = vk[(size_t) voice];
@@ -123,10 +128,13 @@ void LimeEngine::trigger (int target, float vel, float laneValue)
     int dest = 0;
     if (voice <= hat) dest = (int) G (k[kMod], 0);
     else dest = (int) G (k[kVel], 0);
-    const float v = laneValue;   // Tie/Pod step value 0..1
+    if (forcedIndex >= 0) dest = 0;                       // pitch-window audition: plain sample
+    const float v = forcedIndex >= 0 ? 1.0f : laneValue;   // Tie/Pod step value 0..1
 
     int wav = (int) G (k[kWav], 0);
     float tune = G (k[kTune], 0) + p (bTune)->load();
+    const float tuneBase = tune;            // module Tune + global B Tune (before any modulation)
+    int velDegrees = 0; bool velTune = false;
     float start = G (k[kSt], 0) * 0.01f * 0.9f;
     float cut = G (k[kCut], 20000.0f);
     float dcyPct = voice == hat ? G (target == tOHat ? k[kOd] : k[kCd], 50) : G (k[kDcy], 50);
@@ -152,7 +160,7 @@ void LimeEngine::trigger (int target, float vel, float laneValue)
         switch (dest)
         {
             case 1: wav += (int) (v * 8.0f); break;
-            case 2: tune += std::round ((v - 0.5f) * 24.0f); break;
+            case 2: tune += std::round ((v - 0.5f) * 24.0f); velTune = true; velDegrees = (int) std::round ((v - 0.5f) * 14.0f); break;
             case 3: att = jlimit (0.0f, 1.0f, att + v); break;
             case 4: dcyPct = jlimit (0.0f, 100.0f, dcyPct * (0.25f + 1.5f * v)); break;
             case 5: if (isTie) start = jlimit (0.0f, 0.9f, start + v * 0.5f); else zap = jlimit (-100.0f, 100.0f, zap + (v - 0.5f) * 200.0f); break;
@@ -163,6 +171,7 @@ void LimeEngine::trigger (int target, float vel, float laneValue)
         const float vamt = G (k[kVamt], 70) * 0.01f;
         vel *= 1.0f - vamt * (1.0f - v);
     }
+    if (forcedIndex >= 0) wav = forcedIndex;
     wav = ((wav % set->size()) + set->size()) % set->size();
     SamplePtr smp = set->samples[(size_t) wav];
     if (target == tOHat && (size_t) wav < set->openPartner.size() && set->openPartner[(size_t) wav] != nullptr)
@@ -180,6 +189,25 @@ void LimeEngine::trigger (int target, float vel, float laneValue)
     nv.smp = smp;
     nv.active = true; nv.fading = false; nv.fade = 1.0f; nv.t = 0; nv.fmPhase = 0;
     nv.pos = start * (double) smp->length();
+    // ---- pitch: SCALE mode (detected pitch quantized to the shared scale) or MANUAL (per-sample offset)
+    nv.set = set; nv.smpIndex = wav; nv.manualPitch = false;
+    if (voice == tie || voice == pod)
+    {
+        const bool scaleOn = G (k[kScale], 0) > 0.5f;
+        if (scaleOn && smp->pitch >= 0.0f)
+        {
+            const int root = (int) p (bScaleRoot)->load(), type = (int) p (bScaleType)->load();
+            int q = quantizeToScale (smp->pitch + tuneBase, root, type);
+            if (velTune) q = stepScale (q, velDegrees, root, type);
+            tune = (float) q - smp->pitch;
+        }
+        else if (! scaleOn)
+        {
+            nv.manualPitch = true;
+            nv.baseShift = tune;
+            tune += set->offsets[(size_t) wav].load();
+        }
+    }
     nv.rateTarget = smp->sourceRate / sr * std::pow (2.0, tune / 12.0);
     if (voice == tie)
     {
@@ -238,6 +266,8 @@ void LimeEngine::renderSampleVoice (int voice, Voice& v, float* dl, float* dr, i
     const float tieSat = voice == tie ? G (k[kSat], 0) * 0.01f : 0.0f;
     const double portCoef = voice == tie ? 1.0 - std::exp (-1.0 / (sr * (0.002 + std::pow (G (k[kPort], 0) * 0.01, 2.0) * 0.6))) : 1.0;
     const double fmRatio = voice == tie ? std::pow (2.0, G (k[kMp], 12) / 12.0) : 1.0;
+    if (v.manualPitch && v.set != nullptr && v.smpIndex >= 0 && v.smpIndex < v.set->size())
+        v.rateTarget = S.sourceRate / sr * std::pow (2.0, (v.baseShift + v.set->offsets[(size_t) v.smpIndex].load()) / 12.0);
     const double fmDepth = v.fmAmt * 0.01 * 1.5;
     const double zapTau = 0.004 + 0.06 * (1.0 - std::abs (v.zap) * 0.01);
     const double zapOct = v.zap * 0.01 * 4.0;
@@ -368,13 +398,18 @@ void LimeEngine::process (float* L, float* R, int n, const BlockTime& bt, const 
     if ((int) dryL.size() < n) for (auto* b : { &dryL, &dryR, &tieL, &tieR, &sendL, &sendR, &dlyL, &dlyR, &xL, &xR, &srcMono }) b->assign ((size_t) n, 0.0f);
     for (auto* b : { &dryL, &dryR, &tieL, &tieR, &srcMono }) std::fill (b->begin(), b->begin() + n, 0.0f);
 
-    struct Ev { int offset; int target; float vel; float value; bool isMod; };
+    struct Ev { int offset; int target; float vel; float value; bool isMod; int forced = -1; };
     std::array<Ev, 1024> ev;
     int nev = 0;
     auto push = [&] (Ev e) { if (nev < (int) ev.size()) ev[(size_t) nev++] = e; };
     for (auto& e : midi) push ({ e.offset, e.target, e.velocity, 0.5f + 0.5f * e.velocity, false });
     for (int t = 0; t < numTargets; ++t)
         if (const int a = auditionQ[(size_t) t].exchange (0); a > 0) push ({ 0, t, (float) a / 1000.0f, 0.75f, false });
+    {
+        static const int targetOfModule[] { tKick, tSnare, tCHat, tTie, tPod };
+        for (int m = 0; m < 5; ++m)
+            if (const int idx = auditionIdx[(size_t) m].exchange (-1); idx >= 0) push ({ 0, targetOfModule[m], 1.0f, 0.75f, false, idx });
+    }
 
     const int wanted = jlimit (0, NP - 1, (int) p (bPattern)->load());
     const int mainLen = jlimit (1, NS, (int) p (bLen)->load());
@@ -467,7 +502,7 @@ void LimeEngine::process (float* L, float* R, int n, const BlockTime& bt, const 
         {
             const auto& e = ev[(size_t) ei++];
             if (e.isMod) { modHeld = e.value; modNow.store (e.value); }
-            else trigger (e.target, e.vel, e.value);
+            else trigger (e.target, e.vel, e.value, e.forced);
         }
         const int next = ei < nev ? jmin (n, ev[(size_t) ei].offset) : n;
         const int cnt = jmax (1, next - pos);

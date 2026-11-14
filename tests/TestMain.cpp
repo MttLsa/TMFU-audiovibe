@@ -274,11 +274,84 @@ int main (int argc, char** argv)
             if (auto* prm = it.data.getProperty ("params", var()).getDynamicObject())
                 for (auto* id : { params::bDlyGain, params::bXGain })
                     if ((float) prm->getProperty (id) > -16.0f + 1.0e-3f) ++bad;
+        for (auto& it : PresetLibrary::get().items (1))
+            if (auto* prm = it.data.getProperty ("params", var()).getDynamicObject())
+                if ((float) prm->getProperty (params::bDlyGain) > -59.9f) ++bad;
         TwinboxProcessor p;
         auto* d = p.apvts.getParameter (params::bDlyGain); auto* x = p.apvts.getParameter (params::bXGain);
         const bool range = std::abs (d->getNormalisableRange().end) < 1.0e-6f && std::abs (x->getNormalisableRange().end) < 1.0e-6f
-                        && std::abs (d->convertFrom0to1 (d->getDefaultValue()) + 16.0f) < 0.01f && std::abs (x->convertFrom0to1 (x->getDefaultValue()) + 16.0f) < 0.01f;
+                        && std::abs (d->convertFrom0to1 (d->getDefaultValue()) + 60.0f) < 0.01f && std::abs (x->convertFrom0to1 (x->getDefaultValue()) + 16.0f) < 0.01f;
         report ("B preset FX gain <= -16 dB", bad == 0 && range, String (bad) + " values above -16 dB; knob max 0 dB, default -16 dB: " + (range ? "yes" : "no"));
+    }
+
+    // ---------------------------------------------------------------- pitch detection, SCALE, manual pitch, on/off kept
+    {
+        // 1) detector on synthetic tones
+        String info; int bad = 0;
+        for (double f : { 55.0, 98.0, 130.81, 261.63, 440.0, 880.0, 1500.0 })
+        {
+            Sample s; s.sourceRate = 44100;
+            for (int i = 0; i < 44100; ++i)
+            {
+                const double t = i / 44100.0;
+                s.L.push_back ((float) ((0.6 * std::sin (2 * MathConstants<double>::pi * f * t) + 0.25 * std::sin (4 * MathConstants<double>::pi * f * t)) * std::exp (-t * 2.0)));
+            }
+            float conf; const float m = SampleLibrary::detectPitch (s, conf);
+            const float expect = (float) (69.0 + 12.0 * std::log2 (f / 440.0));
+            if (std::abs (m - expect) > 0.2f) { ++bad; info << String (f) << "Hz->" << String (m, 2) << " "; }
+        }
+        Sample noise; noise.sourceRate = 44100; Random r (3);
+        for (int i = 0; i < 22050; ++i) noise.L.push_back ((r.nextFloat() * 2 - 1) * std::exp (-i / 4000.0f));
+        float c2; const float nm = SampleLibrary::detectPitch (noise, c2);
+        report ("pitch detection (tones / noise)", bad == 0 && nm < 0, bad ? info : String ("7 tones within 0.2 st, noise = no pitch"));
+
+        // 2) factory Tie folder (all tonal samples are rooted on C)
+        TwinboxProcessor p;
+        waitLibrary (p);
+        for (int i = 0; i < 300 && p.library.set (SampleLibrary::tie)->size() == 0; ++i) Thread::sleep (10);
+        auto tieSet = p.library.set (SampleLibrary::tie);
+        int pitched = 0, onC = 0;
+        for (auto& smp : tieSet->samples) if (smp->pitch >= 0) { ++pitched; const int pc = ((int) std::round (smp->pitch) % 12 + 12) % 12; if (pc == 0) ++onC; }
+        report ("Tie factory samples analysed", pitched > tieSet->size() / 2, String (pitched) + "/" + String (tieSet->size()) + " pitched, " + String (onC) + " detected on C");
+
+        // 3) SCALE: play a pitched sample, measure the output pitch
+        auto renderAudition = [&] (int idx, double seconds) -> float
+        {
+            p.setPlayConfigDetails (0, 2, 44100, 512); p.prepareToPlay (44100, 512);
+            setP (p, params::gRun, 0); setP (p, params::gXfade, 100); setP (p, params::bFxMix, 0);
+            for (int v : { params::kick, params::snare, params::hat, params::pod, params::pulp }) setP (p, params::b (v, params::lv::on), 0);
+            setP (p, params::b (params::tie, params::lv::dcy), 100);
+            p.lime.auditionSample (SampleLibrary::tie, idx);
+            Sample out; out.sourceRate = 44100;
+            AudioBuffer<float> buf (2, 512); MidiBuffer m;
+            for (int b2 = 0; b2 < (int) (seconds * 44100 / 512); ++b2)
+            {
+                p.processBlock (buf, m);
+                for (int i = 0; i < 512; ++i) out.L.push_back (buf.getSample (0, i));
+            }
+            float c; return SampleLibrary::detectPitch (out, c);
+        };
+        int idx = -1;
+        for (int i = 0; i < tieSet->size(); ++i) if (tieSet->names[i].contains ("Sine Ping")) idx = i;
+        const float src = idx >= 0 ? tieSet->samples[(size_t) idx]->pitch : -1.0f;
+        setP (p, params::b (params::tie, params::lv::scale), 1);
+        setP (p, params::bScaleRoot, 2); setP (p, params::bScaleType, 0);           // D Major: C is not in the scale -> C#
+        const float scaled = renderAudition (idx, 0.6);
+        setP (p, params::b (params::tie, params::lv::scale), 0);
+        p.library.setSampleOffset (SampleLibrary::tie, idx, 5.0f);                  // MANUAL +5 st
+        const float manual = renderAudition (idx, 0.6);
+        p.library.setSampleOffset (SampleLibrary::tie, idx, 0.0f);
+        const bool okScale = std::abs (scaled - (float) params::quantizeToScale (src, 2, 0)) < 0.35f && std::abs (scaled - src) > 0.5f;
+        const bool okManual = std::abs (manual - (src + 5.0f)) < 0.35f;
+        report ("SCALE + MANUAL pitch (measured)", okScale && okManual,
+                "sample " + SampleLibrary::noteName (src) + " -> scale D Major " + SampleLibrary::noteName (scaled) + ", manual +5 " + SampleLibrary::noteName (manual));
+
+        // 4) loading a preset keeps every module's on/off state (incl. Pulp)
+        setP (p, params::b (params::kick, params::lv::on), 0); setP (p, params::b (params::pulp, params::lv::on), 1);
+        PresetLibrary::applyB (p, PresetLibrary::get().items (1)[5], true, true, false);
+        const bool keep = p.apvts.getRawParameterValue (params::b (params::kick, params::lv::on))->load() < 0.5f
+                       && p.apvts.getRawParameterValue (params::b (params::pulp, params::lv::on))->load() > 0.5f;
+        report ("preset load keeps module on/off", keep, keep ? String ("Kick stays off, Pulp stays on") : String ("state changed"));
     }
 
     // ---------------------------------------------------------------- state round trip
@@ -305,6 +378,19 @@ int main (int argc, char** argv)
         report ("legacy import", r.ok && counts[0] > 100, r.message + "  K" + String (counts[0]) + " S" + String (counts[1]) + " H" + String (counts[2])
                 + "/" + String (open) + " T" + String (counts[3]) + " P" + String (counts[4]));
         TwinboxProcessor p;
+        {   // analysis time of the 128 Legacy Tie samples (cache removed -> full analysis)
+            SampleLibrary::folderFor (SampleLibrary::tie, SampleLibrary::legacy).getChildFile (".twinbox_pitch.txt").deleteFile();
+            const auto t0 = Time::getMillisecondCounterHiRes();
+            p.library.setSource (SampleLibrary::tie, SampleLibrary::legacy);
+            Thread::sleep (20);
+            while (p.library.isLoading()) Thread::sleep (5);
+            const auto t1 = Time::getMillisecondCounterHiRes();
+            p.library.setSource (SampleLibrary::tie, SampleLibrary::twinbox); while (p.library.isLoading()) Thread::sleep (5);
+            p.library.setSource (SampleLibrary::tie, SampleLibrary::legacy); Thread::sleep (20); while (p.library.isLoading()) Thread::sleep (5);
+            const auto t2 = Time::getMillisecondCounterHiRes();
+            auto set = p.library.set (SampleLibrary::tie); int pitched = 0; for (auto& sm : set->samples) if (sm->pitch >= 0) ++pitched;
+            std::printf ("   Legacy Tie: %d samples, load+analysis %.0f ms, with cache %.0f ms, %d pitched\n", set->size(), t1 - t0, t2 - t1, pitched);
+        }
         for (int m = 0; m < 5; ++m) p.library.setSource (m, SampleLibrary::legacy);
         for (int i = 0; i < 1000 && (p.library.isLoading() || p.library.set (0)->size() < 100); ++i) Thread::sleep (10);
         setP (p, params::gRun, 1); setP (p, params::gXfade, 100);
@@ -344,6 +430,7 @@ int main (int argc, char** argv)
         snapWin (new LimeModulePanel (p, params::hat, true), 900, 640, "win_B_hat.png");
         snapWin (new LimeFxWindowContent (p), 1300, 860, "win_B_fx.png");
         snapWin (new PresetBrowser (p, 1), 820, 700, "win_B_browser.png");
+        snapWin (new PitchWindowContent (p, params::tie), 760, 640, "win_B_pitch.png");
         ed.reset();
     }
     std::printf (ok ? "ALL TESTS PASSED\n" : "SOME TESTS FAILED\n");

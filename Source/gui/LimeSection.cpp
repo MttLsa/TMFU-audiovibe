@@ -625,6 +625,16 @@ LimeModulePanel::LimeModulePanel (TwinboxProcessor& p, int v, bool b2) : Control
     power->setTooltip (String (limeVoiceName (v)) + " on / mute");
     addAndMakeVisible (*power);
     if (big) { wave = std::make_unique<WaveView> (p, v); addAndMakeVisible (*wave); }
+    if (v == tie || v == pod)
+    {
+        scaleBtn = std::make_unique<Toggle> ("SCALE", theme::accentB);
+        scaleBtn->attach (p.apvts, b (v, lv::scale));
+        scaleBtn->setTooltip ("SCALE on: every sample is re-pitched to the shared Root / Scale (from its detected pitch). Off = MANUAL per-sample pitch");
+        addAndMakeVisible (*scaleBtn);
+        noteBtn.setTooltip ("Per-sample pitch window: detected notes, play and -32..+32 st knobs (MANUAL mode)");
+        noteBtn.onClick = [this] { if (onOpenPitch) onOpenPitch(); };
+        addAndMakeVisible (noteBtn);
+    }
 
     auto K = [this] (const char* key, const char* cap) -> Component* { return knob (b (voice, key), cap); };
     auto* wavKnob = new WavKnob (p, v, accent);
@@ -665,6 +675,11 @@ void LimeModulePanel::resized()
 {
     Panel::resized();
     power->setBounds (getWidth() - 46, 3, 18, headerH - 6);
+    if (scaleBtn)
+    {
+        noteBtn.setBounds (getWidth() - 70, 2, 22, headerH - 4);
+        scaleBtn->setBounds (getWidth() - (big ? 128 : 118), 3, big ? 54 : 46, headerH - 6);
+    }
     auto r = content();
     selector->setBounds (r.removeFromTop (big ? 28 : 20));
     r.removeFromTop (3);
@@ -674,6 +689,119 @@ void LimeModulePanel::resized()
         for (auto* c : rw)
             if (auto* cb = dynamic_cast<ComboBox*> (c)) cb->setBounds (cb->getBounds().withSizeKeepingCentre (cb->getWidth(), jmin (cb->getHeight(), big ? 26 : 20)));
             else if (auto* sg = dynamic_cast<Segmented*> (c)) sg->setBounds (sg->getBounds().withSizeKeepingCentre (sg->getWidth(), jmin (sg->getHeight(), big ? 26 : 18)));
+}
+
+//==============================================================================
+//  PitchWindowContent
+//==============================================================================
+PitchWindowContent::Row::Row (PitchWindowContent& o, int idx) : owner (o), index (idx)
+{
+    play.onClick = [this] { owner.proc.lime.auditionSample (owner.module, index); };
+    play.setTooltip ("Play this sample");
+    knob.setSliderStyle (Slider::RotaryHorizontalVerticalDrag);
+    knob.setTextBoxStyle (Slider::TextBoxRight, false, 56, 20);
+    knob.setRange (-32.0, 32.0, 1.0);
+    knob.setDoubleClickReturnValue (true, 0.0);
+    knob.setColour (Slider::rotarySliderFillColourId, theme::accentB);
+    knob.setRotaryParameters (MathConstants<float>::pi * 1.2f, MathConstants<float>::pi * 2.8f, true);
+    knob.setTextValueSuffix (" st");
+    knob.setValue (owner.proc.library.sampleOffset (owner.module, index), dontSendNotification);
+    knob.onValueChange = [this] { owner.proc.library.setSampleOffset (owner.module, index, (float) knob.getValue()); repaint(); };
+    knob.setTooltip ("Pitch of this sample in semitones (-32..+32), on top of the module Tune. Double-click = 0");
+    addAndMakeVisible (play); addAndMakeVisible (knob);
+}
+
+void PitchWindowContent::Row::paint (Graphics& g)
+{
+    auto set = owner.proc.library.set (owner.module);
+    if (index >= set->size()) return;
+    auto smp = set->samples[(size_t) index];
+    g.setColour (index % 2 ? theme::panel : theme::panel2);
+    g.fillRect (getLocalBounds());
+    g.setColour (theme::textDim);
+    g.setFont (theme::font (12.0f));
+    g.drawText (String (index + 1).paddedLeft ('0', 3), 40, 0, 34, getHeight(), Justification::centredLeft);
+    g.setColour (theme::text);
+    g.setFont (theme::font (13.0f));
+    g.drawText (smp->name, 78, 0, getWidth() - 78 - 330, getHeight(), Justification::centredLeft);
+    // detected pitch
+    g.setFont (theme::font (12.0f, true));
+    if (smp->pitch >= 0) { g.setColour (theme::accentB); g.drawText (SampleLibrary::noteName (smp->pitch), getWidth() - 320, 0, 110, getHeight(), Justification::centredLeft); }
+    else { g.setColour (theme::textDim); g.drawText ("no pitch", getWidth() - 320, 0, 110, getHeight(), Justification::centredLeft); }
+}
+
+void PitchWindowContent::Row::resized()
+{
+    play.setBounds (6, 4, 28, getHeight() - 8);
+    knob.setBounds (getWidth() - 200, 1, 190, getHeight() - 2);
+}
+
+PitchWindowContent::PitchWindowContent (TwinboxProcessor& p, int m) : proc (p), module (m)
+{
+    viewport.setViewedComponent (&list, false);
+    viewport.setScrollBarsShown (true, false);
+    addAndMakeVisible (viewport);
+    resetAll.onClick = [this]
+    {
+        for (auto* r : rows) r->knob.setValue (0.0, sendNotificationSync);
+    };
+    addAndMakeVisible (resetAll);
+    proc.library.addChangeListener (this);
+    rebuild();
+    startTimerHz (8);
+}
+
+PitchWindowContent::~PitchWindowContent() { proc.library.removeChangeListener (this); stopTimer(); }
+
+void PitchWindowContent::rebuild()
+{
+    rows.clear();
+    auto set = proc.library.set (module);
+    for (int i = 0; i < set->size(); ++i) list.addAndMakeVisible (rows.add (new Row (*this, i)));
+    resized();
+    repaint();
+}
+
+void PitchWindowContent::timerCallback()
+{
+    const bool scaleOn = proc.apvts.getRawParameterValue (b (module, lv::scale))->load() > 0.5f;
+    if (scaleOn != scaleWasOn)
+    {
+        scaleWasOn = scaleOn;
+        for (auto* r : rows) r->knob.setEnabled (! scaleOn);
+        resetAll.setEnabled (! scaleOn);
+        repaint();
+    }
+}
+
+void PitchWindowContent::paint (Graphics& g)
+{
+    g.fillAll (theme::bg);
+    auto set = proc.library.set (module);
+    g.setColour (theme::text);
+    g.setFont (theme::font (14.0f, true));
+    g.drawText (String (limeVoiceName (module)) + "  -  " + String (set->size()) + " samples", 12, 8, getWidth() - 200, 20, Justification::centredLeft);
+    g.setColour (theme::textDim);
+    g.setFont (theme::font (11.5f));
+    g.drawText (set->folder.getFullPathName(), 12, 28, getWidth() - 24, 16, Justification::centredLeft);
+    const bool scaleOn = proc.apvts.getRawParameterValue (b (module, lv::scale))->load() > 0.5f;
+    const int root = (int) proc.apvts.getRawParameterValue (bScaleRoot)->load(), type = (int) proc.apvts.getRawParameterValue (bScaleType)->load();
+    static const char* rootN[] { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+    g.setColour (scaleOn ? theme::accentB : theme::accentA);
+    g.drawText (scaleOn ? String ("SCALE ON (") + rootN[root] + " " + scales()[(size_t) type].name + "): samples are re-pitched automatically, the knobs are inactive"
+                        : String ("MANUAL: turn the knobs to re-pitch each sample (-32..+32 st). Changes are heard live, also while playing."),
+                12, 46, getWidth() - 24, 16, Justification::centredLeft);
+}
+
+void PitchWindowContent::resized()
+{
+    auto r = getLocalBounds();
+    r.removeFromTop (68);
+    resetAll.setBounds (getWidth() - 150, 8, 138, 24);
+    viewport.setBounds (r.reduced (8, 4));
+    const int w = viewport.getWidth() - viewport.getScrollBarThickness();
+    list.setSize (w, rows.size() * 34);
+    for (int i = 0; i < rows.size(); ++i) rows[i]->setBounds (0, i * 34, w, 34);
 }
 
 //==============================================================================
@@ -788,6 +916,13 @@ LimeSection::LimeSection (TwinboxProcessor& p) : proc (p)
     legacyBtn.onClick = [this] { importLegacy(); };
     legacyBtn.setTooltip ("Import the original Limelite samples from your own 'Limelite 1.3.ens' into the Legacy folders");
     levelB.attach (p.apvts, bGain);
+    scaleRoot.addItemList (StringArray { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" }, 1);
+    for (auto& sc : scales()) scaleType.addItem (sc.name, scaleType.getNumItems() + 1);
+    scaleRootAtt = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (p.apvts, bScaleRoot, scaleRoot);
+    scaleTypeAtt = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (p.apvts, bScaleType, scaleType);
+    scaleRoot.setTooltip ("SCALE root (shared by Tie and Pod)");
+    scaleType.setTooltip ("SCALE type (shared by Tie and Pod) - same scales as Ableton Live");
+    addAndMakeVisible (scaleRoot); addAndMakeVisible (scaleType);
     for (auto* c : std::initializer_list<Component*> { &browserBtn, &legacyBtn, &levelB }) addAndMakeVisible (c);
 
     seq = std::make_unique<LimeSeqPanel> (p, false);
@@ -808,6 +943,9 @@ LimeSection::LimeSection (TwinboxProcessor& p) : proc (p)
         auto* m = modules.add (new LimeModulePanel (p, v, false));
         m->setExpandable ([this, v] { openWindow ("mod" + String (v), String ("Section B - ") + limeVoiceName (v),
                                                   [this, v] { return new LimeModulePanel (proc, v, true); }, 900, 640); });
+        if (v == tie || v == pod)
+            m->onOpenPitch = [this, v] { openWindow ("pitch" + String (v), String ("Section B - ") + limeVoiceName (v) + " - sample pitch",
+                                                     [this, v] { return new PitchWindowContent (proc, v); }, 760, 640); };
         addAndMakeVisible (m);
     }
     startTimerHz (10);
@@ -865,7 +1003,10 @@ void LimeSection::paint (Graphics& g)
     g.setColour (theme::textDim);
     g.setFont (theme::font (11.0f));
     g.drawText ("6 voices / sequencer / remix / FX", 40, 26, 220, 14, Justification::centredLeft);
-    if (status.isNotEmpty()) g.drawText (status, legacyBtn.getRight() + 10, 12, 420, 20, Justification::centredLeft);
+    g.setColour (theme::textDim);
+    g.setFont (theme::font (11.0f, true));
+    g.drawText ("SCALE", scaleRoot.getX() - 46, scaleRoot.getY(), 42, scaleRoot.getHeight(), Justification::centredRight);
+    if (status.isNotEmpty()) { g.setFont (theme::font (11.0f)); g.drawText (status, scaleType.getRight() + 12, 12, 380, 20, Justification::centredLeft); }
     drawMeter (g, Rectangle<float> ((float) getWidth() - 16.0f, 10.0f, 6.0f, 30.0f), proc.meter (1), theme::accentB);
 }
 
@@ -877,6 +1018,9 @@ void LimeSection::resized()
     browserBtn.setBounds (header.removeFromLeft (90).withSizeKeepingCentre (90, 24));
     header.removeFromLeft (6);
     legacyBtn.setBounds (header.removeFromLeft (120).withSizeKeepingCentre (120, 24));
+    header.removeFromLeft (24);
+    scaleRoot.setBounds (header.removeFromLeft (56).withSizeKeepingCentre (56, 24).translated (44, 0));
+    scaleType.setBounds (header.removeFromLeft (150).withSizeKeepingCentre (150, 24).translated (48, 0));
     header.removeFromRight (16);
     levelB.setBounds (header.removeFromRight (64).expanded (0, 4));
     r.removeFromTop (4);

@@ -206,9 +206,6 @@ def b_kit(genre, r):
         "Tie": pick("Tie", genre, r), "Pod": pick("Pod", genre, r),
     }
     # defaults
-    for vc in ("kick", "snare", "hat", "tie", "pod", "pulp"):
-        v(vc, "on", 1)
-    v("pulp", "on", 0)
     v("kick", "gain", 0); v("snare", "gain", -3); v("hat", "gain", -6); v("tie", "gain", -4); v("pod", "gain", -7); v("pulp", "gain", -9)
     v("kick", "d", 65); v("snare", "d", 50); v("hat", "cd", 35); v("hat", "od", 65); v("tie", "d", 60); v("pod", "d", 55)
     v("tie", "vamt", 60); v("pod", "vamt", 80)
@@ -237,7 +234,7 @@ def b_kit(genre, r):
         v("tie", "cut", r.choice([500, 800, 1200])); v("tie", "res", r.randint(10, 40))
         v("pod", "vel", r.choice([1, 2, 6])); v("pod", "d", r.randint(25, 45)); v("pod", "cut", r.choice([3000, 6000, 20000]))
         v("hat", "cd", r.randint(20, 35)); v("hat", "cut", r.choice([20, 3000, 6000]))
-        v("pulp", "on", r.choice([0, 1])); v("pulp", "comb", r.randint(10, 40)); v("pulp", "d", 30)
+        v("pulp", "comb", r.randint(10, 40)); v("pulp", "d", 30)
         fx.update({"b_swing": r.randint(25, 50), "b_tie_str": 0, "b_dly_one": r.choice([3, 5]), "b_dly_two": r.choice([4, 6, 7]),
                    "b_dly_fb": r.randint(40, 65), "b_dly_gain": -9, "b_dly_cut": r.choice([1800, 2500, 3500]), "b_dly_dm": r.randint(5, 30),
                    "b_x_mode": r.choice([11, 10, 5, 8]), "b_x_x": r.randint(25, 70), "b_x_y": r.randint(30, 70), "b_x_gain": -10,
@@ -266,6 +263,7 @@ def b_kit(genre, r):
     P.update(fx)
     for k in ("b_dly_gain", "b_x_gain"):           # FX returns never above -16 dB by default
         P[k] = min(float(P.get(k, -16)), -16.0)
+    P["b_dly_gain"] = -60.0                         # delay return at minimum by default (raise it by hand)
     return P, smp
 
 def b_preset(genre, idx, r):

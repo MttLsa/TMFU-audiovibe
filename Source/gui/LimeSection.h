@@ -143,11 +143,44 @@ class LimeModulePanel : public ControlPanel
 public:
     LimeModulePanel (TwinboxProcessor& p, int voice, bool big);
     void resized() override;
+    std::function<void()> onOpenPitch;   // Tie / Pod: open the per-sample pitch window
 private:
     int voice; bool big;
     std::unique_ptr<SampleSelector> selector;
     std::unique_ptr<WaveView> wave;
-    std::unique_ptr<Toggle> power;
+    std::unique_ptr<Toggle> power, scaleBtn;
+    juce::TextButton noteBtn { juce::String::fromUTF8 ("\xe2\x99\xaa") };
+};
+
+// Per-sample pitch window (Tie / Pod): every sample of the current folder with detected note, play button
+// and a -32..+32 semitone knob (MANUAL mode). Works live while the sequencer is playing.
+class PitchWindowContent : public juce::Component, private juce::ChangeListener, private juce::Timer
+{
+public:
+    PitchWindowContent (TwinboxProcessor& p, int module);
+    ~PitchWindowContent() override;
+    void paint (juce::Graphics&) override;
+    void resized() override;
+private:
+    struct Row : public juce::Component
+    {
+        Row (PitchWindowContent& o, int idx);
+        void paint (juce::Graphics&) override;
+        void resized() override;
+        PitchWindowContent& owner; int index;
+        juce::TextButton play { juce::String::fromUTF8 ("\xe2\x96\xb6") };
+        juce::Slider knob;
+    };
+    void changeListenerCallback (juce::ChangeBroadcaster*) override { rebuild(); }
+    void timerCallback() override;
+    void rebuild();
+    TwinboxProcessor& proc;
+    int module;
+    juce::Viewport viewport;
+    juce::Component list;
+    juce::OwnedArray<Row> rows;
+    juce::TextButton resetAll { "Reset all to 0" };
+    bool scaleWasOn = false;
 };
 
 // XY pad bound to two parameters (xFx Parameter X / Additional) + XY motion recorder display
@@ -203,6 +236,8 @@ private:
 
     TwinboxProcessor& proc;
     juce::TextButton browserBtn { "BROWSER" }, legacyBtn { "IMPORT LEGACY" };
+    juce::ComboBox scaleRoot, scaleType;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> scaleRootAtt, scaleTypeAtt;
     Knob levelB { "Level B", theme::accentB };
     juce::String status;
     std::unique_ptr<juce::FileChooser> chooser;
