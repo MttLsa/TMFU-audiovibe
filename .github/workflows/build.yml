@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-14        # builds AU + VST3 (universal arm64/x86_64)
+          - os: macos-14        # builds AU + VST3 + .pkg installer (universal: Intel x86_64 + Apple Silicon)
             name: macOS
           - os: windows-2022    # builds VST3
             name: Windows
@@ -37,6 +37,15 @@ jobs:
           cp -R build/Twinbox_artefacts/Release/AU/Twinbox.component ~/Library/Audio/Plug-Ins/Components/
           killall -9 AudioComponentRegistrar || true
           auval -v aumu Twbx Twnb
+      - name: Build installer (macOS)
+        if: runner.os == 'macOS'
+        run: ./packaging/macos/make_pkg.sh 1.0.0
+      - name: Upload installer (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Twinbox-macOS-Installer
+          path: build/installer/Twinbox-1.0.0-macOS.pkg
       - uses: actions/upload-artifact@v4
         with:
           name: Twinbox-${{ matrix.name }}
