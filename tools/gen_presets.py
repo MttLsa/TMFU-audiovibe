@@ -264,6 +264,8 @@ def b_kit(genre, r):
                    "b_x_x": r.randint(30, 70), "b_x_y": r.randint(30, 70), "b_x_gain": -8, "b_x_len": r.choice([1, 2, 4]),
                    "b_remix": r.randint(1, 127), "b_remix_rate": r.choice([2, 3])})
     P.update(fx)
+    for k in ("b_dly_gain", "b_x_gain"):           # FX returns never above -16 dB by default
+        P[k] = min(float(P.get(k, -16)), -16.0)
     return P, smp
 
 def b_preset(genre, idx, r):

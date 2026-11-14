@@ -267,6 +267,20 @@ int main (int argc, char** argv)
             }
     }
 
+    // ---------------------------------------------------------------- B presets: FX returns <= -16 dB, knobs reach 0 dB
+    {
+        int bad = 0;
+        for (auto& it : PresetLibrary::get().items (1))
+            if (auto* prm = it.data.getProperty ("params", var()).getDynamicObject())
+                for (auto* id : { params::bDlyGain, params::bXGain })
+                    if ((float) prm->getProperty (id) > -16.0f + 1.0e-3f) ++bad;
+        TwinboxProcessor p;
+        auto* d = p.apvts.getParameter (params::bDlyGain); auto* x = p.apvts.getParameter (params::bXGain);
+        const bool range = std::abs (d->getNormalisableRange().end) < 1.0e-6f && std::abs (x->getNormalisableRange().end) < 1.0e-6f
+                        && std::abs (d->convertFrom0to1 (d->getDefaultValue()) + 16.0f) < 0.01f && std::abs (x->convertFrom0to1 (x->getDefaultValue()) + 16.0f) < 0.01f;
+        report ("B preset FX gain <= -16 dB", bad == 0 && range, String (bad) + " values above -16 dB; knob max 0 dB, default -16 dB: " + (range ? "yes" : "no"));
+    }
+
     // ---------------------------------------------------------------- state round trip
     {
         TwinboxProcessor a, b;

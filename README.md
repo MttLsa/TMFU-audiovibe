@@ -1,4 +1,4 @@
-# TWINBOX — groovebox ibrida VST3 / AU (v2.1)
+# TWINBOX — groovebox ibrida VST3 / AU (v2.1.1)
 
 Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in un solo plugin:
 
@@ -109,6 +109,7 @@ Ogni sezione ha un pulsante **BROWSER**. I preset sono 16 per ciascuno degli 8 g
 - **Sezione A**: kit di 8 drum patch con nomi + pattern (fino a 64 step), swing e fill rate. Il pattern viene caricato nello slot corrente.
 - **Sezione B**: snapshot completo (campioni, voci, effetti, lunghezze, swing, Remix) + pattern A–D.
 - Opzioni: caricare solo il kit, solo i pattern, e impostare il tempo.
+- I knob GAIN di Delay e xFx arrivano al massimo a 0 dB e partono da −16 dB. In nessun preset superano −16 dB, così il kit dry resta in primo piano.
 - I livelli degli effetti dei preset B sono calibrati: ogni effetto (Delay, xFx, Magic) aggiunge al massimo **+2,5 dB** RMS rispetto al segnale dry. Il ricalcolo si fa con `TwinboxTest <out> "" calibrate resources/presets_B.json resources/presets_B.json`.
 
 Il Rominimal segue i riferimenti indicati (Villalobos, Bauch, Barac, Ohm Hourani, Sublee, Zavor, 118–130 BPM):
@@ -144,7 +145,7 @@ JUCE 8.0.4 viene scaricato in automatico.
 Il workflow `.github/workflows/build.yml`:
 - compila le tre piattaforme;
 - su macOS verifica l'AU con `auval`;
-- produce l'installer **`Twinbox-2.1.0-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
+- produce l'installer **`Twinbox-2.1.1-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
 
 Gli script che generano campioni e preset (`resources/`) sono `tools/gen_samples.py` e `tools/gen_presets.py`.
 

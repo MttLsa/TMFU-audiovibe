@@ -244,7 +244,7 @@ Layout createLayout()
     addInt    (l, bDlyOne, "B Delay One (16ths)", 1, 16, 3);
     addInt    (l, bDlyTwo, "B Delay Two (16ths)", 1, 16, 4);
     addFloat  (l, bDlyFb,  "B Delay Feedback", NormalisableRange<float> (0.f, 98.f), 40.f, pctText);
-    addFloat  (l, bDlyGain,"B Delay Gain", NormalisableRange<float> (-60.f, 6.f), -6.f, dbText);
+    addFloat  (l, bDlyGain,"B Delay Gain", NormalisableRange<float> (-60.f, 0.f), -16.f, dbText);
     addFloat  (l, bDlyLfo, "B Delay LFO", logRange (0.02f, 10.f, 0.5f), 0.3f, hzText);
     addFloat  (l, bDlyFM,  "B Delay FM", pctR, 0.f, pctText);
     addFloat  (l, bDlyDM,  "B Delay DM", pctR, 0.f, pctText);
@@ -257,7 +257,7 @@ Layout createLayout()
     addFloat  (l, bXParam, "B xFx Parameter X", pctR, 50.f, pctText);
     addFloat  (l, bXAdd,   "B xFx Additional", pctR, 50.f, pctText);
     addFloat  (l, bXDly,   "B xFx Delay Input", pctR, 0.f, [] (float x, int) { return x < 1 ? String ("dry") : (x > 99 ? String ("post-delay") : String (roundToInt (x)) + " %"); });
-    addFloat  (l, bXGain,  "B xFx Gain", NormalisableRange<float> (-60.f, 6.f), 0.f, dbText);
+    addFloat  (l, bXGain,  "B xFx Gain", NormalisableRange<float> (-60.f, 0.f), -16.f, dbText);
     addFloat  (l, bXLo,    "B xFx Low Cut", logRange (20.f, 2000.f, 150.f), 20.f, hzText);
     addFloat  (l, bXHi,    "B xFx High Cut", logRange (500.f, 20000.f, 5000.f), 20000.f, hzText);
     addFloat  (l, bXSpd,   "B xFx Speed (XY playback/record)", pctR, 50.f,
