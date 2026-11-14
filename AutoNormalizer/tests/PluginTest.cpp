@@ -12,6 +12,8 @@ static void check (bool ok, const char* what)
         ++failures;
 }
 
+static float peakEver = 0;
+
 static float runSeconds (AutoNormalizerProcessor& p, double seconds, float amp, double freq, bool programChangeFirst = false)
 {
     const double sr = 48000.0;
@@ -32,6 +34,7 @@ static float runSeconds (AutoNormalizerProcessor& p, double seconds, float amp, 
             buf.setSample (1, i, v);
         }
         p.processBlock (buf, midi);
+        peakEver = std::max (peakEver, buf.getMagnitude (0, block));
         if (done > (int) ((seconds - 0.5) * sr))
             peak = std::max (peak, buf.getMagnitude (0, block));
     }
@@ -46,16 +49,21 @@ int main (int argc, char** argv)
     p.setRateAndBufferSizeDetails (48000.0, 256);
     p.prepareToPlay (48000.0, 256);
 
+    check (p.getLatencySamples() == p.engine.getLatencySamples() && p.getLatencySamples() > 0, "look-ahead latency reported to host");
+
     float pk = runSeconds (p, 3.0, 0.1f, 110.0);
-    std::printf ("      first preset: out peak %.2f dBFS, gain %.2f dB\n", juce::Decibels::gainToDecibels (pk), p.engine.getGainDb());
-    check (std::abs (juce::Decibels::gainToDecibels (pk)) < 0.2f, "first signal normalized to 0 dBFS");
+    std::printf ("      first preset: %.2f LUFS, gain %.2f dB, out peak %.2f dBFS\n", p.engine.getLastMeasuredLufs(),
+                 p.engine.getGainDb(), juce::Decibels::gainToDecibels (pk));
+    check (p.engine.getState() == an::State::Locked && std::abs (p.engine.getGainDb() - (-14.0f - p.engine.getLastMeasuredLufs())) < 0.01f,
+           "first signal normalized to -14 LUFS");
 
     // Turn off auto-detect to prove the MIDI path alone works
     p.apvts.getParameter ("auto")->setValueNotifyingHost (0.0f);
     runSeconds (p, 0.5, 0.0f, 110.0, true); // Program Change during silence
     check (p.engine.getState() == an::State::WaitingForSignal, "MIDI Program Change arms the normalizer");
-    pk = runSeconds (p, 3.0, 0.7f, 220.0);
-    check (std::abs (juce::Decibels::gainToDecibels (pk)) < 0.2f && p.engine.getLastTrigger() == an::TriggerSource::Midi,
+    runSeconds (p, 3.0, 0.7f, 220.0);
+    check (std::abs (p.engine.getGainDb() - (-14.0f - p.engine.getLastMeasuredLufs())) < 0.01f
+               && p.engine.getLastTrigger() == an::TriggerSource::Midi,
            "new preset normalized after Program Change");
 
     // automation trigger (rising edge)
@@ -64,6 +72,14 @@ int main (int argc, char** argv)
     check (p.engine.getState() == an::State::WaitingForSignal, "'Normalize Now' parameter arms the normalizer");
     p.apvts.getParameter ("trigger")->setValueNotifyingHost (0.0f);
     runSeconds (p, 3.0, 0.3f, 220.0);
+
+    // loud target: output must stay <= -1 dBFS
+    p.apvts.getParameter ("target")->setValueNotifyingHost (p.apvts.getParameterRange ("target").convertTo0to1 (-5.0f));
+    p.engine.requestNormalize (an::TriggerSource::Manual);
+    runSeconds (p, 4.0, 0.9f, 55.0);
+    std::printf ("      worst output peak: %.3f dBFS, limiter GR %.2f dB\n", juce::Decibels::gainToDecibels (peakEver),
+                 p.engine.getGainReductionDb());
+    check (peakEver <= juce::Decibels::decibelsToGain (-1.0f) * 1.000001f, "output never exceeds -1 dBFS");
 
     // state round-trip
     juce::MemoryBlock mb;

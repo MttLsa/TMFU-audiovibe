@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum macOS version")
 set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "macOS architectures")
 
-project(AutoNormalizer VERSION 1.0.0 LANGUAGES C CXX)
+project(AutoNormalizer VERSION 1.1.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -58,7 +58,7 @@ juce_add_plugin(AutoNormalizer
   VST3_CATEGORIES Fx Tools
   AU_MAIN_TYPE kAudioUnitType_MusicEffect   # 'aumf': audio effect that also receives MIDI
   VST2_CATEGORY kPlugCategEffect
-  DESCRIPTION "Normalizes the previous plugin to 0 dB once per preset change, then holds the gain")
+  DESCRIPTION "Normalizes the previous plugin to a LUFS target once per preset change (ceiling -1 dBFS)")
 
 target_sources(AutoNormalizer PRIVATE
   Source/NormalizerEngine.cpp

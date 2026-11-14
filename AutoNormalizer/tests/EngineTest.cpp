@@ -2,6 +2,7 @@
 #include "../Source/NormalizerEngine.h"
 
 #include <cmath>
+#include <algorithm>
 #include <cstdio>
 #include <functional>
 #include <random>
@@ -24,6 +25,7 @@ struct Sim
     NormalizerEngine eng;
     double t = 0;
     float outPeakLastSec = 0;
+    float outPeakEver = 0; // must never exceed -1 dBFS
 
     explicit Sim (Settings s = {})
     {
@@ -48,6 +50,8 @@ struct Sim
                 t += 1.0 / kSr;
             }
             eng.process (ch, 2, n);
+            for (int i = 0; i < n; ++i)
+                outPeakEver = std::max ({ outPeakEver, std::abs (l[(size_t) i]), std::abs (r[(size_t) i]) });
             if ((double) done / kSr >= seconds - measureFromSec)
                 for (int i = 0; i < n; ++i)
                     outPeakLastSec = std::max (outPeakLastSec, std::abs (l[(size_t) i]));
@@ -65,32 +69,40 @@ int main()
 {
     std::mt19937 rng (1);
     std::normal_distribution<float> nd (0.0f, 1.0f);
+    const float ceiling = dbToLin (NormalizerEngine::kCeilingDb) * 1.000001f;
+    float worstPeak = 0;
 
-    // 1) first insertion: waits for signal, measures, locks at 0 dBFS peak
+    // 1) first insertion: waits for signal, measures loudness, locks gain = target - LUFS
     {
         Sim s;
         s.run (1.0, [] (double) { return 0.0f; });
         check (s.eng.getState() == State::WaitingForSignal, "silence -> still waiting for signal");
-        s.run (4.0, [] (double t) { return 0.25f * (float) std::sin (2 * M_PI * 220 * t); }, 1.0f);
-        std::printf ("      gain=%.2f dB  out peak=%.2f dBFS\n", s.eng.getGainDb(), linToDb (s.outPeakLastSec));
+        s.run (4.0, [] (double t) { return 0.1f * (float) std::sin (2 * M_PI * 1000 * t); }, 1.0f);
+        std::printf ("      measured=%.2f LUFS gain=%.2f dB out peak=%.2f dBFS\n", s.eng.getLastMeasuredLufs(),
+                     s.eng.getGainDb(), linToDb (s.outPeakLastSec));
         check (s.eng.getState() == State::Locked, "locked after measurement");
-        check (std::abs (linToDb (s.outPeakLastSec)) < 0.1f, "output peak ~ 0 dBFS");
+        check (std::abs (s.eng.getLastMeasuredLufs() + 20.0f) < 0.3f, "1 kHz stereo sine, 0.1 peak = -20 LUFS (BS.1770)");
+        check (std::abs (s.eng.getGainDb() - 6.0f) < 0.3f, "gain = -14 LUFS target - (-20 LUFS) = +6 dB");
+        check (std::abs (linToDb (s.outPeakLastSec) - (-20.0f + 6.0f)) < 0.3f, "output = input + gain (no limiting needed)");
+        worstPeak = std::max (worstPeak, s.outPeakEver);
     }
 
     // 2) preset change: timbre + level change -> auto detection -> re-normalize
     {
         Sim s;
-        auto presetA = [] (double t) { return 0.2f * saw (t, 110.0); };                         // bright saw, -14 dB
+        auto presetA = [] (double t) { return 0.05f * saw (t, 110.0); };                       // quiet bright saw
         auto presetB = [] (double t) { return 0.9f * (float) std::sin (2 * M_PI * 80 * t); };  // loud sub sine
         s.run (5.0, presetA, 1.0f);
         const int countA = s.eng.getNormalizeCount();
-        std::printf ("      preset A: gain=%.2f dB out=%.2f dBFS\n", s.eng.getGainDb(), linToDb (s.outPeakLastSec));
+        const float gainA = s.eng.getGainDb();
+        std::printf ("      preset A: %.2f LUFS gain=%.2f dB\n", s.eng.getLastMeasuredLufs(), gainA);
         s.run (6.0, presetB, 1.0f);
-        std::printf ("      preset B: gain=%.2f dB out=%.2f dBFS trigger=%d\n", s.eng.getGainDb(),
-                     linToDb (s.outPeakLastSec), (int) s.eng.getLastTrigger());
+        std::printf ("      preset B: %.2f LUFS gain=%.2f dB trigger=%d\n", s.eng.getLastMeasuredLufs(), s.eng.getGainDb(),
+                     (int) s.eng.getLastTrigger());
         check (s.eng.getNormalizeCount() == countA + 1, "auto-detected preset change exactly once");
         check (s.eng.getLastTrigger() == TriggerSource::Auto, "trigger source = Auto");
-        check (std::abs (linToDb (s.outPeakLastSec)) < 0.1f, "new preset also at 0 dBFS");
+        check (std::abs (s.eng.getGainDb() - (-14.0f - s.eng.getLastMeasuredLufs())) < 0.01f, "new preset brought to -14 LUFS");
+        worstPeak = std::max (worstPeak, s.outPeakEver);
     }
 
     // 3) same preset, different notes and dynamics -> must NOT re-trigger
@@ -109,6 +121,7 @@ int main()
         }
         std::printf ("      max change score while playing = %.2f\n", maxScore);
         check (s.eng.getNormalizeCount() == count, "no false trigger while playing the same preset");
+        worstPeak = std::max (worstPeak, s.outPeakEver);
     }
 
     // 4) silence gaps don't trigger
@@ -124,11 +137,10 @@ int main()
         check (s.eng.getNormalizeCount() == count, "silence gaps don't trigger");
     }
 
-    // 5) manual / MIDI trigger, preset changed during silence, RMS mode
+    // 5) MIDI trigger, preset changed during silence, custom target
     {
         Settings st;
-        st.mode = MeasureMode::RMS;
-        st.targetDb = -12.0f;
+        st.targetLufs = -18.0f;
         st.autoDetect = false;
         Sim s (st);
         s.run (4.0, [&] (double) { return 0.05f * nd (rng); });
@@ -136,34 +148,67 @@ int main()
         s.eng.requestNormalize (TriggerSource::Midi);
         s.run (0.5, [] (double) { return 0.0f; });
         check (s.eng.getState() == State::WaitingForSignal, "MIDI trigger -> waiting for signal");
-        s.run (4.0, [] (double t) { return 0.5f * (float) std::sin (2 * M_PI * 440 * t); }); // RMS = -9 dBFS
-        std::printf ("      RMS mode gain=%.2f dB (expected -3.0)\n", s.eng.getGainDb());
-        check (std::abs (s.eng.getGainDb() + 3.0f) < 0.1f, "RMS target -12 dB reached");
+        s.run (4.0, [] (double t) { return 0.5f * (float) std::sin (2 * M_PI * 1000 * t); }); // ~ -6 LUFS
+        std::printf ("      measured=%.2f LUFS gain=%.2f dB (expected about -12)\n", s.eng.getLastMeasuredLufs(), s.eng.getGainDb());
+        check (std::abs (s.eng.getGainDb() + 12.0f) < 0.3f, "-18 LUFS target reached");
         check (s.eng.getLastTrigger() == TriggerSource::Midi, "trigger source = MIDI");
+        worstPeak = std::max (worstPeak, s.outPeakEver);
     }
 
-    // 6) loudness mode: 1 kHz stereo sine, 0.1 peak (-23 dB mean square per channel, +3 dB channel sum) => -20 LUFS
+    // 6) CEILING: loud target on spiky material -> limiter keeps every sample <= -1 dBFS
     {
         Settings st;
-        st.mode = MeasureMode::Loudness;
-        st.targetDb = -14.0f;
+        st.targetLufs = -6.0f;
         Sim s (st);
-        s.run (4.0, [] (double t) { return 0.1f * (float) std::sin (2 * M_PI * 1000 * t); });
-        std::printf ("      measured=%.2f LUFS gain=%.2f dB\n", s.eng.getLastMeasuredDb(), s.eng.getGainDb());
-        check (std::abs (s.eng.getLastMeasuredDb() + 20.0f) < 0.3f, "K-weighted loudness of -20 dBFS sine ~ -20 LUFS");
+        auto spiky = [&] (double t)
+        {
+            const double ph = std::fmod (t * 4.0, 1.0); // 4 hits per second, sharp attack
+            return (float) (0.3 * std::exp (-ph * 30.0) * std::sin (2 * M_PI * 180 * t)) + 0.002f * nd (rng);
+        };
+        s.run (6.0, spiky);
+        std::printf ("      gain=%.2f dB  limiter GR=%.2f dB  max out=%.3f dBFS\n", s.eng.getGainDb(),
+                     s.eng.getGainReductionDb(), linToDb (s.outPeakEver));
+        check (s.outPeakEver <= ceiling, "spiky material at -6 LUFS never exceeds -1 dBFS");
+        worstPeak = std::max (worstPeak, s.outPeakEver);
     }
 
-    // 7) safety ceiling: louder new preset never clips during re-measurement
+    // 7) CEILING: lock on soft notes, then play 30 dB louder (same preset) -> still <= -1 dBFS
+    {
+        Settings st;
+        st.autoDetect = false;
+        Sim s (st);
+        s.run (4.0, [] (double t) { return 0.02f * saw (t, 110.0); });
+        s.run (3.0, [] (double t) { return 0.63f * saw (t, 110.0); }, 3.0f);
+        std::printf ("      gain=%.2f dB  max out=%.3f dBFS\n", s.eng.getGainDb(), linToDb (s.outPeakEver));
+        check (s.outPeakEver <= ceiling, "much louder notes after lock never exceed -1 dBFS");
+        worstPeak = std::max (worstPeak, s.outPeakEver);
+    }
+
+    // 8) CEILING: full-scale white noise + full-scale square, max boost
+    {
+        Settings st;
+        st.targetLufs = -6.0f;
+        st.maxBoostDb = 48.0f;
+        Sim s (st);
+        s.run (3.0, [&] (double) { return std::clamp (0.4f * nd (rng), -1.0f, 1.0f); });
+        s.run (2.0, [] (double t) { return std::sin (2 * M_PI * 50 * t) > 0 ? 1.0f : -1.0f; });
+        check (s.outPeakEver <= ceiling, "noise / full-scale square never exceed -1 dBFS");
+        worstPeak = std::max (worstPeak, s.outPeakEver);
+    }
+
+    // 9) safety while re-measuring: a much louder new preset doesn't slam the limiter
     {
         Sim s;
-        s.run (4.0, [] (double t) { return 0.05f * saw (t, 110.0); }); // gain ~ +26 -> clamped +24
+        s.run (4.0, [] (double t) { return 0.01f * saw (t, 110.0); }); // gain clamped to +24
         s.eng.requestNormalize (TriggerSource::Manual);
-        s.run (1.0, [] (double t) { return 0.9f * saw (t, 110.0); }, 1.0f);
-        std::printf ("      during re-measure out peak=%.2f dBFS\n", linToDb (s.outPeakLastSec));
-        check (s.outPeakLastSec <= 1.0001f, "no output above 0 dBFS while measuring");
+        s.run (1.0, [] (double t) { return 0.9f * saw (t, 110.0); }, 0.8f);
+        std::printf ("      during re-measure applied gain=%.2f dB, limiter GR=%.2f dB\n", s.eng.getAppliedGainDb(),
+                     s.eng.getGainReductionDb());
+        check (s.eng.getGainReductionDb() > -0.5f, "safety gain keeps the limiter idle while measuring");
+        check (s.outPeakEver <= ceiling, "no output above -1 dBFS while measuring");
     }
 
-    // 8) freeze ignores triggers; snapshot restore keeps gain
+    // 10) freeze ignores triggers; snapshot restore keeps gain; latency reported
     {
         Settings st;
         Sim s (st);
@@ -180,8 +225,11 @@ int main()
         s2.run (0.5, [] (double t) { return 0.5f * saw (t, 110.0); }, 0.25f);
         check (s2.eng.getState() == State::Locked && std::abs (s2.eng.getGainDb() - snap.gainDb) < 0.001f,
                "restored project keeps locked gain");
+        std::printf ("      latency = %d samples\n", s.eng.getLatencySamples());
+        check (s.eng.getLatencySamples() == 71, "1.5 ms look-ahead latency at 48 kHz");
     }
 
+    std::printf ("      worst output peak over all tests: %.3f dBFS\n", linToDb (worstPeak));
     std::printf ("\n%s (%d failures)\n", failures == 0 ? "ALL TESTS PASSED" : "TESTS FAILED", failures);
     return failures == 0 ? 0 : 1;
 }

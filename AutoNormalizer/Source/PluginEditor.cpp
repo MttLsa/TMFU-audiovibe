@@ -32,22 +32,19 @@ AutoNormalizerEditor::AutoNormalizerEditor (AutoNormalizerProcessor& p)
     lnf.setColour (juce::PopupMenu::backgroundColourId, kPanel);
     setLookAndFeel (&lnf);
 
-    setupKnob (target, "target", "Target");
+    setupKnob (target, "target", "Target LUFS");
     setupKnob (measure, "measure", "Measure time");
     setupKnob (gate, "gate", "Signal gate");
     setupKnob (sens, "sens", "Sensitivity");
     setupKnob (maxBoost, "maxboost", "Max boost");
 
-    modeBox.addItemList (proc.apvts.getParameter ("mode")->getAllValueStrings(), 1);
-    modeAtt = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (proc.apvts, "mode", modeBox);
-    addAndMakeVisible (modeBox);
-    modeLabel.setText ("Measure", juce::dontSendNotification);
-    modeLabel.setColour (juce::Label::textColourId, kDim);
-    addAndMakeVisible (modeLabel);
+    ceilingLabel.setText ("Ceiling -1.0 dBFS  (always on)", juce::dontSendNotification);
+    ceilingLabel.setColour (juce::Label::textColourId, kDim);
+    addAndMakeVisible (ceilingLabel);
 
     setupToggle (autoBtn, autoAtt, "auto", "Auto-detect preset change");
     setupToggle (midiBtn, midiAtt, "midipc", "MIDI Program Change");
-    setupToggle (safetyBtn, safetyAtt, "safety", "Safety ceiling (0 dBFS)");
+    setupToggle (safetyBtn, safetyAtt, "safety", "Safe gain while measuring");
     setupToggle (freezeBtn, freezeAtt, "freeze", "Freeze gain");
 
     normalizeBtn.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff2f6fb3));
@@ -56,7 +53,7 @@ AutoNormalizerEditor::AutoNormalizerEditor (AutoNormalizerProcessor& p)
     addAndMakeVisible (normalizeBtn);
     addAndMakeVisible (resetBtn);
 
-    setSize (560, 420);
+    setSize (560, 460);
     startTimerHz (20);
 }
 
@@ -92,7 +89,10 @@ void AutoNormalizerEditor::timerCallback()
     state = e.getState();
     gainDb = e.getGainDb();
     appliedDb = e.getAppliedGainDb();
-    measuredDb = e.getLastMeasuredDb();
+    measuredLufs = e.getLastMeasuredLufs();
+    measuredPeak = e.getLastMeasuredPeakDb();
+    outputDb = e.getOutputPeakDb();
+    grDb = e.getGainReductionDb();
     score = e.getChangeScore();
     progress = e.getMeasureProgress();
     inputDb = e.getInputLevelDb();
@@ -112,7 +112,7 @@ void AutoNormalizerEditor::paint (juce::Graphics& g)
     g.drawText ("AutoNormalizer", header, juce::Justification::centredLeft);
     g.setColour (kDim);
     g.setFont (juce::FontOptions (12.0f));
-    g.drawText ("normalizes once per preset change, then holds", header, juce::Justification::centredRight);
+    g.drawText ("LUFS once per preset change, then holds", header, juce::Justification::centredRight);
 
     // ---- status panel
     auto s = statusArea;
@@ -145,8 +145,8 @@ void AutoNormalizerEditor::paint (juce::Graphics& g)
     g.setFont (juce::FontOptions (13.0f));
     g.setColour (kDim);
     const char* trigNames[] = { "-", "first signal", "manual", "MIDI program change", "auto-detect" };
-    const char* unit = proc.apvts.getRawParameterValue ("mode")->load() > 1.5f ? " LUFS" : " dBFS";
-    g.drawText ("Last measured: " + fmtDb (measuredDb) + unit + "   |   by: " + trigNames[(int) lastTrig]
+    g.drawText ("Measured: " + fmtDb (measuredLufs) + " LUFS (peak " + fmtDb (measuredPeak) + ")   |   by: "
+                    + trigNames[(int) lastTrig]
                     + "   |   count: " + juce::String (count),
                 row2, juce::Justification::centredLeft);
 
@@ -167,6 +167,18 @@ void AutoNormalizerEditor::paint (juce::Graphics& g)
 
     drawBar (s.removeFromTop (18), "Input", juce::jmap (juce::jlimit (-60.0f, 0.0f, inputDb), -60.0f, 0.0f, 0.0f, 1.0f),
              kGreen.withAlpha (0.8f), fmtDb (inputDb) + " dB");
+    {
+        auto r = s.removeFromTop (18);
+        const float frac = juce::jmap (juce::jlimit (-60.0f, 0.0f, outputDb), -60.0f, 0.0f, 0.0f, 1.0f);
+        drawBar (r, "Output", frac, outputDb > -1.3f ? kOrange : kGreen.withAlpha (0.8f), fmtDb (outputDb) + " dB");
+        // ceiling marker at -1 dBFS
+        auto bar = r.withTrimmedLeft (100).withTrimmedRight (118).reduced (0, 2).toFloat();
+        const float x = bar.getX() + bar.getWidth() * (59.0f / 60.0f);
+        g.setColour (kRed);
+        g.fillRect (x - 1.0f, bar.getY(), 2.0f, bar.getHeight());
+    }
+    drawBar (s.removeFromTop (18), "Limiter GR", juce::jlimit (0.0f, 1.0f, -grDb / 12.0f), kRed,
+             juce::String (grDb, 1) + " dB");
     drawBar (s.removeFromTop (18), "Preset change", score, score >= 1.0f ? kRed : kOrange,
              juce::String (juce::roundToInt (juce::jmin (score, 9.99f) * 100)) + "%");
     drawBar (s.removeFromTop (18), "Measure", state == an::State::Locked ? 0.0f : progress, kBlue,
@@ -177,7 +189,7 @@ void AutoNormalizerEditor::resized()
 {
     auto area = getLocalBounds().reduced (14);
     area.removeFromTop (34);
-    statusArea = area.removeFromTop (132);
+    statusArea = area.removeFromTop (170);
     area.removeFromTop (12);
 
     auto knobs = area.removeFromTop (120);
@@ -191,9 +203,8 @@ void AutoNormalizerEditor::resized()
 
     area.removeFromTop (10);
     auto row = area.removeFromTop (26);
-    modeLabel.setBounds (row.removeFromLeft (64));
-    modeBox.setBounds (row.removeFromLeft (170));
-    row.removeFromLeft (16);
+    ceilingLabel.setBounds (row.removeFromLeft (220));
+    row.removeFromLeft (8);
     resetBtn.setBounds (row.removeFromRight (100));
     row.removeFromRight (8);
     normalizeBtn.setBounds (row);

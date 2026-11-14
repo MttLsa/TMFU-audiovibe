@@ -31,9 +31,7 @@ private:
     juce::LookAndFeel_V4 lnf;
 
     Knob target, measure, gate, sens, maxBoost;
-    juce::ComboBox modeBox;
-    juce::Label modeLabel;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> modeAtt;
+    juce::Label ceilingLabel;
 
     juce::ToggleButton autoBtn, midiBtn, safetyBtn, freezeBtn;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> autoAtt, midiAtt, safetyAtt, freezeAtt;
@@ -43,7 +41,8 @@ private:
     juce::Rectangle<int> statusArea;
     // cached display values
     an::State state = an::State::WaitingForSignal;
-    float gainDb = 0, appliedDb = 0, measuredDb = -100, score = 0, progress = 0, inputDb = -100;
+    float gainDb = 0, appliedDb = 0, measuredLufs = -100, measuredPeak = -100, score = 0, progress = 0, inputDb = -100,
+          outputDb = -100, grDb = 0;
     an::TriggerSource lastTrig = an::TriggerSource::None;
     int count = 0;
 

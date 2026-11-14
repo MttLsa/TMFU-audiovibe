@@ -11,12 +11,11 @@ APVTS::ParameterLayout AutoNormalizerProcessor::createLayout()
     auto dB = AudioParameterFloatAttributes().withLabel ("dB");
     auto sec = AudioParameterFloatAttributes().withLabel ("s");
 
-    p.push_back (std::make_unique<AudioParameterChoice> (ParameterID { "mode", 1 }, "Measure Mode",
-                                                         StringArray { "Peak (dBFS)", "RMS (dBFS)", "Loudness (LUFS)" }, 0));
-    p.push_back (std::make_unique<AudioParameterFloat> (ParameterID { "target", 1 }, "Target Level",
-                                                        NormalisableRange<float> (-40.0f, 0.0f, 0.1f), 0.0f, dB));
+    p.push_back (std::make_unique<AudioParameterFloat> (ParameterID { "target", 2 }, "Target Loudness",
+                                                        NormalisableRange<float> (-40.0f, -5.0f, 0.1f), -14.0f,
+                                                        AudioParameterFloatAttributes().withLabel ("LUFS")));
     p.push_back (std::make_unique<AudioParameterFloat> (ParameterID { "measure", 1 }, "Measure Time",
-                                                        NormalisableRange<float> (0.2f, 10.0f, 0.1f, 0.5f), 1.5f, sec));
+                                                        NormalisableRange<float> (0.4f, 10.0f, 0.1f, 0.5f), 2.0f, sec));
     p.push_back (std::make_unique<AudioParameterFloat> (ParameterID { "gate", 1 }, "Signal Gate",
                                                         NormalisableRange<float> (-90.0f, -20.0f, 1.0f), -50.0f, dB));
     p.push_back (std::make_unique<AudioParameterBool> (ParameterID { "auto", 1 }, "Auto Detect Preset Change", true));
@@ -26,7 +25,7 @@ APVTS::ParameterLayout AutoNormalizerProcessor::createLayout()
     p.push_back (std::make_unique<AudioParameterBool> (ParameterID { "midipc", 1 }, "Trigger On MIDI Program Change", true));
     p.push_back (std::make_unique<AudioParameterFloat> (ParameterID { "maxboost", 1 }, "Max Boost",
                                                         NormalisableRange<float> (0.0f, 48.0f, 0.5f), 24.0f, dB));
-    p.push_back (std::make_unique<AudioParameterBool> (ParameterID { "safety", 1 }, "Safety Ceiling While Measuring", true));
+    p.push_back (std::make_unique<AudioParameterBool> (ParameterID { "safety", 1 }, "Safe Gain While Measuring", true));
     p.push_back (std::make_unique<AudioParameterBool> (ParameterID { "freeze", 1 }, "Freeze Gain", false));
     // Automatable/MIDI-learnable trigger: every off->on transition starts a new normalization.
     p.push_back (std::make_unique<AudioParameterBool> (ParameterID { "trigger", 1 }, "Normalize Now", false));
@@ -40,7 +39,6 @@ AutoNormalizerProcessor::AutoNormalizerProcessor()
                           .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
       apvts (*this, nullptr, "AutoNormalizer", createLayout())
 {
-    pMode = apvts.getRawParameterValue ("mode");
     pTarget = apvts.getRawParameterValue ("target");
     pMeasure = apvts.getRawParameterValue ("measure");
     pGate = apvts.getRawParameterValue ("gate");
@@ -64,8 +62,7 @@ bool AutoNormalizerProcessor::isBusesLayoutSupported (const BusesLayout& layouts
 an::Settings AutoNormalizerProcessor::readSettings() const
 {
     an::Settings s;
-    s.mode = (an::MeasureMode) juce::jlimit (0, 2, (int) pMode->load());
-    s.targetDb = pTarget->load();
+    s.targetLufs = pTarget->load();
     s.measureSeconds = pMeasure->load();
     s.gateDb = pGate->load();
     s.autoDetect = pAuto->load() > 0.5f;
@@ -80,7 +77,7 @@ void AutoNormalizerProcessor::prepareToPlay (double sampleRate, int)
 {
     engine.setSettings (readSettings());
     engine.prepare (sampleRate, juce::jmax (1, getTotalNumInputChannels()));
-    setLatencySamples (0);
+    setLatencySamples (engine.getLatencySamples()); // limiter look-ahead (1.5 ms)
 }
 
 void AutoNormalizerProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)

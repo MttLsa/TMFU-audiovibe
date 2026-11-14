@@ -58,6 +58,15 @@ jobs:
             unzip -q pv.zip
             xvfb-run -a ./pluginval --strictness-level 8 --validate-in-process build/AutoNormalizer_artefacts/Release/VST3/AutoNormalizer.vst3
           fi
+      - name: Build installer .pkg (macOS)
+        if: runner.os == 'macOS'
+        run: ./packaging/macos/make_pkg.sh
+      - name: Upload installer (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v5
+        with:
+          name: AutoNormalizer-macOS-Installer
+          path: AutoNormalizer/build/installer/AutoNormalizer-*-macOS.pkg
       - uses: actions/upload-artifact@v5
         with:
           name: AutoNormalizer-${{ matrix.name }}

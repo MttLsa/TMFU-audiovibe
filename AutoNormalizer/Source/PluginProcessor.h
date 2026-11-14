@@ -23,7 +23,7 @@ public:
     bool acceptsMidi() const override { return true; }
     bool producesMidi() const override { return false; }
     bool isMidiEffect() const override { return false; }
-    double getTailLengthSeconds() const override { return 0.0; }
+    double getTailLengthSeconds() const override { return 0.0015; }
 
     int getNumPrograms() override { return 1; }
     int getCurrentProgram() override { return 0; }
@@ -42,7 +42,6 @@ public:
 private:
     an::Settings readSettings() const;
 
-    std::atomic<float>* pMode = nullptr;
     std::atomic<float>* pTarget = nullptr;
     std::atomic<float>* pMeasure = nullptr;
     std::atomic<float>* pGate = nullptr;

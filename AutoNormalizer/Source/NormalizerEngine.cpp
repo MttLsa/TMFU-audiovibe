@@ -75,6 +75,17 @@ void NormalizerEngine::prepare (double sampleRate, int numChannels)
 
     gainTargetLin = gainSmoothed = lastApplied = dbToLin (gainDb);
 
+    // limiter
+    ceilingLin = dbToLin (kCeilingDb);
+    limLen = std::max (2, (int) std::lround (sr * kLookaheadSec));
+    limDelay.assign ((size_t) (kMaxChannels * (limLen - 1)), 0.0f);
+    limReq.assign ((size_t) limLen, 1.0f);
+    limBox.assign ((size_t) limLen, 1.0);
+    limBoxSum = (double) limLen;
+    limPos = 0;
+    limHold = 1.0f;
+    limRelease = (float) (1.0 - std::exp (-1.0 / (0.08 * sr))); // 80 ms release
+
     if (snapshotPending.exchange (false))
         applySnapshot (pendingSnapshot);
 }
@@ -168,15 +179,10 @@ void NormalizerEngine::computeShape (const double* e, float* shape) const noexce
 
 void NormalizerEngine::finishMeasurement() noexcept
 {
-    float measured = -200.0f;
-    switch (settings.mode)
-    {
-        case MeasureMode::Peak:     measured = linToDb (measPeak); break;
-        case MeasureMode::RMS:      measured = powToDb (measSq / std::max (1.0, measSamples * numCh)); break;
-        case MeasureMode::Loudness: measured = -0.691f + powToDb (measKSq / std::max (1.0, measSamples)); break;
-    }
+    // Loudness (ITU-R BS.1770): K-weighted mean square, summed over channels.
+    const float measured = -0.691f + powToDb (measKSq / std::max (1.0, measSamples));
 
-    const float newGain = std::clamp (settings.targetDb - measured, -settings.maxCutDb, settings.maxBoostDb);
+    const float newGain = std::clamp (settings.targetLufs - measured, -settings.maxCutDb, settings.maxBoostDb);
 
     // Continue smoothly from whatever gain was actually being applied (it may have been
     // reduced by the safety ceiling) so that locking never causes a jump.
@@ -201,6 +207,7 @@ void NormalizerEngine::finishMeasurement() noexcept
     cooldown = 1.0; // seconds of active signal before auto-detect is allowed again
 
     uiMeasuredDb.store (measured);
+    uiMeasuredPeak.store (linToDb (measPeak));
     uiGainDb.store (gainDb);
     uiState.store ((int) state);
     uiProgress.store (1.0f);
@@ -222,6 +229,10 @@ void NormalizerEngine::endFrame() noexcept
     // input meter (peak hold with decay)
     inputPeakHold = std::max (framePeak, inputPeakHold * 0.85f);
     uiInputDb.store (linToDb (inputPeakHold));
+    uiOutDb.store (linToDb (outputPeakHold));
+    outputPeakHold *= 0.85f;
+    uiGrDb.store (std::min (0.0f, linToDb (grHold)));
+    grHold = 1.0f;
 
     const bool settling = settle > 0 && state != State::Locked;
     if (settling)
@@ -368,18 +379,71 @@ void NormalizerEngine::process (float* const* channels, int numChannels, int num
         {
             peakSinceArm = std::max (peakSinceArm, pk);
             if (settings.safetyCeiling && peakSinceArm > 1.0e-6f)
-                g = std::min (g, 1.0f / peakSinceArm); // never exceed 0 dBFS while (re)measuring
+                g = std::min (g, ceilingLin / peakSinceArm); // keep the new preset below the ceiling while (re)measuring
         }
         lastApplied = g;
 
         for (int c = 0; c < numChannels; ++c)
             channels[c][i] *= g;
 
+        const float gr = limiterProcess (channels, numChannels, i);
+        grHold = std::min (grHold, gr);
+
         if (++frameN >= hop)
             endFrame();
     }
 
     uiAppliedGainDb.store (linToDb (lastApplied));
+}
+
+// Look-ahead brick-wall limiter. Gain path: required gain -> running minimum over the
+// look-ahead window -> release smoothing (only upwards) -> box average over the window.
+// With the audio delayed by (limLen - 1) samples the applied gain at every sample is <=
+// the gain that sample requires, so the output can never exceed the ceiling.
+float NormalizerEngine::limiterProcess (float* const* channels, int numChannels, int i) noexcept
+{
+    const int nc = std::min (numChannels, kMaxChannels);
+    const int d = limLen - 1;
+    const int dp = limPos % d;
+
+    float mx = 0;
+    for (int c = 0; c < nc; ++c)
+        mx = std::max (mx, std::abs (channels[c][i]));
+    const float req = mx > ceilingLin ? ceilingLin / mx : 1.0f;
+
+    const int rp = limPos % limLen;
+    limReq[(size_t) rp] = req;
+    float h = 1.0f;
+    for (float v : limReq)
+        h = std::min (h, v);
+
+    limHold = h < limHold ? h : limHold + limRelease * (h - limHold);
+
+    limBoxSum += (double) limHold - limBox[(size_t) rp];
+    limBox[(size_t) rp] = limHold;
+    if (rp == 0) // recompute occasionally to avoid floating point drift
+    {
+        limBoxSum = 0;
+        for (double v : limBox)
+            limBoxSum += v;
+    }
+    const float g = std::min (1.0f, (float) (limBoxSum / limLen));
+
+    float outPk = 0;
+    for (int c = 0; c < nc; ++c)
+    {
+        float& slot = limDelay[(size_t) (c * d + dp)];
+        const float delayed = slot;
+        slot = channels[c][i];
+        const float y = std::clamp (delayed * g, -ceilingLin, ceilingLin); // final safety
+        channels[c][i] = y;
+        outPk = std::max (outPk, std::abs (y));
+    }
+    outputPeakHold = std::max (outputPeakHold, outPk);
+    ++limPos;
+    if (limPos >= limLen * d)
+        limPos = 0;
+    return g;
 }
 
 } // namespace an
