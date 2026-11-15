@@ -552,6 +552,22 @@ int main (int argc, char** argv)
         setP (*proc, lb::pid (8, "lfo3depth"), 0.0f); setP (*proc, lb::pid (1, "lfo2depth"), 0.0f); setP (*proc, lb::pid (1, "lfo1depth"), 0.0f);
     }
 
+    // ---- a session that puts a loop into the wrong module (older version): the module gets a fitting loop
+    {
+        auto dbx = proc->library->db();
+        String bottomPath;
+        for (auto& e : dbx->entries) if (e.info.type == lb::bottom) { bottomPath = e.path; break; }
+        MemoryBlock mb; proc->getStateInformation (mb);
+        auto xml = AudioProcessor::getXmlFromBinary (mb.getData(), (int) mb.getSize());
+        if (auto* mods = xml->getChildByName ("MODULES"))
+            for (auto* t : mods->getChildIterator()) if (t->getIntAttribute ("index") == lb::kick) t->setAttribute ("path", bottomPath);
+        MemoryBlock mb2; AudioProcessor::copyXmlToBinary (*xml, mb2);
+        proc->setStateInformation (mb2.getData(), (int) mb2.getSize());
+        for (int i = 0; i < 40; ++i) pump (50);
+        auto k = proc->currentLoop (lb::kick);
+        check (k != nullptr && k->info.type == lb::kick, "restored session: a BOTTOM loop saved in KICK is replaced by a kick loop (" + (k ? k->name : String ("-")) + ")");
+    }
+
     // ---- print
     proc->setSnapshotName ("TestSnapshot");
     auto pr = proc->printModules();

@@ -298,7 +298,13 @@ void GroovulationProcessor::loadPath (int m, const String& path)
 {
     if (path.isEmpty()) return;
     auto d = library->db();
-    if (const int i = d->indexOf (path); i >= 0 && m != lb::custom) { loadAsync (m, d->entries[(size_t) i]); return; }
+    if (const int i = d->indexOf (path); i >= 0 && m != lb::custom)
+    {
+        // a loop saved in a session (or by an older version) that now belongs to another module is not reloaded here
+        if (d->entries[(size_t) i].info.type != m) { randomLoop (m); return; }
+        loadAsync (m, d->entries[(size_t) i]);
+        return;
+    }
     if (! File (path).existsAsFile()) { if (m != lb::custom) randomLoop (m); return; }
     // file outside the scanned folders (CUSTOM, moved files): analyse it in the background, then load
     const int gen = ++loadGen[(size_t) m];
@@ -312,6 +318,7 @@ void GroovulationProcessor::loadPath (int m, const String& path)
         MessageManager::callAsync ([this, m, e, gen, safe]
         {
             if (safe.expired() || gen != loadGen[(size_t) m]) return;
+            if (m != lb::custom && e.info.type != m) { randomLoop (m); return; }   // not a loop for this module
             loadAsync (m, e);
         });
     });
@@ -405,6 +412,14 @@ void GroovulationProcessor::changeListenerCallback (ChangeBroadcaster*)
     for (auto& p : paths) anyEmpty |= p.isEmpty();
     if (anyEmpty && (stateRestored || started))
         for (int m = 0; m < lb::numModules; ++m) if (paths[(size_t) m].isEmpty() && m != lb::custom) randomLoop (m);
+    // after a (re)scan: a module whose loop now belongs to another module gets a fitting one
+    auto d = library->db();
+    for (int m = 0; m < lb::numModules; ++m)
+    {
+        if (m == lb::custom || paths[(size_t) m].isEmpty()) continue;
+        const int i = d->indexOf (paths[(size_t) m]);
+        if (i >= 0 && d->entries[(size_t) i].info.type != m) randomLoop (m);
+    }
     uiState.setProperty ("dbChanged", (int) uiState.getProperty ("dbChanged", 0) + 1, nullptr);
 }
 
