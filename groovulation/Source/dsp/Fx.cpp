@@ -339,10 +339,10 @@ void Deck::process (float* L, float* R, int n, int type, float ctl, float noise,
             if (type == 1) { wowPh += 0.6 / fs; flutPh += 9.0 / fs; sp *= 1.0 + 0.0015 * std::sin (2 * kPi * wowPh) + 0.0005 * std::sin (2 * kPi * flutPh); }
             r += sp;
             // the head can never read the future, nor further back than the buffer
-            double lag = (double) w - r; while (lag < 0) lag += size; while (lag >= size) lag -= size;
+            double lag = std::fmod ((double) w - r, (double) size); if (lag < 0) lag += size;
             if (lag < 2.0) { r = (double) w - 2.0; }
             if (lag > size - 8.0) { r = (double) w - (size - 8.0); }
-            while (r < 0) r += size; while (r >= size) r -= size;
+            r = std::fmod (r, (double) size); if (r < 0) r += size;
             // cubic read
             const int i1 = (int) r; const float f = (float) (r - i1);
             const int i0 = (i1 - 1 + size) % size, i2 = (i1 + 1) % size, i3 = (i1 + 2) % size;

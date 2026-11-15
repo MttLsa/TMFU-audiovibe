@@ -62,7 +62,6 @@ namespace
     }
 
     bool hasWord (const String& text, const char* w) { return text.contains (" " + String (w) + " "); }
-    bool hasPrefix (const String& text, const char* w) { return text.contains (" " + String (w)); }
 
     float median (std::vector<float> v)
     {
@@ -548,7 +547,7 @@ Result analyse (AudioFormatManager& fm, const File& file, const String& pathForK
         double estBpm = 0, bestScore = 0;
         for (int lag = (int) (fps * 60 / 200); lag <= (int) (fps * 60 / 60) && lag < frames; ++lag)
         {
-            double s = 0; for (int f = 0; f + lag < frames; ++f) s += flux[(size_t) f] * flux[(size_t) f + lag];
+            double s = 0; for (int f = 0; f + lag < frames; ++f) s += flux[(size_t) f] * flux[(size_t) (f + lag)];
             const double bpmL = 60.0 * fps / lag;
             s *= std::exp (-0.5 * std::pow (std::log2 (bpmL / 120.0) / 0.9, 2.0));
             if (s > bestScore) { bestScore = s; estBpm = bpmL; }
@@ -582,8 +581,8 @@ Result analyse (AudioFormatManager& fm, const File& file, const String& pathForK
     r.features.assign (numFeatures, 0.0f);
     auto meanStd = [] (const std::vector<float>& v, float& m, float& s)
     {
-        m = 0; for (auto a : v) m += a; m /= (float) jmax<size_t> (1, v.size());
-        s = 0; for (auto a : v) s += (a - m) * (a - m); s = std::sqrt (s / (float) jmax<size_t> (1, v.size()));
+        m = 0; for (auto a : v) m += a; m /= (float) std::max<size_t> (1, v.size());
+        s = 0; for (auto a : v) s += (a - m) * (a - m); s = std::sqrt (s / (float) std::max<size_t> (1, v.size()));
     };
     for (int c = 0; c < kMfcc; ++c)
     {

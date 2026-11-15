@@ -48,7 +48,7 @@ float WaveDisplay::volToY (float v) const { auto r = plot(); return r.getY() + (
 void WaveDisplay::timerCallback()
 {
     const float pos = proc.modulePlayPos (module);
-    if (pos != lastPos || isMouseButtonDown()) { lastPos = pos; repaint(); }
+    if (std::abs (pos - lastPos) > 1.0e-6f || isMouseButtonDown()) { lastPos = pos; repaint(); }
 }
 
 void WaveDisplay::paint (Graphics& g)
@@ -165,7 +165,7 @@ void WaveDisplay::paint (Graphics& g)
         g.setFont (theme::mono (12.0f, true));
         const String len = steps == 0 ? "LENGTH ORIG = " + String (loopBeats / 4.0, 2) + " bars"
                                       : "LENGTH " + String (steps) + " x " + lb::gridNames()[(int) param ("grid")] + " = " + String (R, 3) + " beats";
-        g.drawText (len + (R != loopBeats ? "   (loop " + String (loopBeats / 4.0, 2) + " bars)" : String()), r.reduced (4, 2), Justification::topLeft);
+        g.drawText (len + (std::abs (R - loopBeats) > 1.0e-9 ? "   (loop " + String (loopBeats / 4.0, 2) + " bars)" : String()), r.reduced (4, 2), Justification::topLeft);
         g.drawText ("GRID " + lb::gridNames()[(int) param ("grid")], r.reduced (4, 2), Justification::topRight);
     }
 }

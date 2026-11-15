@@ -91,5 +91,4 @@ private:
     fx::FdnReverb reverb;
     long long shCycle[2] { -1, -1 }; float shVal[2] {};
     juce::Random rnd;
-    float envFade = 1.0f;          // slice gate smoothing
 };

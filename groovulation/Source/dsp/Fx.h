@@ -76,7 +76,7 @@ namespace fx
         std::vector<float> pre; int prePos = 0;
         double lfo = 0.0;
         float sizeSm = -1.0f;
-        bool active = false; int silentFor = 0;
+        bool active = false;
     };
 
     // ---------------------------------------------------------------- Beat Repeat

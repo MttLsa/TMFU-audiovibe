@@ -101,7 +101,7 @@ void LoopLibrary::installFactoryIfMissing()
                             factoryFolder().getChildFile (fo.name.toString()).getChildFile (name).deleteFile();
                     }
     const auto r = zip.uncompressTo (rootFolder(), true);
-    if (r.failed()) DBG ("Groovulation: factory loop install failed: " << r.getErrorMessage());
+    if (r.failed()) { DBG ("Groovulation: factory loop install failed: " << r.getErrorMessage()); }
 }
 
 StringArray LoopLibrary::userFolders() const
@@ -199,7 +199,7 @@ void LoopLibrary::run()
             ++analysed;
         }
         if (e.info.ok && e.info.type >= 0) d->entries.push_back (std::move (e));
-        progress = (float) ++done / (float) jmax<size_t> (1, items.size());
+        progress = (float) ++done / (float) std::max<size_t> (1, items.size());
     }
     // files without a type keyword: classified by their nearest named neighbours
     {
