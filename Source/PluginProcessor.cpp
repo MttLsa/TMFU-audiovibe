@@ -16,8 +16,9 @@ TwinboxProcessor::TwinboxProcessor()
     : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
       apvts (*this, nullptr, "TWINBOX", params::createLayout())
 {
-    micro.bind (apvts);
-    lime.bind (apvts);
+    mod.init (apvts);
+    micro.bind (mod);
+    lime.bind (mod);
     library.installFactoryIfMissing();
     library.reloadAll();
 
@@ -99,6 +100,9 @@ void TwinboxProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mid
     bt.justStarted = bt.playing && ! wasPlaying;
     wasPlaying = bt.playing;
     transportPlaying.store (bt.playing);
+
+    // ------------------------------------------------------------ LFOs -> modulated parameters for both engines
+    mod.process (bt, sr, n);
 
     // ------------------------------------------------------------ MIDI
     midiA.clear(); midiB.clear();

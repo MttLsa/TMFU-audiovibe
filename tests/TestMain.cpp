@@ -351,6 +351,49 @@ int main (int argc, char** argv)
                 + ", state: " + (stateOk ? "ok" : "lost"));
     }
 
+    // ---------------------------------------------------------------- LFOs: rate (ms) and sync (beat), any parameter of the section
+    {
+        auto targetIndex = [] (int sec, const String& id) { const auto& l = params::lfoTargets (sec); for (int i = 0; i < (int) l.size(); ++i) if (l[(size_t) i].id == id) return i + 1; return 0; };
+        auto run = [&] (int sec, const String& id, bool sync, float msOrDiv, int shape, int blocks, std::vector<float>& out)
+        {
+            TwinboxProcessor p; waitLibrary (p);
+            setP (p, params::gTempo, 120.0f);
+            setP (p, params::lfoId (sec, 0, "target"), (float) targetIndex (sec, id));
+            setP (p, params::lfoId (sec, 0, "sync"), sync ? 1.0f : 0.0f);
+            setP (p, params::lfoId (sec, 0, sync ? "div" : "ms"), msOrDiv);
+            setP (p, params::lfoId (sec, 0, "shape"), (float) shape);
+            setP (p, params::lfoId (sec, 0, "depth"), 100.0f);
+            p.setPlayConfigDetails (0, 2, 48000, 480); p.prepareToPlay (48000, 480);    // 10 ms blocks
+            if (sync) setP (p, params::gRun, 1);
+            AudioBuffer<float> buf (2, 480); MidiBuffer m;
+            for (int i = 0; i < blocks; ++i) { p.processBlock (buf, m); out.push_back (p.mod.get (id)->load()); }
+            const float raw = p.apvts.getRawParameterValue (id)->load();
+            out.push_back (raw);                                   // last element = unmodulated value
+        };
+        // A: channel 1 Osc Freq, sine, 200 ms period (rate in ms): 20 blocks of 10 ms = one cycle
+        std::vector<float> a; run (0, params::a (0, params::mt::oscFreq), false, 200.0f, 0, 40, a);
+        const float rawA = a.back(); a.pop_back();
+        const auto mmA = std::minmax_element (a.begin(), a.end());
+        int signChangesA = 0; for (size_t i = 1; i < a.size(); ++i) if ((a[i] > rawA) != (a[i - 1] > rawA)) ++signChangesA;
+        const bool okA = *mmA.first < rawA * 0.8f && *mmA.second > rawA * 1.2f && signChangesA >= 3 && signChangesA <= 5;
+        // B: Kick Gain, square synced to 1/4 at 120 BPM: flips every 250 ms = 25 blocks
+        std::vector<float> b; const int quarter = 5; run (1, params::b (params::kick, params::lv::gain), true, (float) quarter, 4, 100, b);
+        b.pop_back();
+        int flips = 0; std::vector<int> at;
+        for (size_t i = 1; i < b.size(); ++i) if (std::abs (b[i] - b[i - 1]) > 1.0f) { ++flips; at.push_back ((int) i); }
+        bool spacing = flips >= 3;
+        for (size_t i = 1; i < at.size(); ++i) spacing = spacing && std::abs ((at[i] - at[i - 1]) - 25) <= 1;
+        // the knob (APVTS) value is not changed by the LFO
+        TwinboxProcessor q;
+        const bool uiUntouched = std::abs (q.apvts.getRawParameterValue (params::b (params::kick, params::lv::gain))->load()) < 1.0e-6f;
+        report ("LFO rate (ms) + sync (beat)", okA && spacing && uiUntouched,
+                "A Osc Freq " + String (*mmA.first, 1) + " .. " + String (*mmA.second, 1) + " Hz around " + String (rawA, 1) + " (" + String (signChangesA) + " crossings / 400 ms at 200 ms); "
+                + "B Kick Gain square 1/4: " + String (flips) + " flips every " + (at.size() > 1 ? String (at[1] - at[0]) : String ("?")) + " blocks (25 expected)");
+        // every parameter of each section is a target
+        int nA = (int) params::lfoTargets (0).size(), nB = (int) params::lfoTargets (1).size();
+        report ("LFO targets", nA >= 200 && nB >= 170, "Section A: " + String (nA) + " parameters, Section B: " + String (nB) + " parameters");
+    }
+
     // ---------------------------------------------------------------- Hat filter type LP / BP / HP, Sat on Hat and Pod
     {
         auto hit = [] (int voice, int target, std::function<void (TwinboxProcessor&)> cfg) -> std::pair<double, double>
@@ -674,6 +717,7 @@ int main (int argc, char** argv)
         snapWin (new LimeFxWindowContent (p), 1300, 860, "win_B_fx.png");
         snapWin (new PresetBrowser (p, 1), 820, 700, "win_B_browser.png");
         snapWin (new PitchWindowContent (p, params::tie), 760, 640, "win_B_pitch.png");
+        snapWin (new LfoWindowContent (p, 1), 960, 360, "win_B_lfo.png");
         {   // keyboard editing of a Tie column (VEL = wav: one notch per sample)
             setP (p, params::b (params::tie, params::lv::vel), 1);
             auto& P = p.lime.pattern ((int) p.apvts.getRawParameterValue (params::bPattern)->load());

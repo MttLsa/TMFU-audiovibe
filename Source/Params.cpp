@@ -6,7 +6,13 @@ namespace params
 {
 namespace
 {
-    using Layout = AudioProcessorValueTreeState::ParameterLayout;
+    // collects the parameters first, so that the LFO target lists can be built from them
+    struct Layout
+    {
+        std::vector<std::unique_ptr<RangedAudioParameter>> v;
+        void add (std::unique_ptr<RangedAudioParameter> p) { v.push_back (std::move (p)); }
+    };
+    std::vector<LfoTarget> targetLists[2];
 
     NormalisableRange<float> logRange (float lo, float hi, float centre)
     {
@@ -66,7 +72,7 @@ namespace
     };
 }
 
-Layout createLayout()
+AudioProcessorValueTreeState::ParameterLayout createLayout()
 {
     Layout l;
 
@@ -294,6 +300,61 @@ Layout createLayout()
                [] (float v, int) { return String (v, 1) + " BPM"; });
     addBool   (l, gRun, "Run (internal clock)", false);
 
-    return l;
+    // ===================================================================== LFO targets + LFO parameters
+    for (int sec = 0; sec < 2; ++sec)
+    {
+        auto& tl = targetLists[sec];
+        tl.clear();
+        for (auto& p : l.v)
+        {
+            const String id = p->getParameterID(), name = p->getName (64);
+            const bool inSection = sec == 0 ? (id.startsWith ("a") && ! id.startsWith ("a_lfo")) : (id.startsWith ("b_") && ! id.startsWith ("b_lfo"));
+            if (! inSection || id == aMorph) continue;
+            String group;
+            if (sec == 0)
+                group = id[1] >= '1' && id[1] <= '8' ? "Channel " + String::charToString (id[1]) : String ("Section A");
+            else
+            {
+                group = "Global";
+                for (int v = 0; v < numLimeVoices; ++v)
+                    if (id.startsWith (String ("b_") + limeVoiceKey (v) + "_")) group = limeVoiceName (v);
+                if (group == "Global")
+                {
+                    const String w = name.fromFirstOccurrenceOf (" ", false, false).upToFirstOccurrenceOf (" ", false, false);
+                    if (StringArray { "Delay", "xFx", "EQ", "Magic", "Filter", "Norm", "FX", "Mod" }.contains (w)) group = w == "Mod" ? "FX" : w;
+                    else if (StringArray { "Pattern", "Length", "Start", "Tie", "Pod", "Swing", "Half", "Remix", "Lock", "Scale" }.contains (w)) group = "Sequencer";
+                    else group = "Out";
+                }
+            }
+            tl.push_back ({ id, name, group });
+        }
+        StringArray choices { "--" };
+        for (auto& t : tl) choices.add (t.name);
+        const String S = sec == 0 ? "A " : "B ";
+        for (int i = 0; i < numLfos; ++i)
+        {
+            const String P = S + "LFO " + String (i + 1) + " ";
+            addChoice (l, lfoId (sec, i, "target"), P + "Target", choices, 0);
+            addChoice (l, lfoId (sec, i, "shape"), P + "Shape", lfoShapes(), 0);
+            addBool   (l, lfoId (sec, i, "sync"), P + "Sync", true);
+            StringArray divs; for (auto& d : lfoDivs()) divs.add (d.name);
+            addChoice (l, lfoId (sec, i, "div"), P + "Sync Rate", divs, 3);
+            addFloat  (l, lfoId (sec, i, "ms"), P + "Rate (ms)", logRange (10.f, 30000.f, 500.f), 500.f,
+                       [] (float v, int) { return v >= 1000.f ? String (v / 1000.f, 2) + " s" : String (roundToInt (v)) + " ms"; });
+            addFloat  (l, lfoId (sec, i, "depth"), P + "Depth", NormalisableRange<float> (-100.f, 100.f), 50.f, pctText);
+            addFloat  (l, lfoId (sec, i, "phase"), P + "Phase", NormalisableRange<float> (0.f, 360.f), 0.f,
+                       [] (float v, int) { return String (roundToInt (v)) + juce::String::fromUTF8 ("\xc2\xb0"); });
+        }
+    }
+
+    AudioProcessorValueTreeState::ParameterLayout out;
+    for (auto& p : l.v) out.add (std::move (p));
+    return out;
+}
+
+const std::vector<LfoTarget>& lfoTargets (int section)
+{
+    if (targetLists[0].empty()) createLayout();                // builds the lists (the layout itself is discarded)
+    return targetLists[juce::jlimit (0, 1, section)];
 }
 } // namespace params

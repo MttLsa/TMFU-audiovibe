@@ -383,6 +383,8 @@ void MicroSection::ChannelRow::mouseDown (const MouseEvent&) { owner.selectChann
 
 MicroSection::MicroSection (TwinboxProcessor& p) : proc (p), patch (p), grid (p, false)
 {
+    lfo = std::make_unique<LfoPanel> (p, 0);
+    addAndMakeVisible (*lfo);
     // header: patterns A-L
     for (int i = 0; i < numMicroPatterns; ++i)
     {
@@ -596,6 +598,8 @@ void MicroSection::resized()
 
     auto patArea = r.removeFromBottom (jmax (130, r.getHeight() * 2 / 5));
     r.removeFromBottom (6);
+    lfo->setBounds (r.removeFromRight (236));
+    r.removeFromRight (6);
     patch.setBounds (r);
 
     patPanel.setBounds (patArea);

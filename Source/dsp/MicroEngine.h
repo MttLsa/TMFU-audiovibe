@@ -3,6 +3,7 @@
 #include <array>
 #include <atomic>
 #include "Transport.h"
+#include "ModMatrix.h"
 #include "../Params.h"
 
 struct TriggerEvent
@@ -125,7 +126,7 @@ public:
     };
 
     MicroEngine();
-    void bind (juce::AudioProcessorValueTreeState& apvts);
+    void bind (ParamSource& apvts);   // parameters (LFO-modulated copies)
     void prepare (double sampleRate);
 
     // Renders (adds) Section A into L/R. midiEvents are external triggers (target = channel).

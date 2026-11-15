@@ -1,4 +1,5 @@
 #pragma once
+#include "LfoPanel.h"
 #include "LookAndFeel.h"
 #include "../PluginProcessor.h"
 
@@ -132,6 +133,7 @@ private:
     juce::TextButton copyBtn { "Copy" }, pasteBtn { "Paste" };
 
     MicroPatchEditor patch;
+    std::unique_ptr<LfoPanel> lfo;   // 3 LFOs for Section A
 
     // pattern panel
     Panel patPanel { "Pattern", theme::accentA };

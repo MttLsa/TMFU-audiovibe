@@ -170,21 +170,21 @@ MicroEngine::MicroEngine()
     loadDefaultPatterns();
 }
 
-void MicroEngine::bind (juce::AudioProcessorValueTreeState& apvts)
+void MicroEngine::bind (ParamSource& apvts)
 {
     const auto& sfx = mt::patchSuffixes();
     for (int ch = 0; ch < NC; ++ch)
     {
         for (size_t i = 0; i < sfx.size(); ++i)
-            cp[(size_t) ch].v[i] = apvts.getRawParameterValue (a (ch, sfx[i]));
-        cp[(size_t) ch].v[sfx.size()] = apvts.getRawParameterValue (a (ch, mt::mute));
-        pNudge[(size_t) ch] = apvts.getRawParameterValue (a (ch, mt::nudge));
+            cp[(size_t) ch].v[i] = apvts.get (a (ch, sfx[i]));
+        cp[(size_t) ch].v[sfx.size()] = apvts.get (a (ch, mt::mute));
+        pNudge[(size_t) ch] = apvts.get (a (ch, mt::nudge));
     }
-    pPattern  = apvts.getRawParameterValue (aPattern);
-    pSwing    = apvts.getRawParameterValue (aSwing);
-    pFillRate = apvts.getRawParameterValue (aFillRate);
-    pFill     = apvts.getRawParameterValue (aFill);
-    pLevel    = apvts.getRawParameterValue (aLevel);
+    pPattern  = apvts.get (aPattern);
+    pSwing    = apvts.get (aSwing);
+    pFillRate = apvts.get (aFillRate);
+    pFill     = apvts.get (aFill);
+    pLevel    = apvts.get (aLevel);
 }
 
 void MicroEngine::prepare (double sr)

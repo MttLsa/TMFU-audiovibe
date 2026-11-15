@@ -206,5 +206,29 @@ namespace params
     inline const char* gTempo  = "g_tempo";
     inline const char* gRun    = "g_run";
 
+    // ---------------- LFOs: 3 per section, each can modulate any parameter of its section ----------------
+    constexpr int numLfos = 3;
+    // section 0 = A, 1 = B;  keys: target, shape, sync, div, ms, depth, phase
+    inline juce::String lfoId (int section, int lfo, const char* key)
+    {
+        return juce::String (section == 0 ? "a" : "b") + "_lfo" + juce::String (lfo + 1) + "_" + key;
+    }
+    inline const juce::StringArray& lfoShapes()
+    {
+        static const juce::StringArray s { "Sine", "Triangle", "Saw Up", "Saw Down", "Square", "S&H", "Random" };
+        return s;
+    }
+    struct LfoDiv { const char* name; double beats; };
+    inline const std::vector<LfoDiv>& lfoDivs()
+    {
+        static const std::vector<LfoDiv> d { { "8 bars", 32 }, { "4 bars", 16 }, { "2 bars", 8 }, { "1 bar", 4 }, { "1/2", 2 }, { "1/4", 1 },
+                                             { "1/8", 0.5 }, { "1/16", 0.25 }, { "1/32", 0.125 }, { "1/2 T", 4.0 / 3.0 }, { "1/4 T", 2.0 / 3.0 },
+                                             { "1/8 T", 1.0 / 3.0 }, { "1/16 T", 1.0 / 6.0 }, { "1/2 .", 3 }, { "1/4 .", 1.5 }, { "1/8 .", 0.75 } };
+        return d;
+    }
+    // modulation targets of a section (every parameter of the section except the LFOs themselves and A Morph)
+    struct LfoTarget { juce::String id, name, group; };
+    const std::vector<LfoTarget>& lfoTargets (int section);
+
     juce::AudioProcessorValueTreeState::ParameterLayout createLayout();
 }

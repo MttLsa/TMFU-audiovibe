@@ -36,6 +36,7 @@ public:
 
     // ------------------------------------------------------------------ public API for the editor
     juce::AudioProcessorValueTreeState apvts;
+    ModMatrix mod;                       // 3 LFOs per section: the engines read the modulated parameters
     SampleLibrary library;
     MicroEngine micro;
     LimeEngine  lime { library };

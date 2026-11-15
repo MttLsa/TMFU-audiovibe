@@ -42,7 +42,7 @@ public:
     };
 
     explicit LimeEngine (SampleLibrary& lib);
-    void bind (juce::AudioProcessorValueTreeState& apvts);
+    void bind (ParamSource& apvts);   // parameters (LFO-modulated copies)
     void prepare (double sampleRate, int blockSize);
     void process (float* L, float* R, int numSamples, const BlockTime& bt, const std::vector<TriggerEvent>& midiEvents);
 
@@ -97,7 +97,7 @@ private:
 
     SampleLibrary& library;
     std::array<std::array<std::atomic<float>*, 40>, params::numLimeVoices> vk {};   // per-voice parameter pointers
-    juce::AudioProcessorValueTreeState* state = nullptr;
+    ParamSource* state = nullptr;
     std::array<Pattern, NP> patterns;
     std::array<std::array<int8_t, 16>, 128> remixTable {};
 

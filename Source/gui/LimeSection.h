@@ -1,4 +1,5 @@
 #pragma once
+#include "LfoPanel.h"
 #include "LookAndFeel.h"
 #include "../PluginProcessor.h"
 
@@ -255,6 +256,7 @@ private:
     std::unique_ptr<ControlPanel> remix, out, global, pulp, xfx, delay, mix, eq, filter, magic;
     juce::OwnedArray<LimeModulePanel> modules;
     std::map<juce::String, std::unique_ptr<ExpandWindow>> windows;
+    std::unique_ptr<LfoPanel> lfo;   // 3 LFOs for Section B (FX row)
 };
 
 // helper used by the FX window and the main view

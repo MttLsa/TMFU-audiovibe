@@ -52,14 +52,14 @@ LimeEngine::LimeEngine (SampleLibrary& lib) : library (lib)
     }
 }
 
-std::atomic<float>* LimeEngine::p (const juce::String& id) const { return state->getRawParameterValue (id); }
+std::atomic<float>* LimeEngine::p (const juce::String& id) const { return state->get (id); }
 
-void LimeEngine::bind (juce::AudioProcessorValueTreeState& apvts)
+void LimeEngine::bind (ParamSource& apvts)
 {
     state = &apvts;
     for (int v = 0; v < numLimeVoices; ++v)
         for (int k = 0; k < kCount; ++k)
-            vk[(size_t) v][(size_t) k] = apvts.getRawParameterValue (b (v, keyNames[k]));   // nullptr if the voice lacks it
+            vk[(size_t) v][(size_t) k] = apvts.get (b (v, keyNames[k]));   // nullptr if the voice lacks it
 }
 
 void LimeEngine::prepare (double sampleRate, int blockSize)

@@ -1,14 +1,14 @@
-# TWINBOX — groovebox ibrida VST3 / AU (v2.9)
+# TWINBOX — groovebox ibrida VST3 / AU (v2.10)
 
 Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in un solo plugin:
 
 | Sezione | Architettura di riferimento | Contenuto |
 |---|---|---|
-| **A — Drum Synth** (in alto) | Sonic Charge **Microtonic** | 8 canali di percussioni sintetiche, 12 pattern (A–L) fino a **64 step** con Trigger / Accent / Fill, Swing, Fill Rate, Morph |
-| **B — Groovebox** (in basso) | NI Reaktor **Limelite 1.3** | 6 voci (Kick, Snare, Hat, Tie, Pod, **Pulp**), sequencer A–D fino a **64 step** con catena di pattern e motore **Remix**, effetti Filter / EQ / Magic / Delay / xFx (23 modi) / Mix / Out |
+| **A — Drum Synth** (in alto) | Sonic Charge **Microtonic** | 8 canali di percussioni sintetiche, 12 pattern (A–L) fino a **64 step** con Trigger / Accent / Fill, Swing, Fill Rate, Morph, **3 LFO** |
+| **B — Groovebox** (in basso) | NI Reaktor **Limelite 1.3** | 6 voci (Kick, Snare, Hat, Tie, Pod, **Pulp**), sequencer A–D fino a **64 step** con catena di pattern e motore **Remix**, effetti Filter / EQ / Magic / Delay / xFx (23 modi) / Mix / Out, **3 LFO** |
 | **GLOBAL CONTROL** (a destra, comprimibile) | — | Crossfader A↔B, filtro master **Cutoff** (manopola grande) HP/BP/LP + **Resonance**, Master, Tempo / Run |
 
-📖 **Manuale d'uso completo (PDF):** [docs/Twinbox_Manuale_v2.9.0.pdf](docs/Twinbox_Manuale_v2.9.0.pdf)
+📖 **Manuale d'uso completo (PDF):** [docs/Twinbox_Manuale_v2.10.0.pdf](docs/Twinbox_Manuale_v2.10.0.pdf)
 
 ![Interfaccia principale](docs/gui_main.png)
 
@@ -81,6 +81,18 @@ Ogni pannello si apre in una **finestra grande** (⤢):
 | | | |
 |---|---|---|
 | ![](docs/win_B_sequencer.png) | ![](docs/win_B_hat.png) | ![](docs/win_B_fx.png) |
+
+## LFO (3 per sezione)
+
+Ogni sezione ha **3 LFO**. Nella Sezione A il pannello LFO è a destra dell'editor dei suoni; nella Sezione B c'è un nuovo modulo **LFO** nella riga degli effetti. Ogni LFO può modulare **qualsiasi parametro della propria sezione**: 213 destinazioni in A, 180 in B.
+
+- **Target**: menu diviso per gruppi (canali 1–8 / Kick, Snare, Hat, Tie, Pod, Pulp, Sequencer, Delay, xFx, EQ, Filter, Magic, Out). *-- (off)* spegne l'LFO.
+- **Forme**: Sine, Triangle, Saw Up, Saw Down, Square, S&H, Random.
+- **SYNC** acceso: divisioni musicali (8 bar … 1/32, terzine e puntati) agganciate alla posizione del brano. **SYNC** spento: **RATE** in millisecondi (10 ms … 30 s per ciclo).
+- **Depth** da −100 a +100 % (100 % = metà dell'escursione del parametro in su e in giù), **Phase** 0–360° nella finestra grande (↗).
+- La modulazione si somma al valore del knob, che resta dove l'hai messo. Le impostazioni sono automatizzabili, si salvano col progetto e non cambiano col caricamento dei preset. Il Morph della Sezione A non è modulabile.
+
+![](docs/win_B_lfo.png)
 
 ## SCALE e intonazione dei campioni (Tie e Pod)
 
@@ -164,7 +176,7 @@ JUCE 8.0.4 viene scaricato in automatico.
 Il workflow `.github/workflows/build.yml`:
 - compila le tre piattaforme;
 - su macOS verifica l'AU con `auval`;
-- produce l'installer **`Twinbox-2.9.0-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
+- produce l'installer **`Twinbox-2.10.0-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
 
 Gli script che generano campioni e preset (`resources/`) sono `tools/gen_samples.py` e `tools/gen_presets.py`.
 

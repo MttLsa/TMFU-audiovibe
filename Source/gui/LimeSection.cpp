@@ -1090,6 +1090,8 @@ LimeSection::LimeSection (TwinboxProcessor& p) : proc (p)
     for (auto* c : std::initializer_list<Component*> { &browserBtn, &legacyBtn, &levelB }) addAndMakeVisible (c);
 
     seq = std::make_unique<LimeSeqPanel> (p, false);
+    lfo = std::make_unique<LfoPanel> (p, 1);
+    addAndMakeVisible (*lfo);
     seq->setExpandable ([this] { openWindow ("seq", "Section B - Sequencer (64 steps)", [this] { return new LimeSeqPanel (proc, true); }, 1400, 640); });
     addAndMakeVisible (*seq);
 
@@ -1206,11 +1208,12 @@ void LimeSection::resized()
 
     r.removeFromTop (6);
     auto row3 = r;
-    pulp->setBounds (row3.removeFromLeft (W * 21 / 100).reduced (2, 0));
-    xfx->setBounds (row3.removeFromLeft (W * 21 / 100).reduced (2, 0));
-    delay->setBounds (row3.removeFromLeft (W * 17 / 100).reduced (2, 0));
-    mix->setBounds (row3.removeFromLeft (W * 8 / 100).reduced (2, 0));
-    eq->setBounds (row3.removeFromLeft (W * 10 / 100).reduced (2, 0));
+    pulp->setBounds (row3.removeFromLeft (W * 18 / 100).reduced (2, 0));
+    xfx->setBounds (row3.removeFromLeft (W * 18 / 100).reduced (2, 0));
+    delay->setBounds (row3.removeFromLeft (W * 15 / 100).reduced (2, 0));
+    lfo->setBounds (row3.removeFromLeft (W * 17 / 100).reduced (2, 0));
+    mix->setBounds (row3.removeFromLeft (W * 7 / 100).reduced (2, 0));
+    eq->setBounds (row3.removeFromLeft (W * 8 / 100).reduced (2, 0));
     auto fm = row3.reduced (2, 0);
     filter->setBounds (fm.removeFromTop (fm.getHeight() / 2 - 2));
     fm.removeFromTop (4);

@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum macOS version")
 set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "macOS architectures")
 
-project(TWINBOX VERSION 2.9.0 LANGUAGES C CXX)
+project(TWINBOX VERSION 2.10.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -50,11 +50,13 @@ target_sources(Twinbox PRIVATE
   Source/dsp/MicroEngine.cpp
   Source/dsp/LimeEngine.cpp
   Source/dsp/LimeFX.cpp
+  Source/dsp/ModMatrix.cpp
   Source/Presets.cpp
   Source/gui/LookAndFeel.cpp
   Source/gui/PresetBrowser.cpp
   Source/gui/MicroSection.cpp
   Source/gui/LimeSection.cpp
+  Source/gui/LfoPanel.cpp
   Source/gui/GlobalPanel.cpp)
 
 target_include_directories(Twinbox PRIVATE Source)
@@ -88,8 +90,8 @@ if(TWINBOX_BUILD_TESTS)
   juce_add_console_app(TwinboxTest PRODUCT_NAME "TwinboxTest")
   target_sources(TwinboxTest PRIVATE tests/TestMain.cpp
     Source/PluginProcessor.cpp Source/PluginEditor.cpp Source/Params.cpp
-    Source/dsp/SampleLibrary.cpp Source/dsp/MicroEngine.cpp Source/dsp/LimeEngine.cpp Source/dsp/LimeFX.cpp
-    Source/Presets.cpp Source/gui/PresetBrowser.cpp Source/gui/LookAndFeel.cpp Source/gui/MicroSection.cpp Source/gui/LimeSection.cpp Source/gui/GlobalPanel.cpp)
+    Source/dsp/SampleLibrary.cpp Source/dsp/MicroEngine.cpp Source/dsp/LimeEngine.cpp Source/dsp/LimeFX.cpp Source/dsp/ModMatrix.cpp
+    Source/Presets.cpp Source/gui/PresetBrowser.cpp Source/gui/LookAndFeel.cpp Source/gui/MicroSection.cpp Source/gui/LimeSection.cpp Source/gui/LfoPanel.cpp Source/gui/GlobalPanel.cpp)
   target_include_directories(TwinboxTest PRIVATE Source)
   target_compile_definitions(TwinboxTest PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JucePlugin_Name="Twinbox"
     JUCE_STANDALONE_APPLICATION=0 JUCE_MODAL_LOOPS_PERMITTED=1)
