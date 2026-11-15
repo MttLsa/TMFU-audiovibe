@@ -60,7 +60,7 @@ void WaveDisplay::paint (Graphics& g)
     if (l == nullptr)
     {
         g.setColour (theme::lcdDim);
-        g.drawText (proc.library->isScanning() ? "SCANNING..." : "NO LOOP", r, Justification::centred);
+        g.drawText (module == lb::custom ? "DROP AN AUDIO FILE HERE  /  FLOPPY = LOAD" : (proc.library->isScanning() ? "SCANNING..." : "NO LOOP"), r, Justification::centred);
         return;
     }
     const double R = regionBeats(), loopBeats = jmax (1, l->beats);
@@ -270,7 +270,19 @@ ModuleStrip::ModuleStrip (GroovulationProcessor& p, int m, std::function<void (i
     const auto c = theme::sectionColour (m);
     display.onClick = [this] { select (module); };
     addAndMakeVisible (display);
-    for (auto* b : { &prev, &next, &rnd, &sim }) addAndMakeVisible (b);
+    const bool isCustom = m == lb::custom;
+    for (auto* b : { &prev, &next, &rnd, &sim }) addChildComponent (b), b->setVisible (! isCustom);
+    addChildComponent (floppy); floppy.setVisible (isCustom);
+    addChildComponent (clear); clear.setVisible (isCustom);
+    floppy.onClick = [this]
+    {
+        chooser = std::make_unique<FileChooser> ("Load an audio file into CUSTOM", File::getSpecialLocation (File::userMusicDirectory), "*.wav;*.aif;*.aiff;*.flac;*.mp3;*.ogg;*.m4a;*.caf");
+        chooser->launchAsync (FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles, [this] (const FileChooser& fc)
+        {
+            if (fc.getResult().existsAsFile()) { proc.loadCustomFile (fc.getResult()); select (module); }
+        });
+    };
+    clear.onClick = [this] { proc.clearCustom(); };
     prev.onClick = [this] { proc.stepLoop (module, -1); };
     next.onClick = [this] { proc.stepLoop (module, 1); };
     rnd.onClick  = [this] { proc.randomLoop (module); };
@@ -299,6 +311,21 @@ void ModuleStrip::timerCallback()
 
 void ModuleStrip::mouseDown (const MouseEvent&) { select (module); }
 
+bool ModuleStrip::isInterestedInFileDrag (const StringArray& files)
+{
+    if (module != lb::custom) return false;
+    for (auto& f : files) if (File (f).hasFileExtension ("wav;aif;aiff;flac;mp3;ogg;m4a;caf")) return true;
+    return false;
+}
+
+void ModuleStrip::filesDropped (const StringArray& files, int, int)
+{
+    dragOver = false;
+    for (auto& f : files)
+        if (File (f).hasFileExtension ("wav;aif;aiff;flac;mp3;ogg;m4a;caf")) { proc.loadCustomFile (File (f)); select (module); break; }
+    repaint();
+}
+
 void ModuleStrip::paint (Graphics& g)
 {
     const auto c = theme::sectionColour (module);
@@ -322,13 +349,18 @@ void ModuleStrip::paint (Graphics& g)
     const auto infoArea = Rectangle<int> (6, display.getBottom() + 2, getWidth() - 12, 30);
     g.setColour (theme::text);
     g.setFont (theme::font (11.5f, true));
-    g.drawFittedText (shownLoop ? shownLoop->name : String ("-"), infoArea.withHeight (15), Justification::centredLeft, 1, 0.75f);
+    g.drawFittedText (shownLoop ? shownLoop->name : String (module == lb::custom ? "drop a file / floppy" : "-"), infoArea.withHeight (15), Justification::centredLeft, 1, 0.75f);
     g.setColour (theme::textDim);
     g.setFont (theme::font (10.5f));
     String info = shownLoop ? loopInfo (*shownLoop) : String();
     const float st = proc.appliedSemitones (module);
     if (shownLoop && std::abs (st) > 0.004f) info << "  " << (st > 0 ? "+" : "") << String (st, 2) << "st";
     g.drawFittedText (info, infoArea.withTrimmedTop (15), Justification::centredLeft, 1, 0.7f);
+    if (dragOver)
+    {
+        g.setColour (c.withAlpha (0.25f)); g.fillRoundedRectangle (getLocalBounds().toFloat(), 4.0f);
+        g.setColour (c); g.drawRoundedRectangle (getLocalBounds().toFloat().reduced (2.0f), 4.0f, 3.0f);
+    }
     // meter
     drawMeter (g, Rectangle<float> ((float) getWidth() - 10.0f, (float) gain.getY() + 6.0f, 4.0f, (float) gain.getHeight() - 12.0f), level, c);
 }
@@ -341,9 +373,14 @@ void ModuleStrip::resized()
     r.removeFromTop (34);
     auto b = r.removeFromTop (22);
     const int bw = b.getWidth();
-    prev.setBounds (b.removeFromLeft (bw * 15 / 100).reduced (1, 0));
-    next.setBounds (b.removeFromLeft (bw * 15 / 100).reduced (1, 0));
-    rnd.setBounds (b.removeFromLeft (bw * 26 / 100).reduced (1, 0));
+    {
+        auto bb = b;
+        floppy.setBounds (bb.removeFromLeft (bw * 40 / 100).reduced (1, 0));
+        clear.setBounds (bb.reduced (1, 0));
+    }
+    prev.setBounds (b.removeFromLeft (bw * 18 / 100).reduced (1, 0));
+    next.setBounds (b.removeFromLeft (bw * 18 / 100).reduced (1, 0));
+    rnd.setBounds (b.removeFromLeft (bw * 32 / 100).reduced (1, 0));
     sim.setBounds (b.reduced (1, 0));
     r.removeFromTop (3);
     auto bottom = r.removeFromBottom (22);
@@ -361,15 +398,28 @@ ModuleEditor::ModuleEditor (GroovulationProcessor& p) : proc (p), display (p, 0,
     addAndMakeVisible (display);
     for (auto* c : std::initializer_list<Component*> { &grid, &keySrc, &ftype, &lenMinus, &lenPlus, &lenOrig, &volReset, &slice, &fade, &volA, &dpp,
                                                        &prev, &next, &rnd, &sim, &browser,
-                                                       &pAmp, &pAdsr, &pPitch, &pFilter, &pDirt, &pDelay, &pReverb, &pLfo1, &pLfo2 })
+                                                       &pAmp, &pAdsr, &pPitch, &pFilter, &pDirt, &pDelay, &pReverb, &pLfo1, &pLfo2, &pLfo3 })
         addAndMakeVisible (c);
-    for (auto* k : { &gain, &pan, &shaper, &atk, &dec, &sus, &rel, &pitch, &tempo, &cut, &res, &dirt, &dtime, &dfb, &dmix,
-                     &rsize, &rdecay, &rdamp, &rpre, &rmix, &l1rate, &l1depth, &l2rate, &l2depth })
+    addChildComponent (floppy); addChildComponent (clear);
+    floppy.onClick = [this]
+    {
+        chooser = std::make_unique<FileChooser> ("Load an audio file into CUSTOM", File::getSpecialLocation (File::userMusicDirectory), "*.wav;*.aif;*.aiff;*.flac;*.mp3;*.ogg;*.m4a;*.caf");
+        chooser->launchAsync (FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles, [this] (const FileChooser& fc)
+        {
+            if (fc.getResult().existsAsFile()) proc.loadCustomFile (fc.getResult());
+        });
+    };
+    clear.onClick = [this] { proc.clearCustom(); };
+    for (auto* k : { &gain, &pan, &atk, &dec, &sus, &rel, &pitch, &tempo, &cut, &res, &dirt, &dtime, &dfb, &dmix,
+                     &rsize, &rdecay, &rdamp, &rpre, &rmix, &l1rate, &l1depth, &l2rate, &l2depth, &l3rate, &l3depth })
         addAndMakeVisible (k);
-    for (auto* c : { &l1shape, &l1target, &l2shape, &l2target }) addAndMakeVisible (c);
-    l1shape.addItemList (lb::lfoShapes(), 1); l2shape.addItemList (lb::lfoShapes(), 1);
-    l1target.addItemList (lb::lfoTargets(), 1); l2target.addItemList (lb::lfoTargets(), 1);
-    l1target.setTooltip ("LFO 1 destination"); l2target.setTooltip ("LFO 2 destination");
+    for (auto* c : { &l1shape, &l1target, &l2shape, &l2target, &l3shape, &l3target }) addAndMakeVisible (c);
+    for (auto* c : { &l1shape, &l2shape, &l3shape }) c->addItemList (lb::lfoShapes(), 1);
+    for (auto* c : { &l1target, &l2target, &l3target })
+    {
+        c->addItemList (lb::lfoTargets(), 1);
+        c->setTooltip ("LFO destination (Loop = switches between up to 8 similar loops on every grid step)");
+    }
     keySrc.setCaption ("TYPE (key from)");
     grid.setCaption ("GRID");
     ftype.setCaption ("");
@@ -415,7 +465,7 @@ void ModuleEditor::attachAll()
 {
     const int m = module;
     auto& s = proc.apvts;
-    gain.attach (s, lb::pid (m, "gain")); pan.attach (s, lb::pid (m, "pan")); shaper.attach (s, lb::pid (m, "shaper"));
+    gain.attach (s, lb::pid (m, "gain")); pan.attach (s, lb::pid (m, "pan"));
     atk.attach (s, lb::pid (m, "atk")); dec.attach (s, lb::pid (m, "dec")); sus.attach (s, lb::pid (m, "sus")); rel.attach (s, lb::pid (m, "rel"));
     pitch.attach (s, lb::pid (m, "pitch")); tempo.attach (s, lb::pid (m, "tempo"));
     cut.attach (s, lb::pid (m, "cut")); res.attach (s, lb::pid (m, "res")); dirt.attach (s, lb::pid (m, "dirt"));
@@ -424,6 +474,7 @@ void ModuleEditor::attachAll()
     rpre.attach (s, lb::pid (m, "rpre")); rmix.attach (s, lb::pid (m, "rmix"));
     l1rate.attach (s, lb::pid (m, "lfo1rate")); l1depth.attach (s, lb::pid (m, "lfo1depth"));
     l2rate.attach (s, lb::pid (m, "lfo2rate")); l2depth.attach (s, lb::pid (m, "lfo2depth"));
+    l3rate.attach (s, lb::pid (m, "lfo3rate")); l3depth.attach (s, lb::pid (m, "lfo3depth"));
     grid.attach (s, lb::pid (m, "grid"));
     keySrc.attach (s, lb::pid (m, "keysrc"), { "AUDIO", "FILE NAME" });
     ftype.attach (s, lb::pid (m, "ftype"));
@@ -433,6 +484,8 @@ void ModuleEditor::attachAll()
     comboAtt.push_back (std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (s, lb::pid (m, "lfo1target"), l1target));
     comboAtt.push_back (std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (s, lb::pid (m, "lfo2shape"), l2shape));
     comboAtt.push_back (std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (s, lb::pid (m, "lfo2target"), l2target));
+    comboAtt.push_back (std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (s, lb::pid (m, "lfo3shape"), l3shape));
+    comboAtt.push_back (std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (s, lb::pid (m, "lfo3target"), l3target));
 }
 
 void ModuleEditor::setModule (int m)
@@ -440,10 +493,13 @@ void ModuleEditor::setModule (int m)
     module = jlimit (0, lb::numModules - 1, m);
     display.setModule (module);
     const auto c = theme::sectionColour (module);
-    for (auto* k : { &gain, &pan, &shaper, &atk, &dec, &sus, &rel, &pitch, &tempo, &cut, &res, &dirt, &dtime, &dfb, &dmix,
-                     &rsize, &rdecay, &rdamp, &rpre, &rmix, &l1rate, &l1depth, &l2rate, &l2depth })
+    for (auto* k : { &gain, &pan, &atk, &dec, &sus, &rel, &pitch, &tempo, &cut, &res, &dirt, &dtime, &dfb, &dmix,
+                     &rsize, &rdecay, &rdamp, &rpre, &rmix, &l1rate, &l1depth, &l2rate, &l2depth, &l3rate, &l3depth })
         k->setAccent (c);
-    for (auto* p : { &pAmp, &pAdsr, &pPitch, &pFilter, &pDirt, &pDelay, &pReverb, &pLfo1, &pLfo2 }) p->setAccent (c);
+    for (auto* p : { &pAmp, &pAdsr, &pPitch, &pFilter, &pDirt, &pDelay, &pReverb, &pLfo1, &pLfo2, &pLfo3 }) p->setAccent (c);
+    const bool isCustom = module == lb::custom;
+    for (auto* b : std::initializer_list<Component*> { &prev, &next, &rnd, &sim, &browser }) b->setVisible (! isCustom);
+    floppy.setVisible (isCustom); clear.setVisible (isCustom);
     for (auto* sg : { &grid, &keySrc, &ftype }) sg->setAccent (c);
     for (auto* t : { &slice, &fade, &volA, &dpp }) t->setColour (TextButton::buttonOnColourId, c);
     attachAll();
@@ -556,6 +612,11 @@ void ModuleEditor::resized()
     next.setBounds (ls.removeFromLeft (28).reduced (1, 0));
     rnd.setBounds (ls.removeFromLeft (48).reduced (1, 0));
     sim.setBounds (ls.removeFromLeft (80).reduced (1, 0));
+    {
+        auto fl = prev.getBounds().getUnion (sim.getBounds());
+        floppy.setBounds (fl.removeFromLeft (60).reduced (1, 0));
+        clear.setBounds (fl.removeFromLeft (80).reduced (1, 0));
+    }
     browser.setBounds (getWidth() - 430, 3, 420, 18);
     r.removeFromTop (6);
     display.setBounds (r.removeFromTop (juce::jmax (120, r.getHeight() * 40 / 100)));
@@ -577,10 +638,10 @@ void ModuleEditor::resized()
             x += (float) w;
         }
     };
-    place (row1, { { &pAmp, 3 }, { &pAdsr, 4 }, { &pPitch, 2 }, { &pFilter, 3 }, { &pDirt, 1 } });
-    place (row2, { { &pDelay, 4 }, { &pReverb, 5 }, { &pLfo1, 3 }, { &pLfo2, 3 } });
+    place (row1, { { &pAmp, 2 }, { &pAdsr, 4 }, { &pPitch, 2 }, { &pFilter, 3 }, { &pDirt, 1 }, { &pDelay, 4 } });
+    place (row2, { { &pReverb, 5 }, { &pLfo1, 3 }, { &pLfo2, 3 }, { &pLfo3, 3 } });
     auto inP = [] (Panel& p) { return p.getBounds().withTrimmedTop (Panel::headerH + 2).reduced (4, 2); };
-    layoutRow (inP (pAmp), { &gain, &pan, &shaper });
+    layoutRow (inP (pAmp), { &gain, &pan });
     layoutRow (inP (pAdsr), { &atk, &dec, &sus, &rel });
     layoutRow (inP (pPitch), { &pitch, &tempo });
     {
@@ -595,14 +656,14 @@ void ModuleEditor::resized()
         layoutRow (d, { &dtime, &dfb, &dmix });
     }
     layoutRow (inP (pReverb), { &rsize, &rdecay, &rdamp, &rpre, &rmix });
-    for (int k = 0; k < 2; ++k)
+    for (int k = 0; k < 3; ++k)
     {
-        auto a = inP (k == 0 ? pLfo1 : pLfo2);
+        auto a = inP (k == 0 ? pLfo1 : (k == 1 ? pLfo2 : pLfo3));
         auto combos = a.removeFromRight (a.getWidth() * 45 / 100);
-        auto& sh = k == 0 ? l1shape : l2shape;
-        auto& tg2 = k == 0 ? l1target : l2target;
+        auto& sh = k == 0 ? l1shape : (k == 1 ? l2shape : l3shape);
+        auto& tg2 = k == 0 ? l1target : (k == 1 ? l2target : l3target);
         sh.setBounds (combos.removeFromTop (combos.getHeight() / 2).withSizeKeepingCentre (combos.getWidth(), 24));
         tg2.setBounds (combos.withSizeKeepingCentre (combos.getWidth(), 24));
-        layoutRow (a, { k == 0 ? &l1rate : &l2rate, k == 0 ? &l1depth : &l2depth });
+        layoutRow (a, { k == 0 ? &l1rate : (k == 1 ? &l2rate : &l3rate), k == 0 ? &l1depth : (k == 1 ? &l2depth : &l3depth) });
     }
 }

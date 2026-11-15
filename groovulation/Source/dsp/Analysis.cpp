@@ -72,41 +72,72 @@ namespace
 }
 
 //==============================================================================
+bool nameSaysNoKick (const String& pathText)
+{
+    const String t = lowerWords (File::createFileWithoutCheckingPath (pathText).getFileNameWithoutExtension());
+    return t.contains (" no kick ") || t.contains (" nokick ") || t.contains (" without kick ") || t.contains (" kickless ")
+        || t.contains (" no kicks ") || t.contains (" no bd ") || t.contains (" w o kick ");
+}
+
 int typeFromName (const String& pathText)
 {
+    using namespace lb;
     const String t = lowerWords (pathText);
-    // order matters: "bass drum" is a kick, "drum loop top" is a top loop, generic drums -> bottom
-    static const char* kick[]   { "kick", "kicks", "kik", "bd", "bassdrum", "kck" };
-    static const char* snare[]  { "snare", "snares", "snr", "sd", "clap", "claps", "clp", "rim", "rimshot", "snap", "snaps" };
-    static const char* top[]    { "top", "tops", "hat", "hats", "hh", "hihat", "hihats", "hi hat", "hi hats", "cymbal", "cymbals", "ride", "rides", "shaker", "shakers", "oh", "ch", "crash", "openhat" };
-    static const char* perc[]   { "perc", "percs", "percussion", "percussions", "conga", "congas", "bongo", "bongos", "tom", "toms", "tamb", "tambourine", "cowbell", "clave", "claves", "timbale", "timbales", "djembe", "tabla", "woodblock", "agogo", "guiro", "cabasa" };
-    static const char* bass[]   { "bass", "basses", "bassline", "basslines", "sub", "subs", "808", "reese", "bs" };
-    static const char* pad[]    { "pad", "pads", "atmo", "atmos", "atmosphere", "ambient", "ambience", "drone", "drones", "string", "strings", "texture", "textures", "choir", "swell", "swells", "soundscape" };
-    static const char* chords[] { "chord", "chords", "stab", "stabs", "keys", "key", "piano", "pianos", "rhodes", "organ", "organs", "guitar", "guitars", "gtr", "epiano", "ep", "wurli", "wurlitzer", "brass", "horn", "horns", "clav" };
-    static const char* synth[]  { "synth", "synths", "lead", "leads", "arp", "arps", "arpeggio", "pluck", "plucks", "seq", "sequence", "melody", "melodies", "mel", "bell", "bells", "vox", "vocal", "vocals", "hook", "riff", "riffs", "melodic" };
-    static const char* drums[]  { "bottom", "bottoms", "btm", "drum", "drums", "drumloop", "beat", "beats", "groove", "grooves", "break", "breaks", "breakbeat", "full", "loop drums", "kit" };
+    // order matters: vocals / fx first (they must never land in another module), "bass drum" is a kick,
+    // "no kick" loops are bottoms, generic drums -> bottom
+    static const char* vocalList[]  { "vocal", "vocals", "vox", "voice", "voices", "acapella", "acappella", "a cappella", "chant", "chants", "choir", "choirs",
+                                  "adlib", "adlibs", "spoken", "phrase", "phrases", "sing", "singer", "rap", "hook vocal", "vocoder" };
+    static const char* fxList[]     { "fx", "sfx", "riser", "risers", "uplifter", "uplifters", "downlifter", "downlifters", "sweep", "sweeps", "impact", "impacts",
+                                  "whoosh", "whooshes", "transition", "transitions", "noise", "noises", "build", "buildup", "reverse", "reversed", "boom", "booms",
+                                  "foley", "glitch", "glitches", "zap", "laser", "siren", "effect", "effects" };
+    static const char* kickW[]  { "kick", "kicks", "kik", "bd", "bassdrum", "kck" };
+    static const char* snareList[]  { "snare", "snares", "snr", "sd", "clap", "claps", "clp", "rim", "rimshot", "snap", "snaps" };
+    static const char* topList[]    { "top", "tops", "hat", "hats", "hh", "hihat", "hihats", "hi hat", "hi hats", "cymbal", "cymbals", "ride", "rides", "shaker", "shakers", "oh", "ch", "crash", "openhat" };
+    static const char* percList[]   { "perc", "percs", "percussion", "percussions", "conga", "congas", "bongo", "bongos", "tamb", "tambourine", "cowbell", "clave", "claves",
+                                  "timbale", "timbales", "djembe", "tabla", "woodblock", "agogo", "guiro", "cabasa" };
+    static const char* bassW[]  { "bass", "basses", "bassline", "basslines", "sub", "subs", "808", "reese", "bs" };
+    static const char* padW[]   { "pad", "pads", "atmo", "atmos", "atmosphere", "ambient", "ambience", "drone", "drones", "string", "strings", "texture", "textures", "swell", "swells", "soundscape" };
+    static const char* chordW[] { "chord", "chords", "stab", "stabs", "keys", "key", "piano", "pianos", "rhodes", "organ", "organs", "guitar", "guitars", "gtr", "epiano", "ep", "wurli", "wurlitzer", "brass", "horn", "horns", "clav" };
+    static const char* synthW[] { "synth", "synths", "lead", "leads", "arp", "arps", "arpeggio", "pluck", "plucks", "seq", "sequence", "melody", "melodies", "mel", "bell", "bells", "hook", "riff", "riffs", "melodic" };
+    static const char* drums[]  { "bottom", "bottoms", "btm", "tom", "toms", "drum", "drums", "drumloop", "beat", "beats", "groove", "grooves", "break", "breaks", "breakbeat", "full", "kit" };
 
-    if (t.contains (" bass drum") || t.contains (" kick drum")) return 0;
-    auto any = [&t] (const char* const* list, size_t n) { for (size_t i = 0; i < n; ++i) if (hasWord (t, list[i])) return true; return false; };
+    if (nameSaysNoKick (pathText)) return bottom;
     // the file name is the most specific: test it first, then the whole path
     const String fileOnly = lowerWords (File::createFileWithoutCheckingPath (pathText).getFileNameWithoutExtension());
     for (const String* text : { &fileOnly, &t })
     {
         auto anyIn = [text] (const char* const* list, size_t n) { for (size_t i = 0; i < n; ++i) if (hasWord (*text, list[i])) return true; return false; };
-        if (anyIn (kick, std::size (kick)) && ! anyIn (drums, std::size (drums))) return 0;
-        if (anyIn (snare, std::size (snare))) return 1;
-        if (anyIn (top, std::size (top))) return 3;
-        if (anyIn (perc, std::size (perc))) return 4;
-        if (anyIn (bass, std::size (bass))) return 5;
-        if (anyIn (pad, std::size (pad))) return 7;
-        if (anyIn (chords, std::size (chords))) return 6;
-        if (anyIn (synth, std::size (synth))) return 8;
-        if (anyIn (drums, std::size (drums))) return 2;
-        if (anyIn (kick, std::size (kick))) return 0;
-        // numbered factory folders "01 Kick" ... "09 Melodic 03 Synth" are matched by the words above
+        if (anyIn (vocalList, std::size (vocalList))) return vocals;
+        if (anyIn (fxList, std::size (fxList))) return fx;
+        if (text->contains (" bass drum") || text->contains (" kick drum")) return kick;
+        if (anyIn (kickW, std::size (kickW)) && ! anyIn (drums, std::size (drums))) return kick;
+        if (anyIn (snareList, std::size (snareList))) return snare;
+        if (anyIn (topList, std::size (topList))) return top;
+        if (anyIn (percList, std::size (percList))) return perc;
+        if (anyIn (bassW, std::size (bassW))) return bass;
+        if (anyIn (padW, std::size (padW))) return pad;
+        if (anyIn (chordW, std::size (chordW))) return chords;
+        if (anyIn (synthW, std::size (synthW))) return synth;
+        if (anyIn (drums, std::size (drums))) return bottom;
+        if (anyIn (kickW, std::size (kickW))) return kick;
     }
-    ignoreUnused (any);
     return -1;
+}
+
+int decideType (int nameType, const Result& r, bool noKickName)
+{
+    using namespace lb;
+    // 1. vocals / fx by name are final; "no kick" loops are bottoms
+    if (nameType == vocals || nameType == fx) return nameType;
+    if (noKickName) return bottom;
+    // 2. named tonal material keeps its type
+    if (nameType == bass || nameType == chords || nameType == pad || nameType == synth) return nameType;
+    // 3. the audio decides about the kick: drum material with an audible kick goes to KICK, whatever the name says
+    const bool drumMaterial = nameType >= 0 ? nameType < 5 : r.voiced < 0.6f;
+    if (drumMaterial && r.kickScore >= kickThreshold) return kick;
+    // 4. named "kick" but no kick in the audio -> low drums without kick = BOTTOM
+    if (nameType == kick) return bottom;
+    return nameType;   // -1 = unknown: classified later by the nearest named neighbours
 }
 
 bool keyFromName (const String& fileName, int& rootOut, bool& minorOut)
@@ -540,6 +571,43 @@ Result analyse (AudioFormatManager& fm, const File& file, const String& pathForK
         }
     }
 
+    // ---- kick detection: transients in the 30..100 Hz band (kick drums), independent of the name
+    {
+        IIRFilter lpK, lpK2, hpK;
+        lpK.setCoefficients (IIRCoefficients::makeLowPass (sr, 100.0, 0.7));
+        lpK2.setCoefficients (IIRCoefficients::makeLowPass (sr, 100.0, 0.7));
+        hpK.setCoefficients (IIRCoefficients::makeHighPass (sr, 30.0, 0.7));
+        std::vector<float> low (x);
+        lpK.processSamples (low.data(), n); lpK2.processSamples (low.data(), n); hpK.processSamples (low.data(), n);
+        const int hop = jmax (16, (int) (sr * 0.005));
+        const int nf = n / hop;
+        std::vector<float> envL ((size_t) nf), envA ((size_t) nf);
+        double eL = 0, eA = 0;
+        for (int f = 0; f < nf; ++f)
+        {
+            float a = 0, b = 0;
+            for (int i = f * hop; i < (f + 1) * hop; ++i) { a += low[(size_t) i] * low[(size_t) i]; b += x[(size_t) i] * x[(size_t) i]; }
+            envL[(size_t) f] = std::sqrt (a / hop); envA[(size_t) f] = std::sqrt (b / hop);
+            eL += a; eA += b;
+        }
+        const float share = (float) (eL / (eA + 1e-12));
+        float mxL = 0; for (auto v : envL) mxL = jmax (mxL, v);
+        float mxA = 0; for (auto v : envA) mxA = jmax (mxA, v);
+        // low transients: fast rise (x2.5 within 30 ms) to a loud peak, followed by a decay
+        int hits = 0, last = -1000;
+        const int rise = jmax (1, (int) (0.03 * sr / hop)), decay = jmax (2, (int) (0.12 * sr / hop));
+        for (int f = rise; f + decay < nf; ++f)
+        {
+            const float v = envL[(size_t) f];
+            if (v < 0.3f * mxL || v < 0.12f * mxA || f - last < decay) continue;
+            if (v < envL[(size_t) f - 1] || v < envL[(size_t) f + 1]) continue;
+            if (v > 2.5f * envL[(size_t) (f - rise)] && envL[(size_t) (f + decay)] < 0.6f * v) { ++hits; last = f; }
+        }
+        const double bars = jmax (0.25, r.duration * (r.bpm > 0 ? r.bpm : 120.0) / 240.0);
+        const float perBar = (float) (hits / bars);
+        r.kickScore = jlimit (0.0f, 1.0f, std::min (1.0f, share * 3.0f) * std::min (1.0f, perBar / 1.5f) * (mxL > 0.15f * mxA ? 1.0f : 0.3f));
+    }
+
     // ---- tempo & length
     {
         // onset-envelope autocorrelation tempo (60..200 BPM, log-gaussian prior around 120)
@@ -617,9 +685,15 @@ Result analyse (AudioFormatManager& fm, const File& file, const String& pathForK
     for (int i = 0; i < 12; ++i) r.features[(size_t) (54 + i)] = r.chroma[(size_t) ((i + jmax (0, r.keyRoot)) % 12)];
     r.features[66] = r.voiced;
 
-    // ---- audio classifier (only when the names say nothing)
+    // ---- type: names + kick detection; rule-based audio fallback (refined later by k-NN in the library)
+    {
+        const int nameType = r.type;
+        r.type = decideType (nameType, r, nameSaysNoKick (pathForKeywords));
+        r.typeFromName = nameType >= 0;
+    }
     if (r.type < 0)
     {
+        using namespace lb;
         const float lowR = r.features[34], highR = r.features[36], flatness = r.features[29];
         float chromaPeak = 0; for (auto v : r.chroma) chromaPeak = jmax (chromaPeak, v);
         int strong = 0; for (auto v : r.chroma) if (v > chromaPeak * 0.5f) ++strong;
@@ -627,18 +701,17 @@ Result analyse (AudioFormatManager& fm, const File& file, const String& pathForK
         const float density = r.features[37];
         if (tonal)
         {
-            if (r.f0 > 0 && r.f0 < 180 && lowR > 0.3f) r.type = 5;
-            else if (density < 0.5f && r.features[32] < 0.5f) r.type = 7;
-            else if (strong >= 3) r.type = 6;
-            else r.type = 8;
+            if (r.f0 > 0 && r.f0 < 180 && lowR > 0.3f) r.type = bass;
+            else if (density < 0.5f && r.features[32] < 0.5f) r.type = pad;
+            else if (strong >= 3) r.type = chords;
+            else r.type = synth;
         }
         else
         {
-            if (lowR > 0.55f && highR < 0.08f) r.type = 0;
-            else if (highR > 0.4f && lowR < 0.08f) r.type = 3;
-            else if (lowR > 0.15f && highR > 0.1f) r.type = 2;
-            else if (density <= 1.1f) r.type = 1;
-            else r.type = 4;
+            if (highR > 0.4f && lowR < 0.08f) r.type = top;
+            else if (lowR > 0.1f) r.type = bottom;
+            else if (density <= 1.1f) r.type = snare;
+            else r.type = perc;
         }
     }
     r.ok = true;

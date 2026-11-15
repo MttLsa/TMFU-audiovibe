@@ -26,9 +26,14 @@ namespace theme
     const juce::Colour amber     { 0xffd6842a };   // BASS
     const juce::Colour teal      { 0xff4d7c8c };   // MELODIC
     const juce::Colour master    { 0xff6f6a61 };   // pad grey
+    const juce::Colour customC   { 0xff7c7466 };   // CUSTOM (warm grey)
+    const juce::Colour olive     { 0xff8a7f2e };   // VOCALS / FX
     const juce::Colour white     { 0xfff4f0e6 };
 
-    inline juce::Colour sectionColour (int module) { return module < 5 ? red : (module == 5 ? amber : teal); }
+    inline juce::Colour sectionColour (int module)
+    {
+        return module < 5 ? red : (module == 5 ? customC : (module == 6 ? amber : (module <= 9 ? teal : olive)));
+    }
 
     inline juce::Font font (float h, bool bold = false)
     {
@@ -136,6 +141,14 @@ private:
 };
 
 void drawMeter (juce::Graphics& g, juce::Rectangle<float> r, float level, juce::Colour c);
+
+// Floppy-disk button (CUSTOM module: load a file)
+class FloppyButton : public juce::Button
+{
+public:
+    FloppyButton() : juce::Button ("Load file") { setTooltip ("Load an audio file into CUSTOM (or drag & drop a file onto the module)"); }
+    void paintButton (juce::Graphics&, bool over, bool down) override;
+};
 void drawLcd (juce::Graphics& g, juce::Rectangle<float> r);
 void drawGroovLogo (juce::Graphics& g, juce::Rectangle<float> r, float level, double phase);   // backlit LCD background with bezel
 

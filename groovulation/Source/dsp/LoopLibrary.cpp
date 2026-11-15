@@ -6,7 +6,7 @@ using namespace juce;
 
 namespace
 {
-    constexpr int kDbVersion = 3;
+    constexpr int kDbVersion = 4;
     const char* const audioWildcard = "*.wav;*.aif;*.aiff;*.flac;*.mp3;*.ogg;*.m4a;*.caf";
 
     // feature weights for the similarity space (drums vs tonal material)
@@ -87,7 +87,7 @@ void LoopLibrary::installFactoryIfMissing()
     const int vEmb = (int) embedded.getProperty ("version", 1), vInst = installed.isObject() ? (int) installed.getProperty ("version", 0) : 0;
     bool missing = false;
     for (int m = 0; m < lb::numModules; ++m)
-        if (factoryFolder().getChildFile (lb::folderName (m)).findChildFiles (File::findFiles, false, audioWildcard).isEmpty()) missing = true;
+        if (lb::folderName (m).isNotEmpty() && factoryFolder().getChildFile (lb::folderName (m)).findChildFiles (File::findFiles, false, audioWildcard).isEmpty()) missing = true;
     if (! missing && vInst >= vEmb) return;
     // upgrade: remove the files of the previously installed factory set (user files are never touched)
     if (installed.isObject() && vInst < vEmb)
@@ -206,7 +206,10 @@ void LoopLibrary::run()
         std::vector<LoopEntry> labelled;
         for (auto& e : d->entries) if (e.info.typeFromName) labelled.push_back (e);
         if (labelled.size() >= 9)
-            for (auto& e : d->entries) if (! e.info.typeFromName) e.info.type = classifyByNeighbours (labelled, e.info);
+            for (auto& e : d->entries)
+                if (! e.info.typeFromName)
+                    e.info.type = analysis::decideType (classifyByNeighbours (labelled, e.info), e.info, false);
+        for (auto& e : d->entries) if (e.info.type == lb::custom) e.info.type = lb::bottom;   // the library never feeds CUSTOM
     }
     finalise (*d);
     std::atomic_store (&database, DbPtr (d));
@@ -294,6 +297,7 @@ void LoopLibrary::finalise (LoopDatabase& d) const
 std::vector<int> LoopLibrary::candidates (const LoopDatabase& d, int type, double hostBpm) const
 {
     std::vector<int> r;
+    if (type == lb::custom) return r;   // CUSTOM is loaded by the user (floppy / drag & drop)
     const double maxSec = 32.0 * 4.0 * 60.0 / jmax (20.0, hostBpm) + 0.05;   // 32 bars at the project tempo
     for (int i : d.byType[(size_t) jlimit (0, lb::numModules - 1, type)])
     {
@@ -412,7 +416,7 @@ void LoopLibrary::saveDatabase (const LoopDatabase& d) const
         o->setProperty ("bpm", r.bpm); o->setProperty ("beats", r.beats); o->setProperty ("bpmName", r.bpmFromName);
         o->setProperty ("key", r.keyRoot); o->setProperty ("minor", r.minor); o->setProperty ("keyConf", r.keyConf); o->setProperty ("tune", r.tuneCents);
         o->setProperty ("nameKey", r.nameRoot); o->setProperty ("nameMinor", r.nameMinor);
-        o->setProperty ("f0", r.f0); o->setProperty ("voiced", r.voiced);
+        o->setProperty ("f0", r.f0); o->setProperty ("voiced", r.voiced); o->setProperty ("kick", r.kickScore);
         o->setProperty ("chroma", toVar (std::vector<float> (r.chroma.begin(), r.chroma.end())));
         o->setProperty ("features", toVar (r.features));
         o->setProperty ("onsets", toVar (r.onsets));
@@ -463,7 +467,7 @@ DbPtr LoopLibrary::loadDatabaseFile() const
             r.bpm = o.getProperty ("bpm", 120.0); r.beats = o.getProperty ("beats", 4); r.bpmFromName = o.getProperty ("bpmName", false);
             r.keyRoot = o.getProperty ("key", -1); r.minor = o.getProperty ("minor", false); r.keyConf = (float) (double) o.getProperty ("keyConf", 0.0); r.tuneCents = (float) (double) o.getProperty ("tune", 0.0);
             r.nameRoot = o.getProperty ("nameKey", -1); r.nameMinor = o.getProperty ("nameMinor", false);
-            r.f0 = (float) (double) o.getProperty ("f0", 0.0); r.voiced = (float) (double) o.getProperty ("voiced", 0.0);
+            r.f0 = (float) (double) o.getProperty ("f0", 0.0); r.voiced = (float) (double) o.getProperty ("voiced", 0.0); r.kickScore = (float) (double) o.getProperty ("kick", 0.0);
             const auto ch = fromVar (o.getProperty ("chroma", var()));
             for (size_t i = 0; i < 12 && i < ch.size(); ++i) r.chroma[i] = ch[i];
             r.features = fromVar (o.getProperty ("features", var()));

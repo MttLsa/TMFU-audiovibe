@@ -58,9 +58,10 @@ public:
     double currentBpm() const { return bpmNow.load(); }
     bool isTransportRunning() const { return playingNow.load(); }
 
-    // ---------------- swing commit (DO IT!)
-    void commitSwing();
-    float committedSwing() const { return swingCommitted.load(); }
+    // ---------------- CUSTOM module (floppy / drag & drop)
+    void loadCustomFile (const juce::File& f);
+    void clearCustom();
+    void requestResync() { resync = true; }
 
     // ---------------- snapshot / print / export
     juce::String snapshotName() const { return snapName; }
@@ -71,6 +72,8 @@ public:
     // renders every loaded module exactly as it leaves the module (1 loop cycle, tails wrapped) into
     // <root>/PRINT/<snapshot>/<Module> - <snapshot>.wav  (call from a background thread)
     PrintResult printModules (std::function<void (float)> progress = {});
+    // EXPORT: copies the original (unprocessed) files: <Module> - <snapshot> (original).<ext>
+    PrintResult exportOriginals();
     std::atomic<bool> printing { false };
 
     fx::Deck deck;   // tape / vinyl (UI talks to it directly via atomics)
@@ -80,6 +83,8 @@ private:
     void changeListenerCallback (juce::ChangeBroadcaster*) override;
     void timerCallback() override;
     void loadAsync (int module, const LoopEntry& e);
+    void loadPath (int module, const juce::String& path);
+    void updatePools();
     ModuleParams readParams (int module) const;
     float computeSemitones (int module, const LoopData* l, const ModuleParams& p, bool raw) const;
 
@@ -101,7 +106,12 @@ private:
     bool wasPlaying = false;
     std::atomic<double> bpmNow { 120.0 };
     std::atomic<bool> playingNow { false };
-    std::atomic<float> masterPeak { 0.0f }, swingCommitted { 0.0f };
+    std::atomic<float> masterPeak { 0.0f };
+    std::atomic<bool> resync { false };
+    int lastDeckType = 0;
+    bool started = false;
+    std::array<juce::String, lb::numModules> poolKey;
+    std::array<std::atomic<bool>, lb::numModules> clearRequest {};
     juce::String snapName { "Untitled" };
     bool stateRestored = false;
 

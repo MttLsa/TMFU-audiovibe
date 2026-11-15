@@ -320,6 +320,28 @@ void drawMeter (Graphics& g, Rectangle<float> r, float level, Colour c)
     else g.fillRoundedRectangle (r.withTrimmedTop (r.getHeight() * (1.0f - p)), 2.0f);
 }
 
+void FloppyButton::paintButton (Graphics& g, bool over, bool down)
+{
+    auto r = getLocalBounds().toFloat().reduced (1.0f);
+    g.setColour (over ? theme::panel2.brighter (0.06f) : theme::panel2);
+    g.fillRoundedRectangle (r, 3.0f);
+    g.setColour (theme::outline); g.drawRoundedRectangle (r, 3.0f, 1.0f);
+    const float s = jmin (r.getWidth(), r.getHeight()) * 0.72f;
+    auto f = Rectangle<float> (s, s).withCentre (r.getCentre()).translated (0.0f, down ? 1.0f : 0.0f);
+    Path body;   // disk with a clipped top-right corner
+    body.startNewSubPath (f.getX(), f.getY());
+    body.lineTo (f.getRight() - s * 0.18f, f.getY());
+    body.lineTo (f.getRight(), f.getY() + s * 0.18f);
+    body.lineTo (f.getRight(), f.getBottom());
+    body.lineTo (f.getX(), f.getBottom());
+    body.closeSubPath();
+    g.setColour (theme::header); g.fillPath (body);
+    g.setColour (Colour (0xffc7ccd2)); g.fillRect (f.getX() + s * 0.22f, f.getY(), s * 0.5f, s * 0.32f);          // metal shutter
+    g.setColour (theme::header); g.fillRect (f.getX() + s * 0.52f, f.getY() + s * 0.05f, s * 0.1f, s * 0.22f);
+    g.setColour (theme::white); g.fillRoundedRectangle (f.getX() + s * 0.14f, f.getY() + s * 0.48f, s * 0.72f, s * 0.42f, 1.5f);   // label
+    g.setColour (theme::red); g.fillRect (f.getX() + s * 0.2f, f.getY() + s * 0.56f, s * 0.6f, s * 0.05f);
+}
+
 void drawLcd (Graphics& g, Rectangle<float> r)
 {
     g.setColour (theme::header);

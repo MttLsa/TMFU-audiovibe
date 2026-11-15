@@ -19,13 +19,14 @@ DeckView::DeckView (GroovulationProcessor& p, int t) : proc (p), type (t)
     std::vector<B> list;
     if (type == 1) list = { { "STOP", fx::Deck::stop }, { "START", fx::Deck::start }, { "WOBBLE", fx::Deck::wobble }, { "PULL", fx::Deck::pull },
                             { "REWIND", fx::Deck::rewind }, { "RANDOM", fx::Deck::random } };
-    else list = { { "BRAKE", fx::Deck::brake }, { "START", fx::Deck::start }, { "SPINBACK", fx::Deck::spinback }, { "SCRATCH", fx::Deck::scratch },
-                  { "WOBBLE", fx::Deck::wobble }, { "RANDOM", fx::Deck::random } };
+    else list = { { "SPINBACK", fx::Deck::spinback }, { "SCRATCH", fx::Deck::scratch }, { "WOBBLE", fx::Deck::wobble },
+                  { "RANDOM", fx::Deck::random }, { "RESYNC", -1 } };
     for (auto& b : list)
     {
         auto* btn = buttons.add (new TextButton (b.label));
         const int a = b.action;
-        btn->onClick = [this, a] { trigger (a); };
+        btn->onClick = [this, a] { if (a < 0) proc.requestResync(); else trigger (a); };
+        if (a < 0) btn->setTooltip ("Back in sync with the DAW (after pitch-fader / 33-45 changes)");
         if (a == fx::Deck::random) { btn->setColour (TextButton::buttonColourId, theme::red); btn->setColour (TextButton::textColourOffId, theme::white); }
         addAndMakeVisible (btn);
     }
@@ -39,6 +40,12 @@ DeckView::~DeckView()
 }
 
 void DeckView::trigger (int action) { proc.deck.pendingAction = action; }
+
+float DeckView::vinylRate() const
+{
+    return (proc.apvts.getRawParameterValue ("vinyl45")->load() > 0.5f ? 45.0f / (100.0f / 3.0f) : 1.0f)
+         * (1.0f + proc.apvts.getRawParameterValue ("vinylPitch")->load() / 100.0f);
+}
 
 void DeckView::resized()
 {
@@ -70,7 +77,8 @@ void DeckView::timerCallback()
     logoPhase += dt;
     auto& deck = proc.deck;
     const bool running = proc.isTransportRunning();
-    const float speed = deck.engagedFlag.load() ? deck.currentSpeed.load() : 1.0f;
+    float speed = deck.engagedFlag.load() ? deck.currentSpeed.load() : 1.0f;
+    if (type == 2) speed *= vinylRate();   // pitch fader + 33/45 (the motor ramp is inside the deck speed)
     shownSpeed = speed;
     const float motion = running ? speed : (deck.engagedFlag.load() ? speed : 0.0f);
     if (type == 1)
@@ -80,7 +88,7 @@ void DeckView::timerCallback()
         packL = jlimit (0.45f, 0.9f, packL - dt * 0.002f * motion);
         if (packL <= 0.46f) packL = 0.9f;
     }
-    else recordAngle += dt * (kTwoPi * 33.333f / 60.0f) * motion;
+    else recordAngle += dt * (kTwoPi * 33.333f / 60.0f) * (running || deck.engagedFlag.load() ? speed : 0.0f);
 
     // grip handling (held still on the record = stop; left reel relaxes back)
     if (grip == record && now - lastMoveTime > 0.05) deck.handSpeed = deck.handSpeed.load() * 0.6f;
@@ -107,11 +115,18 @@ void DeckView::mouseDown (const MouseEvent& e)
     }
     else
     {
-        if (startStopBtn.contains (e.position))
+        auto setParam = [this] (const char* id, float v)
         {
-            trigger (std::abs (shownSpeed) > 0.5f && ! (deck.currentAction.load() == fx::Deck::brake) ? fx::Deck::brake : fx::Deck::start);
+            if (auto* prm = proc.apvts.getParameter (id)) { prm->beginChangeGesture(); prm->setValueNotifyingHost (prm->convertTo0to1 (v)); prm->endChangeGesture(); }
+        };
+        if (startStopBtn.contains (e.position))   // real START / STOP: the platter brakes and stays stopped until START
+        {
+            setParam ("vinylMotor", proc.apvts.getRawParameterValue ("vinylMotor")->load() > 0.5f ? 0.0f : 1.0f);
             return;
         }
+        if (rpm33.contains (e.position)) { setParam ("vinyl45", 0.0f); return; }
+        if (rpm45.contains (e.position)) { setParam ("vinyl45", 1.0f); return; }
+        if (faderArea.expanded (8.0f).contains (e.position)) { grip = fader; mouseDrag (e); return; }
         if (e.position.getDistanceFrom (platter) < platterR * 1.02f)
         {
             grip = record;
@@ -120,7 +135,6 @@ void DeckView::mouseDown (const MouseEvent& e)
             deck.handSpeed = 0.0f;   // hand on the record: it stops under the fingers
             deck.handHeld = true;
         }
-        else if (deckArea.contains (e.position)) trigger (fx::Deck::random);
     }
 }
 
@@ -144,6 +158,13 @@ void DeckView::mouseDrag (const MouseEvent& e)
         const float target = jlimit (-1.0f, 2.5f, 0.97f - v / 900.0f);
         deck.handSpeed = deck.handSpeed.load() * 0.5f + target * 0.5f;
     }
+    else if (grip == fader)
+    {
+        // like a real deck: top = -8 %, bottom = +8 %, centre click; changes speed AND pitch
+        float v = jlimit (-8.0f, 8.0f, (e.position.y - faderArea.getCentreY()) / (faderArea.getHeight() * 0.45f) * 8.0f);
+        if (std::abs (v) < 0.25f) v = 0.0f;
+        if (auto* prm = proc.apvts.getParameter ("vinylPitch")) prm->setValueNotifyingHost (prm->convertTo0to1 (v));
+    }
     else if (grip == record)
     {
         const float a = std::atan2 (e.position.y - platter.y, e.position.x - platter.x);
@@ -159,7 +180,7 @@ void DeckView::mouseDrag (const MouseEvent& e)
 
 void DeckView::mouseUp (const MouseEvent&)
 {
-    if (grip != none) proc.deck.handHeld = false;
+    if (grip != none && grip != fader) proc.deck.handHeld = false;
     grip = none;
 }
 
@@ -231,13 +252,14 @@ void DeckView::paint (Graphics& g)
     g.setColour (ink); g.drawRoundedRectangle (lcd, 4.0f, 2.5f);
     g.setColour (theme::lcdInk);
     g.setFont (theme::mono (14.0f, true));
-    g.drawText ("SPEED " + String (shownSpeed, 2) + "x", lcd.reduced (10, 4).removeFromTop (20), Justification::centredLeft);
+    g.drawText (type == 2 ? String (proc.apvts.getRawParameterValue ("vinyl45")->load() > 0.5f ? "45" : "33") + " RPM  " + String (shownSpeed, 3) + "x"
+                          : "SPEED " + String (shownSpeed, 2) + "x", lcd.reduced (10, 4).removeFromTop (20), Justification::centredLeft);
     g.setFont (theme::mono (12.0f));
     const int act = proc.deck.currentAction.load();
     g.drawText (grip != none ? String ("HAND ON THE ") + (type == 1 ? "REEL" : "RECORD") : String (act != 0 ? actionName (act) : (proc.isTransportRunning() ? "PLAY" : "WAITING FOR PLAY")),
                 lcd.reduced (10, 4).removeFromBottom (18), Justification::centredLeft);
     const String help = type == 1 ? "Drag the RIGHT reel up / down  -  shake the LEFT reel  -  click between the reels for a random move"
-                                  : "Grab the record and move it to scratch (hold still = stop)  -  START/STOP  -  click the deck for a random move";
+                                  : "Grab the record to scratch (hold still = stop)  -  START/STOP, 33/45 and the pitch fader work like a real deck";
     auto hr = Rectangle<float> (deckArea.getX(), deckArea.getBottom() + 2.0f, deckArea.getWidth(), 16.0f);
     g.setFont (theme::font (12.5f, true));
     g.setColour (Colours::black.withAlpha (0.6f)); g.drawText (help, hr.translated (1, 1), Justification::centred);
@@ -433,22 +455,38 @@ void DeckView::drawVinyl (Graphics& g)
     inked (g, ssP, metalGrad (startStopBtn), 2.5f);
     g.setColour (ink); g.setFont (theme::font (12.0f, true));
     g.drawText ("START / STOP", startStopBtn, Justification::centred);
+    const bool is45 = proc.apvts.getRawParameterValue ("vinyl45")->load() > 0.5f;
+    const bool motorOn = proc.apvts.getRawParameterValue ("vinylMotor")->load() > 0.5f;
+    g.setColour (motorOn ? Colour (0xffff5a3c) : Colour (0xff6a2a20));
+    g.fillEllipse (startStopBtn.getRight() - 14.0f, startStopBtn.getY() + 6.0f, 7.0f, 7.0f);   // motor lamp
+    rpm33 = Rectangle<float> (startStopBtn.getRight() + 16.0f, startStopBtn.getBottom() - 24.0f, 44.0f, 22.0f);
+    rpm45 = rpm33.translated (52.0f, 0.0f);
     for (int k = 0; k < 2; ++k)
     {
-        auto b = Rectangle<float> (startStopBtn.getRight() + 16.0f + k * 52.0f, startStopBtn.getBottom() - 24.0f, 44.0f, 22.0f);
+        auto b = k == 0 ? rpm33 : rpm45;
+        const bool on = (k == 1) == is45;
         Path bp; bp.addRoundedRectangle (b, 4.0f);
-        inked (g, bp, Colour (0xff2b2d30), 2.0f);
-        g.setColour (k == 0 ? Colour (0xffff5a3c) : Colour (0xff9ea3a8)); g.fillEllipse (b.getX() + 5, b.getCentreY() - 3, 6, 6);
+        inked (g, bp, on ? Colour (0xff4a4d52) : Colour (0xff2b2d30), 2.0f);
+        g.setColour (on ? Colour (0xffff5a3c) : Colour (0xff6d7177)); g.fillEllipse (b.getX() + 5, b.getCentreY() - 3, 6, 6);
         g.setColour (Colour (0xffe7e9eb)); g.setFont (theme::font (11.0f, true));
         g.drawText (k == 0 ? "33" : "45", b.withTrimmedLeft (10.0f), Justification::centred);
     }
-    auto fader = Rectangle<float> (plinth.getRight() - 66.0f, plinth.getBottom() - plinth.getHeight() * 0.55f, 28.0f, plinth.getHeight() * 0.45f);
-    Path slot; slot.addRoundedRectangle (fader.withSizeKeepingCentre (9.0f, fader.getHeight()), 4.0f);
+    faderArea = Rectangle<float> (plinth.getRight() - 66.0f, plinth.getBottom() - plinth.getHeight() * 0.55f, 28.0f, plinth.getHeight() * 0.45f);
+    const auto fd = faderArea;
+    Path slot; slot.addRoundedRectangle (fd.withSizeKeepingCentre (9.0f, fd.getHeight()), 4.0f);
     inked (g, slot, Colour (0xff0d0e10), 2.0f);
-    const float fy = fader.getCentreY() - jlimit (-1.0f, 1.0f, (shownSpeed - 1.0f) * 4.0f) * fader.getHeight() * 0.45f;
-    Path cap; cap.addRoundedRectangle (fader.getX(), fy - 10.0f, 28.0f, 20.0f, 4.0f);
-    inked (g, cap, metalGrad ({ fader.getX(), fy - 10.0f, 28.0f, 20.0f }), 2.0f);
-    g.setColour (theme::red); g.drawHorizontalLine ((int) fy, fader.getX() + 4, fader.getRight() - 4);
+    for (int t = -4; t <= 4; ++t)
+    {
+        const float ty = fd.getCentreY() + (float) t / 4.0f * fd.getHeight() * 0.45f;
+        g.setColour (t == 0 ? Colour (0xff7cd06a) : Colour (0xffb7bcc2)); g.drawHorizontalLine ((int) ty, fd.getRight() + 2, fd.getRight() + (t == 0 ? 12.0f : 7.0f));
+    }
+    const float pitchPct = proc.apvts.getRawParameterValue ("vinylPitch")->load();
+    const float fy = fd.getCentreY() + pitchPct / 8.0f * fd.getHeight() * 0.45f;
+    Path cap; cap.addRoundedRectangle (fd.getX(), fy - 10.0f, 28.0f, 20.0f, 4.0f);
+    inked (g, cap, metalGrad ({ fd.getX(), fy - 10.0f, 28.0f, 20.0f }), 2.0f);
+    g.setColour (Colour (0xffe7e9eb)); g.setFont (theme::font (10.0f, true));
+    g.drawText ((pitchPct >= 0 ? "+" : "") + String (pitchPct, 2) + "%", Rectangle<float> (fd.getX() - 30.0f, fd.getBottom() + 6.0f, 88.0f, 14.0f), Justification::centred);
+    g.setColour (theme::red); g.drawHorizontalLine ((int) fy, fd.getX() + 4, fd.getRight() - 4);
 }
 
 //==============================================================================

@@ -2,39 +2,48 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 // =====================================================================================
-//  LOOPBOX parameters
-//    per module   : "m<1..9>_<name>"
+//  GROOVULATION parameters
+//    per module   : "m<1..12>_<name>"
 //    global/master: plain names
 // =====================================================================================
 namespace lb
 {
-    constexpr int numModules = 9;
+    constexpr int numModules = 12;
+    constexpr int numLfos = 3;
 
-    enum ModuleType { kick = 0, snare, bottom, top, perc, bass, chords, pad, synth };
-    enum Section { drums = 0, bassSection, melodic };
+    enum ModuleType { kick = 0, snare, bottom, top, perc, custom, bass, chords, pad, synth, vocals, fx };
+    enum Section { drums = 0, customSection, bassSection, melodic, voxfx };
 
     inline juce::String moduleName (int m)
     {
-        static const char* n[] { "Kick", "Snare", "Bottom", "Top", "Percussion", "Bass", "Melodic 01", "Melodic 02", "Melodic 03" };
+        static const char* n[] { "Kick", "Snare", "Bottom", "Top", "Percussion", "Custom", "Bass", "Melodic 01", "Melodic 02", "Melodic 03", "Vocals", "FX" };
         return n[juce::jlimit (0, numModules - 1, m)];
     }
     inline juce::String moduleSubtitle (int m)
     {
-        static const char* n[] { "kick loops", "snare / clap", "bottom groove", "top / hats", "percussion", "bass", "chords & stabs", "pads", "synth" };
+        static const char* n[] { "loops with kick", "snare / clap", "toms, low-mid, no kick", "top / hats", "percussion", "your own file",
+                                 "bass", "chords & stabs", "pads", "synth", "vocals", "fx" };
         return n[juce::jlimit (0, numModules - 1, m)];
     }
-    inline juce::String folderName (int m)   // factory folder of each module
+    // factory folder of each module ("" = none: Custom)
+    inline juce::String folderName (int m)
     {
-        static const char* n[] { "01 Kick", "02 Snare-Clap", "03 Bottom", "04 Top", "05 Percussion", "06 Bass", "07 Melodic 01 Chords-Stabs", "08 Melodic 02 Pads", "09 Melodic 03 Synth" };
+        static const char* n[] { "01 Kick", "02 Snare-Clap", "03 Bottom", "04 Top", "05 Percussion", "", "06 Bass",
+                                 "07 Melodic 01 Chords-Stabs", "08 Melodic 02 Pads", "09 Melodic 03 Synth", "10 Vocals", "11 FX" };
         return n[juce::jlimit (0, numModules - 1, m)];
     }
-    inline Section sectionOf (int m) { return m < 5 ? drums : (m == 5 ? bassSection : melodic); }
-    inline bool isTonal (int m) { return m >= 5; }
+    inline Section sectionOf (int m)
+    {
+        return m < 5 ? drums : (m == custom ? customSection : (m == bass ? bassSection : (m <= synth ? melodic : voxfx)));
+    }
+    // modules whose loops follow SCALE (Custom: only when its loop is pitched)
+    inline bool isTonal (int m) { return m == bass || m == chords || m == pad || m == synth || m == vocals; }
+    // drums use the transient-slice ("Beats") engine, the rest the high quality time-stretch ("Complex")
+    inline bool usesBeats (int m) { return m < 5; }
 
     inline juce::String pid (int module, const char* name) { return "m" + juce::String (module + 1) + "_" + name; }
 
     // ---------------- grid (display + loop length in grid steps -> polyrhythms)
-    // beats (quarter notes) per grid step
     inline const juce::StringArray& gridNames() { static juce::StringArray s { "1/1", "1/2", "1/4", "1/8", "1/12", "1/16", "1/24", "1/32" }; return s; }
     inline double gridBeats (int i)
     {
@@ -57,10 +66,10 @@ namespace lb
 
     // ---------------- LFO
     inline const juce::StringArray& lfoShapes() { static juce::StringArray s { "Sine", "Triangle", "Saw Up", "Saw Down", "Square", "S&H" }; return s; }
-    enum LfoTarget { tNone = 0, tGain, tPan, tPitch, tCutoff, tRes, tDirt, tShaper, tDelayMix, tDelayFb, tReverbMix, tSliceStart, tSliceEnd, numTargets };
+    enum LfoTarget { tNone = 0, tGain, tPan, tPitch, tTempo, tCutoff, tRes, tDirt, tDelayMix, tDelayFb, tReverbMix, tSliceStart, tSliceEnd, tLoop, numTargets };
     inline const juce::StringArray& lfoTargets()
     {
-        static juce::StringArray s { "--", "Gain", "Pan", "Pitch", "Cutoff", "Resonance", "Dirt", "Shaper", "Delay Mix", "Delay FB", "Reverb Mix", "Slice Start", "Slice End" };
+        static juce::StringArray s { "--", "Gain", "Pan", "Pitch", "Tempo", "Cutoff", "Resonance", "Dirt", "Delay Mix", "Delay FB", "Reverb Mix", "Slice Start", "Slice End", "Loop" };
         return s;
     }
 

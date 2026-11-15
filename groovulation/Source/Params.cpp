@@ -53,12 +53,10 @@ AudioProcessorValueTreeState::ParameterLayout lb::createLayout()
         auto id = [m] (const char* s) { return ParameterID { pid (m, s), 1 }; };
         add (std::make_unique<APB> (id ("on"), n + "On", true));
         add (std::make_unique<APB> (id ("solo"), n + "Solo", false));
-        add (std::make_unique<APF> (id ("gain"), n + "Gain", NormalisableRange<float> (-60.0f, 12.0f, 0.01f, 2.0f), 0.0f, db()));
+        add (std::make_unique<APF> (id ("gain"), n + "Gain", NormalisableRange<float> (-60.0f, 12.0f, 0.01f, 2.0f), -6.0f, db()));
         add (std::make_unique<APF> (id ("pan"), n + "Pan", NormalisableRange<float> (-1.0f, 1.0f), 0.0f,
             AudioParameterFloatAttributes().withStringFromValueFunction ([] (float v, int)
             { return std::abs (v) < 0.005f ? String ("C") : (v < 0 ? "L" : "R") + String (roundToInt (std::abs (v) * 100.0f)); })));
-        // transient shaper: 100 % = untouched, lower = each hit fades out sooner (Ableton "Transient Envelope")
-        add (std::make_unique<APF> (id ("shaper"), n + "Shaper", NormalisableRange<float> (0.0f, 1.0f), 1.0f, percent()));
         add (std::make_unique<APF> (id ("atk"), n + "Attack", msRange (2000.0f, 60.0f), 0.0f, withLabel ("ms", 0)));
         add (std::make_unique<APF> (id ("dec"), n + "Decay", msRange (4000.0f, 300.0f), 500.0f, withLabel ("ms", 0)));
         add (std::make_unique<APF> (id ("sus"), n + "Sustain", NormalisableRange<float> (0.0f, 1.0f), 1.0f, percent()));
@@ -66,8 +64,13 @@ AudioProcessorValueTreeState::ParameterLayout lb::createLayout()
         add (std::make_unique<APF> (id ("pitch"), n + "Pitch", NormalisableRange<float> (-32.0f, 32.0f, 0.001f), 0.0f,
             AudioParameterFloatAttributes().withStringFromValueFunction ([] (float v, int)
             { return (v >= 0 ? "+" : "") + String (v, std::abs (v - std::round (v)) < 0.0005f ? 0 : 3) + " st"; })));
-        add (std::make_unique<APF> (id ("tempo"), n + "Tempo", NormalisableRange<float> (0.25f, 4.0f, 0.0001f, 0.5f), 1.0f,
-            AudioParameterFloatAttributes().withStringFromValueFunction ([] (float v, int) { return "x" + String (v, 3); })));
+        {
+            // fine resolution (like PITCH): 0.5x .. 2x, centre = 1x, 1/100000 steps
+            NormalisableRange<float> tr (0.5f, 2.0f, 0.00001f);
+            tr.setSkewForCentre (1.0f);
+            add (std::make_unique<APF> (id ("tempo"), n + "Tempo", tr, 1.0f,
+                AudioParameterFloatAttributes().withStringFromValueFunction ([] (float v, int) { return "x" + String (v, 4); })));
+        }
         add (std::make_unique<APC> (id ("ftype"), n + "Filter Type", StringArray { "LP", "BP", "HP" }, 0));
         add (std::make_unique<APF> (id ("cut"), n + "Cutoff", freqRange(), 20000.0f, hz()));
         add (std::make_unique<APF> (id ("res"), n + "Resonance", NormalisableRange<float> (0.0f, 1.0f), 0.1f, percent()));
@@ -81,7 +84,7 @@ AudioProcessorValueTreeState::ParameterLayout lb::createLayout()
         add (std::make_unique<APF> (id ("rdamp"), n + "Reverb Damping", NormalisableRange<float> (0.0f, 1.0f), 0.4f, percent()));
         add (std::make_unique<APF> (id ("rpre"), n + "Reverb Predelay", NormalisableRange<float> (0.0f, 200.0f), 10.0f, withLabel ("ms", 0)));
         add (std::make_unique<APF> (id ("rmix"), n + "Reverb Mix", NormalisableRange<float> (0.0f, 1.0f), 0.0f, percent()));
-        for (int l = 1; l <= 2; ++l)
+        for (int l = 1; l <= numLfos; ++l)
         {
             const String L = "lfo" + String (l);
             add (std::make_unique<APC> (ParameterID { pid (m, (L + "rate").toRawUTF8()), 1 }, n + "LFO" + String (l) + " Rate", syncNames(), 10));
@@ -127,17 +130,19 @@ AudioProcessorValueTreeState::ParameterLayout lb::createLayout()
     add (std::make_unique<APB> (ParameterID { "brNoTrip", 1 }, "BR No Triplets", false));
     add (std::make_unique<APF> (ParameterID { "brVar", 1 }, "BR Variation", NormalisableRange<float> (0.0f, 10.0f, 0.01f), 0.0f, withLabel ("", 1)));
     add (std::make_unique<APF> (ParameterID { "brChance", 1 }, "BR Chance", NormalisableRange<float> (0.0f, 1.0f), 1.0f, percent()));
-    add (std::make_unique<API> (ParameterID { "brGate", 1 }, "BR Gate (16ths)", 1, 16, 4));
+    add (std::make_unique<API> (ParameterID { "brGate", 1 }, "BR Length (16ths)", 1, 16, 4));
     add (std::make_unique<APF> (ParameterID { "brDecay", 1 }, "BR Decay", NormalisableRange<float> (0.0f, 1.0f), 0.0f, percent()));
     add (std::make_unique<API> (ParameterID { "brPitch", 1 }, "BR Pitch", -48, 0, 0));
     add (std::make_unique<APF> (ParameterID { "brPDecay", 1 }, "BR Pitch Decay", NormalisableRange<float> (0.0f, 1.0f), 0.0f, percent()));
-    add (std::make_unique<APC> (ParameterID { "brMode", 1 }, "BR Mix Mode", StringArray { "Mix", "Insert", "Gate" }, 1));
+    add (std::make_unique<APC> (ParameterID { "brMode", 1 }, "BR Mix Mode", StringArray { "Mix", "Insert" }, 1));
     add (std::make_unique<APF> (ParameterID { "brVol", 1 }, "BR Volume", NormalisableRange<float> (-36.0f, 6.0f, 0.01f), 0.0f, db()));
     // tape / vinyl
     add (std::make_unique<APC> (ParameterID { "deck", 1 }, "Remix Deck", StringArray { "Off", "Tape", "Vinyl" }, 0));
     add (std::make_unique<APF> (ParameterID { "deckCtl", 1 }, "Deck Hand (controller)", NormalisableRange<float> (-1.0f, 1.0f), 0.0f,
         AudioParameterFloatAttributes().withStringFromValueFunction ([] (float v, int) { return String (roundToInt (v * 100.0f)); })));
-    add (std::make_unique<APF> (ParameterID { "deckPitch", 1 }, "Deck Pitch", NormalisableRange<float> (-8.0f, 8.0f, 0.01f), 0.0f, withLabel ("%", 2)));
-    add (std::make_unique<APF> (ParameterID { "deckNoise", 1 }, "Deck Noise", NormalisableRange<float> (0.0f, 1.0f), 0.25f, percent()));
+    // turntable: pitch fader (speed + pitch, like a real deck), 33 / 45 rpm, motor START / STOP
+    add (std::make_unique<APF> (ParameterID { "vinylPitch", 1 }, "Vinyl Pitch Fader", NormalisableRange<float> (-8.0f, 8.0f, 0.001f), 0.0f, withLabel ("%", 2)));
+    add (std::make_unique<APB> (ParameterID { "vinyl45", 1 }, "Vinyl 45 rpm", false));
+    add (std::make_unique<APB> (ParameterID { "vinylMotor", 1 }, "Vinyl Motor (start / stop)", true));
     return layout;
 }

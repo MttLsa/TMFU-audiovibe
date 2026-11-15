@@ -16,11 +16,11 @@ SR = 44100
 OUT = sys.argv[1] if len(sys.argv) > 1 else "build/factory"
 ROOT = os.path.join(OUT, "Loops")
 FOLDERS = ["01 Kick", "02 Snare-Clap", "03 Bottom", "04 Top", "05 Percussion", "06 Bass",
-           "07 Melodic 01 Chords-Stabs", "08 Melodic 02 Pads", "09 Melodic 03 Synth"]
+           "07 Melodic 01 Chords-Stabs", "08 Melodic 02 Pads", "09 Melodic 03 Synth", "10 Vocals", "11 FX"]
 NOTE = {"C": 0, "C#": 1, "D": 2, "D#": 3, "E": 4, "F": 5, "F#": 6, "G": 7, "G#": 8, "A": 9, "A#": 10, "B": 11}
 MAJOR = [0, 2, 4, 5, 7, 9, 11]
 MINOR = [0, 2, 3, 5, 7, 8, 10]
-manifest = {"version": 2, "folders": {}}
+manifest = {"version": 3, "folders": {}}
 
 
 def rng(seed):
@@ -248,11 +248,13 @@ def make_drums():
         else:
             snd = snare(seed + 2, 190, 0.18, 0.85); hits = [4, 12]; nm = "Snare"
         write(FOLDERS[1], f"{genre} {nm} {bpm}bpm", pattern(bpm, 2, hits, lambda st: snd, sw), {"bpm": bpm, "bars": 2, "genre": genre})
-        # 03 Bottom: kick + snare/clap + hats
-        h = hat(seed + 3, 0.03 if genre != "Deep House" else 0.05)
-        hh = [2, 6, 10, 14] if genre in ("House", "Deep House") else ([0, 3, 6, 8, 11, 14] if genre == "Micro House" else list(range(0, 16, 2)))
-        x = pattern(bpm, 2, [0, 4, 8, 12], lambda st: k) + 0.7 * pattern(bpm, 2, [4, 12], lambda st: snd, sw) + 0.35 * pattern(bpm, 2, hh, lambda st: h, sw)
-        write(FOLDERS[2], f"{genre} Bottom Groove {bpm}bpm", x, {"bpm": bpm, "bars": 2, "genre": genre})
+        # 03 Bottom: toms and mid-low percussion, NO kick
+        tp = {"House": ([2, 7, 10, 14], [130, 165, 210]), "Deep House": ([3, 6, 11, 13], [115, 140, 175]),
+              "Micro House": ([1, 5, 6, 9, 13, 14], [180, 220, 260]), "Minimal": ([3, 10, 14], [150, 190, 230]),
+              "Techno": ([2, 3, 6, 10, 11, 14], [105, 125, 150])}[genre]
+        x = pattern(bpm, 2, tp[0], lambda st: tom(seed + 3, tp[1][st % 3], 0.16), sw) \
+            + 0.45 * pattern(bpm, 2, [0, 4, 8, 12] if genre != "Micro House" else [4, 12], lambda st: conga(seed + 4, 190, 0.09), sw)
+        write(FOLDERS[2], f"{genre} Bottom Toms No Kick {bpm}bpm", x, {"bpm": bpm, "bars": 2, "genre": genre})
         # 04 Top
         if genre == "House":
             x = pattern(bpm, 2, [2, 6, 10, 14], lambda st: hat(seed + 4, 0.08, 7000), sw) + 0.4 * pattern(bpm, 2, list(range(16)), lambda st: shaker(seed + 5), sw, [1, .5, .8, .5])
@@ -373,10 +375,86 @@ def make_melodic():
         write(FOLDERS[8], f"{genre} Synth {'Lead' if kind == 'lead' else 'Seq'} {bpm}bpm {rootn}{kmin}", buf, {"bpm": bpm, "bars": 2, "genre": genre})
 
 
+# ------------------------------------------------------------------------------------------ vocals / fx
+VOWELS = {"a": [(800, 80), (1150, 90), (2900, 120)], "o": [(450, 70), (800, 80), (2830, 100)],
+          "e": [(400, 60), (2000, 100), (2550, 120)], "u": [(325, 50), (700, 60), (2530, 120)]}
+
+
+def voice(midi, n, vowel, seed):
+    """Glottal pulse train (with vibrato and jitter) through three formant resonators."""
+    r = rng(seed)
+    t = np.arange(n) / SR
+    f = mtof(midi) * (1 + 0.012 * np.sin(2 * np.pi * 5.2 * t) * np.minimum(1, t / 0.25)) * (1 + 0.002 * r.standard_normal(n).cumsum() / np.sqrt(n))
+    ph = np.cumsum(f / SR) % 1.0
+    src = np.where(ph < 0.6, np.sin(np.pi * ph / 0.6) ** 2, 0.0) - 0.35
+    src += 0.03 * r.standard_normal(n)
+    out = np.zeros(n)
+    N = 1 << int(np.ceil(np.log2(n + 1)))
+    X = np.fft.rfft(src, N)
+    fr = np.fft.rfftfreq(N, 1 / SR)
+    H = np.zeros_like(fr)
+    for k, (fc, bw) in enumerate(VOWELS[vowel]):
+        H += (1.0 / (1 + k)) / (1 + ((fr - fc) / bw) ** 2)
+    out = np.fft.irfft(X * H, N)[:n]
+    return out * np.minimum(1, t / 0.02) * np.minimum(1, (n / SR - t) / 0.04)
+
+
+def make_vocals():
+    phrases = {"House": [(0, 3, "a"), (4, 3, "o"), (8, 2, "a"), (12, 4, "e")], "Deep House": [(0, 6, "o"), (8, 6, "u")],
+               "Micro House": [(1, 1, "a"), (3, 1, "e"), (6, 1, "a"), (9, 1, "o"), (11, 1, "a"), (14, 1, "e")],
+               "Minimal": [(4, 2, "o"), (20, 2, "o")], "Techno": [(0, 2, "a"), (8, 2, "a"), (16, 2, "a"), (24, 4, "e")]}
+    degs = {"House": [4, 2, 0, 4], "Deep House": [2, 0], "Micro House": [4, 7, 4, 2, 4, 0], "Minimal": [0, 0], "Techno": [0, 0, 0, 2]}
+    for gi, (genre, bpm, sw, rootn, minor) in enumerate(GENRES):
+        root, sc = key_notes(rootn, minor)
+        L = bar_len(bpm, 2); buf = np.zeros(L)
+        s16 = 60.0 / bpm / 4 * SR
+        for j, (st, ln, vw) in enumerate(phrases[genre]):
+            dg = degs[genre][j % len(degs[genre])]
+            midi = 60 + root + sc[dg % 7] + 12 * (dg // 7) - (12 if root > 6 else 0)
+            place(buf, voice(midi, int(ln * s16 * 0.95), vw, 500 + gi * 10 + j), step_pos(bpm, st, sw))
+        kind = "Vocal Chop" if genre in ("Micro House", "Techno") else "Vocal Phrase"
+        write(FOLDERS[9], f"{genre} {kind} {bpm}bpm {rootn}{'min' if minor else 'maj'}", buf, {"bpm": bpm, "bars": 2, "genre": genre})
+
+
+def make_fx():
+    for gi, (genre, bpm, sw, _, _) in enumerate(GENRES):
+        r = rng(900 + gi)
+        bars = 2 if genre != "Deep House" else 4
+        L = bar_len(bpm, bars); t = np.arange(L) / SR; T = L / SR
+        if genre == "House":          # white-noise riser
+            nz = r.standard_normal(L)
+            x = np.zeros(L)
+            for k in range(8):        # sweeping band-pass, built in segments
+                a, b = k * L // 8, (k + 1) * L // 8
+                x[a:b] = fft_filter(nz[a:b], lo=400 * 2 ** (k * 0.6), hi=1200 * 2 ** (k * 0.6))
+            x *= (t / T) ** 2; nm = "FX Riser"
+        elif genre == "Deep House":   # down-lifter: falling filtered noise + falling tone
+            f = 1800 * np.exp(-3 * t / T) + 80
+            x = 0.4 * np.sin(np.cumsum(2 * np.pi * f / SR)) + 0.5 * fft_filter(r.standard_normal(L), lo=300, hi=4000)
+            x *= np.exp(-2.5 * t / T); nm = "FX Downlifter"
+        elif genre == "Micro House":  # glitchy zaps
+            x = np.zeros(L)
+            for st in [3, 7, 10, 19, 22, 27]:
+                n = int(0.08 * SR); tt = np.arange(n) / SR
+                x[int(step_pos(bpm, st)):][:n] += np.sin(2 * np.pi * np.cumsum(3000 * np.exp(-tt / 0.01) + 200) / SR)[: len(x[int(step_pos(bpm, st)):][:n])] * np.exp(-tt / 0.03)[: len(x[int(step_pos(bpm, st)):][:n])]
+            nm = "FX Zaps"
+        elif genre == "Minimal":      # reversed swell into the downbeat
+            sw_ = fft_filter(r.standard_normal(L), lo=2000, hi=9000) * np.exp(-6 * t / T)
+            x = sw_[::-1]; nm = "FX Reverse Swell"
+        else:                         # impact: sub boom + noise burst
+            n = L; tt = t
+            f = 60 + 140 * np.exp(-tt / 0.05)
+            x = np.sin(np.cumsum(2 * np.pi * f / SR)) * np.exp(-tt / 0.9) + 0.6 * r.standard_normal(n) * np.exp(-tt / 0.08)
+            x = np.tanh(1.5 * x); nm = "FX Impact"
+        write(FOLDERS[10], f"{genre} {nm} {bpm}bpm", x, {"bpm": bpm, "bars": bars, "genre": genre})
+
+
 if __name__ == "__main__":
     make_drums()
     make_bass()
     make_melodic()
+    make_vocals()
+    make_fx()
     with open(os.path.join(ROOT, "manifest.json"), "w") as f:
         json.dump(manifest, f, indent=1)
     total = sum(len(v) for v in manifest["folders"].values())

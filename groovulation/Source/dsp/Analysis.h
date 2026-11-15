@@ -1,5 +1,6 @@
 #pragma once
 #include <juce_audio_formats/juce_audio_formats.h>
+#include "../Params.h"
 #include <array>
 #include <vector>
 
@@ -41,6 +42,7 @@ namespace analysis
         bool nameMinor = false;
         float f0 = 0.0f;            // fundamental (Hz), 0 = none
         float voiced = 0.0f;        // fraction of pitched frames
+        float kickScore = 0.0f;     // 0..1: how clearly the loop contains a kick drum (low-band transients)
         std::array<float, 12> chroma {};   // absolute pitch classes (sum = 1)
         std::vector<float> features;       // numFeatures values
         std::vector<float> onsets;         // onset positions as fractions of the loop (0..1)
@@ -49,8 +51,13 @@ namespace analysis
     // full analysis of one file (thread-safe, no shared state)
     Result analyse (juce::AudioFormatManager& fm, const juce::File& file, const juce::String& pathForKeywords);
 
-    // keyword classifier on file + folder names; returns -1 if nothing matched
+    // keyword classifier on file + folder names (module index); returns -1 if nothing matched
     int typeFromName (const juce::String& pathText);
+    bool nameSaysNoKick (const juce::String& pathText);
+    // final module type: vocals / fx names are final, "no kick" -> Bottom, drum material with an audible
+    // kick -> Kick (the audio wins over the name), "kick" without a kick -> Bottom
+    constexpr float kickThreshold = 0.35f;
+    int decideType (int nameType, const Result& r, bool noKickName);
     // key from a name ("bass rocket league Gmin" -> G minor, "pad D" -> D major); false if none
     bool keyFromName (const juce::String& name, int& root, bool& minor);
     // BPM from a name ("120bpm", "128 BPM", "_95_"), 0 if none

@@ -101,10 +101,10 @@ namespace fx
         bool repeating = false;
         double gateEndPpq = 0, chunkStartPpq = 0;
         int captureStart = 0, chunkLen = 1, repIndex = 0;
-        double readPos = 0, rate = 1;
+        double readPos = 0, rate = 1, chunkPos = 0;
         long long lastInterval = -1;
         juce::Random rnd;
-        float fadeGain = 0;
+        float dryGain = 1.0f, repGain = 0.0f;   // 2 ms crossfades between the original and the repeats
     };
 
     // ---------------------------------------------------------------- Tape machine / turntable
@@ -117,7 +117,8 @@ namespace fx
         enum Action { none = 0, stop, start, wobble, pull, rewind, scratch, brake, spinback, random };
         void prepare (double sr);
         void reset();
-        void process (float* L, float* R, int n, int deckType /*1 tape, 2 vinyl*/, float controller /*-1..1*/, float noise, double bpm);
+        // deckType 1 = tape, 2 = vinyl; controller = HAND (-1..1); motorOn = turntable START/STOP state
+        void process (float* L, float* R, int n, int deckType, float controller, double bpm, bool motorOn);
 
         // UI (message thread) -> audio
         std::atomic<int> pendingAction { none };
@@ -127,17 +128,18 @@ namespace fx
         std::atomic<float> currentSpeed { 1.0f };
         std::atomic<int> currentAction { none };
         std::atomic<bool> engagedFlag { false };
+        std::atomic<float> platterSpeed { 1.0f };   // vinyl motor (0 = stopped, 1 = running)
 
     private:
+        void engage();
         double fs = 44100.0;
         std::vector<float> bufL, bufR; int w = 0, size = 1;
         double r = 0, speed = 1.0;
-        bool engaged = false;
+        bool engaged = false, fastRelease = false, lastMotor = true;
         int action = none; double actionT = 0, actionLen = 0; float actionParam = 0;
         float xfade = 0.0f;   // 0 = live, 1 = deck
-        double wowPh = 0, flutPh = 0;
+        double wowPh = 0, flutPh = 0, motor = 1.0;
         juce::Random rnd;
-        float crackleLp = 0, hissLp = 0, rumblePh = 0;
         int lastType = 0;
     };
 }

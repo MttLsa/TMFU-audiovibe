@@ -43,9 +43,13 @@ private:
 // -------------------------------------------------------------------------------------------------
 //  Compact module strip (top row): name, LCD, loop name, LOOP / SIMILAR buttons, GAIN, PITCH, ON, SOLO
 // -------------------------------------------------------------------------------------------------
-class ModuleStrip : public juce::Component, private juce::Timer
+class ModuleStrip : public juce::Component, public juce::FileDragAndDropTarget, private juce::Timer
 {
 public:
+    bool isInterestedInFileDrag (const juce::StringArray& files) override;
+    void filesDropped (const juce::StringArray& files, int, int) override;
+    void fileDragEnter (const juce::StringArray&, int, int) override { dragOver = true; repaint(); }
+    void fileDragExit (const juce::StringArray&) override { dragOver = false; repaint(); }
     ModuleStrip (GroovulationProcessor& p, int module, std::function<void (int)> onSelect);
     void paint (juce::Graphics&) override;
     void resized() override;
@@ -58,7 +62,10 @@ private:
     std::function<void (int)> select;
     bool selected = false;
     WaveDisplay display;
-    juce::TextButton prev { "<" }, next { ">" }, rnd { "RND" }, sim { "SIMILAR" };
+    juce::TextButton prev { "<" }, next { ">" }, rnd { "RND" }, sim { "SIM" }, clear { "CLEAR" };
+    FloppyButton floppy;
+    std::unique_ptr<juce::FileChooser> chooser;
+    bool dragOver = false;
     Knob gain { "Gain" }, pitch { "Pitch" };
     Toggle on { "ON" }, solo { "S" };
     LoopPtr shownLoop;
@@ -88,18 +95,21 @@ private:
     Segmented grid, keySrc, ftype;
     juce::TextButton lenMinus { "-" }, lenPlus { "+" }, lenOrig { "ORIG" }, volReset { "RESET VOL" };
     Toggle slice { "SLICE" }, fade { "FADE 0.5ms" }, volA { "VOL.A" }, dpp { "PING-PONG" };
-    juce::TextButton prev { "<" }, next { ">" }, rnd { "RND" }, sim { "SIMILAR" };
+    juce::TextButton prev { "<" }, next { ">" }, rnd { "RND" }, sim { "SIMILAR" }, clear { "CLEAR" };
+    FloppyButton floppy;
+    std::unique_ptr<juce::FileChooser> chooser;
     juce::ComboBox browser;
     std::vector<int> browserIndices;
     // panels
-    Panel pAmp { "Gain / Shaper", theme::red }, pAdsr { "ADSR", theme::red }, pPitch { "Pitch / Tempo", theme::red },
+    Panel pAmp { "Gain / Pan", theme::red }, pAdsr { "ADSR", theme::red }, pPitch { "Pitch / Tempo", theme::red },
           pFilter { "Cutoff", theme::red }, pDirt { "Dirt", theme::red }, pDelay { "Delay", theme::red },
-          pReverb { "Reverb", theme::red }, pLfo1 { "LFO 1", theme::red }, pLfo2 { "LFO 2", theme::red };
-    Knob gain { "Gain" }, pan { "Pan" }, shaper { "Shaper" }, atk { "A" }, dec { "D" }, sus { "S" }, rel { "R" },
+          pReverb { "Reverb", theme::red }, pLfo1 { "LFO 1", theme::red }, pLfo2 { "LFO 2", theme::red }, pLfo3 { "LFO 3", theme::red };
+    Knob gain { "Gain" }, pan { "Pan" }, atk { "A" }, dec { "D" }, sus { "S" }, rel { "R" },
          pitch { "Pitch" }, tempo { "Tempo" }, cut { "Cutoff" }, res { "Res" }, dirt { "Dirt" },
          dtime { "Time" }, dfb { "Feedback" }, dmix { "Mix" }, rsize { "Size" }, rdecay { "Decay" }, rdamp { "Damp" },
-         rpre { "Predelay" }, rmix { "Mix" }, l1rate { "Rate" }, l1depth { "Depth" }, l2rate { "Rate" }, l2depth { "Depth" };
-    juce::ComboBox l1shape, l1target, l2shape, l2target;
+         rpre { "Predelay" }, rmix { "Mix" }, l1rate { "Rate" }, l1depth { "Depth" }, l2rate { "Rate" }, l2depth { "Depth" },
+         l3rate { "Rate" }, l3depth { "Depth" };
+    juce::ComboBox l1shape, l1target, l2shape, l2target, l3shape, l3target;
     std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>> comboAtt;
     LoopPtr shownLoop;
     juce::String infoLine;

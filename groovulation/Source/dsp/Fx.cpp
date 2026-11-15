@@ -175,12 +175,13 @@ void BeatRepeat::prepare (double sr)
     reset();
 }
 
-void BeatRepeat::reset() { repeating = false; lastInterval = -1; w = 0; fadeGain = 0; repIndex = 0; }
+void BeatRepeat::reset() { repeating = false; lastInterval = -1; w = 0; dryGain = 1.0f; repGain = 0.0f; repIndex = 0; }
 
 void BeatRepeat::process (float* L, float* R, int n, double ppq0, double pps, bool playing, const BeatRepeatParams& p)
 {
-    if (! playing || pps <= 0) { repeating = false; lastInterval = -1; return; }
-    const double fadeS = 0.002 * fs;
+    if (! playing || pps <= 0) { repeating = false; lastInterval = -1; repGain = 0.0f; dryGain = 1.0f; repIndex = 0; return; }
+    const double fadeS = 0.002 * fs;           // 2 ms: chunk edges and the switch back to the original
+    const float step = (float) (1.0 / fadeS);
     static const double grids[] { 0.125, 1.0 / 6, 0.25, 1.0 / 3, 0.5, 1.0, 2.0, 4.0 };
     for (int i = 0; i < n; ++i)
     {
@@ -199,20 +200,17 @@ void BeatRepeat::process (float* L, float* R, int n, double ppq0, double pps, bo
                 gateEndPpq = ppq + p.gateBeats;
                 captureStart = w; repIndex = 0;
                 chunkLen = jmax (32, (int) (p.gridBeats / pps));
-                readPos = 0; chunkStartPpq = ppq; rate = 1;
+                readPos = 0; chunkPos = 0; chunkStartPpq = ppq; rate = 1;
             }
         }
-        if (repeating && ppq >= gateEndPpq) repeating = false;
+        if (repeating && ppq >= gateEndPpq) repeating = false;   // the repeats fade out (2 ms), the original fades in
 
-        float outL = L[i], outR = R[i];
-        float repL = 0, repR = 0; bool repActive = false;
-        if (repeating)
+        if (repeating || repGain > 0.0f)
         {
-            const double inChunk = (ppq - chunkStartPpq) / pps;
-            if (inChunk >= chunkLen)
+            if (repeating && (ppq - chunkStartPpq) / pps >= chunkLen)
             {
                 // next repetition (optionally with a new, shorter grid = variation)
-                ++repIndex; chunkStartPpq = ppq; readPos = 0;
+                ++repIndex; chunkStartPpq = ppq; readPos = 0; chunkPos = 0;
                 if (p.variation > 0 && rnd.nextFloat() < p.variation / 10.0f)
                 {
                     int gi = 0; while (gi < 7 && grids[gi] < p.gridBeats - 1e-9) ++gi;
@@ -224,24 +222,26 @@ void BeatRepeat::process (float* L, float* R, int n, double ppq0, double pps, bo
                 const float semis = jmax (-48.0f, p.pitch - p.pitchDecay * 12.0f * (float) (repIndex - 1));
                 rate = std::pow (2.0, semis / 12.0);
             }
-            if (repIndex > 0)
-            {
-                double rp = captureStart + readPos; while (rp >= size) rp -= size;
-                const int i0 = (int) rp; const float fr = (float) (rp - i0); const int i1 = (i0 + 1) % size;
-                const double posC = (ppq - chunkStartPpq) / pps;
-                const float env = (float) jmin (1.0, posC / fadeS, (chunkLen - posC) / fadeS);
-                const float g = p.volume * std::pow (1.0f - p.decay, (float) (repIndex - 1)) * jmax (0.0f, env);
-                repL = (bufL[(size_t) i0] + fr * (bufL[(size_t) i1] - bufL[(size_t) i0])) * g;
-                repR = (bufR[(size_t) i0] + fr * (bufR[(size_t) i1] - bufR[(size_t) i0])) * g;
-                readPos += rate;
-                repActive = true;
-            }
         }
-        // dry gain per mix mode (smoothed)
-        const float dryTarget = p.mode == 2 ? 0.0f : ((p.mode == 1 && repActive) ? 0.0f : 1.0f);
-        fadeGain += (dryTarget - fadeGain) * (float) (1.0 / fadeS);
-        outL = outL * fadeGain + repL; outR = outR * fadeGain + repR;
-        L[i] = outL; R[i] = outR;
+        const bool repActive = repIndex > 0 && (repeating || repGain > 0.0f);
+        repGain = jlimit (0.0f, 1.0f, repGain + ((repeating && repIndex > 0) ? step : -step));
+        float repL = 0, repR = 0;
+        if (repActive)
+        {
+            double rp = captureStart + readPos; while (rp >= size) rp -= size;
+            const int i0 = (int) rp; const float fr = (float) (rp - i0); const int i1 = (i0 + 1) % size;
+            const float env = (float) jlimit (0.0, 1.0, jmin (chunkPos / fadeS, (chunkLen - chunkPos) / fadeS));
+            const float g = p.volume * std::pow (1.0f - p.decay, (float) jmax (0, repIndex - 1)) * env * repGain;
+            repL = (bufL[(size_t) i0] + fr * (bufL[(size_t) i1] - bufL[(size_t) i0])) * g;
+            repR = (bufR[(size_t) i0] + fr * (bufR[(size_t) i1] - bufR[(size_t) i0])) * g;
+            readPos += rate; chunkPos += 1.0;
+            if (chunkPos >= chunkLen) { readPos = 0; chunkPos = 0; }   // (only while fading out after the gate)
+        }
+        if (! repeating && repGain <= 0.0f) repIndex = 0;
+        // Insert: the original is muted while the repeats play (crossfaded); Mix: always on
+        const float dryTarget = (p.mode == 1 && repeating && repIndex > 0) ? 0.0f : 1.0f;
+        dryGain = jlimit (0.0f, 1.0f, dryGain + (dryTarget > dryGain ? step : -step));
+        L[i] = L[i] * dryGain + repL; R[i] = R[i] * dryGain + repR;
         if (++w >= size) w = 0;
     }
 }
@@ -256,11 +256,16 @@ void Deck::prepare (double sr)
 
 void Deck::reset()
 {
-    w = 0; r = 0; speed = 1; engaged = false; action = none; xfade = 0; actionT = 0;
-    engagedFlag = false; currentSpeed = 1.0f; currentAction = none;
+    w = 0; r = 0; speed = 1; engaged = false; action = none; xfade = 0; actionT = 0; fastRelease = false; motor = 1.0; lastMotor = true;
+    engagedFlag = false; currentSpeed = 1.0f; currentAction = none; platterSpeed = 1.0f;
 }
 
-void Deck::process (float* L, float* R, int n, int type, float ctl, float noise, double bpm)
+void Deck::engage()
+{
+    if (! engaged) { engaged = true; fastRelease = false; r = (double) w - 2.0; if (r < 0) r += size; speed = 1.0; }
+}
+
+void Deck::process (float* L, float* R, int n, int type, float ctl, double bpm, bool motorOn)
 {
     if (type == 0)
     {
@@ -268,20 +273,16 @@ void Deck::process (float* L, float* R, int n, int type, float ctl, float noise,
         pendingAction.store (none);
         return;
     }
-    if (type != lastType) { lastType = type; action = none; }
+    if (type != lastType) { lastType = type; action = none; motor = 1.0; lastMotor = true; }
     const double beat = 60.0 / jmax (30.0, bpm);   // seconds
     const int pa = pendingAction.exchange (none);
-    auto engage = [this]
-    {
-        if (! engaged) { engaged = true; r = (double) w - 2.0; if (r < 0) r += size; speed = 1.0; }
-    };
     if (pa != none)
     {
         action = pa;
         if (action == random)
         {
             static const int tapeActs[] { stop, start, wobble, pull, rewind };
-            static const int vinylActs[] { brake, spinback, scratch, wobble, start };
+            static const int vinylActs[] { spinback, scratch, wobble, spinback, scratch };
             action = type == 1 ? tapeActs[rnd.nextInt (5)] : vinylActs[rnd.nextInt (5)];
         }
         actionT = 0;
@@ -291,9 +292,9 @@ void Deck::process (float* L, float* R, int n, int type, float ctl, float noise,
             case brake:    actionLen = beat * 1.5; break;
             case start:    actionLen = beat * 1.0; break;
             case wobble:   actionLen = beat * 4.0; break;
-            case pull:     actionLen = beat * 1.0; break;
-            case rewind:   actionLen = beat * 1.0; break;
-            case spinback: actionLen = beat * 1.0; break;
+            case pull:     actionLen = 2.8; break;          // tape snatched off the reel: long, slowly falling rewind
+            case rewind:   actionLen = 2.0; break;
+            case spinback: actionLen = 2.0; break;
             case scratch:  actionLen = beat * 2.0; actionParam = 0.5f + rnd.nextFloat(); break;
             default:       actionLen = 0; break;
         }
@@ -302,14 +303,28 @@ void Deck::process (float* L, float* R, int n, int type, float ctl, float noise,
     }
     const bool held = handHeld.load();
     const float hs = handSpeed.load();
-    const double tauHand = type == 2 ? 0.006 : 0.05, tauAct = 0.01;
-    const float noiseAmt = noise * 0.015f;
+    const double tauHand = type == 2 ? 0.006 : 0.05;
+    const double fadeEnd = 0.06;   // 60 ms fade-out at the end of rewind / spinback / pull
+
+    // turntable motor (START / STOP): real decks brake in ~0.7 s and reach speed in ~0.35 s
+    if (type == 2 && motorOn && ! lastMotor && motor < 0.999)
+    {
+        // land exactly on the live signal when the platter is back at speed
+        engage();
+        const double lag = (1.0 - motor) * (1.0 - motor) * 0.35 * 0.5 * fs;
+        r = (double) w - jmax (2.0, lag); if (r < 0) r += size;
+        speed = motor;
+    }
+    if (type == 2) lastMotor = motorOn; else motor = 1.0;
 
     for (int i = 0; i < n; ++i)
     {
         bufL[(size_t) w] = L[i]; bufR[(size_t) w] = R[i];
-        double target = 1.0, tau = tauAct;
-        bool wantEngaged = false;
+        if (type == 2) motor = motorOn ? jmin (1.0, motor + 1.0 / (0.35 * fs)) : jmax (0.0, motor - 1.0 / (0.7 * fs));
+        double target = type == 2 ? motor : 1.0, tau = type == 2 ? 0.002 : 0.01;
+        bool wantEngaged = type == 2 && motor < 0.999;
+        float actGain = 1.0f;
+        if (wantEngaged) engage();
         if (held) { engage(); target = hs; tau = tauHand; wantEngaged = true; }
         else if (std::abs (ctl) > 0.02f) { engage(); target = 1.0 + 2.0 * ctl; tau = tauHand; wantEngaged = true; }
         else if (action != none)
@@ -318,19 +333,27 @@ void Deck::process (float* L, float* R, int n, int type, float ctl, float noise,
             wantEngaged = true;
             switch (action)
             {
-                case stop:     target = t < 0.5 ? jmax (0.0, 1.0 - t * 2.0) : 0.0; tau = 0.03; break;   // slow down, then silence
+                case stop:     target = t < 0.5 ? jmax (0.0, 1.0 - t * 2.0) : 0.0; tau = 0.03; break;
                 case brake:    target = t < 0.35 ? jmax (0.0, 1.0 - t / 0.35) : 0.0; tau = 0.01; break;
                 case start:    target = jmin (1.0, t * 1.6); tau = 0.02; break;
                 case wobble:   target = 1.0 + 0.05 * std::sin (2.0 * kPi * 5.0 * actionT) * std::sin (kPi * t); tau = 0.004; break;
-                case pull:     target = 1.0 - 0.75 * std::sin (kPi * t); tau = 0.02; break;
-                case rewind:   target = t < 0.75 ? -3.0 : 0.0; tau = 0.04; break;
-                case spinback: target = t < 0.8 ? -4.0 * (1.0 - t) : 0.0; tau = 0.01; break;
+                case pull:     target = -3.2 * std::exp (-actionT / 1.1); tau = 0.03; break;   // pitch falls slowly
+                case rewind:   target = -3.0; tau = 0.05; break;
+                case spinback: target = -4.5 * std::pow (1.0 - t, 1.4); tau = 0.008; break;
                 case scratch:  target = 2.6 * std::sin (2.0 * kPi * actionT / (beat * 0.5 * actionParam)); tau = 0.004; break;
                 default: break;
             }
+            if (action == pull || action == rewind || action == spinback)
+                actGain = (float) jlimit (0.0, 1.0, (actionLen - actionT) / fadeEnd);
             actionT += 1.0 / fs;
-            if (actionT >= actionLen) action = none;
+            if (actionT >= actionLen)
+            {
+                fastRelease = action == pull || action == rewind || action == spinback;   // deck is silent now: come back quickly
+                action = none;
+                actGain = fastRelease ? 0.0f : 1.0f;
+            }
         }
+        if (fastRelease) actGain = 0.0f;
         speed += (target - speed) * (1.0 - std::exp (-1.0 / (tau * fs)));
         float outL = L[i], outR = R[i];
         if (engaged)
@@ -340,42 +363,23 @@ void Deck::process (float* L, float* R, int n, int type, float ctl, float noise,
             r += sp;
             // the head can never read the future, nor further back than the buffer
             double lag = std::fmod ((double) w - r, (double) size); if (lag < 0) lag += size;
-            if (lag < 2.0) { r = (double) w - 2.0; }
-            if (lag > size - 8.0) { r = (double) w - (size - 8.0); }
+            if (lag < 2.0) r = (double) w - 2.0;
+            if (lag > size - 8.0) r = (double) w - (size - 8.0);
             r = std::fmod (r, (double) size); if (r < 0) r += size;
-            // cubic read
             const int i1 = (int) r; const float f = (float) (r - i1);
             const int i0 = (i1 - 1 + size) % size, i2 = (i1 + 1) % size, i3 = (i1 + 2) % size;
             auto cub = [f] (float a, float b, float c, float d)
             { return b + 0.5f * f * (c - a + f * (2.0f * a - 5.0f * b + 4.0f * c - d + f * (3.0f * (b - c) + d - a))); };
-            float dl = cub (bufL[(size_t) i0], bufL[(size_t) i1], bufL[(size_t) i2], bufL[(size_t) i3]);
-            float dr = cub (bufR[(size_t) i0], bufR[(size_t) i1], bufR[(size_t) i2], bufR[(size_t) i3]);
-            // motor/tape "drag": level follows |speed| a little (silence when stopped)
-            const float lvl = (float) jmin (1.0, std::abs (sp) * 1.4);
-            dl *= lvl; dr *= lvl;
-            if (! wantEngaged && std::abs (speed - 1.0) < 0.02) xfade -= (float) (1.0 / (0.04 * fs));   // back to live
+            const float lvl = (float) jmin (1.0, std::abs (sp) * 1.4) * actGain;   // silence when stopped
+            const float dl = cub (bufL[(size_t) i0], bufL[(size_t) i1], bufL[(size_t) i2], bufL[(size_t) i3]) * lvl;
+            const float dr = cub (bufR[(size_t) i0], bufR[(size_t) i1], bufR[(size_t) i2], bufR[(size_t) i3]) * lvl;
+            if (fastRelease) xfade -= (float) (1.0 / (0.01 * fs));
+            else if (! wantEngaged && std::abs (speed - 1.0) < 0.02) xfade -= (float) (1.0 / (0.04 * fs));
             else xfade += (float) (1.0 / (0.004 * fs));
             xfade = jlimit (0.0f, 1.0f, xfade);
             outL = L[i] + (dl - L[i]) * xfade;
             outR = R[i] + (dr - R[i]) * xfade;
-            if (xfade <= 0.0f && ! wantEngaged) { engaged = false; speed = 1.0; }
-        }
-        // character: tape hiss / vinyl crackle + rumble
-        const float wn = rnd.nextFloat() * 2.0f - 1.0f;
-        if (type == 1)
-        {
-            hissLp += 0.3f * (wn - hissLp);
-            const float h = (wn - hissLp) * noiseAmt * 0.5f;
-            outL += h; outR += h * 0.9f;
-        }
-        else
-        {
-            float cr = 0.0f;
-            if (rnd.nextFloat() < 0.0004f * (0.3f + noise)) cr = (rnd.nextFloat() * 2.0f - 1.0f) * 0.6f;
-            crackleLp += 0.5f * (cr - crackleLp);
-            rumblePh += (float) (17.0 / fs); if (rumblePh > 1.0f) rumblePh -= 1.0f;
-            const float c = (cr - crackleLp) * noise * 0.25f + std::sin (2.0f * (float) kPi * rumblePh) * noiseAmt * 0.3f;
-            outL += c; outR += c;
+            if (xfade <= 0.0f && ! wantEngaged) { engaged = false; fastRelease = false; speed = 1.0; }
         }
         L[i] = outL; R[i] = outR;
         if (++w >= size) w = 0;
@@ -383,5 +387,6 @@ void Deck::process (float* L, float* R, int n, int type, float ctl, float noise,
     engagedFlag = engaged;
     currentSpeed = engaged ? (float) speed : 1.0f;
     currentAction = action;
+    platterSpeed = (float) motor;
 }
-}
+} // namespace fx

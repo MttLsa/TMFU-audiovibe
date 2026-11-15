@@ -1,7 +1,7 @@
 #include "PluginEditor.h"
 #include "Scales.h"
 #ifndef JucePlugin_VersionString
- #define JucePlugin_VersionString "1.0.0"
+ #define JucePlugin_VersionString "1.1.0"
 #endif
 
 using namespace juce;
@@ -20,7 +20,7 @@ ExportPanel::ExportPanel()
     close.onClick = [this] { if (onClose) onClose(); };
 }
 
-void ExportPanel::setFiles (const Array<File>& f, const File& d) { files = f; folder = d; repaint(); }
+void ExportPanel::setFiles (const Array<File>& f, const File& d, const String& t) { files = f; folder = d; title = t; repaint(); }
 
 void ExportPanel::paint (Graphics& g)
 {
@@ -31,7 +31,7 @@ void ExportPanel::paint (Graphics& g)
     auto head = box.removeFromTop (34.0f);
     g.setColour (theme::header); g.fillRoundedRectangle (head, 8.0f); g.fillRect (head.withTrimmedTop (17.0f));
     g.setColour (theme::headerText); g.setFont (theme::font (16.0f, true));
-    g.drawText ("EXPORT  -  " + String (files.size()) + " loops printed", head.reduced (14.0f, 0), Justification::centredLeft);
+    g.drawText (title + "  -  " + String (files.size()) + " loops", head.reduced (14.0f, 0), Justification::centredLeft);
     // drag area
     g.setColour (theme::lcdBg); g.fillRoundedRectangle (dragArea.toFloat(), 6.0f);
     const float dash[] { 6.0f, 4.0f };
@@ -103,12 +103,12 @@ MainView::MainView (GroovulationProcessor& p) : proc (p), editor (p), master (p)
     raw.setTooltip ("RAW: loops play at their original pitch AND original tempo (PITCH / TEMPO still work)");
     run.setTooltip ("Internal clock (when the host is stopped)");
     randomAll.setTooltip ("Loads a random loop of the right type into every module");
-    print.setTooltip ("PRINT: renders each module (as it leaves the module) into PRINT/<snapshot>/<Module> - <snapshot>.wav");
-    exportBtn.setTooltip ("EXPORT: prints, then lets you drag all loops into Ableton Live / Logic (one audio track each)");
+    print.setTooltip ("PRINT: every loop as Groovulation plays it (processed) -> PRINT/<snapshot>/<Module> - <snapshot>.wav, then drag them into the DAW");
+    exportBtn.setTooltip ("EXPORT: the ORIGINAL loops, unprocessed -> PRINT/<snapshot>/<Module> - <snapshot> (original), then drag them into the DAW");
     menu.onClick = [this] { showMenu(); };
     randomAll.onClick = [this] { proc.randomAll(); };
-    print.onClick = [this] { startPrint (false); };
-    exportBtn.onClick = [this] { startPrint (true); };
+    print.onClick = [this] { startPrint(); };
+    exportBtn.onClick = [this] { startExport(); };
     for (auto* b : { &print, &exportBtn }) { b->setColour (TextButton::buttonColourId, theme::red); b->setColour (TextButton::textColourOffId, theme::white); }
     addChildComponent (exportPanel);
     exportPanel.onClose = [this] { exportPanel.setVisible (false); };
@@ -203,26 +203,32 @@ void MainView::showMenu()
     });
 }
 
-void MainView::startPrint (bool exportAfter)
+void MainView::startPrint()
 {
     if (proc.printing.load()) return;
     printProgress = 0.0f;
-    Thread::launch ([this, exportAfter, sp = SafePointer<MainView> (this)]
+    Thread::launch ([this, sp = SafePointer<MainView> (this)]
     {
         auto res = proc.printModules ([this] (float pr) { printProgress = pr; });
-        MessageManager::callAsync ([sp, res, exportAfter]
+        MessageManager::callAsync ([sp, res]
         {
             if (sp == nullptr) return;
             sp->printProgress = -1.0f;
-            if (exportAfter && res.ok)
-            {
-                sp->exportPanel.setFiles (res.files, res.folder);
-                sp->exportPanel.setVisible (true);
-                sp->exportPanel.toFront (false);
-            }
-            else if (res.ok) res.folder.revealToUser();
+            if (! res.ok) return;
+            sp->exportPanel.setFiles (res.files, res.folder, "PRINT (processed)");
+            sp->exportPanel.setVisible (true);
+            sp->exportPanel.toFront (false);
         });
     });
+}
+
+void MainView::startExport()
+{
+    auto res = proc.exportOriginals();
+    if (! res.ok) return;
+    exportPanel.setFiles (res.files, res.folder, "EXPORT (original loops)");
+    exportPanel.setVisible (true);
+    exportPanel.toFront (false);
 }
 
 void MainView::drawWoofer (Graphics& g, Rectangle<float> r) { drawGroovLogo (g, r, level, phase); }
@@ -263,14 +269,16 @@ void MainView::paint (Graphics& g)
     g.drawText (status, lr, Justification::centredLeft, true);
 
     // ---- section tabs above the strips
-    for (int s = 0; s < 3; ++s)
+    struct Sec { int a, b; const char* name; Colour c; };
+    const Sec secs[] { { 0, 4, "DRUMS", theme::red }, { 5, 5, "CUSTOM", theme::customC }, { 6, 6, "BASS", theme::amber },
+                       { 7, 9, "MELODIC", theme::teal }, { 10, 11, "VOX / FX", theme::olive } };
+    for (auto& sec : secs)
     {
-        const int a = s == 0 ? 0 : (s == 1 ? 5 : 6), b = s == 0 ? 4 : (s == 1 ? 5 : 8);
-        auto r = strips[(size_t) a]->getBounds().getUnion (strips[(size_t) b]->getBounds()).withY (stripsY - 20).withHeight (16).toFloat();
+        auto r = strips[(size_t) sec.a]->getBounds().getUnion (strips[(size_t) sec.b]->getBounds()).withY (stripsY - 20).withHeight (16).toFloat();
         g.setColour (theme::header); g.fillRoundedRectangle (r, 3.0f);
-        g.setColour (s == 0 ? theme::red : (s == 1 ? theme::amber : theme::teal)); g.fillRoundedRectangle (r.withWidth (5.0f), 2.0f);
+        g.setColour (sec.c); g.fillRoundedRectangle (r.withWidth (5.0f), 2.0f);
         g.setColour (theme::headerText); g.setFont (theme::font (11.5f, true));
-        g.drawText (s == 0 ? "DRUMS" : (s == 1 ? "BASS" : "MELODIC"), r.withTrimmedLeft (10.0f), Justification::centredLeft);
+        g.drawText (sec.name, r.withTrimmedLeft (10.0f), Justification::centredLeft);
     }
 }
 
@@ -289,13 +297,13 @@ void MainView::resized()
     randomAll.setBounds (bar.removeFromRight (96)); bar.removeFromRight (6);
     menu.setBounds (bar.removeFromRight (64));
 
-    // module strips: 5 drums | bass | 3 melodic
-    const int gap = 6, sectionGap = 18;
-    const int stripW = (designW - 2 * margin - 8 * gap - 2 * sectionGap) / 9;
+    // module strips: 5 drums | custom | bass | 3 melodic | vocals, fx
+    const int gap = 5, sectionGap = 14;
+    const int stripW = (designW - 2 * margin - (lb::numModules - 1) * gap - 4 * sectionGap) / lb::numModules;
     int x = margin;
     for (int m = 0; m < lb::numModules; ++m)
     {
-        if (m == 5 || m == 6) x += sectionGap;
+        if (m == 5 || m == 6 || m == 7 || m == 10) x += sectionGap;
         strips[(size_t) m]->setBounds (x, stripsY, stripW, stripsH);
         x += stripW + gap;
     }

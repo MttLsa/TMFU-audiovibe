@@ -7,7 +7,7 @@
 //   TAPE  - reel-to-reel machine. Drag the RIGHT reel up/down (up = pull faster, down = slow down / stop),
 //           shake the LEFT reel (wobble / drag), click between the reels = a random action.
 //   VINYL - turntable. Grab the record and move it (scratch: speed follows your hand, holding still = stop),
-//           START/STOP button (brake / spin up), click outside the record = a random action.
+//           START/STOP (brake, stays stopped), 33 / 45 and the pitch fader (speed + pitch) like a real deck.
 // -------------------------------------------------------------------------------------------------
 class DeckView : public juce::Component, private juce::Timer
 {
@@ -35,14 +35,15 @@ private:
     float reelRadius = 100, platterR = 200;
     float angleL = 0, angleR = 0, recordAngle = 0, packL = 0.75f;
     double lastTime = 0;
-    enum Grip { none, rightReel, leftReel, record } grip = none;
+    enum Grip { none, rightReel, leftReel, record, fader } grip = none;
     juce::Point<float> pressPos, lastPos;
     double lastMoveTime = 0, lastAngleTime = 0;
     float lastAngle = 0;
     float shownSpeed = 1.0f;
     double logoPhase = 0.0;
     juce::OwnedArray<juce::TextButton> buttons;
-    juce::Rectangle<float> startStopBtn;
+    juce::Rectangle<float> startStopBtn, rpm33, rpm45, faderArea;
+    float vinylRate() const;
     juce::Image backdrop;   // neutral background, rendered on resize
 };
 

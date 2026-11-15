@@ -11,7 +11,7 @@ class ExportPanel : public juce::Component
 {
 public:
     ExportPanel();
-    void setFiles (const juce::Array<juce::File>& f, const juce::File& folder);
+    void setFiles (const juce::Array<juce::File>& f, const juce::File& folder, const juce::String& title);
     void paint (juce::Graphics&) override;
     void resized() override;
     void mouseDrag (const juce::MouseEvent&) override;
@@ -19,6 +19,7 @@ public:
 private:
     juce::Array<juce::File> files;
     juce::File folder;
+    juce::String title;
     juce::TextButton reveal { "SHOW IN FINDER" }, close { "CLOSE" };
     juce::Rectangle<int> dragArea;
 };
@@ -30,12 +31,13 @@ public:
     ~MainView() override;
     void paint (juce::Graphics&) override;
     void resized() override;
-    static constexpr int designW = 1640, designH = 1000;
+    static constexpr int designW = 1840, designH = 1000;
     void selectModule (int m);
 private:
     void timerCallback() override;
     void showMenu();
-    void startPrint (bool exportAfter);
+    void startPrint();
+    void startExport();
     void openDeck (int type);
     void askText (const juce::String& title, const juce::String& initial, std::function<void (juce::String)> done);
     void drawWoofer (juce::Graphics&, juce::Rectangle<float>);

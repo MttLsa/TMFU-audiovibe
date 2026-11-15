@@ -6,13 +6,14 @@ using namespace juce;
 
 namespace
 {
-    enum P { pOn, pSolo, pGain, pPan, pShaper, pAtk, pDec, pSus, pRel, pPitch, pTempo, pFtype, pCut, pRes, pDirt,
+    enum P { pOn, pSolo, pGain, pPan, pAtk, pDec, pSus, pRel, pPitch, pTempo, pFtype, pCut, pRes, pDirt,
              pDtime, pDfb, pDmix, pDpp, pRsize, pRdecay, pRdamp, pRpre, pRmix,
-             pL1rate, pL1shape, pL1depth, pL1target, pL2rate, pL2shape, pL2depth, pL2target,
+             pL1rate, pL1shape, pL1depth, pL1target, pL2rate, pL2shape, pL2depth, pL2target, pL3rate, pL3shape, pL3depth, pL3target,
              pGrid, pSteps, pSlice, pSstart, pSend, pFade, pVola, pKeysrc, pCount };
-    const char* const pNames[pCount] { "on", "solo", "gain", "pan", "shaper", "atk", "dec", "sus", "rel", "pitch", "tempo", "ftype", "cut", "res", "dirt",
+    const char* const pNames[pCount] { "on", "solo", "gain", "pan", "atk", "dec", "sus", "rel", "pitch", "tempo", "ftype", "cut", "res", "dirt",
         "dtime", "dfb", "dmix", "dpp", "rsize", "rdecay", "rdamp", "rpre", "rmix",
         "lfo1rate", "lfo1shape", "lfo1depth", "lfo1target", "lfo2rate", "lfo2shape", "lfo2depth", "lfo2target",
+        "lfo3rate", "lfo3shape", "lfo3depth", "lfo3target",
         "grid", "steps", "slice", "sstart", "send", "fade", "vola", "keysrc" };
 
 }
@@ -39,6 +40,7 @@ GroovulationProcessor::GroovulationProcessor()
         volPoints[(size_t) m] = { { 0.0f, volUnityY }, { 1.0f, volUnityY } };
         volShared[(size_t) m] = std::make_shared<VolEnvelope> (volPoints[(size_t) m]);
         engines[(size_t) m].setVolEnvelope (volShared[(size_t) m]);
+        engines[(size_t) m].setMode (lb::usesBeats (m) ? 1 : (m == lb::custom ? -1 : 0));
         similarAnchor[(size_t) m] = -1;
         applied[(size_t) m] = 0.0f;
     }
@@ -77,9 +79,7 @@ void GroovulationProcessor::prepareToPlay (double sampleRate, int samplesPerBloc
         MessageManager::callAsync ([safe = std::weak_ptr<bool> (alive), this]
         {
             if (safe.expired()) return;
-            auto d = library->db();
-            for (int m = 0; m < lb::numModules; ++m)
-                if (const int i = d->indexOf (paths[(size_t) m]); i >= 0) loadAsync (m, d->entries[(size_t) i]);
+            for (int m = 0; m < lb::numModules; ++m) loadPath (m, paths[(size_t) m]);
         });
     else
         for (int m = 0; m < lb::numModules; ++m)
@@ -92,7 +92,7 @@ ModuleParams GroovulationProcessor::readParams (int m) const
     const auto& a = mp[(size_t) m];
     auto v = [&a] (int k) { return a[(size_t) k]->load(); };
     ModuleParams p;
-    p.on = v (pOn) > 0.5f; p.gainDb = v (pGain); p.pan = v (pPan); p.shaper = v (pShaper);
+    p.on = v (pOn) > 0.5f; p.gainDb = v (pGain); p.pan = v (pPan);
     p.atkMs = v (pAtk); p.decMs = v (pDec); p.sus = v (pSus); p.relMs = v (pRel);
     p.pitch = v (pPitch); p.tempo = v (pTempo);
     p.ftype = (int) v (pFtype); p.cut = v (pCut); p.res = v (pRes); p.dirt = v (pDirt);
@@ -100,6 +100,7 @@ ModuleParams GroovulationProcessor::readParams (int m) const
     p.rsize = v (pRsize); p.rdecay = v (pRdecay); p.rdamp = v (pRdamp); p.rpre = v (pRpre); p.rmix = v (pRmix);
     p.lfoRate[0] = (int) v (pL1rate); p.lfoShape[0] = (int) v (pL1shape); p.lfoDepth[0] = v (pL1depth); p.lfoTarget[0] = (int) v (pL1target);
     p.lfoRate[1] = (int) v (pL2rate); p.lfoShape[1] = (int) v (pL2shape); p.lfoDepth[1] = v (pL2depth); p.lfoTarget[1] = (int) v (pL2target);
+    p.lfoRate[2] = (int) v (pL3rate); p.lfoShape[2] = (int) v (pL3shape); p.lfoDepth[2] = v (pL3depth); p.lfoTarget[2] = (int) v (pL3target);
     p.grid = (int) v (pGrid); p.steps = (int) v (pSteps);
     p.slice = v (pSlice) > 0.5f; p.sStart = v (pSstart); p.sEnd = v (pSend); p.fade = v (pFade) > 0.5f; p.volA = v (pVola) > 0.5f;
     return p;
@@ -108,7 +109,8 @@ ModuleParams GroovulationProcessor::readParams (int m) const
 float GroovulationProcessor::computeSemitones (int m, const LoopData* l, const ModuleParams& p, bool raw) const
 {
     const bool scaleOn = apvts.getRawParameterValue ("scaleOn")->load() > 0.5f;
-    if (raw || ! scaleOn || ! lb::isTonal (m) || l == nullptr) return p.pitch;   // MANUAL / RAW: original pitch + knob
+    const bool tonal = lb::isTonal (m) || (m == lb::custom && l != nullptr && l->info.voiced >= 0.45f);
+    if (raw || ! scaleOn || ! tonal || l == nullptr) return p.pitch;   // MANUAL / RAW: original pitch + knob
     const bool byName = mp[(size_t) m][pKeysrc]->load() > 0.5f;
     int root; std::array<float, 12> chroma {};
     float tune = 0.0f;
@@ -165,7 +167,14 @@ void GroovulationProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
     BlockContext ctx;
     ctx.playing = playing; ctx.jumped = jumped; ctx.ppq = ppq; ctx.ppqPerSample = pps; ctx.bpm = bpm;
     ctx.raw = apvts.getRawParameterValue ("raw")->load() > 0.5f;
-    ctx.swing = apvts.getRawParameterValue ("swingOn")->load() > 0.5f ? apvts.getRawParameterValue ("swing")->load() : swingCommitted.load();
+    ctx.swing = apvts.getRawParameterValue ("swingOn")->load() > 0.5f ? apvts.getRawParameterValue ("swing")->load() : 0.0f;
+    // turntable: pitch fader and 33/45 change tempo AND pitch of everything (like a real record)
+    const int deckType = (int) apvts.getRawParameterValue ("deck")->load();
+    if (deckType == 2)
+        ctx.rateMul = (apvts.getRawParameterValue ("vinyl45")->load() > 0.5f ? 45.0 / (100.0 / 3.0) : 1.0)
+                    * (1.0 + apvts.getRawParameterValue ("vinylPitch")->load() / 100.0);
+    if ((lastDeckType == 2 && deckType != 2) || resync.exchange (false)) ctx.jumped = playing;   // back in sync with the host
+    lastDeckType = deckType;
     ctx.swingGrid = (int) apvts.getRawParameterValue ("swingGrid")->load();
 
     bool anySolo = false;
@@ -177,6 +186,7 @@ void GroovulationProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
     for (int m = 0; m < lb::numModules; ++m)
     {
         if (auto nl = std::atomic_exchange (&pending[(size_t) m], LoopPtr())) engines[(size_t) m].setLoop (nl);
+        if (clearRequest[(size_t) m].exchange (false)) engines[(size_t) m].setLoop (nullptr);
         auto& e = engines[(size_t) m];
         ModuleParams p = readParams (m);
         if (anySolo && mp[(size_t) m][pSolo]->load() < 0.5f) p.on = false;
@@ -237,11 +247,21 @@ void GroovulationProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
         beatRepeat.process (mainL, mainR, n, ppq, pps, playing, b);
     }
     else beatRepeat.reset();
-    deck.process (mainL, mainR, n, (int) apvts.getRawParameterValue ("deck")->load(), apvts.getRawParameterValue ("deckCtl")->load(),
-                  apvts.getRawParameterValue ("deckNoise")->load(), bpm);
+    deck.process (mainL, mainR, n, deckType, apvts.getRawParameterValue ("deckCtl")->load(), bpm,
+                  apvts.getRawParameterValue ("vinylMotor")->load() > 0.5f);
 
-    const float mg = fx::dbToGain (apvts.getRawParameterValue ("master")->load());
+    // master: -6 dB mix-bus headroom (12 modules summed) + gain, then a soft safety clipper (transparent below -1 dBFS)
+    const float mg = fx::dbToGain (apvts.getRawParameterValue ("master")->load()) * 0.5f;
     mainBus.applyGain (mg);
+    for (int c = 0; c < 2; ++c)
+    {
+        auto* d = mainBus.getWritePointer (c);
+        for (int i = 0; i < n; ++i)
+        {
+            const float x = d[i], a = std::abs (x);
+            if (a > 0.89f) d[i] = std::copysign (0.89f + 0.11f * std::tanh ((a - 0.89f) / 0.11f), x);
+        }
+    }
     float pk = 0.0f;
     for (int c = 0; c < 2; ++c) pk = jmax (pk, mainBus.getMagnitude (c, 0, n));
     masterPeak = jmax (pk, masterPeak.load() * 0.9f);
@@ -273,6 +293,42 @@ void GroovulationProcessor::loadAsync (int m, const LoopEntry& e)
     });
 }
 
+void GroovulationProcessor::loadPath (int m, const String& path)
+{
+    if (path.isEmpty()) return;
+    auto d = library->db();
+    if (const int i = d->indexOf (path); i >= 0 && m != lb::custom) { loadAsync (m, d->entries[(size_t) i]); return; }
+    if (! File (path).existsAsFile()) { if (m != lb::custom) randomLoop (m); return; }
+    // file outside the scanned folders (CUSTOM, moved files): analyse it in the background, then load
+    const int gen = ++loadGen[(size_t) m];
+    paths[(size_t) m] = path;
+    loader.addJob ([this, m, path, gen, safe = std::weak_ptr<bool> (alive)]
+    {
+        AudioFormatManager fm; fm.registerBasicFormats();
+        LoopEntry e; e.path = path; e.name = File (path).getFileNameWithoutExtension();
+        e.info = analysis::analyse (fm, File (path), path);
+        if (! e.info.ok) return;
+        MessageManager::callAsync ([this, m, e, gen, safe]
+        {
+            if (safe.expired() || gen != loadGen[(size_t) m]) return;
+            loadAsync (m, e);
+        });
+    });
+}
+
+void GroovulationProcessor::loadCustomFile (const File& f)
+{
+    if (f.existsAsFile()) loadPath (lb::custom, f.getFullPathName());
+}
+
+void GroovulationProcessor::clearCustom()
+{
+    ++loadGen[(size_t) lb::custom];
+    paths[(size_t) lb::custom] = {};
+    std::atomic_store (&shown[(size_t) lb::custom], LoopPtr());
+    clearRequest[(size_t) lb::custom] = true;
+}
+
 void GroovulationProcessor::selectLoop (int m, int index)
 {
     auto d = library->db();
@@ -282,6 +338,7 @@ void GroovulationProcessor::selectLoop (int m, int index)
 
 void GroovulationProcessor::stepLoop (int m, int dir)
 {
+    if (m == lb::custom) return;   // CUSTOM holds the user's own file
     auto d = library->db();
     const auto c = library->candidates (*d, m, bpmNow.load());
     if (c.empty()) return;
@@ -295,6 +352,7 @@ void GroovulationProcessor::stepLoop (int m, int dir)
 
 void GroovulationProcessor::randomLoop (int m)
 {
+    if (m == lb::custom) return;   // CUSTOM holds the user's own file
     auto d = library->db();
     const auto c = library->candidates (*d, m, bpmNow.load());
     if (c.empty()) return;
@@ -307,6 +365,7 @@ void GroovulationProcessor::randomLoop (int m)
 
 void GroovulationProcessor::similarLoop (int m)
 {
+    if (m == lb::custom) return;   // CUSTOM holds the user's own file
     auto d = library->db();
     const auto c = library->candidates (*d, m, bpmNow.load());
     const int cur = d->indexOf (paths[(size_t) m]);
@@ -338,25 +397,65 @@ void GroovulationProcessor::setVolEnvelope (int m, const VolEnvelope& e)
     volShared[(size_t) m] = sp;
 }
 
-void GroovulationProcessor::commitSwing()
-{
-    swingCommitted = apvts.getRawParameterValue ("swing")->load();
-}
-
 void GroovulationProcessor::changeListenerCallback (ChangeBroadcaster*)
 {
     // the library finished a scan: fill empty modules with random loops
     bool anyEmpty = false;
     for (auto& p : paths) anyEmpty |= p.isEmpty();
-    if (anyEmpty && (stateRestored || ! isTimerRunning()))
-        for (int m = 0; m < lb::numModules; ++m) if (paths[(size_t) m].isEmpty()) randomLoop (m);
+    if (anyEmpty && (stateRestored || started))
+        for (int m = 0; m < lb::numModules; ++m) if (paths[(size_t) m].isEmpty() && m != lb::custom) randomLoop (m);
     uiState.setProperty ("dbChanged", (int) uiState.getProperty ("dbChanged", 0) + 1, nullptr);
 }
 
 void GroovulationProcessor::timerCallback()
 {
-    stopTimer();
-    if (! stateRestored) randomAll();
+    if (! started)
+    {
+        started = true;
+        if (! stateRestored) randomAll();
+        startTimer (500);
+    }
+    updatePools();
+}
+
+// LFO -> Loop: each module that uses it gets a pool of up to 8 similar loops (max 8 bars) preloaded in RAM,
+// so the engine can switch loops instantly (quantised to the grid, crossfaded) without touching the disk.
+void GroovulationProcessor::updatePools()
+{
+    auto d = library->db();
+    for (int m = 0; m < lb::numModules; ++m)
+    {
+        const bool wants = readParams (m).usesLoopLfo() && m != lb::custom;
+        const String key = wants ? paths[(size_t) m] + "@" + String (sr) : String();
+        if (key == poolKey[(size_t) m]) continue;
+        poolKey[(size_t) m] = key;
+        if (! wants) { engines[(size_t) m].setPool (nullptr); continue; }
+        const int cur = d->indexOf (paths[(size_t) m]);
+        if (cur < 0) continue;
+        std::vector<int> pool { cur };
+        std::vector<int> cand;
+        for (int i : library->candidates (*d, m, bpmNow.load())) if (d->entries[(size_t) i].info.beats <= 32) cand.push_back (i);
+        std::set<int> used { cur };
+        while ((int) pool.size() < 8)
+        {
+            const int nx = LoopLibrary::nearest (*d, cur, used, cand);
+            if (nx < 0) break;
+            used.insert (nx); pool.push_back (nx);
+        }
+        std::vector<LoopEntry> entries;
+        for (int i : pool) entries.push_back (d->entries[(size_t) i]);
+        const double rate = sr;
+        loader.addJob ([this, m, entries, rate, key, safe = std::weak_ptr<bool> (alive)]
+        {
+            auto pl = std::make_shared<LoopPool>();
+            for (auto& e : entries) if (auto l = LoopLibrary::load (e, rate)) pl->push_back (l);
+            MessageManager::callAsync ([this, m, pl, key, safe]
+            {
+                if (safe.expired() || poolKey[(size_t) m] != key) return;
+                engines[(size_t) m].setPool (pl);
+            });
+        });
+    }
 }
 
 //==============================================================================
@@ -381,7 +480,6 @@ void GroovulationProcessor::getStateInformation (MemoryBlock& dest)
     }
     state.removeChild (state.getChildWithName ("MODULES"), nullptr);
     state.appendChild (mods, nullptr);
-    state.setProperty ("swingCommitted", swingCommitted.load(), nullptr);
     state.setProperty ("snapshot", snapName, nullptr);
     state.removeChild (state.getChildWithName ("UI"), nullptr);
     ValueTree ui ("UI");
@@ -397,7 +495,6 @@ void GroovulationProcessor::setStateInformation (const void* data, int size)
     if (xml == nullptr || ! xml->hasTagName (apvts.state.getType())) return;
     auto state = ValueTree::fromXml (*xml);
     stateRestored = true;
-    swingCommitted = (float) (double) state.getProperty ("swingCommitted", 0.0);
     snapName = state.getProperty ("snapshot", "Untitled").toString();
     if (auto ui = state.getChildWithName ("UI"); ui.isValid())
     {
@@ -424,19 +521,10 @@ void GroovulationProcessor::setStateInformation (const void* data, int size)
     // loops: by path (re-analysed if needed); missing files -> random loop of the right type
     auto apply = [this, wanted]
     {
-        auto d = library->db();
         for (int m = 0; m < lb::numModules; ++m)
         {
-            const int i = d->indexOf (wanted[(size_t) m]);
-            if (i >= 0) loadAsync (m, d->entries[(size_t) i]);
-            else if (wanted[(size_t) m].isNotEmpty() && File (wanted[(size_t) m]).existsAsFile())
-            {
-                // file outside the scanned folders: analyse on the fly
-                LoopEntry e; e.path = wanted[(size_t) m]; e.name = File (e.path).getFileNameWithoutExtension();
-                e.info = analysis::analyse (library->formats(), File (e.path), e.path);
-                if (e.info.type < 0) e.info.type = m;
-                loadAsync (m, e);
-            }
+            if (wanted[(size_t) m].isNotEmpty()) loadPath (m, wanted[(size_t) m]);
+            else if (m == lb::custom) clearCustom();
             else randomLoop (m);
         }
     };
@@ -475,7 +563,7 @@ GroovulationProcessor::PrintResult GroovulationProcessor::printModules (std::fun
     BlockContext base;
     base.playing = true; base.bpm = bpm; base.ppqPerSample = bpm / 60.0 / rate;
     base.raw = apvts.getRawParameterValue ("raw")->load() > 0.5f;
-    base.swing = apvts.getRawParameterValue ("swingOn")->load() > 0.5f ? apvts.getRawParameterValue ("swing")->load() : swingCommitted.load();
+    base.swing = apvts.getRawParameterValue ("swingOn")->load() > 0.5f ? apvts.getRawParameterValue ("swing")->load() : 0.0f;
     base.swingGrid = (int) apvts.getRawParameterValue ("swingGrid")->load();
     bool anySolo = false;
     for (int m = 0; m < lb::numModules; ++m) anySolo |= mp[(size_t) m][pSolo]->load() > 0.5f;
@@ -491,12 +579,13 @@ GroovulationProcessor::PrintResult GroovulationProcessor::printModules (std::fun
         BlockContext ctx = base;
         ctx.semitones = computeSemitones (m, loop.get(), p, ctx.raw);
         ModuleEngine e;
+        e.setMode (lb::usesBeats (m) ? 1 : (m == lb::custom ? -1 : 0));
         constexpr int bs = 512;
         e.prepare (rate, bs);
         e.setLoop (loop);
         e.setVolEnvelope (std::make_shared<VolEnvelope> (volPoints[(size_t) m]));
         const double region = ModuleEngine::regionBeats (*loop, p);
-        const double uPerPpq = ctx.raw ? loop->bpm / bpm * p.tempo : p.tempo;
+        const double uPerPpq = ctx.raw ? loop->bpm / bpm * p.tempo : p.tempo;   // (q = ppq * tempo from a fresh start)
         const double cyclePpq = region / jmax (1e-6, uPerPpq);
         const int cycle = (int) std::lround (cyclePpq * 60.0 / bpm * rate);
         if (cycle <= 0) continue;
@@ -531,6 +620,26 @@ GroovulationProcessor::PrintResult GroovulationProcessor::printModules (std::fun
     res.ok = ! res.files.isEmpty();
     res.message = res.ok ? String (res.files.size()) + " loops printed to " + folder.getFullPathName() : String ("No loops to print");
     printing = false;
+    return res;
+}
+
+GroovulationProcessor::PrintResult GroovulationProcessor::exportOriginals()
+{
+    // EXPORT: the original, unprocessed files of the loaded loops -> PRINT/<snapshot>/<Module> - <snapshot> (original).<ext>
+    PrintResult res;
+    const auto folder = LoopLibrary::printFolder().getChildFile (snapName);
+    folder.createDirectory();
+    res.folder = folder;
+    for (int m = 0; m < lb::numModules; ++m)
+    {
+        const File src (paths[(size_t) m]);
+        if (paths[(size_t) m].isEmpty() || ! src.existsAsFile()) continue;
+        const auto dst = folder.getChildFile (File::createLegalFileName (lb::moduleName (m) + " - " + snapName + " (original)") + src.getFileExtension());
+        dst.deleteFile();
+        if (src.copyFileTo (dst)) res.files.add (dst);
+    }
+    res.ok = ! res.files.isEmpty();
+    res.message = res.ok ? String (res.files.size()) + " original loops exported to " + folder.getFullPathName() : String ("No loops to export");
     return res;
 }
 
