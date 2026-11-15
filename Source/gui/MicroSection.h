@@ -124,6 +124,7 @@ private:
         MicroSection& owner; int ch;
         Toggle mute { "M", theme::accentA };
         juce::TextButton play { juce::String::fromUTF8 ("\xe2\x96\xb6") };
+        NudgeBox nudge { theme::accentA };
         float flash = 0.0f; int lastHits = 0;
     };
     juce::OwnedArray<ChannelRow> rows;

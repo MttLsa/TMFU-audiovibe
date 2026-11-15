@@ -744,6 +744,9 @@ LimeModulePanel::LimeModulePanel (TwinboxProcessor& p, int v, bool b2) : Control
     power->setTooltip (String (limeVoiceName (v)) + " on / mute");
     addAndMakeVisible (*power);
     if (big) { wave = std::make_unique<WaveView> (p, v); addAndMakeVisible (*wave); }
+    nudge = std::make_unique<NudgeBox> (theme::accentB);              // per-module timing offset
+    nudge->attach (p.apvts, b (v, lv::nudge));
+    addAndMakeVisible (*nudge);
     if (v == tie || v == pod)
     {
         scaleBtn = std::make_unique<Toggle> ("SCALE", theme::accentB);
@@ -806,7 +809,10 @@ void LimeModulePanel::resized()
         nameBtn->setBounds (scaleBtn->getX() - (big ? 50 : 42), 3, big ? 46 : 40, headerH - 6);
     }
     auto r = content();
-    selector->setBounds (r.removeFromTop (big ? 28 : 20));
+    auto selRow = r.removeFromTop (big ? 28 : 20);
+    nudge->setBounds (selRow.removeFromRight (big ? 78 : 60));
+    selRow.removeFromRight (3);
+    selector->setBounds (selRow);
     r.removeFromTop (3);
     if (wave) { wave->setBounds (r.removeFromTop (jmax (100, r.getHeight() / 3))); r.removeFromTop (6); }
     layoutRows (r, rows);

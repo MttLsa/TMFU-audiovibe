@@ -178,6 +178,7 @@ void MicroEngine::bind (juce::AudioProcessorValueTreeState& apvts)
         for (size_t i = 0; i < sfx.size(); ++i)
             cp[(size_t) ch].v[i] = apvts.getRawParameterValue (a (ch, sfx[i]));
         cp[(size_t) ch].v[sfx.size()] = apvts.getRawParameterValue (a (ch, mt::mute));
+        pNudge[(size_t) ch] = apvts.getRawParameterValue (a (ch, mt::nudge));
     }
     pPattern  = apvts.getRawParameterValue (aPattern);
     pSwing    = apvts.getRawParameterValue (aSwing);
@@ -241,6 +242,9 @@ void MicroEngine::process (float* L, float* R, int numSamples, const BlockTime& 
     const bool manualFill = pFill->load() > 0.5f;
     const int fillRateIdx = (int) pFillRate->load();       // 0 = manual, 1..7 -> every 2..8 loops
 
+    bool reset = false;
+    const BlockTime btl = look.next (bt, msToPpq (kNudgeMaxMs + 1.0, bt.bpm), reset);   // look-ahead for negative nudge
+    if (reset || ! bt.playing) queue.clear();
     if (! bt.playing)
     {
         currentPattern.store (wantedPattern);
@@ -250,11 +254,11 @@ void MicroEngine::process (float* L, float* R, int numSamples, const BlockTime& 
     else
     {
         const double swing = pSwing->load() * 0.01;
-        forEachOnset (bt, 0.25, swing, [&] (long long k, double ppq)
+        forEachOnset (btl, 0.25, swing, [&] (long long k, double ppq)
         {
             int cur = currentPattern.load();
             int len = juce::jlimit (1, NS, patterns[(size_t) cur].length.load());
-            if (k % len == 0 || bt.justStarted)
+            if (k % len == 0 || btl.justStarted)
             {
                 cur = wantedPattern;               // queued pattern change takes effect at loop start
                 currentPattern.store (cur);
@@ -267,16 +271,20 @@ void MicroEngine::process (float* L, float* R, int numSamples, const BlockTime& 
             fillNow.store (fillOn);
             playStep.store (step);
 
-            const int off = bt.toSample (ppq);
             auto& pat = patterns[(size_t) cur];
             for (int ch = 0; ch < NC; ++ch)
             {
                 if (patch[(size_t) ch].mute) continue;
                 const uint8_t f = pat.steps[(size_t) ch][(size_t) step].load();
                 if ((f & trig) || (fillOn && (f & fill)))
-                    push ({ off, ch, (f & accent) ? 1.0f : 0.5f });
+                {
+                    const double nudge = juce::jlimit (-kNudgeMaxMs, kNudgeMaxMs, (double) pNudge[(size_t) ch]->load());
+                    queue.add (ppq + msToPpq (nudge, bt.bpm), { 0, ch, (f & accent) ? 1.0f : 0.5f });
+                }
             }
         });
+        // fire the (nudged) events that fall inside this block
+        queue.flush (bt.ppqEnd(), [&] (double ppq, TriggerEvent e) { e.offset = bt.toSample (ppq); push (e); });
     }
 
     std::stable_sort (ev.begin(), ev.begin() + nev, [] (const TriggerEvent& x, const TriggerEvent& y) { return x.offset < y.offset; });

@@ -106,6 +106,7 @@ Layout createLayout()
         addFloat  (l, id (mt::pan),     p + "Pan", NormalisableRange<float> (-100.f, 100.f), d.pan, panText);
         addBool   (l, id (mt::choke),   p + "Choke", d.choke);
         addBool   (l, id (mt::mute),    p + "Mute", false);
+        addFloat  (l, id (mt::nudge),   p + "Nudge", NormalisableRange<float> (-50.f, 50.f, 0.1f), 0.f, [] (float x, int) { return (x > 0.04f ? "+" : "") + String (x, std::abs (x - std::round (x)) > 0.04f ? 1 : 0) + " ms"; });
         addFloat  (l, id (mt::velOsc),  p + "Vel > Osc", NormalisableRange<float> (0.f, 200.f), 60.f, pctText);
         addFloat  (l, id (mt::velNoise),p + "Vel > Noise", NormalisableRange<float> (0.f, 200.f), 60.f, pctText);
         addFloat  (l, id (mt::velMod),  p + "Vel > Mod", NormalisableRange<float> (0.f, 200.f), 0.f, pctText);
@@ -135,6 +136,7 @@ Layout createLayout()
         if (v <= hat) addFloat (l, id (lv::acc), P + "Accent", pctR, 50.f, pctText);
         if (v == tie || v == pod) addFloat (l, id (lv::vamt), P + "V>A", pctR, 70.f, pctText);
         if (sampler)  addInt   (l, id (lv::wav), P + "Wave", 0, 255, 0);
+        if (sampler)  addFloat (l, id (lv::nudge), P + "Nudge", NormalisableRange<float> (-50.f, 50.f, 0.1f), 0.f, [] (float x, int) { return (x > 0.04f ? "+" : "") + String (x, std::abs (x - std::round (x)) > 0.04f ? 1 : 0) + " ms"; });
         addFloat (l, id (lv::tune), P + "Tune", NormalisableRange<float> (-24.f, 24.f), 0.f, stText);
         if (v == tie || v == pulp) addFloat (l, id (lv::port), P + "Portamento", pctR, 0.f, pctText);
         if (sampler && v != hat) addFloat (l, id (lv::st), P + "Start", pctR, 0.f, pctText);

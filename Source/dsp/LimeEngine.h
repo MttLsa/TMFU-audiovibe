@@ -72,6 +72,9 @@ public:
     void loadDefaultPatterns();
 
 private:
+    struct Ev { int offset; int target; float vel; float value; bool isMod; int forced = -1; };
+    LookaheadWindow look;
+    NudgeQueue<Ev> queue;
     struct Voice
     {
         SamplePtr smp;

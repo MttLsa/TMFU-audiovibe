@@ -42,6 +42,7 @@ namespace params
         inline const char* pan       = "pan";
         inline const char* choke     = "choke";
         inline const char* mute      = "mute";
+        inline const char* nudge     = "nudge";      // per-channel timing offset, ms (-50..+50)
         inline const char* velOsc    = "vel_osc";
         inline const char* velNoise  = "vel_noise";
         inline const char* velMod    = "vel_mod";
@@ -87,7 +88,8 @@ namespace params
                           *vamt = "vamt", *port = "port", *att = "a", *fm = "fm", *mp = "mp", *noise = "noise", *vel = "vel",
                           *zap = "zap",
                           *trkLo = "lo", *trkHi = "hi", *src = "src", *inGain = "in", *osc = "osc",
-                          *comb = "comb", *fb = "fb", *freq = "freq", *scale = "scale", *nameKey = "namekey";
+                          *comb = "comb", *fb = "fb", *freq = "freq", *scale = "scale", *nameKey = "namekey",
+                          *nudge = "nudge";   // per-module timing offset, ms (-50..+50)
     }
 
     // sequencer / remix / global B

@@ -337,3 +337,82 @@ void drawMeter (Graphics& g, Rectangle<float> r, float level, Colour c)
     else
         g.setColour (level > 1.0f ? Colours::red : c), g.fillRoundedRectangle (r.withTrimmedTop (r.getHeight() * (1.0f - p)), 2.0f);
 }
+
+//==============================================================================
+//  NudgeBox
+//==============================================================================
+NudgeBox::NudgeBox (Colour a) : accent (a)
+{
+    for (auto* b : { &up, &down })
+    {
+        b->setRepeatSpeed (350, 60);
+        b->setColour (TextButton::buttonColourId, theme::panel2);
+        b->setColour (TextButton::textColourOffId, theme::textDim);
+        addAndMakeVisible (*b);
+    }
+    up.onClick   = [this] { step (ModifierKeys::currentModifiers.isShiftDown() ? 0.1f : 1.0f); };
+    down.onClick = [this] { step (ModifierKeys::currentModifiers.isShiftDown() ? -0.1f : -1.0f); };
+    up.setTooltip ("Later (delay): +1 ms, Shift +0.1 ms");
+    down.setTooltip ("Earlier (anticipation): -1 ms, Shift -0.1 ms");
+    setTooltip ("Nudge: plays this track earlier (-) or later (+), -50..+50 ms. Drag or use the arrows; double-click = 0");
+}
+
+void NudgeBox::attach (AudioProcessorValueTreeState& s, const String& id)
+{
+    param = s.getParameter (id);
+    jassert (param != nullptr);
+    if (param == nullptr) return;
+    att = std::make_unique<ParameterAttachment> (*param, [this] (float v) { value = v; repaint(); }, s.undoManager);
+    att->sendInitialUpdate();
+}
+
+String NudgeBox::format (float ms)
+{
+    const float r = std::round (ms * 10.0f) / 10.0f;
+    if (std::abs (r) < 0.05f) return "0 ms";
+    const bool frac = std::abs (r - std::round (r)) > 0.05f;
+    return (r > 0 ? "+" : "") + String (r, frac ? 1 : 0) + " ms";
+}
+
+void NudgeBox::setValue (float ms)
+{
+    ms = jlimit (-50.0f, 50.0f, std::round (ms * 10.0f) / 10.0f);
+    if (att) att->setValueAsCompleteGesture (ms); else { value = ms; repaint(); }
+}
+
+void NudgeBox::step (float ms) { setValue (value + ms); }
+
+void NudgeBox::resized()
+{
+    auto r = getLocalBounds();
+    auto arrows = r.removeFromRight (jmin (14, getWidth() / 3));
+    up.setBounds (arrows.removeFromTop (arrows.getHeight() / 2));
+    down.setBounds (arrows);
+}
+
+void NudgeBox::paint (Graphics& g)
+{
+    auto r = getLocalBounds().withTrimmedRight (jmin (14, getWidth() / 3) + 1).toFloat();
+    g.setColour (Colours::black.withAlpha (0.45f));
+    g.fillRoundedRectangle (r, 2.0f);
+    const bool zero = std::abs (value) < 0.05f;
+    g.setColour (zero ? theme::textDim : accent);
+    g.drawRoundedRectangle (r.reduced (0.5f), 2.0f, zero ? 0.6f : 1.0f);
+    g.setFont (theme::font (jlimit (9.0f, 12.0f, r.getHeight() * 0.55f), ! zero));
+    g.drawText (format (value), r.reduced (2.0f, 0.0f), Justification::centred);
+}
+
+void NudgeBox::mouseDown (const MouseEvent&) { dragStart = value; if (att) att->beginGesture(); }
+void NudgeBox::mouseDrag (const MouseEvent& e)
+{
+    const float per = e.mods.isShiftDown() ? 0.02f : 0.2f;     // ms per pixel
+    const float v = jlimit (-50.0f, 50.0f, std::round ((dragStart - (float) e.getDistanceFromDragStartY() * per) * 10.0f) / 10.0f);
+    if (att) att->setValueAsPartOfGesture (v); else value = v;
+    repaint();
+}
+void NudgeBox::mouseUp (const MouseEvent&) { if (att) att->endGesture(); }
+void NudgeBox::mouseDoubleClick (const MouseEvent&) { setValue (0.0f); }
+void NudgeBox::mouseWheelMove (const MouseEvent& e, const MouseWheelDetails& w)
+{
+    if (std::abs (w.deltaY) > 0.0f) step ((w.deltaY > 0 ? 1.0f : -1.0f) * (e.mods.isShiftDown() ? 0.1f : 1.0f));
+}

@@ -110,6 +110,34 @@ private:
 };
 
 // -------------------------------------------------------------------------------------
+//  NudgeBox: small ms display + up / down arrows for a track's timing offset (-50..+50 ms).
+//  Arrows: 1 ms (Shift: 0.1 ms, hold to repeat). Drag / wheel on the display; double-click = 0.
+// -------------------------------------------------------------------------------------
+class NudgeBox : public juce::Component, public juce::SettableTooltipClient
+{
+public:
+    explicit NudgeBox (juce::Colour accent = theme::accentA);
+    void attach (juce::AudioProcessorValueTreeState& s, const juce::String& paramId);
+    void paint (juce::Graphics&) override;
+    void resized() override;
+    void mouseDown (const juce::MouseEvent&) override;
+    void mouseDrag (const juce::MouseEvent&) override;
+    void mouseUp (const juce::MouseEvent&) override;
+    void mouseDoubleClick (const juce::MouseEvent&) override;
+    void mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
+    float getValue() const { return value; }
+    void step (float ms);
+    static juce::String format (float ms);
+private:
+    void setValue (float ms);
+    juce::Colour accent;
+    float value = 0.0f, dragStart = 0.0f;
+    juce::TextButton up { juce::String::fromUTF8 ("\xe2\x96\xb2") }, down { juce::String::fromUTF8 ("\xe2\x96\xbc") };
+    juce::RangedAudioParameter* param = nullptr;
+    std::unique_ptr<juce::ParameterAttachment> att;
+};
+
+// -------------------------------------------------------------------------------------
 //  Titled panel with optional "expand" button (opens a large editor window)
 // -------------------------------------------------------------------------------------
 class Panel : public juce::Component

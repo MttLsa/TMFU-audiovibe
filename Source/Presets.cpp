@@ -20,7 +20,7 @@ namespace
     // parameters that a preset never touches: module on/off (incl. Pulp), pattern selection / chain, scale settings
     bool keepOnPresetLoad (const String& id)
     {
-        return id.endsWith ("_on") || id.startsWith ("b_chain") || id == params::bPattern || id.contains ("scale");
+        return id.endsWith ("_on") || id.endsWith ("_nudge") || id.startsWith ("b_chain") || id == params::bPattern || id.contains ("scale");
     }
 
     std::vector<PresetLibrary::Item> parse (const char* data, int size)

@@ -154,6 +154,7 @@ private:
     std::unique_ptr<SampleSelector> selector;
     std::unique_ptr<WaveView> wave;
     std::unique_ptr<Toggle> power, scaleBtn, nameBtn;
+    std::unique_ptr<NudgeBox> nudge;
     juce::TextButton noteBtn { juce::String::fromUTF8 ("\xe2\x99\xaa") };
 };
 

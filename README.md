@@ -1,4 +1,4 @@
-# TWINBOX — groovebox ibrida VST3 / AU (v2.7)
+# TWINBOX — groovebox ibrida VST3 / AU (v2.8)
 
 Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in un solo plugin:
 
@@ -8,7 +8,7 @@ Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in 
 | **B — Groovebox** (in basso) | NI Reaktor **Limelite 1.3** | 6 voci (Kick, Snare, Hat, Tie, Pod, **Pulp**), sequencer A–D fino a **64 step** con catena di pattern e motore **Remix**, effetti Filter / EQ / Magic / Delay / xFx (23 modi) / Mix / Out |
 | **GLOBAL CONTROL** (a destra, comprimibile) | — | Crossfader A↔B, filtro master **Cutoff** (manopola grande) HP/BP/LP + **Resonance**, Master, Tempo / Run |
 
-📖 **Manuale d'uso completo (PDF):** [docs/Twinbox_Manuale_v2.7.0.pdf](docs/Twinbox_Manuale_v2.7.0.pdf)
+📖 **Manuale d'uso completo (PDF):** [docs/Twinbox_Manuale_v2.8.0.pdf](docs/Twinbox_Manuale_v2.8.0.pdf)
 
 ![Interfaccia principale](docs/gui_main.png)
 
@@ -40,6 +40,11 @@ Parametri, nomi e organizzazione vengono dall'analisi del file originale (dettag
 - 64 step in 4 pagine.
 - Catena di pattern: **ON**, lunghezza, 8 slot A–D, **LOCK**. Più COPY / PASTE.
 
+**NUDGE per traccia** (Sezione A: ogni canale nella colonna di sinistra; Sezione B: ogni modulo sample, a destra del menu del campione)
+- Piccolo display in millisecondi con le frecce ▲▼: valori negativi = la traccia suona **in anticipo**, positivi = **in ritardo**, da −50 a +50 ms.
+- ▲/▼ = ±1 ms (Shift ±0,1 ms, tieni premuto per ripetere); trascina sul display o usa la rotella; doppio clic = 0.
+- Non aggiunge latenza: il sequencer legge le note con 51 ms di anticipo. Il nudge vale per le note del sequencer; le note MIDI in ingresso suonano subito. Caricare un preset non cambia il nudge.
+
 **REMIX**
 - **NOW!**, **SHIFT**, **REMIX** (127 schemi di variazione), Rate (OFF / 2 / 4 / 8 / 12 / 16 battute).
 - SWING, **1/2** (metà tempo), START, lunghezze LEN / TIE / POD / MOD con **Stretch**.
@@ -53,7 +58,7 @@ Parametri, nomi e organizzazione vengono dall'analisi del file originale (dettag
 
 | Voce | Controlli |
 |---|---|
-| **Kick** | GAIN, ACC, PAN, **WAV** (selezione campione), TUNE, ST, H, D, SAT, SHP, SM, MOD (`-- / wav / tune / cut`), LO (low cut), CUT, RES |
+| **Kick** | NUDGE, GAIN, ACC, PAN, **WAV** (selezione campione), TUNE, ST, H, D, SAT, SHP, SM, MOD (`-- / wav / tune / cut`), LO (low cut), CUT, RES |
 | **Snare** | come il Kick, con filtro LP/BP/HP al posto del low cut, MOD anche su `flam`, e il controllo FLAM |
 | **Hat** | GAIN, ACC, PAN, TUNE, CD, OD, LINK, MOD, CUT (passa-alto), RES. Un solo campione; il partner "open" è opzionale |
 | **Tie** | voce tonale: GAIN, V>A, PAN, TUNE, PORT, ST, A, D, FM, MP, NOISE, SAT, VEL (`wav / tune / att / dcy / st / fm / cut`), filtro LP/BP/HP, CUT, RES |
@@ -159,7 +164,7 @@ JUCE 8.0.4 viene scaricato in automatico.
 Il workflow `.github/workflows/build.yml`:
 - compila le tre piattaforme;
 - su macOS verifica l'AU con `auval`;
-- produce l'installer **`Twinbox-2.7.0-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
+- produce l'installer **`Twinbox-2.8.0-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
 
 Gli script che generano campioni e preset (`resources/`) sono `tools/gen_samples.py` e `tools/gen_presets.py`.
 

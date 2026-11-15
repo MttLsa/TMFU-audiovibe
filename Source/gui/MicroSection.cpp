@@ -345,6 +345,8 @@ MicroSection::ChannelRow::ChannelRow (MicroSection& o, int c) : owner (o), ch (c
     mute.setTooltip ("Mute channel " + String (ch + 1));
     play.setTooltip ("Audition");
     play.onClick = [this] { owner.proc.micro.auditionChannel (ch, 1.0f); };
+    nudge.attach (owner.proc.apvts, a (ch, mt::nudge));
+    addAndMakeVisible (nudge);
     addAndMakeVisible (mute);
     addAndMakeVisible (play);
 }
@@ -364,7 +366,7 @@ void MicroSection::ChannelRow::paint (Graphics& g)
     g.drawText (String (ch + 1), 20, 0, 16, getHeight(), Justification::centred);
     g.setColour (theme::text);
     g.setFont (theme::font (12.5f, sel));
-    g.drawText (owner.proc.channelName (ch), 38, 0, getWidth() - 100, getHeight(), Justification::centredLeft);
+    g.drawText (owner.proc.channelName (ch), 38, 0, jmax (10, nudge.getX() - 40), getHeight(), Justification::centredLeft);
 }
 
 void MicroSection::ChannelRow::resized()
@@ -373,6 +375,8 @@ void MicroSection::ChannelRow::resized()
     mute.setBounds (r.removeFromRight (26));
     r.removeFromRight (3);
     play.setBounds (r.removeFromRight (26));
+    r.removeFromRight (3);
+    nudge.setBounds (r.removeFromRight (60));
 }
 
 void MicroSection::ChannelRow::mouseDown (const MouseEvent&) { owner.selectChannel (ch); }
@@ -579,7 +583,7 @@ void MicroSection::resized()
     storeL.setBounds (header.removeFromRight (70).withTrimmedTop (14).reduced (2, 2));
 
     r.removeFromTop (6);
-    auto left = r.removeFromLeft (184);
+    auto left = r.removeFromLeft (244);
     r.removeFromLeft (6);
     const int rowH = jmin (28, (left.getHeight() - 70) / numMicroChannels);
     for (auto* row : rows) row->setBounds (left.removeFromTop (rowH).reduced (0, 1));

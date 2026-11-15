@@ -10,11 +10,11 @@ static constexpr double kPi = juce::MathConstants<double>::pi;
 namespace
 {
     enum K { kOn, kGain, kPan, kAcc, kVamt, kWav, kTune, kPort, kSt, kHold, kDcy, kSat, kShp, kSm, kAtt, kCd, kOd, kLink,
-             kFm, kMp, kNoise, kZap, kMod, kVel, kLo, kFt, kFlam, kCut, kRes, kTrkLo, kTrkHi, kSrc, kIn, kOsc, kComb, kFb, kFreq, kScale, kName, kCount };
+             kFm, kMp, kNoise, kZap, kMod, kVel, kLo, kFt, kFlam, kCut, kRes, kTrkLo, kTrkHi, kSrc, kIn, kOsc, kComb, kFb, kFreq, kScale, kName, kNudge, kCount };
     const char* keyNames[kCount] { lv::on, lv::gain, lv::pan, lv::acc, lv::vamt, lv::wav, lv::tune, lv::port, lv::st, lv::hold, lv::dcy,
                                    lv::sat, lv::shp, lv::sm, lv::att, lv::cd, lv::od, lv::link, lv::fm, lv::mp, lv::noise, lv::zap,
                                    lv::mod, lv::vel, lv::lo, lv::ft, lv::flam, lv::cut, lv::res, lv::trkLo, lv::trkHi, lv::src, lv::inGain,
-                                   lv::osc, lv::comb, lv::fb, lv::freq, lv::scale, lv::nameKey };
+                                   lv::osc, lv::comb, lv::fb, lv::freq, lv::scale, lv::nameKey, lv::nudge };
     inline float G (std::atomic<float>* a, float def) { return a != nullptr ? a->load() : def; }
     inline float decayTau (float pct) { return (float) (0.005 * std::pow (800.0, pct * 0.01)); }   // 5 ms … 4 s
     inline int   moduleOf (int voice) { return voice; }                                             // kick..pod map 1:1
@@ -410,7 +410,6 @@ void LimeEngine::process (float* L, float* R, int n, const BlockTime& bt, const 
     if ((int) dryL.size() < n) for (auto* b : { &dryL, &dryR, &tieL, &tieR, &sendL, &sendR, &dlyL, &dlyR, &xL, &xR, &srcMono }) b->assign ((size_t) n, 0.0f);
     for (auto* b : { &dryL, &dryR, &tieL, &tieR, &srcMono }) std::fill (b->begin(), b->begin() + n, 0.0f);
 
-    struct Ev { int offset; int target; float vel; float value; bool isMod; int forced = -1; };
     std::array<Ev, 1024> ev;
     int nev = 0;
     auto push = [&] (Ev e) { if (nev < (int) ev.size()) ev[(size_t) nev++] = e; };
@@ -436,6 +435,18 @@ void LimeEngine::process (float* L, float* R, int n, const BlockTime& bt, const 
     const int shift = (int) p (bShift)->load();
     auto accVel = [this] (int voice, uint8_t f) { const float a = G (vk[(size_t) voice][kAcc], 50) * 0.01f; return f >= 2 ? 1.0f : 1.0f - 0.6f * a; };
 
+    bool reset = false;
+    const BlockTime btl = look.next (bt, msToPpq (kNudgeMaxMs + 1.0, bt.bpm), reset);   // look-ahead for negative nudge
+    if (reset || ! bt.playing) queue.clear();
+    // queue a sequencer event at its onset + the module nudge (Mod lane values are not nudged)
+    auto qpush = [&] (double ppq, Ev e)
+    {
+        static const int voiceOfTarget[] { kick, snare, hat, hat, tie, pod, pulp };
+        double ms = 0.0;
+        if (! e.isMod && e.target >= 0 && e.target < numTargets)
+            ms = jlimit (-kNudgeMaxMs, kNudgeMaxMs, (double) G (vk[(size_t) voiceOfTarget[e.target]][kNudge], 0.0f));
+        queue.add (ppq + msToPpq (ms, bt.bpm), e);
+    };
     if (! bt.playing)
     {
         currentPattern.store (chainOn ? (int) p (bChainSlot (0))->load() : wanted);
@@ -444,10 +455,10 @@ void LimeEngine::process (float* L, float* R, int n, const BlockTime& bt, const 
     }
     else
     {
-        forEachOnset (bt, stepPpq, swing, [&] (long long k, double ppq)
+        forEachOnset (btl, stepPpq, swing, [&] (long long k, double ppq)
         {
             const long long loop = k / mainLen;
-            if (loop != lastLoop || bt.justStarted)
+            if (loop != lastLoop || btl.justStarted)
             {
                 lastLoop = loop;
                 if (chainOn)
@@ -468,13 +479,12 @@ void LimeEngine::process (float* L, float* R, int n, const BlockTime& bt, const 
             remixPos = remixThisLoop ? (float) (step - pos) / 16.0f : 0.0f;
             laneSteps[0].store (step);
             auto& pat = patterns[(size_t) currentPattern.load()];
-            const int off = bt.toSample (ppq);
             static const int voiceOf[] { kick, snare, hat, hat };
             static const int targetOf[] { tKick, tSnare, tCHat, tOHat };
             for (int l = 0; l < numTrigLanes; ++l)
             {
                 const uint8_t f = pat.trig[(size_t) l][(size_t) step].load();
-                if (f) push ({ off, targetOf[l], accVel (voiceOf[l], f), 0.0f, false });
+                if (f) qpush (ppq, { 0, targetOf[l], accVel (voiceOf[l], f), 0.0f, false });
             }
         });
 
@@ -483,24 +493,25 @@ void LimeEngine::process (float* L, float* R, int n, const BlockTime& bt, const 
             const int len = jlimit (1, NS, (int) p (lenId)->load());
             const bool stretch = p (strId)->load() > 0.5f;
             const double sp = stretch ? stepPpq * (double) mainLen / (double) len : stepPpq;
-            forEachOnset (bt, sp, stretch ? 0.0 : swing, [&] (long long k, double ppq)
+            forEachOnset (btl, sp, stretch ? 0.0 : swing, [&] (long long k, double ppq)
             {
                 const int step = (int) (k % len);
                 laneSteps[(size_t) uiIdx].store (step);
                 auto& cp = patterns[(size_t) currentPattern.load()];
                 const float v = cp.value[(size_t) laneIdx][(size_t) step].load();
-                const int off = bt.toSample (ppq);
-                if (laneIdx == laneMod) push ({ off, -1, 0.0f, v, true });
+                if (laneIdx == laneMod) qpush (ppq, { 0, -1, 0.0f, v, true });
                 else if (v > 0.001f)
                 {
                     const float sv = juce::jlimit (0.0f, 1.0f, cp.vel[(size_t) laneIdx][(size_t) step].load());
-                    push ({ off, laneIdx == laneTie ? tTie : tPod, sv, v, false });
+                    qpush (ppq, { 0, laneIdx == laneTie ? tTie : tPod, sv, v, false });
                 }
             });
         };
         lane (laneTie, bTieLen, bTieStr, 1);
         lane (lanePod, bPodLen, bPodStr, 2);
         lane (laneMod, bModLen, bModStr, 3);
+        // fire the (nudged) events that fall inside this block
+        queue.flush (bt.ppqEnd(), [&] (double ppq, Ev e) { e.offset = bt.toSample (ppq); push (e); });
     }
 
     std::stable_sort (ev.begin(), ev.begin() + nev, [] (const Ev& a, const Ev& b2)

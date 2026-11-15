@@ -351,6 +351,53 @@ int main (int argc, char** argv)
                 + ", state: " + (stateOk ? "ok" : "lost"));
     }
 
+    // ---------------------------------------------------------------- per-track nudge: measured onset of a hit on beat 2
+    {
+        auto onsetMs = [] (bool sectionB, float nudgeMs) -> double
+        {
+            TwinboxProcessor p; waitLibrary (p);
+            for (int v = 0; v < params::numLimeVoices; ++v) setP (p, params::b (v, params::lv::on), 0);   // silence the other section
+            for (int ch = 0; ch < params::numMicroChannels; ++ch) setP (p, params::a (ch, params::mt::mute), 1);
+            setP (p, params::gTempo, 120.0f);
+            setP (p, params::gXfade, sectionB ? 100.0f : 0.0f);
+            if (sectionB)
+            {
+                auto& P = p.lime.pattern (0); P.clear();
+                P.trig[LimeEngine::laneKick][4].store (2);                    // beat 2 (step 5) = 500 ms at 120 BPM
+                setP (p, params::bPattern, 0); setP (p, params::bFxMix, 0);
+                setP (p, params::b (params::kick, params::lv::on), 1);
+                setP (p, params::b (params::kick, params::lv::nudge), nudgeMs);
+            }
+            else
+            {
+                for (int pi = 0; pi < 12; ++pi) p.micro.pattern (pi).clear();
+                p.micro.pattern (0).steps[0][4].store (MicroEngine::trig | MicroEngine::accent);
+                setP (p, params::aPattern, 0); setP (p, params::aSwing, 0);
+                setP (p, params::a (0, params::mt::mute), 0);
+                setP (p, params::a (0, params::mt::nudge), nudgeMs);
+            }
+            p.setPlayConfigDetails (0, 2, 48000, 256); p.prepareToPlay (48000, 256);
+            setP (p, params::gRun, 1);
+            AudioBuffer<float> buf (2, 256); MidiBuffer m; double at = -1.0;
+            for (int blk = 0; blk < 300 && at < 0; ++blk)
+            {
+                buf.clear(); p.processBlock (buf, m);
+                for (int i = 0; i < 256; ++i) if (std::abs (buf.getSample (0, i)) > 0.01f) { at = (blk * 256 + i) / 48.0; break; }
+            }
+            setP (p, params::gRun, 0);
+            return at;
+        };
+        String info; bool okAll = true;
+        for (int sec = 0; sec < 2; ++sec)
+        {
+            const double z = onsetMs (sec == 1, 0.0f), e = onsetMs (sec == 1, -20.0f), l = onsetMs (sec == 1, 20.0f), x = onsetMs (sec == 1, -50.0f);
+            const bool ok = std::abs (z - 500.0) < 2.0 && std::abs ((z - e) - 20.0) < 0.6 && std::abs ((l - z) - 20.0) < 0.6 && std::abs ((z - x) - 50.0) < 0.6;
+            okAll = okAll && ok;
+            info << (sec ? "  B kick: " : "A ch1: ") << String (z, 1) << " ms, -20 -> " << String (e, 1) << ", +20 -> " << String (l, 1) << ", -50 -> " << String (x, 1);
+        }
+        report ("per-track nudge (measured)", okAll, info);
+    }
+
     // ---------------------------------------------------------------- pitch detection, SCALE, manual pitch, on/off kept
     {
         // 1) detector on synthetic tones
