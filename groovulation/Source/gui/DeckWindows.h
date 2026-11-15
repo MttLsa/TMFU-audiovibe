@@ -5,10 +5,9 @@
 // -------------------------------------------------------------------------------------------------
 //  REMIX decks, in a large window:
 //   TAPE  - reel-to-reel machine. Drag the RIGHT reel up/down (up = pull faster, down = slow down / stop),
-//           shake the LEFT reel (wobble / drag), click between the reels = a random hand action.
+//           shake the LEFT reel (wobble / drag), click between the reels = a random action.
 //   VINYL - turntable. Grab the record and move it (scratch: speed follows your hand, holding still = stop),
-//           START/STOP button (brake / spin up), click outside the record = a random hand action.
-//  The hands follow the mouse; during automatic actions both hands play the deck.
+//           START/STOP button (brake / spin up), click outside the record = a random action.
 // -------------------------------------------------------------------------------------------------
 class DeckView : public juce::Component, private juce::Timer
 {
@@ -28,7 +27,6 @@ private:
     void drawTape (juce::Graphics&);
     void drawVinyl (juce::Graphics&);
     void drawReel (juce::Graphics&, juce::Point<float> c, float r, float angle, float pack);   // hub = Groovulation logo
-    static void drawHand (juce::Graphics&, juce::Point<float> at, float scale, bool left, float grab, float rotation);
 
     GroovulationProcessor& proc;
     const int type;
@@ -37,9 +35,6 @@ private:
     float reelRadius = 100, platterR = 200;
     float angleL = 0, angleR = 0, recordAngle = 0, packL = 0.75f;
     double lastTime = 0;
-    // hands: current and target positions (screen), grab amount
-    juce::Point<float> handL, handR, handLT, handRT;
-    float grabL = 0, grabR = 0;
     enum Grip { none, rightReel, leftReel, record } grip = none;
     juce::Point<float> pressPos, lastPos;
     double lastMoveTime = 0, lastAngleTime = 0;

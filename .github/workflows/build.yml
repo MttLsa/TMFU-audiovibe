@@ -3,7 +3,7 @@ name: build
 on:
   push:
     branches: [ main ]
-    paths-ignore: [ "docs/**", "README.md" ]   # documentation changes do not trigger a build
+    paths-ignore: [ "docs/**", "README.md", "groovulation/**", ".github/workflows/groovulation.yml" ]   # docs and Groovulation do not trigger the Twinbox build
   workflow_dispatch:                            # manual start from the Actions tab
 
 jobs:

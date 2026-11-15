@@ -1,5 +1,22 @@
 #include "ModuleEngine.h"
+#if defined (__clang__)
+ #pragma clang diagnostic push
+ #pragma clang diagnostic ignored "-Weverything"
+#elif defined (__GNUC__)
+ #pragma GCC diagnostic push
+ #pragma GCC diagnostic ignored "-Wsign-conversion"
+ #pragma GCC diagnostic ignored "-Wconversion"
+ #pragma GCC diagnostic ignored "-Wfloat-equal"
+ #pragma GCC diagnostic ignored "-Wshadow"
+ #pragma GCC diagnostic ignored "-Wunused-parameter"
+ #pragma GCC diagnostic ignored "-Wold-style-cast"
+#endif
 #include "../../third_party/signalsmith-stretch/signalsmith-stretch.h"
+#if defined (__clang__)
+ #pragma clang diagnostic pop
+#elif defined (__GNUC__)
+ #pragma GCC diagnostic pop
+#endif
 
 using namespace juce;
 

@@ -60,8 +60,6 @@ void DeckView::resized()
         startStopBtn = Rectangle<float> (deckArea.getX() + 22.0f, deckArea.getBottom() - 70.0f, 92.0f, 48.0f);
     }
     renderBackdrop();
-    handL = handLT = { deckArea.getX() + 70.0f, deckArea.getBottom() - 20.0f };
-    handR = handRT = { deckArea.getRight() - 70.0f, deckArea.getBottom() - 20.0f };
 }
 
 void DeckView::timerCallback()
@@ -88,34 +86,6 @@ void DeckView::timerCallback()
     if (grip == record && now - lastMoveTime > 0.05) deck.handSpeed = deck.handSpeed.load() * 0.6f;
     if (grip == leftReel && now - lastMoveTime > 0.06) deck.handSpeed = deck.handSpeed.load() + (0.97f - deck.handSpeed.load()) * 0.3f;
 
-    // hands
-    const int act = deck.currentAction.load();
-    const bool autoAct = act != fx::Deck::none && grip == none;
-    const Point<float> idleL { deckArea.getX() + 40.0f, deckArea.getBottom() + 30.0f }, idleR { deckArea.getRight() - 40.0f, deckArea.getBottom() + 30.0f };
-    float gL = 0.0f, gR = 0.0f;
-    handLT = idleL; handRT = idleR;
-    if (grip == rightReel || grip == record) { handRT = lastPos; gR = 1.0f; }
-    if (grip == leftReel) { handLT = lastPos; gL = 1.0f; }
-    if (autoAct)
-    {
-        if (type == 1)
-        {
-            handRT = reelR + Point<float> (std::cos (angleR * 0.15f + 0.6f), std::sin (angleR * 0.15f + 0.6f)) * reelRadius * 0.85f;
-            handLT = reelL + Point<float> (std::cos (angleL * 0.15f + 2.5f), std::sin (angleL * 0.15f + 2.5f)) * reelRadius * 0.85f;
-        }
-        else
-        {
-            handRT = platter + Point<float> (std::cos (recordAngle * 0.5f), std::sin (recordAngle * 0.5f)) * platterR * 0.7f;
-            handLT = (act == fx::Deck::brake || act == fx::Deck::start) ? startStopBtn.getCentre() : platter + Point<float> (-platterR * 0.75f, platterR * 0.3f);
-        }
-        gL = gR = 1.0f;
-    }
-    else if (grip == none && isMouseOver (true) && deckArea.contains (lastPos))
-        handRT = lastPos + Point<float> (26.0f, 34.0f);   // the right hand hovers over the deck, following the mouse
-    handL += (handLT - handL) * 0.25f;
-    handR += (handRT - handR) * 0.25f;
-    grabL += (gL - grabL) * 0.3f;
-    grabR += (gR - grabR) * 0.3f;
     repaint();
 }
 
@@ -194,20 +164,20 @@ void DeckView::mouseUp (const MouseEvent&)
 }
 
 //==============================================================================
-//  Drawing: illustrated, half-realistic / half-comic look (bold ink outlines, painted gradients,
-//  hard highlights, drop shadows).
+//  Drawing: illustrated, half-realistic look (thin dark outlines, painted gradients, hard highlights,
+//  drop shadows).
 namespace
 {
     const Colour ink { 0xff15100c };
     void inked (Graphics& g, const Path& p, const ColourGradient& fill, float w)
     {
         g.setGradientFill (fill); g.fillPath (p);
-        g.setColour (ink); g.strokePath (p, PathStrokeType (w, PathStrokeType::curved, PathStrokeType::rounded));
+        g.setColour (ink.withAlpha (0.85f)); g.strokePath (p, PathStrokeType (w * 0.5f, PathStrokeType::curved, PathStrokeType::rounded));
     }
     void inked (Graphics& g, const Path& p, Colour fill, float w)
     {
         g.setColour (fill); g.fillPath (p);
-        g.setColour (ink); g.strokePath (p, PathStrokeType (w, PathStrokeType::curved, PathStrokeType::rounded));
+        g.setColour (ink.withAlpha (0.85f)); g.strokePath (p, PathStrokeType (w * 0.5f, PathStrokeType::curved, PathStrokeType::rounded));
     }
     void softShadow (Graphics& g, const Path& p, Point<float> offset, float spread)
     {
@@ -248,9 +218,12 @@ void DeckView::paint (Graphics& g)
 {
     if (backdrop.isValid()) g.drawImageAt (backdrop, 0, 0); else g.fillAll (theme::bg);
     if (type == 1) drawTape (g); else drawVinyl (g);
-    const float hs = deckArea.getHeight() / 480.0f;
-    drawHand (g, handL, hs, true, grabL, -0.22f);
-    drawHand (g, handR, hs, false, grabR, 0.22f);
+    // touch indicator where the deck is being played
+    if (grip != none)
+    {
+        g.setColour (theme::red.withAlpha (0.35f)); g.fillEllipse (lastPos.x - 18, lastPos.y - 18, 36, 36);
+        g.setColour (theme::red); g.drawEllipse (lastPos.x - 18, lastPos.y - 18, 36, 36, 2.0f);
+    }
     // status LCD
     auto lcd = Rectangle<float> (deckArea.getRight() - 236.0f, deckArea.getY() + 4.0f, 220.0f, 48.0f);
     g.setColour (Colours::black.withAlpha (0.35f)); g.fillRoundedRectangle (lcd.translated (4, 5), 5.0f);
@@ -476,80 +449,6 @@ void DeckView::drawVinyl (Graphics& g)
     Path cap; cap.addRoundedRectangle (fader.getX(), fy - 10.0f, 28.0f, 20.0f, 4.0f);
     inked (g, cap, metalGrad ({ fader.getX(), fy - 10.0f, 28.0f, 20.0f }), 2.0f);
     g.setColour (theme::red); g.drawHorizontalLine ((int) fy, fader.getX() + 4, fader.getRight() - 4);
-}
-
-// Hand (illustrated): leather sleeve with a watch on the left wrist, shaded skin, nails, knuckles, ink outline
-void DeckView::drawHand (Graphics& g, Point<float> at, float scale, bool left, float grab, float rotation)
-{
-    Graphics::ScopedSaveState ss (g);
-    g.addTransform (AffineTransform::rotation (rotation, at.x, at.y));
-    const float s = 50.0f * jlimit (0.6f, 1.6f, scale);
-    const float ow = jmax (2.0f, s * 0.07f);
-    const Colour skinHi (0xfff6d2b0), skinMid (0xffe0a77c), skinLo (0xffa8653f);
-    // sleeve (leather jacket) going out of the window
-    Path sleeve;
-    sleeve.startNewSubPath (at.x - s * 0.62f, at.y + s * 0.62f);
-    sleeve.lineTo (at.x + s * 0.62f, at.y + s * 0.62f);
-    sleeve.lineTo (at.x + s * 0.9f, at.y + s * 7.0f);
-    sleeve.lineTo (at.x - s * 0.9f, at.y + s * 7.0f);
-    sleeve.closeSubPath();
-    softShadow (g, sleeve, { s * 0.25f, s * 0.2f }, s * 0.3f);
-    ColourGradient lg (Colour (0xff4a3a30), at.x - s, at.y, Colour (0xff120c09), at.x + s, at.y + s * 3, false);
-    inked (g, sleeve, lg, ow);
-    g.setColour (Colours::white.withAlpha (0.18f));
-    g.drawLine (at.x - s * 0.3f, at.y + s * 1.2f, at.x - s * 0.45f, at.y + s * 4.0f, s * 0.08f);
-    g.setColour (ink.withAlpha (0.6f));
-    g.drawLine (at.x + s * 0.1f, at.y + s * 1.6f, at.x + s * 0.5f, at.y + s * 2.0f, s * 0.04f);   // fold
-    // cuff + watch (left wrist)
-    Path cuff; cuff.addRoundedRectangle (at.x - s * 0.66f, at.y + s * 0.5f, s * 1.32f, s * 0.34f, s * 0.12f);
-    inked (g, cuff, Colour (0xff2a201a), ow * 0.8f);
-    if (left)
-    {
-        Path band; band.addRoundedRectangle (at.x - s * 0.58f, at.y + s * 0.3f, s * 1.16f, s * 0.22f, s * 0.06f);
-        inked (g, band, ColourGradient (Colour (0xfffbe39a), at.x - s, at.y, Colour (0xffa87920), at.x + s, at.y, false), ow * 0.6f);
-        inked (g, ellipsePath ({ at.x + s * 0.05f, at.y + s * 0.41f }, s * 0.2f, s * 0.2f),
-               ColourGradient (Colour (0xfffbe39a), at.x - s * 0.2f, at.y, Colour (0xff8c6418), at.x + s * 0.2f, at.y + s * 0.6f, false), ow * 0.6f);
-    }
-    // fingers (behind the palm)
-    const float fl = s * (1.05f - 0.55f * grab);
-    for (int i = 0; i < 4; ++i)
-    {
-        const float fx = at.x + (-0.42f + i * 0.28f) * s;
-        const float len = fl * (i == 0 ? 0.74f : (i == 3 ? 0.82f : (i == 1 ? 0.98f : 0.95f)));
-        auto f = Rectangle<float> (fx - s * 0.135f, at.y - s * 0.32f - len, s * 0.27f, len + s * 0.35f);
-        Path fp; fp.addRoundedRectangle (f, s * 0.135f);
-        ColourGradient fg (skinHi, f.getX(), f.getY(), skinLo, f.getRight(), f.getBottom(), false);
-        fg.addColour (0.45, skinMid);
-        inked (g, fp, fg, ow);
-        // nail + knuckle crease
-        auto nail = Rectangle<float> (f.getX() + s * 0.055f, f.getY() + s * 0.05f, s * 0.16f, s * 0.17f);
-        g.setColour (Colour (0xfffbe4d3)); g.fillRoundedRectangle (nail, s * 0.06f);
-        g.setColour (skinLo); g.drawRoundedRectangle (nail, s * 0.06f, 0.8f);
-        g.setColour (skinLo.withAlpha (0.8f));
-        g.drawLine (f.getX() + s * 0.06f, f.getY() + len * 0.48f, f.getRight() - s * 0.06f, f.getY() + len * 0.46f, 1.0f);
-    }
-    // palm (back of the hand)
-    Path palm;
-    palm.addRoundedRectangle (at.x - s * 0.6f, at.y - s * 0.55f, s * 1.2f, s * 1.18f, s * 0.42f);
-    ColourGradient pg (skinHi, at.x - s * 0.5f, at.y - s * 0.5f, skinLo, at.x + s * 0.6f, at.y + s * 0.7f, false);
-    pg.addColour (0.5, skinMid);
-    inked (g, palm, pg, ow);
-    // knuckles + tendons
-    g.setColour (skinLo.withAlpha (0.7f));
-    for (int i = 0; i < 4; ++i)
-    {
-        const float kx = at.x + (-0.42f + i * 0.28f) * s;
-        g.drawLine (kx - s * 0.06f, at.y - s * 0.38f, kx + s * 0.06f, at.y - s * 0.36f, 1.2f);
-        g.drawLine (kx, at.y - s * 0.25f, at.x + (kx - at.x) * 0.3f, at.y + s * 0.4f, 0.8f);
-    }
-    g.setColour (Colours::white.withAlpha (0.35f)); g.fillEllipse (at.x - s * 0.35f, at.y - s * 0.42f, s * 0.35f, s * 0.2f);
-    // thumb
-    const float d = left ? 1.0f : -1.0f;
-    Path thumb;
-    thumb.addRoundedRectangle (-s * 0.15f, -s * 0.6f, s * 0.3f, s * 0.68f, s * 0.15f);
-    thumb.applyTransform (AffineTransform::rotation (d * (0.9f - 0.5f * grab)).translated (at.x + d * s * 0.52f, at.y + s * 0.1f));
-    ColourGradient tg (skinHi, at.x, at.y - s * 0.5f, skinLo, at.x + d * s, at.y + s * 0.3f, false);
-    inked (g, thumb, tg, ow);
 }
 
 //==============================================================================
