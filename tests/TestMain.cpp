@@ -389,6 +389,28 @@ int main (int argc, char** argv)
         report ("LFO rate (ms) + sync (beat)", okA && spacing && uiUntouched,
                 "A Osc Freq " + String (*mmA.first, 1) + " .. " + String (*mmA.second, 1) + " Hz around " + String (rawA, 1) + " (" + String (signChangesA) + " crossings / 400 ms at 200 ms); "
                 + "B Kick Gain square 1/4: " + String (flips) + " flips every " + (at.size() > 1 ? String (at[1] - at[0]) : String ("?")) + " blocks (25 expected)");
+        // LFO 7 of 8 modulates only when the LFO count reaches 7 (default 3)
+        {
+            TwinboxProcessor p; waitLibrary (p);
+            const String id = params::b (params::snare, params::lv::tune);
+            setP (p, params::lfoId (1, 6, "target"), (float) targetIndex (1, id));
+            setP (p, params::lfoId (1, 6, "sync"), 0.0f); setP (p, params::lfoId (1, 6, "ms"), 100.0f);
+            setP (p, params::lfoId (1, 6, "shape"), 4.0f); setP (p, params::lfoId (1, 6, "depth"), 100.0f);
+            p.setPlayConfigDetails (0, 2, 48000, 480); p.prepareToPlay (48000, 480);
+            AudioBuffer<float> buf (2, 480); MidiBuffer m;
+            auto spread = [&]
+            {
+                float lo = 1e9f, hi = -1e9f;
+                for (int i = 0; i < 30; ++i) { p.processBlock (buf, m); const float v = p.mod.get (id)->load(); lo = jmin (lo, v); hi = jmax (hi, v); }
+                return hi - lo;
+            };
+            const float off = spread();
+            setP (p, params::lfoCountId (1), 8.0f);
+            const float on = spread();
+            const bool def3 = std::abs (p.apvts.getParameter (params::lfoCountId (0))->convertFrom0to1 (p.apvts.getParameter (params::lfoCountId (0))->getDefaultValue()) - 3.0f) < 0.01f;
+            report ("8 LFOs (count)", off < 1.0e-4f && on > 10.0f && def3 && params::numLfos == 8,
+                    "LFO 7 with count 3: range " + String (off, 3) + " st; count 8: range " + String (on, 1) + " st; default count 3: " + (def3 ? "yes" : "no"));
+        }
         // every parameter of each section is a target
         int nA = (int) params::lfoTargets (0).size(), nB = (int) params::lfoTargets (1).size();
         report ("LFO targets", nA >= 200 && nB >= 170, "Section A: " + String (nA) + " parameters, Section B: " + String (nB) + " parameters");
@@ -717,7 +739,11 @@ int main (int argc, char** argv)
         snapWin (new LimeFxWindowContent (p), 1300, 860, "win_B_fx.png");
         snapWin (new PresetBrowser (p, 1), 820, 700, "win_B_browser.png");
         snapWin (new PitchWindowContent (p, params::tie), 760, 640, "win_B_pitch.png");
-        snapWin (new LfoWindowContent (p, 1), 960, 360, "win_B_lfo.png");
+        snapWin (new LfoWindowContent (p, 1), 1240, 400, "win_B_lfo.png");
+        setP (p, params::lfoCountId (1), 8.0f);
+        snapWin (new LfoWindowContent (p, 1), 1240, 700, "win_B_lfo8.png");
+        { LfoPanel lp (p, 1); lp.setSize (240, 190); shot (lp, "B_lfo_panel8.png"); }
+        setP (p, params::lfoCountId (1), 3.0f);
         {   // keyboard editing of a Tie column (VEL = wav: one notch per sample)
             setP (p, params::b (params::tie, params::lv::vel), 1);
             auto& P = p.lime.pattern ((int) p.apvts.getRawParameterValue (params::bPattern)->load());

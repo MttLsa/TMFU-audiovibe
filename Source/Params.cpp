@@ -331,6 +331,7 @@ AudioProcessorValueTreeState::ParameterLayout createLayout()
         StringArray choices { "--" };
         for (auto& t : tl) choices.add (t.name);
         const String S = sec == 0 ? "A " : "B ";
+        addInt (l, lfoCountId (sec), S + "LFO Count", 1, numLfos, 3);
         for (int i = 0; i < numLfos; ++i)
         {
             const String P = S + "LFO " + String (i + 1) + " ";

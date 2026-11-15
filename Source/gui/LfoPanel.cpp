@@ -198,47 +198,148 @@ void LfoStrip::resized()
 //==============================================================================
 //  LfoPanel / LfoWindowContent
 //==============================================================================
+int LfoPanel::getCount (TwinboxProcessor& p, int s)
+{
+    return jlimit (1, numLfos, roundToInt (p.apvts.getRawParameterValue (lfoCountId (s))->load()));
+}
+
+void LfoPanel::setCount (TwinboxProcessor& p, int s, int n)
+{
+    if (auto* c = p.apvts.getParameter (lfoCountId (s)))
+    {
+        c->beginChangeGesture();
+        c->setValueNotifyingHost (c->convertTo0to1 ((float) jlimit (1, numLfos, n)));
+        c->endChangeGesture();
+    }
+}
+
 LfoPanel::LfoPanel (TwinboxProcessor& p, int s) : Panel ("LFO", s == 0 ? theme::accentA : theme::accentB), proc (p), section (s)
 {
-    for (int i = 0; i < numLfos; ++i) addAndMakeVisible (strips.add (new LfoStrip (p, s, i, false)));
+    for (int i = 0; i < numLfos; ++i) addChildComponent (strips.add (new LfoStrip (p, s, i, false)));
+    addBtn.setTooltip ("Add an LFO (up to 8)");
+    removeBtn.setTooltip ("Remove the last LFO (its settings are kept if you add it again)");
+    addBtn.onClick = [this] { setCount (proc, section, getCount (proc, section) + 1); page = (getCount (proc, section)) / 3; timerCallback(); };
+    removeBtn.onClick = [this] { setCount (proc, section, getCount (proc, section) - 1); timerCallback(); };
+    addAndMakeVisible (addBtn); addAndMakeVisible (removeBtn);
+    for (int pg = 0; pg < 3; ++pg)
+    {
+        auto* b = pageBtns.add (new TextButton (pg == 0 ? "1-3" : (pg == 1 ? "4-6" : "7-8")));
+        b->setClickingTogglesState (false);
+        b->setColour (TextButton::buttonOnColourId, accent);
+        b->onClick = [this, pg] { page = pg; layoutStrips(); };
+        b->setTooltip ("Show LFO " + b->getButtonText());
+        addChildComponent (b);
+    }
     setExpandable ([this]
     {
         if (window) { window->toFront (true); return; }
-        window = std::make_unique<ExpandWindow> (String ("Section ") + (section == 0 ? "A" : "B") + " - LFO 1-3",
-                                                 new LfoWindowContent (proc, section), 960, 360, [this] { window.reset(); });
+        const int n = getCount (proc, section);
+        window = std::make_unique<ExpandWindow> (String ("Section ") + (section == 0 ? "A" : "B") + " - LFO",
+                                                 new LfoWindowContent (proc, section), 1240, n > 4 ? 700 : 400, [this] { window.reset(); });
     });
+    startTimerHz (10);
+    timerCallback();
 }
 
-LfoPanel::~LfoPanel() { window.reset(); }
+LfoPanel::~LfoPanel() { stopTimer(); window.reset(); }
+
+void LfoPanel::timerCallback()
+{
+    const int n = getCount (proc, section);
+    page = jlimit (0, (n - 1) / 3, page);
+    if (n != lastCount) { lastCount = n; layoutStrips(); }
+}
+
+void LfoPanel::paint (Graphics& g)
+{
+    Panel::paint (g);
+    g.setColour (theme::textDim);
+    g.setFont (theme::font (10.0f));
+    g.drawText (String (getCount (proc, section)) + "/8", 40, 0, 26, headerH, Justification::centredLeft);
+}
+
+void LfoPanel::layoutStrips()
+{
+    const int n = getCount (proc, section);
+    auto r = content();
+    const int h = r.getHeight() / 3;
+    for (int i = 0; i < strips.size(); ++i)
+    {
+        const bool show = i < n && i / 3 == page;
+        strips[i]->setVisible (show);
+        if (show) strips[i]->setBounds (Rectangle<int> (r.getX(), r.getY() + (i % 3) * h, r.getWidth(), h).reduced (0, 1));
+    }
+    for (int pg = 0; pg < pageBtns.size(); ++pg)
+    {
+        pageBtns[pg]->setVisible (n > 3 && pg * 3 < n);
+        pageBtns[pg]->setToggleState (pg == page, dontSendNotification);
+    }
+    addBtn.setEnabled (n < numLfos);
+    removeBtn.setEnabled (n > 1);
+    repaint();
+}
 
 void LfoPanel::resized()
 {
     Panel::resized();
-    auto r = content();
-    const int h = r.getHeight() / numLfos;
-    for (int i = 0; i < strips.size(); ++i)
-        strips[i]->setBounds ((i == strips.size() - 1 ? r : r.removeFromTop (h)).reduced (0, 1));
+    // header: LFO  n/8  [-][+]  [1-3][4-6][7-8]  ...  [expand]
+    int x = 68;
+    removeBtn.setBounds (x, 2, 18, headerH - 4); x += 19;
+    addBtn.setBounds (x, 2, 18, headerH - 4); x += 24;
+    for (auto* b : pageBtns) { b->setBounds (x, 2, 30, headerH - 4); x += 31; }
+    layoutStrips();
 }
 
-LfoWindowContent::LfoWindowContent (TwinboxProcessor& p, int s) : section (s)
+LfoWindowContent::LfoWindowContent (TwinboxProcessor& p, int s) : proc (p), section (s)
 {
-    for (int i = 0; i < numLfos; ++i) addAndMakeVisible (strips.add (new LfoStrip (p, s, i, true)));
+    for (int i = 0; i < numLfos; ++i) addChildComponent (strips.add (new LfoStrip (p, s, i, true)));
+    addBtn.onClick = [this] { LfoPanel::setCount (proc, section, LfoPanel::getCount (proc, section) + 1); timerCallback(); };
+    removeBtn.onClick = [this] { LfoPanel::setCount (proc, section, LfoPanel::getCount (proc, section) - 1); timerCallback(); };
+    addAndMakeVisible (addBtn); addAndMakeVisible (removeBtn);
+    startTimerHz (10);
+    timerCallback();
+}
+
+void LfoWindowContent::timerCallback()
+{
+    const int n = LfoPanel::getCount (proc, section);
+    if (n == lastCount) return;
+    lastCount = n;
+    addBtn.setEnabled (n < numLfos);
+    removeBtn.setEnabled (n > 1);
+    resized();
+    repaint();
 }
 
 void LfoWindowContent::paint (Graphics& g)
 {
     g.fillAll (theme::bg);
-    for (int i = 0; i < strips.size(); ++i)
-    {
-        g.setColour (theme::panel);
-        g.fillRoundedRectangle (strips[i]->getBounds().toFloat(), 4.0f);
-    }
+    g.setColour (theme::textDim);
+    g.setFont (theme::font (13.0f));
+    g.drawText (String (LfoPanel::getCount (proc, section)) + " / 8 LFO", getWidth() - 160, 8, 150, 24, Justification::centredRight);
+    for (auto* s : strips)
+        if (s->isVisible())
+        {
+            g.setColour (theme::panel);
+            g.fillRoundedRectangle (s->getBounds().toFloat(), 4.0f);
+        }
 }
 
 void LfoWindowContent::resized()
 {
     auto r = getLocalBounds().reduced (8);
-    const int w = r.getWidth() / numLfos;
+    auto bar = r.removeFromTop (28);
+    addBtn.setBounds (bar.removeFromLeft (110).reduced (0, 1));
+    bar.removeFromLeft (6);
+    removeBtn.setBounds (bar.removeFromLeft (150).reduced (0, 1));
+    r.removeFromTop (6);
+    const int n = LfoPanel::getCount (proc, section);
+    const int cols = jmin (4, n), rows = (n + 3) / 4;
+    const int w = r.getWidth() / jmax (1, cols), h = r.getHeight() / jmax (1, rows);
     for (int i = 0; i < strips.size(); ++i)
-        strips[i]->setBounds ((i == strips.size() - 1 ? r : r.removeFromLeft (w)).reduced (4, 0));
+    {
+        const bool show = i < n;
+        strips[i]->setVisible (show);
+        if (show) strips[i]->setBounds (Rectangle<int> (r.getX() + (i % 4) * w, r.getY() + (i / 4) * h, w, h).reduced (4, 4));
+    }
 }

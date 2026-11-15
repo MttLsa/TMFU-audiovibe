@@ -57,5 +57,6 @@ private:
     std::array<std::vector<std::unique_ptr<Entry>>, 2> entries;   // per section, same order as params::lfoTargets()
     std::map<juce::String, Entry*> byId;
     std::array<std::array<Lfo, params::numLfos>, 2> lfos;
+    std::array<std::atomic<float>*, 2> count {};
     juce::AudioProcessorValueTreeState* state = nullptr;
 };

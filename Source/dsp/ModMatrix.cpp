@@ -19,6 +19,7 @@ void ModMatrix::init (AudioProcessorValueTreeState& apvts)
             byId[t.id] = e.get();
             list.push_back (std::move (e));
         }
+        count[(size_t) sec] = apvts.getRawParameterValue (params::lfoCountId (sec));
         for (int i = 0; i < params::numLfos; ++i)
         {
             auto& l = lfos[(size_t) sec][(size_t) i];
@@ -75,9 +76,11 @@ void ModMatrix::process (const BlockTime& bt, double sampleRate, int numSamples)
         auto& list = entries[(size_t) sec];
         for (auto& e : list) e->acc = 0.0f;
 
+        const int active = juce::jlimit (1, params::numLfos, (int) count[(size_t) sec]->load());
         for (int i = 0; i < params::numLfos; ++i)
         {
             auto& l = lfos[(size_t) sec][(size_t) i];
+            if (i >= active) { l.out.store (0.0f); continue; }                  // removed LFO: no modulation
             const int target = (int) l.target->load() - 1;                       // 0 = "--"
             const bool sync = l.sync->load() > 0.5f;
             const auto& divs = params::lfoDivs();

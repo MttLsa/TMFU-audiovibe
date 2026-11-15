@@ -207,7 +207,8 @@ namespace params
     inline const char* gRun    = "g_run";
 
     // ---------------- LFOs: 3 per section, each can modulate any parameter of its section ----------------
-    constexpr int numLfos = 3;
+    constexpr int numLfos = 8;          // maximum per section; "LFO count" (1..8, default 3) sets how many are active
+    inline juce::String lfoCountId (int section) { return section == 0 ? "a_lfo_count" : "b_lfo_count"; }
     // section 0 = A, 1 = B;  keys: target, shape, sync, div, ms, depth, phase
     inline juce::String lfoId (int section, int lfo, const char* key)
     {
