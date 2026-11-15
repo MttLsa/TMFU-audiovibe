@@ -3,7 +3,7 @@ name: groovulation
 on:
   push:
     branches: [ main, "claude/**" ]
-    paths: [ "groovulation/**", ".github/workflows/groovulation.yml", "!groovulation/**/*.md" ]
+    paths: [ "groovulation/**", ".github/workflows/groovulation.yml", "!groovulation/**/*.md", "!groovulation/docs/**" ]
   workflow_dispatch:
 
 jobs:
@@ -25,9 +25,9 @@ jobs:
           killall -9 AudioComponentRegistrar || true
           auval -v aumu Grvl Twnb
       - name: Build installer
-        run: ./packaging/macos/make_pkg.sh 1.1.6
+        run: ./packaging/macos/make_pkg.sh 1.1.7
       - name: Upload installer
         uses: actions/upload-artifact@v5
         with:
           name: Groovulation-macOS-Installer
-          path: groovulation/build/installer/Groovulation-1.1.6-macOS.pkg
+          path: groovulation/build/installer/Groovulation-1.1.7-macOS.pkg

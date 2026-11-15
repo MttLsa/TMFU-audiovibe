@@ -659,6 +659,8 @@ ModuleEditor::ModuleEditor (GroovulationProcessor& p) : proc (p), display (p, 0,
                      &rsize, &rdecay, &rdamp, &rpre, &rmix, &l1rate, &l1depth, &l2rate, &l2depth, &l3rate, &l3depth })
         addAndMakeVisible (k);
     for (auto* c : { &l1shape, &l1target, &l2shape, &l2target, &l3shape, &l3target }) addAndMakeVisible (c);
+    // the panels are backgrounds: keep them behind the selectors / toggles placed on them (LP|BP|HP, WARP, PING-PONG)
+    for (auto* p : { &pAmp, &pAdsr, &pPitch, &pFilter, &pDirt, &pDelay, &pReverb, &pLfo1, &pLfo2, &pLfo3 }) p->toBack();
     for (auto* c : { &l1shape, &l2shape, &l3shape }) c->addItemList (lb::lfoShapes(), 1);
     for (auto* c : { &l1target, &l2target, &l3target })
     {
