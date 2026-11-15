@@ -609,6 +609,28 @@ int main (int argc, char** argv)
         { auto f = outDir.getChildFile ("gui_main.png"); f.deleteFile(); FileOutputStream os (f); png.writeImageToStream (img, os); }
         check (img.getWidth() == MainView::designW, "GUI snapshot");
         {
+            // zoomed big display: whole loop, x40 and down to single samples
+            std::function<Component* (Component*)> find = [&find] (Component* c) -> Component*
+            {
+                if (c->getComponentID() == "bigDisplay") return c;
+                for (auto* ch : c->getChildren()) if (auto* f = find (ch)) return f;
+                return nullptr;
+            };
+            if (auto* wd = dynamic_cast<WaveDisplay*> (find (ed.get())))
+            {
+                int k = 0;
+                for (double len : { 1.0, 1.0 / 40.0, 1.0e-6 })
+                {
+                    wd->setView (0.31, len);
+                    auto im = wd->createComponentSnapshot (wd->getLocalBounds(), true, 1.0f);
+                    auto f = outDir.getChildFile ("gui_zoom_" + String (k++) + ".png"); f.deleteFile(); FileOutputStream os (f); png.writeImageToStream (im, os);
+                }
+                wd->setView (0.0, 1.0);
+                check (true, "big display zoom snapshots");
+            }
+            else check (false, "big display found");
+        }
+        {
             auto logo = ed->createComponentSnapshot ({ 0, 0, 420, 64 }, true, 3.0f);
             auto f = outDir.getChildFile ("gui_logo.png"); f.deleteFile(); FileOutputStream os (f); png.writeImageToStream (logo, os);
         }

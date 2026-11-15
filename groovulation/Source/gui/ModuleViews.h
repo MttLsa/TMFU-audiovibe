@@ -18,6 +18,10 @@ public:
     void mouseDoubleClick (const juce::MouseEvent&) override;
     void mouseMove (const juce::MouseEvent&) override;
     bool keyPressed (const juce::KeyPress&) override;
+    void mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
+    void mouseMagnify (const juce::MouseEvent&, float scaleFactor) override;
+    void resized() override;
+    void setView (double start, double len);   // visible part of the loop region (fractions), interactive display only
     std::function<void()> onClick;   // non-interactive displays: select the module
 private:
     void timerCallback() override;
@@ -40,6 +44,21 @@ private:
     Drag drag = none;
     int dragIndex = -1;
     VolEnvelope env;
+    // zoom / high resolution waveform
+    double viewStart = 0.0, viewLen = 1.0;
+    void zoomAround (double factor, float x);
+    double minViewLen() const;
+    void buildPeaks (const LoopPtr& l);
+    void renderWave (const LoopData& l, double R, int w, int h);
+    LoopPtr peaksLoop;
+    std::vector<float> pkMin, pkMax, mono;     // 64-sample min/max blocks + mono mix of the loop
+    float pkNorm = 1.0f;
+    static constexpr int pkBlock = 64;
+    juce::Image waveImg;
+    struct Key { const void* loop = nullptr; double vs = -1, vl = -1, R = -1; int w = 0, h = 0; } waveKey;
+    juce::TextButton zIn { "+" }, zOut { "-" }, zFit { "FIT" };
+    bool draggingScroll = false;
+    juce::Rectangle<float> scrollBar() const;
     int lastMarker = 0;                      // 0 = S, 1 = E (arrow keys nudge it)
     float dragStartPos = 0.0f, dragStartX = 0.0f;
     float lastPos = -1.0f;

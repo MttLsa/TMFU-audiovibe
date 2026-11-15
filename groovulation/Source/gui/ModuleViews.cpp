@@ -30,6 +30,13 @@ WaveDisplay::WaveDisplay (GroovulationProcessor& p, int m, bool inter) : proc (p
         setTooltip ("SLICE: drag the S / E markers (SNAP ms: 1 ms steps, shift = 0.1 ms; arrow keys nudge the last marker: 1 ms, shift 0.1 ms, alt/cmd 10 ms).  "
                     "VOL.A: click to add a point, drag to move, double-click to delete.");
         setWantsKeyboardFocus (true);
+        for (auto* b : { &zIn, &zOut, &zFit }) { addAndMakeVisible (b); b->setWantsKeyboardFocus (false); }
+        zIn.onClick = [this] { zoomAround (0.5, plot().getCentreX()); };
+        zOut.onClick = [this] { zoomAround (2.0, plot().getCentreX()); };
+        zFit.onClick = [this] { setView (0.0, 1.0); };
+        zIn.setTooltip ("Zoom in (or mouse wheel / pinch)");
+        zOut.setTooltip ("Zoom out");
+        zFit.setTooltip ("Show the whole loop");
     }
 }
 
@@ -76,8 +83,147 @@ bool WaveDisplay::keyPressed (const KeyPress& k)
 }
 
 Rectangle<float> WaveDisplay::plot() const { return getLocalBounds().toFloat().reduced (5.0f, 5.0f); }
-float WaveDisplay::xToPos (float x) const { auto r = plot(); return jlimit (0.0f, 1.0f, (x - r.getX()) / r.getWidth()); }
-float WaveDisplay::posToX (float p) const { auto r = plot(); return r.getX() + p * r.getWidth(); }
+float WaveDisplay::xToPos (float x) const { auto r = plot(); return jlimit (0.0f, 1.0f, (float) (viewStart + (x - r.getX()) / r.getWidth() * viewLen)); }
+float WaveDisplay::posToX (float p) const { auto r = plot(); return r.getX() + (float) ((p - viewStart) / viewLen) * r.getWidth(); }
+
+Rectangle<float> WaveDisplay::scrollBar() const { auto r = plot(); return r.removeFromBottom (6.0f); }
+
+double WaveDisplay::minViewLen() const
+{
+    auto l = proc.currentLoop (module);
+    if (l == nullptr) return 1.0;
+    const double regionSamples = regionBeats() / jmax (1, l->beats) * l->numSamples();
+    return jlimit (1.0e-7, 1.0, 0.04 * plot().getWidth() / jmax (1.0, regionSamples));   // down to ~25 pixels per sample
+}
+
+void WaveDisplay::setView (double start, double len)
+{
+    viewLen = jlimit (minViewLen(), 1.0, len);
+    viewStart = jlimit (0.0, 1.0 - viewLen, start);
+    repaint();
+}
+
+void WaveDisplay::zoomAround (double factor, float x)
+{
+    const auto r = plot();
+    const double anchor = viewStart + (x - r.getX()) / r.getWidth() * viewLen;
+    const double nl = jlimit (minViewLen(), 1.0, viewLen * factor);
+    setView (anchor - (x - r.getX()) / r.getWidth() * nl, nl);
+}
+
+void WaveDisplay::mouseWheelMove (const MouseEvent& e, const MouseWheelDetails& w)
+{
+    if (! interactive) { Component::mouseWheelMove (e, w); return; }
+    if (e.mods.isShiftDown() || std::abs (w.deltaX) > std::abs (w.deltaY))
+        setView (viewStart - (std::abs (w.deltaX) > std::abs (w.deltaY) ? w.deltaX : w.deltaY) * viewLen * 0.6, viewLen);   // scroll
+    else
+        zoomAround (std::exp (-w.deltaY * 2.5), e.position.x);                                                                 // zoom at the mouse
+}
+
+void WaveDisplay::mouseMagnify (const MouseEvent& e, float f)
+{
+    if (interactive && f > 0.0f) zoomAround (1.0 / f, e.position.x);
+}
+
+void WaveDisplay::resized()
+{
+    if (! interactive) return;
+    auto r = plot().toNearestInt();
+    auto b = Rectangle<int> (r.getRight() - 112, r.getBottom() - 30, 108, 20);
+    zFit.setBounds (b.removeFromRight (44)); b.removeFromRight (4);
+    zIn.setBounds (b.removeFromRight (28)); b.removeFromRight (4);
+    zOut.setBounds (b.removeFromRight (28));
+    waveKey = {};
+}
+
+void WaveDisplay::buildPeaks (const LoopPtr& l)
+{
+    peaksLoop = l;
+    const int N = l->numSamples();
+    mono.resize ((size_t) N);
+    const float* a = l->audio.getReadPointer (0);
+    const float* b = l->audio.getReadPointer (1);
+    float pk = 1.0e-6f;
+    for (int i = 0; i < N; ++i) { mono[(size_t) i] = 0.5f * (a[i] + b[i]); pk = jmax (pk, std::abs (mono[(size_t) i])); }
+    pkNorm = 1.0f / pk;
+    const int nb = (N + pkBlock - 1) / pkBlock;
+    pkMin.assign ((size_t) nb, 0.0f); pkMax.assign ((size_t) nb, 0.0f);
+    for (int k = 0; k < nb; ++k)
+    {
+        float mn = 1e9f, mx = -1e9f;
+        for (int i = k * pkBlock; i < jmin (N, (k + 1) * pkBlock); ++i) { mn = jmin (mn, mono[(size_t) i]); mx = jmax (mx, mono[(size_t) i]); }
+        pkMin[(size_t) k] = mn; pkMax[(size_t) k] = mx;
+    }
+}
+
+// waveform of the visible part of the region: true min / max per pixel from the audio (block cache when zoomed out,
+// raw samples when zoomed in, a sample-accurate line when there is less than one sample per pixel)
+void WaveDisplay::renderWave (const LoopData& l, double R, int w, int h)
+{
+    waveImg = Image (Image::ARGB, jmax (1, w), jmax (1, h), true);
+    Graphics g (waveImg);
+    const int N = l.numSamples();
+    const double loopBeats = jmax (1, l.beats);
+    const float cy = (float) h * 0.5f, hh = (float) h * 0.47f;
+    auto srcAt = [&] (double p) { const double b = std::fmod (jmax (0.0, p) * R, loopBeats); return b / loopBeats * N; };   // region pos -> sample
+    const double spp = viewLen * R / loopBeats * N / w;   // samples per pixel
+    g.setColour (theme::lcdInk);
+    auto rangeMinMax = [&] (int i0, int i1, float& mn, float& mx)
+    {
+        // [i0, i1) without wrap
+        int i = i0;
+        while (i < i1 && (i % pkBlock) != 0) { mn = jmin (mn, mono[(size_t) i]); mx = jmax (mx, mono[(size_t) i]); ++i; }
+        while (i + pkBlock <= i1) { mn = jmin (mn, pkMin[(size_t) (i / pkBlock)]); mx = jmax (mx, pkMax[(size_t) (i / pkBlock)]); i += pkBlock; }
+        while (i < i1) { mn = jmin (mn, mono[(size_t) i]); mx = jmax (mx, mono[(size_t) i]); ++i; }
+    };
+    if (spp >= 1.0)
+    {
+        float prevY0 = 0, prevY1 = 0; bool havePrev = false;
+        for (int px = 0; px < w; ++px)
+        {
+            const double p0 = viewStart + viewLen * px / w, p1 = viewStart + viewLen * (px + 1) / w;
+            const int a = jlimit (0, N - 1, (int) srcAt (p0));
+            int b = (int) std::ceil (srcAt (p1));
+            float mn = 1e9f, mx = -1e9f;
+            if (b > a) rangeMinMax (a, jmin (N, b), mn, mx);
+            else { rangeMinMax (a, N, mn, mx); rangeMinMax (0, jlimit (0, N, b), mn, mx); }   // the loop wraps inside this pixel
+            if (mn > mx) continue;
+            float y0 = cy - mx * pkNorm * hh, y1 = cy - mn * pkNorm * hh;
+            // join with the previous column so the trace is continuous (no dotted look when zoomed in)
+            if (havePrev) { y0 = jmin (y0, prevY1 - 0.5f); y1 = jmax (y1, prevY0 + 0.5f); }
+            prevY0 = cy - mx * pkNorm * hh; prevY1 = cy - mn * pkNorm * hh; havePrev = true;
+            g.fillRect ((float) px, std::floor (y0), 1.0f, jmax (1.5f, std::ceil (y1) - std::floor (y0)));
+        }
+    }
+    else
+    {
+        // zoomed in below one sample per pixel: the real waveform line through the samples
+        Path line;
+        for (int px = 0; px <= w; ++px)
+        {
+            const double sp = srcAt (viewStart + viewLen * px / w);
+            const int i0 = jlimit (0, N - 1, (int) sp), i1 = (i0 + 1) % N;
+            const float f = (float) (sp - std::floor (sp));
+            const float v = mono[(size_t) i0] + f * (mono[(size_t) i1] - mono[(size_t) i0]);
+            const float y = cy - v * pkNorm * hh;
+            if (px == 0) line.startNewSubPath (0.0f, y); else line.lineTo ((float) px, y);
+        }
+        g.strokePath (line, PathStrokeType (1.8f, PathStrokeType::curved, PathStrokeType::rounded));
+        if (spp < 0.25)   // sample points
+        {
+            const double first = std::ceil (srcAt (viewStart));
+            for (double sIdx = first; ; sIdx += 1.0)
+            {
+                const double x = (sIdx - srcAt (viewStart)) / spp;
+                if (x > w) break;
+                const int i = ((int) sIdx) % N;
+                g.fillEllipse ((float) x - 2.0f, cy - mono[(size_t) i] * pkNorm * hh - 2.0f, 4.0f, 4.0f);
+            }
+        }
+    }
+    g.setColour (theme::lcdInk.withAlpha (0.25f));
+    g.drawHorizontalLine ((int) cy, 0.0f, (float) w);
+}
 float WaveDisplay::yToVol (float y) const { auto r = plot(); return jlimit (0.0f, 1.0f, 1.0f - (y - r.getY()) / r.getHeight()); }
 float WaveDisplay::volToY (float v) const { auto r = plot(); return r.getY() + (1.0f - v) * r.getHeight(); }
 
@@ -104,9 +250,11 @@ void WaveDisplay::paint (Graphics& g)
     const bool sliceOn = param ("slice") > 0.5f, volOn = param ("vola") > 0.5f;
     const float s0 = param ("sstart"), s1 = param ("send");
 
-    // grid (transparent), bars stronger
-    if (R / gb < r.getWidth() / 2.0)
-        for (double b = 0; b < R - 1e-9; b += gb)
+    Graphics::ScopedSaveState clip (g);
+    g.reduceClipRegion (r.toNearestInt());
+    // grid (transparent), bars stronger: only the visible part, only when the lines are not too dense
+    if (viewLen * R / gb < r.getWidth() / 3.0)
+        for (double b = std::floor (viewStart * R / gb) * gb; b < (viewStart + viewLen) * R + 1e-9; b += gb)
         {
             const float x = posToX ((float) (b / R));
             const bool bar = std::abs (std::fmod (b, 4.0)) < 1e-6, beat = std::abs (std::fmod (b, 1.0)) < 1e-6;
@@ -121,31 +269,27 @@ void WaveDisplay::paint (Graphics& g)
         g.setColour (theme::lcdInk.withAlpha (0.7f));
         g.drawDashedLine (Line<float> (x, r.getY(), x, r.getBottom()), dash, 2, 1.0f);
     }
-    // waveform
-    const auto& ov = l->overview;
-    const int bins = (int) ov.size();
-    const float cy = r.getCentreY(), hh = r.getHeight() * 0.46f;
-    for (int px = 0; px < (int) r.getWidth(); ++px)
+    // waveform (cached image, rebuilt only when loop / view / size change)
     {
-        const double b0 = R * px / r.getWidth(), b1 = R * (px + 1) / r.getWidth();
-        float v = 0.0f;
-        for (double b = b0; b < b1 + 1e-9; b += jmax (1e-6, (b1 - b0) / 4.0))
+        if (peaksLoop != l) { buildPeaks (l); waveKey = {}; }
+        if (viewLen < minViewLen() || viewStart + viewLen > 1.0 + 1e-9) setView (viewStart, viewLen);
+        const int w = (int) r.getWidth(), h = (int) r.getHeight();
+        if (waveKey.loop != l.get() || waveKey.vs != viewStart || waveKey.vl != viewLen || waveKey.R != R || waveKey.w != w || waveKey.h != h)
         {
-            const int idx = jlimit (0, bins - 1, (int) (std::fmod (b, loopBeats) / loopBeats * bins));
-            v = jmax (v, ov[(size_t) idx]);
+            renderWave (*l, R, w, h);
+            waveKey = { l.get(), viewStart, viewLen, R, w, h };
         }
-        const float pos = (float) (b0 / R);
-        const bool inside = ! sliceOn || (pos >= s0 && pos < s1);
-        g.setColour (theme::lcdInk.withAlpha (inside ? 0.9f : 0.22f));
-        const float x = r.getX() + (float) px;
-        g.drawLine (x, cy - jmax (0.5f, v * hh), x, cy + jmax (0.5f, v * hh), 1.0f);
+        g.drawImageAt (waveImg, (int) r.getX(), (int) r.getY());
     }
     // slice
     if (sliceOn)
     {
+        g.setColour (theme::lcdBg.withAlpha (0.7f));
+        g.fillRect (Rectangle<float> (r.getX(), r.getY(), jmax (0.0f, posToX (s0) - r.getX()), r.getHeight()));
+        g.fillRect (Rectangle<float> (posToX (s1), r.getY(), jmax (0.0f, r.getRight() - posToX (s1)), r.getHeight()));
         g.setColour (theme::lcdInk.withAlpha (0.12f));
-        g.fillRect (Rectangle<float> (r.getX(), r.getY(), posToX (s0) - r.getX(), r.getHeight()));
-        g.fillRect (Rectangle<float> (posToX (s1), r.getY(), r.getRight() - posToX (s1), r.getHeight()));
+        g.fillRect (Rectangle<float> (r.getX(), r.getY(), jmax (0.0f, posToX (s0) - r.getX()), r.getHeight()));
+        g.fillRect (Rectangle<float> (posToX (s1), r.getY(), jmax (0.0f, r.getRight() - posToX (s1)), r.getHeight()));
         for (int k = 0; k < 2; ++k)
         {
             const float x = posToX (k == 0 ? s0 : s1);
@@ -213,6 +357,16 @@ void WaveDisplay::paint (Graphics& g)
         g.setColour (theme::lcdInk);
         g.drawLine (posToX (pp), r.getY(), posToX (pp), r.getBottom(), 1.5f);
     }
+    if (interactive && viewLen < 0.999)
+    {
+        auto sb = scrollBar();
+        g.setColour (theme::lcdInk.withAlpha (0.15f)); g.fillRect (sb);
+        g.setColour (theme::lcdInk.withAlpha (0.6f));
+        g.fillRoundedRectangle (sb.getX() + (float) viewStart * sb.getWidth(), sb.getY(), jmax (6.0f, (float) viewLen * sb.getWidth()), sb.getHeight(), 2.0f);
+        g.setFont (theme::mono (11.0f, true));
+        const double z = 1.0 / viewLen;
+        g.drawText ("ZOOM x" + (z < 10.0 ? String (z, 1) : String (roundToInt (z))), r.reduced (4, 2).withTrimmedBottom (30), Justification::bottomRight);
+    }
     if (interactive)
     {
         const int steps = (int) param ("steps");
@@ -247,6 +401,13 @@ void WaveDisplay::mouseDown (const MouseEvent& e)
 {
     if (! interactive) { if (onClick) onClick(); return; }
     grabKeyboardFocus();
+    if (viewLen < 0.999 && scrollBar().expanded (0, 4).contains (e.position))
+    {
+        draggingScroll = true;
+        const auto sb = scrollBar();
+        setView ((e.position.x - sb.getX()) / sb.getWidth() - viewLen * 0.5, viewLen);
+        return;
+    }
     drag = none;
     const bool sliceOn = param ("slice") > 0.5f, volOn = param ("vola") > 0.5f;
     if (sliceOn)
@@ -290,6 +451,12 @@ void WaveDisplay::mouseDown (const MouseEvent& e)
 void WaveDisplay::mouseDrag (const MouseEvent& e)
 {
     if (! interactive) return;
+    if (draggingScroll)
+    {
+        const auto sb = scrollBar();
+        setView ((e.position.x - sb.getX()) / sb.getWidth() - viewLen * 0.5, viewLen);
+        return;
+    }
     const double R = regionBeats();
     auto l = proc.currentLoop (module);
     float pos = xToPos (e.position.x);
@@ -298,7 +465,7 @@ void WaveDisplay::mouseDrag (const MouseEvent& e)
         // SNAP ms: free movement in 1 ms steps; shift = fine (10x slower, 0.1 ms steps)
         const bool fine = e.mods.isShiftDown();
         const double w = jmax (1.0f, plot().getWidth());
-        const double p = dragStartPos + (e.position.x - dragStartX) / w * (fine ? 0.1 : 1.0);
+        const double p = dragStartPos + (e.position.x - dragStartX) / w * viewLen * (fine ? 0.1 : 1.0);
         const double stepMs = fine ? 0.1 : 1.0;
         const double Rms = regionMs();
         setSliceMs (drag == sliceStart, std::round (jlimit (0.0, 1.0, p) * Rms / stepMs) * stepMs);
@@ -325,7 +492,7 @@ void WaveDisplay::mouseDrag (const MouseEvent& e)
     repaint();
 }
 
-void WaveDisplay::mouseUp (const MouseEvent&) { drag = none; repaint(); }
+void WaveDisplay::mouseUp (const MouseEvent&) { drag = none; draggingScroll = false; repaint(); }
 
 void WaveDisplay::mouseDoubleClick (const MouseEvent& e)
 {
@@ -472,6 +639,7 @@ void ModuleStrip::resized()
 //==============================================================================
 ModuleEditor::ModuleEditor (GroovulationProcessor& p) : proc (p), display (p, 0, true)
 {
+    display.setComponentID ("bigDisplay");
     addAndMakeVisible (display);
     for (auto* c : std::initializer_list<Component*> { &grid, &keySrc, &ftype, &warp, &slsnap, &lenMinus, &lenPlus, &lenOrig, &volReset, &slice, &fade, &volA, &dpp,
                                                        &prev, &next, &rnd, &sim, &browser,

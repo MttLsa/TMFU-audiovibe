@@ -48,7 +48,7 @@ Mixer di loop e campioni a 12 moduli, nello stile di Twinbox con i colori di un 
 - I cambi di loop (LOOP SELECT, SIMILAR, LFO → Loop) vanno in dissolvenza incrociata tra due voci.
 
 ## Ogni modulo
-Display LCD (griglia 1/1 … 1/64 con terzine fino a 1/48, lunghezza in step di griglia per le poliritmie), GAIN (−6 dB di default),
+Display LCD con waveform ad alta risoluzione e zoom (rotella / pinch = zoom sul puntatore, shift+rotella o barra = scorri, − + FIT; zoomando a fondo si vedono i singoli campioni), griglia 1/1 … 1/64 con terzine fino a 1/48, lunghezza in step di griglia per le poliritmie), GAIN (−6 dB di default),
 PAN, ADSR, VOL.A (automazione di volume disegnata sul display), PITCH ±32 semitoni (risoluzione 0,001) e TEMPO
 (0,5×–2×, risoluzione 0,00001), SLICE con fade di 0,5 ms: i marcatori S / E si muovono al millisecondo (SNAP MS: shift = 0,1 ms, frecce ← → = ±1 ms, shift ±0,1 ms, alt/cmd ±10 ms) oppure sulla griglia (SNAP GRID), filtro LP/BP/HP (cutoff a risoluzione continua, senza
 zipper), DIRT, DELAY, REVERB, **3 LFO** (destinazioni: gain, pan, pitch, **tempo**, cutoff, resonance, dirt, delay,
@@ -85,7 +85,7 @@ sceglie quale suonare, con crossfade. Non legge dal disco durante la riproduzion
 ## Build
 ```
 cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release
-./packaging/macos/make_pkg.sh 1.1.5        # installer .pkg (macOS)
+./packaging/macos/make_pkg.sh 1.1.6        # installer .pkg (macOS)
 cmake -B build -DGROOV_BUILD_TESTS=ON && cmake --build build --target GroovulationTest   # test offline
 ```
 Su GitHub l'installer viene costruito automaticamente (workflow `groovulation`).
