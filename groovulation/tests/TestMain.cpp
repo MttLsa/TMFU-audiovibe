@@ -178,7 +178,12 @@ int main (int argc, char** argv)
     proc->setPlayHead (&ph);
     proc->setPlayConfigDetails (0, 2, 48000.0, 512);
     proc->prepareToPlay (48000.0, 512);
-    pump (1500);
+    for (int i = 0; i < 100; ++i)
+    {
+        pump (100);
+        int n = 0; for (int m = 0; m < lb::numModules; ++m) n += proc->currentLoop (m) != nullptr && proc->currentLoop (m)->sampleRate == 48000.0;
+        if (n == lb::numModules) break;
+    }
     int loaded = 0; for (int m = 0; m < lb::numModules; ++m) loaded += proc->currentLoop (m) != nullptr;
     check (loaded == lb::numModules, "random loop in every module: " + String (loaded));
     for (int m = 0; m < lb::numModules; ++m) if (auto l = proc->currentLoop (m)) std::cout << "    " << lb::moduleName (m) << ": " << l->name << "\n";
@@ -228,6 +233,40 @@ int main (int argc, char** argv)
     check (pr.files.size() == lb::numModules, "PRINT wrote one file per module");
     if (pr.files.size() > 0)
         check (pr.files[0].getFileName() == "Kick - TestSnapshot.wav", "PRINT file naming: " + pr.files[0].getFileName());
+
+    // ---- GUI snapshots
+    {
+        setP (*proc, "deck", 0); setP (*proc, "scaleOn", 1); setP (*proc, "swingOn", 0);
+        for (int m = 0; m < lb::numModules; ++m) { setP (*proc, lb::pid (m, "steps"), 0); setP (*proc, lb::pid (m, "pitch"), 0); }
+        setP (*proc, lb::pid (5, "vola"), 1);
+        VolEnvelope env { { 0.0f, volUnityY }, { 0.3f, 0.6f }, { 0.55f, 1.0f }, { 1.0f, volUnityY } };
+        proc->setVolEnvelope (5, env);
+        render (*proc, ph, 1.0);
+        std::unique_ptr<AudioProcessorEditor> ed (proc->createEditor());
+        ed->setSize (MainView::designW, MainView::designH);
+        pump (600);
+        if (auto* mv = dynamic_cast<MainView*> (ed->getChildComponent (0))) mv->selectModule (5);
+        pump (400);
+        auto img = ed->createComponentSnapshot (ed->getLocalBounds(), true, 1.0f);
+        PNGImageFormat png;
+        { auto f = outDir.getChildFile ("gui_main.png"); f.deleteFile(); FileOutputStream os (f); png.writeImageToStream (img, os); }
+        check (img.getWidth() == MainView::designW, "GUI snapshot");
+        {
+            auto logo = ed->createComponentSnapshot ({ 0, 0, 420, 64 }, true, 3.0f);
+            auto f = outDir.getChildFile ("gui_logo.png"); f.deleteFile(); FileOutputStream os (f); png.writeImageToStream (logo, os);
+        }
+        for (int t = 1; t <= 2; ++t)
+        {
+            DeckView dv (*proc, t);
+            dv.setSize (980, 650);
+            proc->deck.pendingAction = fx::Deck::wobble;
+            render (*proc, ph, 0.3);
+            for (int i = 0; i < 20; ++i) pump (20);
+            auto im = dv.createComponentSnapshot (dv.getLocalBounds(), true, 1.0f);
+            auto f = outDir.getChildFile (t == 1 ? "gui_tape.png" : "gui_vinyl.png"); f.deleteFile(); FileOutputStream os (f); png.writeImageToStream (im, os);
+        }
+        ed.reset();
+    }
 
     proc->setPlayHead (nullptr);
     proc.reset();

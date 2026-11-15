@@ -89,6 +89,17 @@ void LoopLibrary::installFactoryIfMissing()
     for (int m = 0; m < lb::numModules; ++m)
         if (factoryFolder().getChildFile (lb::folderName (m)).findChildFiles (File::findFiles, false, audioWildcard).isEmpty()) missing = true;
     if (! missing && vInst >= vEmb) return;
+    // upgrade: remove the files of the previously installed factory set (user files are never touched)
+    if (installed.isObject() && vInst < vEmb)
+        if (auto* folders = installed.getProperty ("folders", var()).getDynamicObject())
+            for (auto& fo : folders->getProperties())
+                if (auto* files = fo.value.getArray())
+                    for (auto& f : *files)
+                    {
+                        const String name = f.getProperty ("file", "").toString();
+                        if (name.isNotEmpty() && ! name.containsAnyOf ("/\\"))
+                            factoryFolder().getChildFile (fo.name.toString()).getChildFile (name).deleteFile();
+                    }
     const auto r = zip.uncompressTo (rootFolder(), true);
     if (r.failed()) DBG ("Groovulation: factory loop install failed: " << r.getErrorMessage());
 }
