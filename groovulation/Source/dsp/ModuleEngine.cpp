@@ -51,7 +51,7 @@ void ModuleEngine::prepare (double sampleRate, int maxBlock)
             v.st->configure (2, block, block / 4);
         }
         else v.st->presetDefault (2, (float) sr);
-        v.needSeek = true; v.semisInit = false; v.curSeg = -1; v.prevOn = false;
+        v.needSeek = true; v.semisInit = false;
         maxIn = jmax (maxIn, kSub * 16 + v.st->blockSamples() + v.st->intervalSamples() + 16);
     }
     inL.assign ((size_t) maxIn, 0.0f); inR.assign ((size_t) maxIn, 0.0f);
@@ -66,21 +66,6 @@ void ModuleEngine::prepare (double sampleRate, int maxBlock)
 
 const LoopPtr& ModuleEngine::getLoop() const { return voices[active].loop; }
 
-void ModuleEngine::Voice::buildSegments()
-{
-    segBeat.clear(); segStart.clear(); segEnd.clear(); segSched.clear();
-    schedSwing = -1.0f; curSeg = -1; prevOn = false;
-    if (loop == nullptr) return;
-    const double LB = jmax (1, loop->beats);
-    const int N = loop->numSamples();
-    std::vector<double> b { 0.0 };
-    for (auto f : loop->onsets) b.push_back (f * LB);
-    std::sort (b.begin(), b.end());
-    for (auto x : b) if (segBeat.empty() || x - segBeat.back() > 1.0e-4) segBeat.push_back (x);
-    for (size_t k = 0; k < segBeat.size(); ++k) segStart.push_back (jlimit (0, N - 1, (int) std::lround (segBeat[k] / LB * N)));
-    for (size_t k = 0; k < segBeat.size(); ++k) segEnd.push_back (k + 1 < segBeat.size() ? segStart[k + 1] : N);
-}
-
 void ModuleEngine::switchTo (LoopPtr l)
 {
     if (xfade < 1.0f) { pendingSwitch = std::move (l); return; }   // finish the running crossfade first
@@ -94,8 +79,6 @@ void ModuleEngine::assign (Voice& v, LoopPtr l)
 {
     v.loop = std::move (l);
     v.needSeek = true; v.semisInit = false;
-    v.isBeats = mode == 1;
-    v.buildSegments();
 }
 
 void ModuleEngine::setLoop (LoopPtr l)
@@ -110,17 +93,7 @@ double ModuleEngine::regionBeats (const LoopData& l, const ModuleParams& p)
     return p.steps > 0 ? p.steps * lb::gridBeats (p.grid) : (double) jmax (1, l.beats);
 }
 
-// BEATS swing (Ableton-groove like): the off-beat 1/16 (or 1/8) moves later by up to a triplet position,
-// everything in between is moved proportionally - slices are moved, never stretched.
-double ModuleEngine::swingShift (double b, float swing, int grid)
-{
-    if (swing <= 0.0005f) return b;
-    const double P = grid == 0 ? 1.0 : 0.5, half = P * 0.5, d = (double) swing * P / 6.0;
-    const double base = std::floor (b / P) * P, x = b - base;
-    return base + (x < half ? x * (half + d) / half : half + d + (x - half) * (half - d) / half);
-}
-
-// COMPLEX swing: smooth warp out = s + d * sin^2(pi s / P) (rate changes continuously, no steps);
+// Swing: smooth warp out = s + d * sin^2(pi s / P) (rate changes continuously, no steps);
 // returns the source time s for an output time (Newton iterations).
 double ModuleEngine::swingSmooth (double x, float swing, int grid)
 {
@@ -149,15 +122,33 @@ void ModuleEngine::readSource (const LoopData& L, double startBeat, int count, d
     const double loopBeats = jmax (1, L.beats);
     const float* a = L.audio.getReadPointer (0);
     const float* b = L.audio.getReadPointer (1);
-    for (int k = 0; k < count; ++k)
+    auto at = [&] (double regionBeat, float& outL, float& outR)
     {
-        const double srcBeat = posMod (posMod (startBeat + k * bps, region), loopBeats);
+        const double srcBeat = posMod (posMod (regionBeat, region), loopBeats);
         const double idx = srcBeat / loopBeats * N;
         const int i0 = jlimit (0, N - 1, (int) idx);
         const int i1 = i0 + 1 < N ? i0 + 1 : 0;
         const float f = (float) (idx - i0);
-        l[k] = a[i0] + f * (a[i1] - a[i0]);
-        r[k] = b[i0] + f * (b[i1] - b[i0]);
+        outL = a[i0] + f * (a[i1] - a[i0]);
+        outR = b[i0] + f * (b[i1] - b[i0]);
+    };
+    // SLICE LOOP: only the part between the markers, repeated; 5 ms crossfade into the start at every repeat
+    const bool looping = slOn && slL > 1.0e-6;
+    const double xf = looping ? jmin (slL * 0.25, 0.005 * loopBeats * sr / jmax (1, N)) : 0.0;
+    for (int k = 0; k < count; ++k)
+    {
+        const double U = startBeat + k * bps;
+        if (! looping) { at (U, l[k], r[k]); continue; }
+        const double rr = posMod (U, slL);
+        at (slA + rr, l[k], r[k]);
+        if (rr > slL - xf)
+        {
+            const float g = (float) ((rr - (slL - xf)) / xf);
+            float l2, r2;
+            at (slA + rr - slL, l2, r2);
+            l[k] = l[k] * (1.0f - g) + l2 * g;
+            r[k] = r[k] * (1.0f - g) + r2 * g;
+        }
     }
 }
 
@@ -224,89 +215,10 @@ void ModuleEngine::renderComplex (Voice& v, float* outL, float* outR, int s0, in
     v.st->process (ins, count, outs, m);
 }
 
-void ModuleEngine::renderBeats (Voice& v, float* outL, float* outR, int s0, int m, float semis, double region, const BlockContext& ctx)
-{
-    const auto& L = *v.loop;
-    const int N = L.numSamples();
-    const double loopBeats = jmax (1, L.beats);
-    const float* a = L.audio.getReadPointer (0);
-    const float* b = L.audio.getReadPointer (1);
-    const int S = (int) v.segBeat.size();
-    if (S == 0) { std::fill (outL + s0, outL + s0 + m, 0.0f); std::fill (outR + s0, outR + s0 + m, 0.0f); return; }
-    const float swing = ctx.raw ? 0.0f : ctx.swing;
-    if (std::abs (v.schedSwing - swing) > 1.0e-6f || v.schedGrid != ctx.swingGrid)
-    {
-        v.segSched.resize ((size_t) S);
-        for (int k = 0; k < S; ++k) v.segSched[(size_t) k] = swingShift (v.segBeat[(size_t) k], swing, ctx.swingGrid);
-        v.schedSwing = swing; v.schedGrid = ctx.swingGrid;
-    }
-    const double ratio = std::pow (2.0, (double) semis / 12.0);   // drums: pitch by resampling each slice
-    const double fadeOut = jmax (8.0, 0.006 * sr), fadeIn = jmax (4.0, 0.001 * sr);
-    const double dq = m > 1 ? (qArr[(size_t) (s0 + m - 1)] - qArr[(size_t) s0]) / (m - 1) : ctx.ppqPerSample;
-    const double bpo = jmax (1.0e-9, ctx.raw ? dq * L.bpm / jmax (1.0, ctx.bpm) : dq);   // loop beats per output sample
-    // slices are identified by a running number (region cycle, loop repeat, slice index), never by their time:
-    // when the groove (SWING knob) moves, the slice that is playing keeps playing untouched and only the
-    // following slices use the new timing.
-    const long long nL = jmax (1LL, (long long) std::ceil (region / loopBeats - 1.0e-9));
-    auto floorDiv = [] (long long x, long long d) { return x >= 0 ? x / d : -((-x + d - 1) / d); };
-    auto absOf = [&] (long long id)
-    {
-        const long long base = floorDiv (id, S), k = id - base * S;
-        const long long c = floorDiv (base, nL), lc = base - c * nL;
-        return (double) c * region + (double) lc * loopBeats + v.segSched[(size_t) k];
-    };
-    for (int i = s0; i < s0 + m; ++i)
-    {
-        const double U = loopBeat (qArr[(size_t) i], L, ctx);
-        const double cyc = std::floor (U / region);
-        const double inRegion = U - cyc * region;
-        const double loopCyc = std::floor (inRegion / loopBeats);
-        const double inLoop = inRegion - loopCyc * loopBeats;
-        const int k = (int) (std::upper_bound (v.segSched.begin(), v.segSched.end(), inLoop) - v.segSched.begin()) - 1;
-        const long long id = ((long long) cyc * nL + (long long) loopCyc) * S + k;   // k = -1 -> last slice of the previous loop
-        if (v.curSeg < 0 || id > v.curId)
-        {
-            const double startAbs = absOf (id);
-            const double elapsed = (U - startAbs) / bpo;          // output samples since the slice should have started
-            const int ks = (int) (id - floorDiv (id, S) * S);
-            const double startSrc = v.segStart[(size_t) ks] + elapsed * ratio;
-            if (v.curSeg >= 0 && std::abs (v.curSrc - startSrc) < 2.0)
-                v.curSeg = ks;                                  // contiguous audio: just carry on
-            else
-            {
-                if (v.curSeg >= 0) { v.prevOn = true; v.prevSrc = v.curSrc; v.prevGain = v.curGain; if (ks == v.curSeg) ++sameSliceRestarts; }
-                v.curSeg = ks; v.curSrc = startSrc;
-                v.curGain = elapsed * ratio > fadeIn * 4.0 ? 0.0f : 1.0f;   // starting inside a slice: fade in
-            }
-            v.curId = id;
-        }
-        // will the slice run out before the next one starts (slower tempo / lower pitch)? -> fade out before its end
-        const int k1 = v.curSeg;
-        const double nextAbs = jmin (absOf (v.curId + 1), (cyc + 1.0) * region);
-        const double toNext = (nextAbs - U) / bpo;
-        const double remaining = (v.segEnd[(size_t) k1] - v.curSrc) / ratio;
-        float env = 1.0f;
-        if (remaining < toNext) env = (float) jlimit (0.0, 1.0, remaining / (fadeOut / ratio));
-        if (v.curGain < 1.0f) v.curGain = (float) jmin (1.0, v.curGain + 1.0 / fadeIn);
-        float l = readLin (a, N, v.curSrc) * env * v.curGain, r = readLin (b, N, v.curSrc) * env * v.curGain;
-        v.curSrc += ratio;
-        if (v.prevOn)
-        {
-            l += readLin (a, N, v.prevSrc) * v.prevGain;
-            r += readLin (b, N, v.prevSrc) * v.prevGain;
-            v.prevSrc += ratio;
-            v.prevGain -= (float) (1.0 / fadeOut);
-            if (v.prevGain <= 0.0f) v.prevOn = false;
-        }
-        outL[i] = l; outR[i] = r;
-    }
-}
-
 void ModuleEngine::renderVoice (Voice& v, float* l, float* r, int s0, int m, const ModuleParams&, const BlockContext& ctx, float semis, double region)
 {
     if (v.loop == nullptr || v.loop->numSamples() < 64) { std::fill (l + s0, l + s0 + m, 0.0f); std::fill (r + s0, r + s0 + m, 0.0f); return; }
-    if (v.isBeats) renderBeats (v, l, r, s0, m, semis, region, ctx);
-    else renderComplex (v, l, r, s0, m, semis, region, ctx);
+    renderComplex (v, l, r, s0, m, semis, region, ctx);
 }
 
 //==============================================================================
@@ -315,14 +227,9 @@ void ModuleEngine::process (float* outL, float* outR, int n, const BlockContext&
     if ((int) qArr.size() < n) { qArr.resize ((size_t) n + 64); tmpL.resize ((size_t) n + 64); tmpR.resize ((size_t) n + 64); }
     std::fill (outL, outL + n, 0.0f);
     std::fill (outR, outR + n, 0.0f);
-    if (p.warp != mode)
-    {
-        mode = p.warp;
-        for (auto& v : voices) { v.isBeats = mode == 1; v.needSeek = true; v.curSeg = -1; v.prevOn = false; }
-    }
     const bool running = ctx.playing && p.on && voices[active].loop != nullptr;
-    if (ctx.jumped) { offset = ctx.ppq * (p.tempo * ctx.rateMul - 1.0); for (auto& v : voices) { v.needSeek = true; v.curSeg = -1; v.prevOn = false; } lastLoopStep = -1.0; }
-    if (! running) { for (auto& v : voices) { v.needSeek = true; v.curSeg = -1; v.prevOn = false; } if (! ctx.playing) playPos = -1.0f; }
+    if (ctx.jumped) { offset = ctx.ppq * (p.tempo * ctx.rateMul - 1.0); for (auto& v : voices) v.needSeek = true; lastLoopStep = -1.0; }
+    if (! running) { for (auto& v : voices) v.needSeek = true; if (! ctx.playing) playPos = -1.0f; }
 
     auto P = std::atomic_load (&pool);
     const VolPtr env = std::atomic_load (&vol);
@@ -375,6 +282,11 @@ void ModuleEngine::process (float* outL, float* outR, int n, const BlockContext&
 
             const auto& L = *voices[active].loop;
             const double region = regionBeats (L, p);
+            float sl0 = jlimit (0.0f, 1.0f, p.sStart + 0.25f * mod[lb::tSliceStart]);
+            float sl1 = jlimit (0.0f, 1.0f, p.sEnd + 0.25f * mod[lb::tSliceEnd]);
+            if (sl1 < sl0 + 0.002f) sl1 = jmin (1.0f, sl0 + 0.002f);
+            slOn = p.slice && p.slLoop;
+            slA = sl0 * region; slL = (sl1 - sl0) * region;
             const float semis = jlimit (-48.0f, 48.0f, cx.semitones + 12.0f * mod[lb::tPitch] + 12.0f * (float) std::log2 (cx.rateMul));
             renderVoice (voices[active], outL, outR, s0, m, p, cx, semis, region);
             if (xfade < 1.0f)
@@ -382,7 +294,7 @@ void ModuleEngine::process (float* outL, float* outR, int n, const BlockContext&
                 auto& old = voices[1 - active];
                 const double oregion = old.loop != nullptr ? regionBeats (*old.loop, p) : region;
                 renderVoice (old, tmpL.data(), tmpR.data(), s0, m, p, cx, semis, oregion);
-                const float inc = (float) (1.0 / ((voices[active].isBeats ? 0.005 : 0.02) * sr));
+                const float inc = (float) (1.0 / (0.02 * sr));
                 for (int i = s0; i < s0 + m; ++i)
                 {
                     xfade = jmin (1.0f, xfade + inc);
@@ -396,19 +308,18 @@ void ModuleEngine::process (float* outL, float* outR, int n, const BlockContext&
             const double bpo = (qArr[(size_t) (s0 + m - 1)] - qArr[(size_t) s0]) / jmax (1, m - 1);
             const double regionSamples = region / jmax (1.0e-12, cx.raw ? bpo * L.bpm / jmax (1.0, cx.bpm) : bpo);
             const double regionSec = regionSamples / sr;
-            float sl0 = jlimit (0.0f, 1.0f, p.sStart + 0.25f * mod[lb::tSliceStart]);
-            float sl1 = jlimit (0.0f, 1.0f, p.sEnd + 0.25f * mod[lb::tSliceEnd]);
-            if (sl1 < sl0 + 0.002f) sl1 = jmin (1.0f, sl0 + 0.002f);
             const double fadePh = (0.0005 * sr) / jmax (1.0, regionSamples);   // 0.5 ms slice fades
             ignoreUnused (loopBeats);
             for (int i = s0; i < s0 + m; ++i)
             {
                 const double U = loopBeat (qArr[(size_t) i], L, cx);
-                const double ph = posMod (U, region) / region;
+                // in SLICE LOOP the timeline runs around the slice: ADSR, VOL.A and the playhead follow it
+                const double ph = slOn ? (slA + posMod (U, jmax (1.0e-9, slL))) / region : posMod (U, region) / region;
                 if (i == 0) playPos = (float) ph;
                 float g = 1.0f;
                 double segA = 0.0, segB = 1.0;
-                if (p.slice)
+                if (slOn) { segA = sl0; segB = sl1; }
+                else if (p.slice)
                 {
                     segA = sl0; segB = sl1;
                     if (p.fade) g = (float) (jlimit (0.0, 1.0, (ph - sl0) / fadePh) * jlimit (0.0, 1.0, (sl1 - ph) / fadePh));

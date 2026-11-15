@@ -2,7 +2,7 @@
 
 Mixer di loop e campioni a 12 moduli, nello stile di Twinbox con i colori di un MPC 60 vintage.
 
-📖 **Manuale d'uso (PDF):** [docs/Groovulation_Manuale_v1.1.7.pdf](docs/Groovulation_Manuale_v1.1.7.pdf)
+📖 **Manuale d'uso (PDF):** [docs/Groovulation_Manuale_v1.1.8.pdf](docs/Groovulation_Manuale_v1.1.8.pdf)
 
 | Sezione | Moduli |
 |---|---|
@@ -38,21 +38,18 @@ Mixer di loop e campioni a 12 moduli, nello stile di Twinbox con i colori di un 
   device Scale di Ableton). PITCH funziona ancora: il risultato va sulla nota più vicina della scala.
 - **RAW**: tempo e intonazione originali; PITCH e TEMPO restano manuali.
 
-## Motori audio (WARP, per modulo)
-- **COMPLEX** (default, tutti i moduli): time-stretch / pitch-shift polifonico ad alta qualità (Signalsmith Stretch,
-  classe "Complex Pro"). Sui DRUMS usa una finestra di analisi più corta (~50 ms), così gli attacchi restano netti.
-  Lo swing è un warp continuo (sin²) e la quantità di swing scorre in ~150 ms, quindi muovere il knob non crea
-  salti né scalini.
-- **BEATS** (opzione): il loop viene tagliato sui transienti e ogni fetta suona intatta al suo tempo, come la
-  modalità "Beats" di Ableton. Se il tempo del progetto è molto diverso da quello del loop, le fette lasciano
-  dei buchi: per questo il default è COMPLEX.
+## Motore audio
+- **Time-stretch / pitch-shift polifonico ad alta qualità** (Signalsmith Stretch, classe "Complex Pro") per tutti
+  i moduli. Sui DRUMS usa una finestra di analisi più corta (~50 ms), così gli attacchi restano netti.
+- Lo swing è un warp continuo (sin²) e la quantità di swing scorre in ~150 ms: muovere il knob non crea salti né
+  scalini.
 - I loop vengono ricampionati alla frequenza del progetto come segnali ciclici (nessun buco al giro del loop).
 - I cambi di loop (LOOP SELECT, SIMILAR, LFO → Loop) vanno in dissolvenza incrociata tra due voci.
 
 ## Ogni modulo
 Display LCD con waveform ad alta risoluzione e zoom (rotella / pinch = zoom sul puntatore, shift+rotella o barra = scorri, − + FIT; zoomando a fondo si vedono i singoli campioni), griglia 1/1 … 1/64 con terzine fino a 1/48, lunghezza in step di griglia per le poliritmie), GAIN (−6 dB di default),
 PAN, ADSR, VOL.A (automazione di volume disegnata sul display), PITCH ±32 semitoni (risoluzione 0,001) e TEMPO
-(0,5×–2×, risoluzione 0,00001), SLICE con fade di 0,5 ms: i marcatori S / E si muovono al millisecondo (SNAP MS: shift = 0,1 ms, frecce ← → = ±1 ms, shift ±0,1 ms, alt/cmd ±10 ms) oppure sulla griglia (SNAP GRID), filtro LP/BP/HP (cutoff a risoluzione continua, senza
+(0,5×–2×, risoluzione 0,00001), SLICE con fade di 0,5 ms: i marcatori S / E si muovono al millisecondo (SNAP MS: shift = 0,1 ms, frecce ← → = ±1 ms, shift ±0,1 ms, alt/cmd ±10 ms) oppure sulla griglia (SNAP GRID); con LOOP la parte tra S ed E si ripete di continuo (crossfade di 5 ms), filtro LP/BP/HP (cutoff a risoluzione continua, senza
 zipper), DIRT, DELAY, REVERB, **3 LFO** (destinazioni: gain, pan, pitch, **tempo**, cutoff, resonance, dirt, delay,
 reverb, slice e **Loop**), LOOP SELECT, SIMILAR, TYPE.
 
@@ -87,7 +84,7 @@ sceglie quale suonare, con crossfade. Non legge dal disco durante la riproduzion
 ## Build
 ```
 cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release
-./packaging/macos/make_pkg.sh 1.1.7        # installer .pkg (macOS)
+./packaging/macos/make_pkg.sh 1.1.8        # installer .pkg (macOS)
 cmake -B build -DGROOV_BUILD_TESTS=ON && cmake --build build --target GroovulationTest   # test offline
 ```
 Su GitHub l'installer viene costruito automaticamente (workflow `groovulation`).

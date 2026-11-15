@@ -99,12 +99,11 @@ AudioProcessorValueTreeState::ParameterLayout lb::createLayout()
         add (std::make_unique<APF> (id ("sstart"), n + "Slice Start", NormalisableRange<float> (0.0f, 1.0f), 0.0f, percent()));
         add (std::make_unique<APF> (id ("send"), n + "Slice End", NormalisableRange<float> (0.0f, 1.0f), 1.0f, percent()));
         add (std::make_unique<APB> (id ("fade"), n + "Slice Fades", true));
+        add (std::make_unique<APB> (id ("slloop"), n + "Slice Loop", false));
         // SLICE markers: move in milliseconds (1 ms, shift 0.1 ms) or snap to the grid
         add (std::make_unique<APC> (id ("slsnap"), n + "Slice Snap", StringArray { "ms", "Grid" }, 0));
         add (std::make_unique<APB> (id ("vola"), n + "Volume Automation", false));
         add (std::make_unique<APC> (id ("keysrc"), n + "Type (key source)", StringArray { "Audio", "File Name" }, 0));
-        // time engine: COMPLEX = high quality time-stretch (default, all modules), BEATS = transient slices
-        add (std::make_unique<APC> (id ("warp"), n + "Warp Mode", StringArray { "Complex", "Beats" }, 0));
     }
 
     // ---------------- global

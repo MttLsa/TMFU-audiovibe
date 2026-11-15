@@ -61,6 +61,20 @@ static Stats render (GroovulationProcessor& p, FakePlayHead& ph, double seconds,
     return st;
 }
 
+static AudioBuffer<float> renderToBuffer (GroovulationProcessor& p, FakePlayHead& ph, double seconds)
+{
+    const double sr = 48000.0; const int bs = 512;
+    AudioBuffer<float> all (1, (int) (seconds * sr)), buf (2 + 2 * lb::numModules, bs);
+    MidiBuffer midi;
+    for (int pos = 0; pos + bs <= all.getNumSamples(); pos += bs)
+    {
+        ph.ppq = pos / sr * ph.bpm / 60.0;
+        p.processBlock (buf, midi);
+        all.copyFrom (0, pos, buf, 0, 0, bs);
+    }
+    return all;
+}
+
 int main (int argc, char** argv)
 {
     ScopedJuceInitialiser_GUI init;
@@ -436,11 +450,9 @@ int main (int argc, char** argv)
                     setP (*proc, "swingOn", 0);
                     const int rs = proc->reseeks (lb::top) - s0c;
                     std::cout << "  info COMPLEX re-seeks while the knob moved: " << rs << "\n";
-                    check (rs == 0, "COMPLEX warp: no re-seeks (jumps) while the SWING knob moves");
+                    check (rs == 0, "time-stretch: no re-seeks (jumps) while the SWING knob moves");
                 }
-                setP (*proc, lb::pid (lb::top, "warp"), 1);   // BEATS engine
                 setP (*proc, "swingOn", 1);
-                const int restarts0 = proc->sliceRestarts (lb::top);
                 for (int pos = 0; pos + bs <= outB.getNumSamples(); pos += bs)
                 {
                     ph.ppq = pos / srr * ph.bpm / 60.0;
@@ -449,10 +461,6 @@ int main (int argc, char** argv)
                     outB.copyFrom (0, pos, buf, 0, 0, bs);
                 }
                 setP (*proc, "swingOn", 0);
-                const int restarts = proc->sliceRestarts (lb::top) - restarts0;
-                std::cout << "  info drum slices restarted over themselves while the knob moved: " << restarts << "\n";
-                check (restarts == 0, "BEATS warp: no slice restarts while the SWING knob moves");
-                setP (*proc, lb::pid (lb::top, "warp"), 0);
                 const float moving = clickiness (outB, 4800);
                 setP (*proc, "swingOn", 1); setP (*proc, "swing", 0.6f);
                 const float fixed = clickiness (renderBuf (4.0), 4800);
@@ -461,7 +469,7 @@ int main (int argc, char** argv)
                 check (moving < fixed * 1.5f, "moving the SWING knob while playing stays clean");
             }
             std::cout << "  info swing: " << moved << " off-beat slices moved, " << steady << " on-beat slices in place, of " << checked << "\n";
-            check (checked > 8 && moved + steady >= checked * 8 / 10, "drum swing moves the off-beat slices by the groove amount");
+            check (checked > 8 && moved + steady >= checked * 8 / 10, "drum swing moves the off-beat hits by the groove amount");
             setP (*proc, lb::pid (lb::top, "solo"), 0);
         }
         // 1b) KICK module: every factory kick loop at the project tempo (124 BPM): no holes cut into the sound
@@ -566,6 +574,41 @@ int main (int argc, char** argv)
         for (int i = 0; i < 40; ++i) pump (50);
         auto k = proc->currentLoop (lb::kick);
         check (k != nullptr && k->info.type == lb::kick, "restored session: a BOTTOM loop saved in KICK is replaced by a kick loop (" + (k ? k->name : String ("-")) + ")");
+    }
+
+    // ---- SLICE LOOP: the part between the markers repeats, without holes or clicks
+    {
+        const int m = lb::pad;
+        for (int k = 0; k < lb::numModules; ++k) setP (*proc, lb::pid (k, "solo"), k == m ? 1.0f : 0.0f);
+        setP (*proc, lb::pid (m, "slice"), 1); setP (*proc, lb::pid (m, "sstart"), 0.31f); setP (*proc, lb::pid (m, "send"), 0.43f);
+        setP (*proc, lb::pid (m, "fade"), 1);
+        setP (*proc, lb::pid (m, "slloop"), 0);
+        auto gateBuf = renderToBuffer (*proc, ph, 4.0);
+        setP (*proc, lb::pid (m, "slloop"), 1);
+        auto loopBuf = renderToBuffer (*proc, ph, 4.0);
+        auto silentShare = [] (const AudioBuffer<float>& b)
+        {
+            const float* d = b.getReadPointer (0); int sil = 0;
+            for (int i = 4800; i < b.getNumSamples(); ++i) sil += std::abs (d[i]) < 1.0e-4f;
+            return (float) sil / (float) (b.getNumSamples() - 4800);
+        };
+        const float sg = silentShare (gateBuf), sl = silentShare (loopBuf);
+        std::cout << "  info silence: slice gate " << sg << ", slice loop " << sl << "\n";
+        check (sg > 0.5f && sl < 0.05f, "SLICE LOOP repeats the slice (no silence outside the markers)");
+        auto jumpIdx = [] (const AudioBuffer<float>& b)
+        {
+            const float* d = b.getReadPointer (0); double rms = 0; float mx = 0;
+            for (int i = 4801; i < b.getNumSamples(); ++i) { rms += d[i] * d[i]; mx = std::max (mx, std::abs (d[i] - d[i - 1])); }
+            return mx / (float) (std::sqrt (rms / (b.getNumSamples() - 4800)) + 1e-9);
+        };
+        setP (*proc, lb::pid (m, "slice"), 0);
+        const float plain = jumpIdx (renderToBuffer (*proc, ph, 4.0));
+        setP (*proc, lb::pid (m, "slice"), 1);
+        const float looped = jumpIdx (loopBuf);
+        std::cout << "  info click index: whole loop " << plain << ", slice loop " << looped << "\n";
+        check (looped < plain * 2.0f, "SLICE LOOP: no clicks at the repeat point");
+        setP (*proc, lb::pid (m, "slloop"), 0); setP (*proc, lb::pid (m, "slice"), 0);
+        for (int k = 0; k < lb::numModules; ++k) setP (*proc, lb::pid (k, "solo"), 0);
     }
 
     // ---- grid down to 1/64 (also as loop length unit) renders

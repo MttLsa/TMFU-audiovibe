@@ -9,12 +9,12 @@ namespace
     enum P { pOn, pSolo, pGain, pPan, pAtk, pDec, pSus, pRel, pPitch, pTempo, pFtype, pCut, pRes, pDirt,
              pDtime, pDfb, pDmix, pDpp, pRsize, pRdecay, pRdamp, pRpre, pRmix,
              pL1rate, pL1shape, pL1depth, pL1target, pL2rate, pL2shape, pL2depth, pL2target, pL3rate, pL3shape, pL3depth, pL3target,
-             pGrid, pSteps, pSlice, pSstart, pSend, pFade, pVola, pKeysrc, pWarp, pCount };
+             pGrid, pSteps, pSlice, pSstart, pSend, pFade, pVola, pKeysrc, pSlLoop, pCount };
     const char* const pNames[pCount] { "on", "solo", "gain", "pan", "atk", "dec", "sus", "rel", "pitch", "tempo", "ftype", "cut", "res", "dirt",
         "dtime", "dfb", "dmix", "dpp", "rsize", "rdecay", "rdamp", "rpre", "rmix",
         "lfo1rate", "lfo1shape", "lfo1depth", "lfo1target", "lfo2rate", "lfo2shape", "lfo2depth", "lfo2target",
         "lfo3rate", "lfo3shape", "lfo3depth", "lfo3target",
-        "grid", "steps", "slice", "sstart", "send", "fade", "vola", "keysrc", "warp" };
+        "grid", "steps", "slice", "sstart", "send", "fade", "vola", "keysrc", "slloop" };
 
 }
 
@@ -103,7 +103,7 @@ ModuleParams GroovulationProcessor::readParams (int m) const
     p.lfoRate[2] = (int) v (pL3rate); p.lfoShape[2] = (int) v (pL3shape); p.lfoDepth[2] = v (pL3depth); p.lfoTarget[2] = (int) v (pL3target);
     p.grid = (int) v (pGrid); p.steps = (int) v (pSteps);
     p.slice = v (pSlice) > 0.5f; p.sStart = v (pSstart); p.sEnd = v (pSend); p.fade = v (pFade) > 0.5f; p.volA = v (pVola) > 0.5f;
-    p.warp = (int) v (pWarp);
+    p.slLoop = v (pSlLoop) > 0.5f;
     return p;
 }
 

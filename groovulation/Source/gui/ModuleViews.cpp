@@ -274,7 +274,8 @@ void WaveDisplay::paint (Graphics& g)
         if (peaksLoop != l) { buildPeaks (l); waveKey = {}; }
         if (viewLen < minViewLen() || viewStart + viewLen > 1.0 + 1e-9) setView (viewStart, viewLen);
         const int w = (int) r.getWidth(), h = (int) r.getHeight();
-        if (waveKey.loop != l.get() || waveKey.vs != viewStart || waveKey.vl != viewLen || waveKey.R != R || waveKey.w != w || waveKey.h != h)
+        auto differs = [] (double a, double b) { return std::abs (a - b) > 1.0e-12; };
+        if (waveKey.loop != l.get() || differs (waveKey.vs, viewStart) || differs (waveKey.vl, viewLen) || differs (waveKey.R, R) || waveKey.w != w || waveKey.h != h)
         {
             renderWave (*l, R, w, h);
             waveKey = { l.get(), viewStart, viewLen, R, w, h };
@@ -323,7 +324,7 @@ void WaveDisplay::paint (Graphics& g)
             g.drawText (txt, box, k == 0 ? Justification::centredLeft : Justification::centredRight);
         }
         g.setColour (theme::lcdInk);
-        g.drawText ("SLICE " + String ((s1 - s0) * Rms, 1) + " ms" + (param ("slsnap") < 0.5f ? "  (SNAP ms)" : "  (SNAP grid)"),
+        g.drawText ("SLICE " + String ((s1 - s0) * Rms, 1) + " ms" + (param ("slsnap") < 0.5f ? "  (SNAP ms)" : "  (SNAP grid)") + (param ("slloop") > 0.5f ? "  LOOP" : ""),
                     r.reduced (4, 2).translated (0, 15), Justification::topLeft);
     }
     // clip-gain automation
@@ -641,7 +642,7 @@ ModuleEditor::ModuleEditor (GroovulationProcessor& p) : proc (p), display (p, 0,
 {
     display.setComponentID ("bigDisplay");
     addAndMakeVisible (display);
-    for (auto* c : std::initializer_list<Component*> { &grid, &keySrc, &ftype, &warp, &slsnap, &lenMinus, &lenPlus, &lenOrig, &volReset, &slice, &fade, &volA, &dpp,
+    for (auto* c : std::initializer_list<Component*> { &grid, &keySrc, &ftype, &slsnap, &lenMinus, &lenPlus, &lenOrig, &volReset, &slice, &slLoop, &fade, &volA, &dpp,
                                                        &prev, &next, &rnd, &sim, &browser,
                                                        &pAmp, &pAdsr, &pPitch, &pFilter, &pDirt, &pDelay, &pReverb, &pLfo1, &pLfo2, &pLfo3 })
         addAndMakeVisible (c);
@@ -660,7 +661,7 @@ ModuleEditor::ModuleEditor (GroovulationProcessor& p) : proc (p), display (p, 0,
         addAndMakeVisible (k);
     for (auto* c : { &l1shape, &l1target, &l2shape, &l2target, &l3shape, &l3target }) addAndMakeVisible (c);
     // the panels are backgrounds: keep them behind the selectors / toggles placed on them (LP|BP|HP, WARP, PING-PONG)
-    for (auto* p : { &pAmp, &pAdsr, &pPitch, &pFilter, &pDirt, &pDelay, &pReverb, &pLfo1, &pLfo2, &pLfo3 }) p->toBack();
+    for (auto* pn : { &pAmp, &pAdsr, &pPitch, &pFilter, &pDirt, &pDelay, &pReverb, &pLfo1, &pLfo2, &pLfo3 }) pn->toBack();
     for (auto* c : { &l1shape, &l2shape, &l3shape }) c->addItemList (lb::lfoShapes(), 1);
     for (auto* c : { &l1target, &l2target, &l3target })
     {
@@ -703,6 +704,7 @@ ModuleEditor::ModuleEditor (GroovulationProcessor& p) : proc (p), display (p, 0,
     lenOrig.setTooltip ("Loop length: original length of the loop");
     volReset.onClick = [this] { proc.setVolEnvelope (module, { { 0.0f, volUnityY }, { 1.0f, volUnityY } }); display.repaint(); };
     fade.setTooltip ("0.5 ms fade in / out at the slice edges (no clicks)");
+    slLoop.setTooltip ("SLICE LOOP: the part between S and E repeats continuously (5 ms crossfade at every repeat)");
     volA.setTooltip ("Clip-gain automation drawn on the display");
     setModule (0);
     startTimerHz (10);
@@ -725,11 +727,9 @@ void ModuleEditor::attachAll()
     grid.attach (s, lb::pid (m, "grid"));
     keySrc.attach (s, lb::pid (m, "keysrc"), { "AUDIO", "FILE NAME" });
     ftype.attach (s, lb::pid (m, "ftype"));
-    warp.attach (s, lb::pid (m, "warp"), { "COMPLEX", "BEATS" });
     slsnap.attach (s, lb::pid (m, "slsnap"), { "MS", "GRID" });
     slsnap.setTooltip ("SLICE markers: MS = move in milliseconds (shift = 0.1 ms, arrow keys nudge), GRID = snap to the grid");
-    warp.setTooltip ("WARP: COMPLEX = high quality time-stretch (default), BEATS = transient slices (no stretching, gaps at slower tempos)");
-    slice.attach (s, lb::pid (m, "slice")); fade.attach (s, lb::pid (m, "fade")); volA.attach (s, lb::pid (m, "vola")); dpp.attach (s, lb::pid (m, "dpp"));
+    slice.attach (s, lb::pid (m, "slice")); slLoop.attach (s, lb::pid (m, "slloop")); fade.attach (s, lb::pid (m, "fade")); volA.attach (s, lb::pid (m, "vola")); dpp.attach (s, lb::pid (m, "dpp"));
     comboAtt.clear();
     comboAtt.push_back (std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (s, lb::pid (m, "lfo1shape"), l1shape));
     comboAtt.push_back (std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (s, lb::pid (m, "lfo1target"), l1target));
@@ -751,8 +751,8 @@ void ModuleEditor::setModule (int m)
     const bool isCustom = module == lb::custom;
     for (auto* b : std::initializer_list<Component*> { &prev, &next, &rnd, &sim, &browser }) b->setVisible (! isCustom);
     floppy.setVisible (isCustom); clear.setVisible (isCustom);
-    for (auto* sg : { &grid, &keySrc, &ftype, &warp, &slsnap }) sg->setAccent (c);
-    for (auto* t : { &slice, &fade, &volA, &dpp }) t->setColour (TextButton::buttonOnColourId, c);
+    for (auto* sg : { &grid, &keySrc, &ftype, &slsnap }) sg->setAccent (c);
+    for (auto* t : { &slice, &slLoop, &fade, &volA, &dpp }) t->setColour (TextButton::buttonOnColourId, c);
     attachAll();
     shownLoop = nullptr;
     refreshBrowser();
@@ -850,14 +850,15 @@ void ModuleEditor::resized()
     lenPlus.setBounds (lenA.removeFromLeft (32).reduced (1, 0));
     lenOrig.setBounds (lenA.reduced (1, 0));
     tb.removeFromLeft (10);
-    auto tg = tb.removeFromLeft (430).withTrimmedTop (14).withTrimmedBottom (2);
-    slice.setBounds (tg.removeFromLeft (64).reduced (1, 0));
+    auto tg = tb.removeFromLeft (484).withTrimmedTop (14).withTrimmedBottom (2);
+    slice.setBounds (tg.removeFromLeft (60).reduced (1, 0));
+    slLoop.setBounds (tg.removeFromLeft (54).reduced (1, 0));
     slsnap.setBounds (tg.removeFromLeft (96).reduced (2, 0));
     fade.setBounds (tg.removeFromLeft (90).reduced (1, 0));
     volA.setBounds (tg.removeFromLeft (70).reduced (1, 0));
     volReset.setBounds (tg.removeFromLeft (90).reduced (1, 0));
     tb.removeFromLeft (10);
-    keySrc.setBounds (tb.removeFromLeft (170).withTrimmedBottom (2));
+    keySrc.setBounds (tb.removeFromLeft (150).withTrimmedBottom (2));
     tb.removeFromLeft (10);
     auto ls = tb.withTrimmedTop (14).withTrimmedBottom (2);
     prev.setBounds (ls.removeFromLeft (28).reduced (1, 0));
@@ -895,11 +896,7 @@ void ModuleEditor::resized()
     auto inP = [] (Panel& p) { return p.getBounds().withTrimmedTop (Panel::headerH + 2).reduced (4, 2); };
     layoutRow (inP (pAmp), { &gain, &pan });
     layoutRow (inP (pAdsr), { &atk, &dec, &sus, &rel });
-    {
-        auto pp = inP (pPitch);
-        warp.setBounds (pp.removeFromTop (22).reduced (6, 0));
-        layoutRow (pp, { &pitch, &tempo });
-    }
+    layoutRow (inP (pPitch), { &pitch, &tempo });
     {
         auto f = inP (pFilter);
         ftype.setBounds (f.removeFromTop (22).reduced (6, 0));
