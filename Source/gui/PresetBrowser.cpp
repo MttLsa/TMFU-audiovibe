@@ -72,7 +72,18 @@ void PresetBrowser::paintListBoxItem (int row, Graphics& g, int w, int h, bool s
     g.drawText (String (row + 1).paddedLeft ('0', 2), 8, 0, 26, h, Justification::centredLeft);
     g.setColour (theme::text);
     g.setFont (theme::font (14.0f, selected));
-    g.drawText (it.name, 38, 0, w - 140, h, Justification::centredLeft);
+    g.drawText (it.name, 38, 0, w - 230, h, Justification::centredLeft);
+    if (it.level.isNotEmpty())
+    {
+        // SIMPLE / COMPLEX badge
+        const bool complexLvl = it.level == "Complex";
+        auto badge = Rectangle<float> ((float) w - 186.0f, (float) h * 0.5f - 9.0f, 76.0f, 18.0f);
+        g.setColour (complexLvl ? (section == 0 ? theme::accentA : theme::accentB).withAlpha (0.85f) : theme::header.brighter (0.2f));
+        g.fillRoundedRectangle (badge, 3.0f);
+        g.setColour (complexLvl ? Colours::black : theme::text);
+        g.setFont (theme::font (10.5f, true));
+        g.drawText (it.level.toUpperCase(), badge, Justification::centred);
+    }
     g.setColour (theme::textDim);
     g.setFont (theme::font (12.0f));
     g.drawText (String (it.bpm) + " BPM", w - 100, 0, 90, h, Justification::centredRight);
@@ -83,8 +94,8 @@ void PresetBrowser::paint (Graphics& g)
     g.fillAll (theme::bg);
     g.setColour (theme::textDim);
     g.setFont (theme::font (12.0f));
-    g.drawText (section == 0 ? "Loads into the current pattern slot of Section A (kit = 8 drum patches)"
-                             : "Loads a full Section B snapshot: kit (samples, voices, FX) + patterns A-D",
+    g.drawText (section == 0 ? "Loads into the current pattern slot of Section A (kit = 8 drum patches).  SIMPLE = essential groove, COMPLEX = intricate"
+                             : "Loads a full Section B snapshot: kit (samples, voices, FX) + patterns A-D.  SIMPLE = essential groove, COMPLEX = intricate",
                 12, getHeight() - 52, getWidth() - 24, 18, Justification::centredLeft);
     if (lastLoaded.isNotEmpty())
     {

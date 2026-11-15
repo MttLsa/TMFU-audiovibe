@@ -182,8 +182,11 @@ std::unique_ptr<ControlPanel> makeLimePanel (TwinboxProcessor& p, const String& 
 //==============================================================================
 LimeSeqGrid::LimeSeqGrid (TwinboxProcessor& p, bool b2) : proc (p), big (b2)
 {
+    setWantsKeyboardFocus (true);
     startTimerHz (30);
-    setTooltip ("Click: on/off  |  Right-click: accent  |  Drag: paint  |  Value lanes: drag the bar height (right-click = off)");
+    setTooltip ("Click: on/off  |  Right-click: accent  |  Drag: paint  |  Value lanes: drag the bar height (right-click = off). "
+                "Click a TIE / POD / MOD column, then use the arrows: Up/Down = value (one sample per step with VEL = wav), "
+                "Left/Right = step, Delete = off, Shift = bigger steps");
 }
 
 int LimeSeqGrid::editPattern() const
@@ -285,6 +288,31 @@ void LimeSeqGrid::paint (Graphics& g)
                 g.setColour (Colours::white.withAlpha (0.6f));
                 g.drawRoundedRectangle (c, 2.0f, 1.4f);
             }
+            if (lane == selLane && st == selStep)
+            {
+                g.setColour (hasKeyboardFocus (false) ? theme::accentG : theme::accentG.withAlpha (0.5f));
+                g.drawRoundedRectangle (c.expanded (1.0f), 2.0f, 2.0f);
+            }
+        }
+        // name of the sample selected by the highlighted column (VEL = wav)
+        if (lane == selLane && selStep >= first && selStep < first + vis && wavMode (lane))
+        {
+            const float sv = P.value[(size_t) (lane - 4)][(size_t) selStep].load();
+            const auto set = proc.library.set (lane == 4 ? SampleLibrary::tie : SampleLibrary::pod);
+            const int n = jmin (128, set->size());
+            if (n > 0 && sv > 0.0f)
+            {
+                const int notch = jlimit (1, n, (int) std::ceil (sv * (float) n - 1.0e-4f));
+                const String label = String (notch) + ": " + set->names[n - notch];
+                g.setFont (theme::font (big ? 12.0f : 10.0f, true));
+                const float tw = (float) GlyphArrangement::getStringWidthInt (g.getCurrentFont(), label) + 10.0f;
+                const float x = jlimit (rb.getX(), rb.getRight() - tw, rb.getX() + (float) (selStep - first) * cw);
+                auto box = Rectangle<float> (x, rb.getY() + 1.0f, tw, big ? 16.0f : 13.0f);
+                g.setColour (Colours::black.withAlpha (0.8f));
+                g.fillRoundedRectangle (box, 2.0f);
+                g.setColour (theme::accentG);
+                g.drawText (label, box, Justification::centred);
+            }
         }
     }
     // remix lamp
@@ -293,6 +321,59 @@ void LimeSeqGrid::paint (Graphics& g)
         g.setColour (theme::accentA);
         g.fillEllipse (4.0f, (float) getHeight() - 10.0f, 6.0f, 6.0f);
     }
+}
+
+bool LimeSeqGrid::wavMode (int lane) const
+{
+    return (lane == 4 || lane == 5) && (int) getParam (proc.apvts, b (lane == 4 ? tie : pod, lv::vel)) == 1;
+}
+
+void LimeSeqGrid::setValue (int lane, int st, float v, bool audition)
+{
+    proc.lime.pattern (editPattern()).value[(size_t) (lane - 4)][(size_t) st].store (jlimit (0.0f, 1.0f, v));
+    if (audition && wavMode (lane) && v > 0.0f)
+    {
+        const int module = lane == 4 ? SampleLibrary::tie : SampleLibrary::pod;
+        const int n = jmin (128, proc.library.set (module)->size());
+        if (n > 0) proc.lime.auditionSample (module, n - jlimit (1, n, (int) std::ceil (v * (float) n - 1.0e-4f)));
+    }
+    repaint();
+}
+
+bool LimeSeqGrid::keyPressed (const KeyPress& key)
+{
+    if (selLane < 4 || selStep < 0) return false;
+    const int len = jmax (1, laneLen (selLane));
+    const float v = proc.lime.pattern (editPattern()).value[(size_t) (selLane - 4)][(size_t) selStep].load();
+    const bool shift = key.getModifiers().isShiftDown();
+    if (key.isKeyCode (KeyPress::upKey) || key.isKeyCode (KeyPress::downKey))
+    {
+        const int dir = key.isKeyCode (KeyPress::upKey) ? 1 : -1;
+        if (wavMode (selLane))
+        {
+            const int n = jmin (128, proc.library.set (selLane == 4 ? SampleLibrary::tie : SampleLibrary::pod)->size());
+            if (n == 0) return true;
+            const int notch = v > 0.0f ? jlimit (1, n, (int) std::ceil (v * (float) n - 1.0e-4f)) : 0;
+            const int next = jlimit (1, n, notch + dir * (shift ? 8 : 1));
+            setValue (selLane, selStep, (float) next / (float) n, true);
+        }
+        else setValue (selLane, selStep, v + (float) dir * (shift ? 0.125f : 1.0f / 32.0f), false);
+        return true;
+    }
+    if (key.isKeyCode (KeyPress::leftKey) || key.isKeyCode (KeyPress::rightKey))
+    {
+        selStep = (selStep + (key.isKeyCode (KeyPress::rightKey) ? 1 : -1) + len) % len;
+        if (selStep / visibleSteps() != page) setPage (selStep / visibleSteps());
+        repaint();
+        return true;
+    }
+    if (key.isKeyCode (KeyPress::deleteKey) || key.isKeyCode (KeyPress::backspaceKey))
+    {
+        setValue (selLane, selStep, 0.0f, false);
+        return true;
+    }
+    if (key.isKeyCode (KeyPress::escapeKey)) { selLane = -1; repaint(); return true; }
+    return false;
 }
 
 void LimeSeqGrid::edit (int row, int st, const MouseEvent& e, bool first)
@@ -333,6 +414,7 @@ void LimeSeqGrid::mouseDown (const MouseEvent& e)
             const int st = stepAtX (e.position.x);
             if (st < 0) return;
             dragRow = row; lastStep = st;
+            if (rowToLane (row) >= 4) { selLane = rowToLane (row); selStep = st; grabKeyboardFocus(); }
             edit (row, st, e, true);
             repaint();
             return;
@@ -345,6 +427,7 @@ void LimeSeqGrid::mouseDrag (const MouseEvent& e)
     const int st = stepAtX (e.position.x);
     if (st < 0 || (st == lastStep && dragRow < 4)) return;
     lastStep = st;
+    if (rowToLane (dragRow) >= 4) selStep = st;
     edit (dragRow, st, e, false);
     repaint();
 }

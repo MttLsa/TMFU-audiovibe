@@ -332,7 +332,7 @@ int main (int argc, char** argv)
             float c; return SampleLibrary::detectPitch (out, c);
         };
         int idx = -1;
-        for (int i = 0; i < tieSet->size(); ++i) if (tieSet->names[i].contains ("Sine Ping")) idx = i;
+        for (int i = 0; i < tieSet->size(); ++i) if (tieSet->names[i].contains ("Deep Sub C")) idx = i;
         const float src = idx >= 0 ? tieSet->samples[(size_t) idx]->pitch : -1.0f;
         setP (p, params::b (params::tie, params::lv::scale), 1);
         setP (p, params::bScaleRoot, 2); setP (p, params::bScaleType, 0);           // D Major: C is not in the scale -> C#
@@ -516,6 +516,36 @@ int main (int argc, char** argv)
         snapWin (new LimeFxWindowContent (p), 1300, 860, "win_B_fx.png");
         snapWin (new PresetBrowser (p, 1), 820, 700, "win_B_browser.png");
         snapWin (new PitchWindowContent (p, params::tie), 760, 640, "win_B_pitch.png");
+        {   // keyboard editing of a Tie column (VEL = wav: one notch per sample)
+            setP (p, params::b (params::tie, params::lv::vel), 1);
+            auto& P = p.lime.pattern ((int) p.apvts.getRawParameterValue (params::bPattern)->load());
+            P.value[LimeEngine::laneTie][2].store (0.0f);
+            LimeSeqGrid grid (p, true);
+            grid.setSize (1200, 400); grid.setVisible (true);
+            auto src = Desktop::getInstance().getMainMouseSource();
+            const auto rb = grid.rowBounds (4);
+            const Point<float> pos (rb.getX() + rb.getWidth() / 32.0f * 2.5f, rb.getBottom() - 2.0f);
+            MouseEvent e (src, pos, ModifierKeys(), 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, &grid, &grid, Time::getCurrentTime(), pos, Time::getCurrentTime(), 1, false);
+            grid.mouseDown (e); grid.mouseUp (e);
+            const int n = jmin (128, p.library.set (SampleLibrary::tie)->size());
+            const float afterClick = P.value[LimeEngine::laneTie][2].load();
+            grid.keyPressed (KeyPress (KeyPress::upKey)); grid.keyPressed (KeyPress (KeyPress::upKey));
+            const float afterUp = P.value[LimeEngine::laneTie][2].load();
+            grid.keyPressed (KeyPress (KeyPress::rightKey)); grid.keyPressed (KeyPress (KeyPress::upKey));
+            const float next = P.value[LimeEngine::laneTie][3].load();
+            grid.keyPressed (KeyPress (KeyPress::deleteKey));
+            const float deleted = P.value[LimeEngine::laneTie][3].load();
+            const int nClick = (int) std::round (afterClick * n), nUp = (int) std::round (afterUp * n);
+            const bool ok = nUp == nClick + 2 && std::abs (next * n - 1.0f) < 0.01f && deleted == 0.0f;
+            report ("keyboard arrows on Tie column", ok, "click notch " + String (nClick) + ", +2x Up -> " + String (nUp) + ", Right+Up -> next step notch "
+                    + String ((int) std::round (next * n)) + ", Delete -> " + String (deleted));
+        }
+        {   // factory library upgraded (old v2 files removed, new v3 files installed)
+            const auto k = SampleLibrary::folderFor (SampleLibrary::kick, SampleLibrary::twinbox);
+            const bool ok = ! k.getChildFile ("K01 Rumble Core.wav").existsAsFile() && k.getChildFile ("K01 Tek Rumble Deep.wav").existsAsFile()
+                         && SampleLibrary::namesIn (k).size() == 48;
+            report ("factory library upgrade", ok, String (SampleLibrary::namesIn (k).size()) + " kicks, old files removed: " + String (! k.getChildFile ("K01 Rumble Core.wav").existsAsFile() ? "yes" : "no"));
+        }
         {
             LimeSeqPanel panel (p, false);
             panel.setSize (650, 260);

@@ -10,7 +10,7 @@ Style notes per genre (what the rules below try to capture):
   rominimal   118-130  (Villalobos, Bauch, Barac, Ohm Hourani, Sublee, Zavor) rolling hypnotic grooves,
                        long 32/64-step bars, off-grid wooden perc, rolling sub with portamento, heavy swing,
                        very little snare, shuffled rims, dub delays, constant micro-variation
-  chicago     120-126  jacking 909/808 hats, claps on 2+4, cowbell, open hats, raw saturation
+  house       120-125  deep/garage house (Adriano, Kerri Chandler, Darryl B & Matt Cole, Enrico Mantini): warm 909, claps, organ/rhodes
   techhouse   124-128  shuffle groove, bass stabs, percussive hooks, clap/snare layers
   deephouse   118-124  swung hats, rims, shakers, Rhodes/organ chords on Tie, warm reverb
   breakbeat   126-136  syncopated kick/snare breaks, ghost snares, electro zaps, chopped fx
@@ -19,11 +19,11 @@ import json, os, random, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 manifest = json.load(open(os.path.join(ROOT, "resources", "samples_manifest.json")))
-GENRES = ["techno", "minimal", "microhouse", "rominimal", "chicago", "techhouse", "deephouse", "breakbeat"]
+GENRES = ["techno", "minimal", "microhouse", "rominimal", "house", "techhouse", "deephouse", "breakbeat"]
 LABEL = {"techno": "Techno", "minimal": "Minimal", "microhouse": "Microhouse", "rominimal": "Rominimal",
-         "chicago": "Chicago House", "techhouse": "Tech House", "deephouse": "Deep House", "breakbeat": "Breakbeat"}
+         "house": "House", "techhouse": "Tech House", "deephouse": "Deep House", "breakbeat": "Breakbeat"}
 BPM = {"techno": (126, 138), "minimal": (122, 128), "microhouse": (120, 126), "rominimal": (118, 130),
-       "chicago": (120, 126), "techhouse": (124, 128), "deephouse": (118, 124), "breakbeat": (126, 136)}
+       "house": (120, 125), "techhouse": (124, 128), "deephouse": (118, 124), "breakbeat": (126, 136)}
 
 NAMES = {
     "techno": ["Concrete Ritual", "Rotor Seven", "Tunnel Vision", "Static Hymn", "Iron Lung", "Night Shift", "Sodium Glow",
@@ -34,9 +34,9 @@ NAMES = {
                    "Static Kiss", "Crumb Shuffle", "Felt Tip", "Rubber Band", "Lo Res Love", "Mouse Clicks", "Bubble Wrap", "Kitchen Floor"],
     "rominimal": ["Cismigiu Sunrise", "Lipscani Shuffle", "Strada Lunga", "Wooden Horse", "Dacia Groove", "Sapte Ore", "Paduri",
                   "Fluture", "Bucegi Fog", "Leagan", "Vama Veche", "Zmeu", "Carousel Dub", "Ploaie Calda", "Ceai de Tei", "Lume Lunga"],
-    "chicago": ["Jackin Jefferson", "South Side Box", "Warehouse 1986", "Trax Tape", "Acid Errand", "Lake Shore Jack", "Bump The Box",
-                "Basement Party", "Jack Your Body Twice", "Cabrini Groove", "Westside Snare", "Dance Mania", "Midnight Jack",
-                "Pullman Shuffle", "Wicker Park", "Blue Line"],
+    "house": ["Basement Soul", "Late Garage", "Organ Donor", "Warm Floor", "Midnight Keys", "Soul Shift", "Sunday Groove",
+              "Bassline Kiss", "Deep Inside Out", "Velvet Room", "Garage Steps", "Smoke And Keys", "Night Train House",
+              "Soft Pressure", "Golden Hour Jam", "Back To Basics"],
     "techhouse": ["Bassline Theory", "Rubber Floor", "Afterhours Shuffle", "Neon Chevrons", "Steel Toe", "Pivot", "Low Slung",
                   "Tilt Shift", "Dry Martini", "Hook Line", "Off The Grid", "Club Sandwich", "Two Step Theory", "Tinted", "Bounce Cut", "Swagger"],
     "deephouse": ["Soft Focus", "Late Bloom", "Velvet Hour", "Warm Static", "Tidal Room", "Slow Glow", "Rhodes Less Travelled",
@@ -93,180 +93,152 @@ def pick(module, genre, r, prefer=None):
             cands = pc
     return r.choice(cands or [it["file"][:-4] for it in items])
 
-def b_patterns(genre, r, length):
-    """Returns 4 patterns (A-D) with trig lanes + value lanes."""
+def b_patterns(genre, r, length, cx=1):
+    """4 patterns (A-D). cx = 0: simple, essential groove; cx = 1: intricate (ghosts, polyrhythm, bar variations)."""
+    L = length
+    T = lambda st: tile(grid(st), L)
+    def ghosts(p, prob, avoid=None):            # add soft notes only in the intricate version
+        return sprinkle(p, prob, r, 1, avoid) if cx else p
+    def evolve(p, every=2):                     # bar-to-bar variation (intricate)
+        if not cx or L <= 16: return p
+        out = list(p)
+        for bar in range(L // 16):
+            if bar % every == every - 1:
+                i = bar * 16 + r.choice([13, 14, 15]); out[i] = 0 if out[i] else 1
+        return out
+    def vals(positions, lo=0.5, hi=0.9, prob=1.0):
+        v = [0.0] * L
+        for i in range(L):
+            if (i % 16) in positions and r.random() < prob: v[i] = round(r.uniform(lo, hi), 2)
+        return v
     pats = []
     for variant in range(4):
-        L = length
-        if genre == "techno":
-            k = tile(grid("X---x---X---x---"), L)
-            sn = tile(grid("----x-------x---"), L) if r.random() < 0.6 else [0] * L
-            ch = tile(grid("--x---x---x---x-"), L)
-            ch = sprinkle(ch, 0.12, r, 1, k)
-            oh = tile(grid("--x---x---x---x-"), L) if variant % 2 else [0] * L
-            tie = [0.0] * L
-            for i in range(L):                       # rumble: off-beat sub notes
-                if i % 4 in (2, 3) and r.random() < 0.6: tie[i] = round(0.42 + r.random() * 0.12, 2)
-            pod = [round(0.4 + r.random() * 0.6, 2) if (i % 16) in r.sample(range(16), 3) else 0 for i in range(L)]
-        elif genre == "minimal":
-            k = tile(grid(r.choice(["X---x---X---x---", "X---x---X---x--x", "X-----x-X---x---"])), L)
-            sn = tile(grid(r.choice(["----x-------x---", "-------x----x---", "----x---------x-"])), L)
-            sn = sprinkle(sn, 0.03, r, 1, k)
-            ch = thin(tile(grid("--x---x---x---x-"), L), 0.15, r)
-            ch = sprinkle(ch, 0.08, r, 1, k)
+        if genre == "techno":                    # CVO / Alarico / Danny Wabbit: hypnotic, rumble, rolling percussion
+            k = T("X---x---X---x---")
+            sn = T(r.choice(["----x-------x---", "----------------"])) if not cx else ghosts(T("----x-------x---"), 0.03, k)
+            ch = T("--x---x---x---x-") if not cx else accent_some(T("x-X-x-X-x-X-x-X-"), 0.0, r)
+            oh = T("--x---x---x---x-") if (variant % 2 and not cx) else ([0] * L if not cx else evolve(T("------x-------x-")))
+            tie = vals({2, 6, 10, 14}) if not cx else vals({2, 3, 6, 7, 10, 11, 14, 15}, 0.3, 0.95, 0.7)       # rumble on the off-beats
+            pod = vals({3}, prob=0.8) if not cx else [round(r.uniform(0.3, 0.9), 2) if x else 0.0 for x in tile(euclid(5, 16, r.randint(0, 4)), L)]
+        elif genre == "minimal":                 # Jan Jelinek / Farben / Farine: clicks & cuts, space, micro jazz
+            k = T("X---x---X---x---") if not cx else T(r.choice(["X-----x-X---x--x", "X---x---X--x-x--", "X---x--xX---x---"]))
+            sn = T("----x-------x---") if not cx else ghosts(T("----x-------x--x"), 0.05, k)
+            ch = T("--x---x---x---x-") if not cx else thin(tile(euclid(7, 16, r.randint(0, 6)), L), 0.1, r)
             oh = [0] * L
-            tie = [round(0.5 + r.choice([0, 0, 0.04, -0.04, 0.12]), 2) if (i % 16) in (3, 10) and r.random() < 0.7 else 0 for i in range(L)]
-            pod = [round(0.3 + 0.5 * r.random(), 2) if r.random() < 0.12 else 0 for i in range(L)]
-        elif genre == "microhouse":
-            k = tile(grid(r.choice(["X---x---X---x---", "X--x----X---x---", "X---x--xX---x---"])), L)
-            sn = tile(grid("----x-------x---"), L)
-            sn = sprinkle(sn, 0.06, r, 1, k)
-            ch = accent_some(sprinkle(tile(grid("x-xxx-x-x-xx--x-"), L), 0.1, r, 1), 0.2, r)
+            tie = vals({0, 10}, 0.5, 0.6) if not cx else vals({0, 3, 7, 10, 13}, 0.3, 0.9, 0.8)                # double-bass notes
+            pod = vals({7, 15}, 0.3, 0.6, 0.7) if not cx else [round(r.uniform(0.2, 0.8), 2) if x else 0.0 for x in tile(euclid(9, 16, r.randint(0, 8)), L)]
+        elif genre == "microhouse":              # Zavor / Villalobos: organic percussion, rolling, vocal snippets
+            k = T("X---x---X---x---") if not cx else evolve(T(r.choice(["X---x---X---x---", "X---x--xX---x---", "X---x---X--xx---"])), 2)
+            sn = T(r.choice(["----x-------x---", "----------------"])) if not cx else ghosts(T("----x-------x---"), 0.06, k)
+            ch = T("x-x-x-x-x-x-x-x-") if not cx else accent_some(ghosts(T("x-xxx-x-x-xx--x-"), 0.1), 0.2, r)
             oh = [0] * L
-            tie = [round(0.5 + r.choice([0, 0.17, 0.25, 0.33]), 2) if r.random() < 0.18 else 0 for i in range(L)]
-            pod = [round(0.25 + 0.6 * r.random(), 2) if r.random() < 0.3 else 0 for i in range(L)]
-        elif genre == "rominimal":
-            # long rolling grooves: kick with subtle displacement, almost no snare, rolling wood/perc, rolling sub
-            base_k = grid(r.choice(["X---x---X---x---", "X---x---X--xx---", "X---x--xX---x---", "X-----x-X---x---"]))
-            k = vary_bars(base_k, L, r, lambda b, bar: (b[:13] + [0, 1 if r.random() < 0.5 else 0, 0]) if bar % 2 else b)
-            sn = [0] * L
-            for i in range(L):
-                if i % 16 in (4, 12) and r.random() < 0.25: sn[i] = 1           # occasional rim/snap
-                if r.random() < 0.025: sn[i] = 1
-            ch = tile(grid(r.choice(["--x---x---x---x-", "--xx--x---x--xx-", "-xx--x-x-xx--x-x"])), L)
-            ch = sprinkle(thin(ch, 0.1, r), 0.06, r, 1)
-            oh = [0] * L
-            if variant >= 2:
-                oh = [1 if i % 16 in (6, 14) and r.random() < 0.5 else 0 for i in range(L)]
-            notes = r.choice([[0.5, 0.5, 0.58, 0.42], [0.5, 0.54, 0.5, 0.46], [0.5, 0.62, 0.5, 0.58], [0.5, 0.5, 0.5, 0.71]])
-            tie = [0.0] * L
-            for i in range(L):
-                if i % 16 in (2, 7, 10, 15) or (i % 16 in (5, 13) and r.random() < 0.4):
-                    if r.random() < 0.8: tie[i] = notes[(i // 4) % 4]
-            pod = [0.0] * L
-            for i in range(L):
-                if r.random() < (0.38 if i % 2 else 0.22): pod[i] = round(0.3 + 0.65 * r.random(), 2)
-        elif genre == "chicago":
-            k = tile(grid("X---x---X---x---"), L)
-            sn = tile(grid("----X-------X---"), L)
-            ch = accent_some(tile(grid("xxxxxxxxxxxxxxxx"), L), 0.0, r)
-            ch = [2 if i % 4 == 2 else (1 if v else 0) for i, v in enumerate(ch)]
-            ch = thin(ch, 0.1, r)
-            oh = tile(grid("--x---x---x---x-"), L) if r.random() < 0.7 else [0] * L
-            tie = [round(r.choice([0.5, 0.5, 0.58, 0.62, 0.75]), 2) if i % 16 in r.sample([0, 3, 6, 8, 10, 11, 14], 4) else 0 for i in range(L)]
-            pod = [0.7 if (i % 16) in (3, 7, 11, 15) and r.random() < 0.5 else 0 for i in range(L)]
-        elif genre == "techhouse":
-            k = tile(grid("X---x---X---x---"), L)
-            sn = tile(grid("----X-------X---"), L)
-            sn = sprinkle(sn, 0.04, r, 1, k)
-            ch = tile(grid("--x---x---x---x-"), L)
-            ch = sprinkle(ch, 0.25, r, 1, k)
-            oh = [0] * L
-            tie = [round(0.5 + r.choice([0, 0, 0.08, 0.25]), 2) if (i % 16) in (2, 6, 10, 14, 11, 7) and r.random() < 0.55 else 0 for i in range(L)]
-            pod = [round(0.4 + 0.5 * r.random(), 2) if (i % 16) in r.sample(range(16), 5) else 0 for i in range(L)]
-        elif genre == "deephouse":
-            k = tile(grid(r.choice(["X---x---X---x---", "X---x---X---x--x"])), L)
-            sn = tile(grid("----x-------x---"), L)
-            ch = tile(grid("--x---x---x---x-"), L)
-            ch = sprinkle(ch, 0.2, r)
-            oh = tile(grid("------x-------x-"), L) if variant % 2 else [0] * L
-            tie = [0.0] * L
-            for bar in range(L // 16):
-                for pos in r.choice([[0, 6, 10], [3, 11], [0, 7], [2, 10, 14]]):
-                    tie[bar * 16 + pos] = round(r.choice([0.5, 0.5, 0.58, 0.42]), 2)
-            pod = [round(0.3 + 0.4 * r.random(), 2) if i % 2 == 1 and r.random() < 0.35 else 0 for i in range(L)]
-        else:  # breakbeat
-            k = tile(grid(r.choice(["X-----x---x-----", "X--x------X--x--", "X-x-------x-x---", "X------xx-----x-"])), L)
-            sn = tile(grid(r.choice(["----X-------X---", "----X--x----X--x", "----X-------X-x-"])), L)
-            sn = sprinkle(sn, 0.08, r, 1, k)
-            ch = tile(grid("x-x-x-x-x-x-x-x-"), L)
-            ch = sprinkle(ch, 0.2, r)
-            oh = [1 if i % 16 == 14 and r.random() < 0.6 else 0 for i in range(L)]
-            tie = [round(r.choice([0.5, 0.5, 0.42, 0.58, 0.67]), 2) if r.random() < 0.15 else 0 for i in range(L)]
-            pod = [0.8 if r.random() < 0.08 else 0 for i in range(L)]
+            tie = vals({2, 10}, 0.5, 0.7) if not cx else vals({2, 5, 7, 10, 13, 15}, 0.3, 0.95, 0.6)
+            pod = vals({3, 6, 11, 14}, 0.4, 0.8) if not cx else [round(r.uniform(0.25, 0.9), 2) if x else 0.0 for x in tile(euclid(7, 12, r.randint(0, 5)), L)]
+        elif genre == "rominimal":               # Barac / David Nicolas / Sublee / Takashi Himeoka / Arapu
+            base_k = grid("X---x---X---x---") if not cx else grid(r.choice(["X---x---X--xx---", "X---x--xX---x---", "X-----x-X---x---"]))
+            k = tile(base_k, L) if not cx else vary_bars(base_k, L, r, lambda b, bar: (b[:13] + [0, 1 if r.random() < 0.5 else 0, 0]) if bar % 2 else b)
+            sn = [1 if i % 16 in (4, 12) and r.random() < (0.5 if not cx else 0.25) else 0 for i in range(L)]
+            ch = T("--x---x---x---x-") if not cx else ghosts(thin(T(r.choice(["--xx--x---x--xx-", "-xx--x-x-xx--x-x"])), 0.1, r), 0.06)
+            oh = [0] * L if (not cx or variant < 2) else [1 if i % 16 in (6, 14) and r.random() < 0.5 else 0 for i in range(L)]
+            tie = vals({2, 7, 10, 15}, 0.5, 0.8) if not cx else vals({2, 5, 7, 10, 13, 15}, 0.3, 0.95, 0.75)    # rolling bass
+            pod = vals({3, 11}, 0.4, 0.8) if not cx else [round(r.uniform(0.3, 0.95), 2) if r.random() < (0.38 if i % 2 else 0.22) else 0.0 for i in range(L)]
+        elif genre == "house":                   # Adriano / Kerri Chandler / Darryl B & Matt Cole / Enrico Mantini
+            k = T("X---x---X---x---") if not cx else T(r.choice(["X---x---X---x-x-", "X---x---X---x---", "X---x--xX---x---"]))
+            sn = T("----X-------X---") if not cx else ghosts(T("----X-------X---"), 0.05, k)
+            ch = T("--x---x---x---x-") if not cx else accent_some(T("x-xxx-x-x-xxx-xx"), 0.25, r)
+            oh = T("--x---x---x---x-") if not cx else evolve(T("--x---x---x---x-"))
+            tie = vals(r.choice([{3, 11}, {0, 6, 10}, {2, 10}]), 0.5, 0.8) if not cx else vals({0, 3, 6, 10, 13}, 0.3, 0.95, 0.7)  # organ / rhodes stabs
+            pod = vals({2, 6, 10, 14}, 0.4, 0.7) if not cx else [round(r.uniform(0.3, 0.9), 2) if x else 0.0 for x in tile(euclid(7, 16, r.randint(0, 6)), L)]
+        elif genre == "techhouse":               # Adonis / Henriku / Noha / Saunderson-Larkin: raw jack, acid, Detroit
+            k = T("X---x---X---x---")
+            sn = T("----X-------X---") if not cx else ghosts(T("----X-------X--x"), 0.04, k)
+            ch = accent_some(T("xxxxxxxxxxxxxxxx"), 0.0, r) if not cx else [2 if i % 4 == 2 else (1 if v else 0) for i, v in enumerate(thin(T("xxxxxxxxxxxxxxxx"), 0.12, r))]
+            oh = T("--x---x---x---x-")
+            acid_pos = r.choice([{0, 3, 6, 8, 10, 11, 14}, {0, 2, 3, 6, 8, 11, 12, 14}, {0, 3, 4, 7, 8, 10, 13}])
+            tie = vals(acid_pos, 0.6, 0.9) if not cx else vals(acid_pos | {r.randint(0, 15), r.randint(0, 15)}, 0.3, 0.95)     # acid line
+            pod = vals({3, 7, 11, 15}, 0.5, 0.8, 0.6) if not cx else [round(r.uniform(0.3, 0.9), 2) if x else 0.0 for x in tile(euclid(5, 16, 2), L)]
+        elif genre == "deephouse":               # Mr G / UGLH / Sid Le Rock (DJ Koze) / Edit Murphy: dusty, dub, funky
+            k = T("X---x---X---x---") if not cx else T(r.choice(["X---x---X---x--x", "X---x---X-x-x---"]))
+            sn = T("----x-------x---") if not cx else ghosts(T("----x-------x---"), 0.05, k)
+            ch = T("--x---x---x---x-") if not cx else ghosts(T("--x---x---x---x-"), 0.25)
+            oh = [0] * L if not cx else evolve(T("------x-------x-"))
+            tie = vals(r.choice([{0, 7}, {3, 11}, {0, 10}]), 0.5, 0.8) if not cx else vals({0, 3, 7, 10, 14}, 0.3, 0.95, 0.7)   # dub chords / funky bass
+            pod = vals({5, 13}, 0.3, 0.6, 0.6) if not cx else [round(r.uniform(0.3, 0.7), 2) if i % 2 == 1 and r.random() < 0.35 else 0.0 for i in range(L)]
+        else:                                    # breakbeat -> electro: Silicon Scally / Fleisch Fantasy / OzzE
+            k = T(r.choice(["X------x--X-----", "X-----x---X-----"])) if not cx else T(r.choice(["X--x----x-X--x--", "X-x-------x-x---", "X------xx-----x-"]))
+            sn = T("----X-------X---") if not cx else ghosts(T(r.choice(["----X--x----X--x", "----X-------X-x-"])), 0.06, k)
+            ch = T("x-x-x-x-x-x-x-x-") if not cx else accent_some(ghosts(T("x-x-x-x-x-x-x-x-"), 0.25), 0.2, r)
+            oh = [0] * L if not cx else [1 if i % 16 == 14 and r.random() < 0.6 else 0 for i in range(L)]
+            tie = vals({0, 6, 10}, 0.5, 0.8) if not cx else vals({0, 3, 6, 10, 11, 14}, 0.3, 0.95, 0.8)         # robotic bass
+            pod = vals({15}, 0.6, 0.9, 0.7) if not cx else [round(r.uniform(0.4, 0.9), 2) if x else 0.0 for x in tile(euclid(3, 8, 1), L)]
 
-        if variant == 3:            # D = fill / break variation
+        if variant == 3:            # D = fill / break
             for i in range(L - 4, L):
-                sn[i] = 1 if r.random() < 0.6 else sn[i]
-            if genre not in ("chicago",):
-                k[L - 2] = 0
-        if variant == 1:            # B = variation: shift a few percussion notes
+                if r.random() < (0.5 if cx else 0.3): sn[i] = 1
+        if variant == 1 and cx:     # B = variation: percussion shifted
             pod = pod[1:] + pod[:1]
-        mod = [round(0.5 + 0.5 * __import__("math").sin(i / L * 6.283 * r.choice([1, 2, 3])) * r.choice([0.4, 0.8, 1.0]), 2) for i in range(L)]
+        if variant == 2 and not cx: # C = stripped back
+            oh = [0] * L
+        import math
+        mod = [round(0.5 + (0.5 * math.sin(i / L * 6.283 * r.choice([1, 2, 3])) * r.choice([0.4, 0.8, 1.0]) if cx else 0.0), 2) for i in range(L)]
         pats.append({"len": L, "trig": [s(k[:L]), s(sn[:L]), s(ch[:L]), s(oh[:L])],
                      "tie": [round(x, 3) for x in tie[:L]], "pod": [round(x, 3) for x in pod[:L]],
                      "mod": [max(0.0, min(1.0, x)) for x in mod[:L]]})
     return pats
 
-def b_kit(genre, r):
+def b_kit(genre, r, cx=1):
     P = {}
     def v(voice, key, val): P[f"b_{voice}_{key}"] = val
-    smp = {
-        "Kick": pick("Kick", genre, r), "Snare": pick("Snare", genre, r), "Hat": pick("Hat", genre, r),
-        "Tie": pick("Tie", genre, r), "Pod": pick("Pod", genre, r),
-    }
-    # defaults
+    smp = {m: pick(m, genre, r) for m in ("Kick", "Snare", "Hat", "Tie", "Pod")}
     v("kick", "gain", 0); v("snare", "gain", -3); v("hat", "gain", -6); v("tie", "gain", -4); v("pod", "gain", -7); v("pulp", "gain", -9)
-    v("kick", "d", 65); v("snare", "d", 50); v("hat", "cd", 35); v("hat", "od", 65); v("tie", "d", 60); v("pod", "d", 55)
-    v("tie", "vamt", 60); v("pod", "vamt", 80)
-    v("tie", "pan", -15); v("pod", "pan", r.choice([-30, 25, 35])); v("hat", "pan", r.choice([-8, 8, 12]))
-    fx = {"b_fx_mix": 50, "b_dly_one": 3, "b_dly_two": 4, "b_dly_fb": 35, "b_dly_gain": -16, "b_x_gain": -12, "b_dly_cut": 5000, "b_dly_wide": 70,
+    v("kick", "d", 100); v("snare", "d", 60); v("hat", "cd", 35); v("hat", "od", 65); v("tie", "d", 70); v("pod", "d", 70)
+    v("tie", "pan", -12); v("pod", "pan", r.choice([-30, 25, 35])); v("hat", "pan", r.choice([-8, 8, 12]))
+    fx = {"b_fx_mix": 50, "b_dly_one": 3, "b_dly_two": 4, "b_dly_fb": 35, "b_dly_gain": -60, "b_x_gain": -16, "b_dly_cut": 4000, "b_dly_wide": 70,
           "b_x_mode": 0, "b_dirt": 0, "b_norm": 0, "b_eq_amp": 0, "b_mag_mix": 0, "b_flt_cut": 20000, "b_swing": 0,
           "b_remix": 0, "b_remix_rate": 0, "b_tie_str": 0, "b_pod_str": 0, "b_mod_str": 0}
-    if genre == "techno":
-        v("kick", "sat", r.randint(10, 40)); v("kick", "shp", r.randint(0, 40)); v("tie", "vel", 2); v("tie", "d", 45)
-        v("tie", "ft", 0); v("tie", "cut", r.choice([300, 450, 600])); v("tie", "res", 30)
-        v("hat", "mod", 3); fx.update({"b_dly_one": 3, "b_dly_two": 5, "b_dly_fb": 55, "b_dly_gain": -10, "b_dly_cut": 2500,
-                                          "b_x_mode": r.choice([11, 6, 9, 4]), "b_x_x": r.randint(30, 70), "b_x_y": r.randint(30, 70),
-                                          "b_x_gain": -9, "b_dirt": r.randint(5, 25), "b_norm": 1, "b_eq_lo": 2, "b_flt_mod": -20})
-    elif genre == "minimal":
-        v("kick", "d", 45); v("snare", "d", 30); v("tie", "vel", 2); v("tie", "d", 35); v("pod", "vel", 6); v("pod", "cut", 4000)
-        fx.update({"b_dly_one": 3, "b_dly_two": 3, "b_dly_fb": 45, "b_dly_gain": -8, "b_x_mode": r.choice([10, 16, 3]),
-                   "b_x_x": r.randint(20, 60), "b_x_y": r.randint(20, 60), "b_x_gain": -12, "b_swing": r.randint(5, 20)})
-    elif genre == "microhouse":
-        v("hat", "mod", 1); v("tie", "vel", 1); v("pod", "vel", 1); v("tie", "d", 30); v("snare", "flam", r.choice([0, 0, 30]))
-        fx.update({"b_swing": r.randint(30, 55), "b_x_mode": r.choice([20, 16, 19, 13]), "b_x_x": r.randint(20, 60),
-                   "b_x_y": r.randint(40, 80), "b_x_gain": -6, "b_remix": r.randint(1, 127), "b_remix_rate": r.choice([2, 3]),
-                   "b_dly_one": 3, "b_dly_two": 2, "b_mag_mix": r.choice([0, 20]), "b_mag_pitch": r.choice([-5, 7, 12])})
-    elif genre == "rominimal":
-        v("kick", "d", r.randint(40, 60)); v("kick", "shp", r.randint(-20, 10)); v("snare", "d", 25)
-        v("tie", "vel", 2); v("tie", "port", r.randint(25, 60)); v("tie", "d", r.randint(30, 55)); v("tie", "ft", 0)
-        v("tie", "cut", r.choice([500, 800, 1200])); v("tie", "res", r.randint(10, 40))
-        v("pod", "vel", r.choice([1, 2, 6])); v("pod", "d", r.randint(25, 45)); v("pod", "cut", r.choice([3000, 6000, 20000]))
-        v("hat", "cd", r.randint(20, 35)); v("hat", "cut", r.choice([20, 3000, 6000]))
+    X = lambda modes, x=(30, 70), y=(30, 70): {"b_x_mode": r.choice(modes), "b_x_x": r.randint(*x), "b_x_y": r.randint(*y)}
+    if genre == "techno":            # rumble kicks, metallic hats, hypnotic stabs, reverb spaces
+        v("kick", "sat", r.randint(0, 20)); v("hat", "mod", 3); v("tie", "ft", 0); v("tie", "cut", r.choice([600, 900, 1400])); v("tie", "res", 25)
+        fx.update({"b_dirt": r.randint(4, 14), "b_norm": 1, "b_eq_lo": 1.5, "b_flt_mod": -15 if cx else 0})
+        fx.update(X([11, 9, 6], (40, 75), (30, 60)) if cx else X([0, 11], (40, 60), (40, 60)))
+    elif genre == "minimal":         # dry clicks, lofi, space
+        v("kick", "d", 70); v("snare", "d", 40); v("pod", "cut", 6000); v("tie", "d", 60)
+        fx.update({"b_swing": r.randint(5, 18)})
+        fx.update(X([16, 10, 3], (20, 60), (20, 60)) if cx else X([0, 0, 16], (20, 40), (20, 40)))
+    elif genre == "microhouse":      # organic, rolling, swung, vocal snippets
+        v("hat", "mod", 1 if cx else 0); v("tie", "d", 60); v("snare", "flam", r.choice([0, 0, 25]) if cx else 0)
+        fx.update({"b_swing": r.randint(30, 55)})
+        fx.update(X([20, 13, 16], (20, 60), (40, 80)) if cx else X([0, 11], (40, 60), (40, 60)))
+        if cx: fx.update({"b_remix": r.randint(1, 127), "b_remix_rate": r.choice([2, 3]), "b_mag_mix": r.choice([0, 15])})
+    elif genre == "rominimal":       # round kicks, rims, rolling bass with glide, swing
+        v("kick", "shp", r.randint(-20, 10)); v("snare", "d", 40); v("tie", "port", r.randint(20, 55)); v("tie", "ft", 0)
+        v("tie", "cut", r.choice([700, 1000, 1500])); v("tie", "res", r.randint(10, 35)); v("hat", "cd", r.randint(20, 35))
         v("pulp", "comb", r.randint(10, 40)); v("pulp", "d", 30)
-        fx.update({"b_swing": r.randint(25, 50), "b_tie_str": 0, "b_dly_one": r.choice([3, 5]), "b_dly_two": r.choice([4, 6, 7]),
-                   "b_dly_fb": r.randint(40, 65), "b_dly_gain": -9, "b_dly_cut": r.choice([1800, 2500, 3500]), "b_dly_dm": r.randint(5, 30),
-                   "b_x_mode": r.choice([11, 10, 5, 8]), "b_x_x": r.randint(25, 70), "b_x_y": r.randint(30, 70), "b_x_gain": -10,
-                   "b_flt_trk": r.randint(0, 25), "b_eq_lo": 1.5, "b_eq_hi": -1})
-    elif genre == "chicago":
-        v("kick", "sat", r.randint(20, 50)); v("snare", "sat", r.randint(10, 40)); v("hat", "acc", 70)
-        v("tie", "vel", 2); v("tie", "d", 40); v("pod", "vel", 0)
-        fx.update({"b_swing": r.randint(10, 30), "b_dirt": r.randint(15, 40), "b_eq_amp": r.randint(3, 9),
-                   "b_x_mode": r.choice([0, 3, 11]), "b_x_x": 55, "b_x_y": 45, "b_x_gain": -10})
-    elif genre == "techhouse":
-        v("tie", "vel", 2); v("tie", "d", 30); v("tie", "ft", 0); v("tie", "cut", r.choice([700, 1000, 1500])); v("tie", "res", 35)
-        v("pod", "vel", 2)
-        fx.update({"b_swing": r.randint(15, 35), "b_norm": 1, "b_x_mode": r.choice([3, 4, 18, 11]), "b_x_x": r.randint(30, 70),
-                   "b_x_y": r.randint(20, 60), "b_x_gain": -9, "b_dly_one": 3, "b_dly_two": 3, "b_dly_gain": -14})
-    elif genre == "deephouse":
-        v("tie", "vel", 2); v("tie", "d", 75); v("tie", "a", 5); v("tie", "gain", -6); v("hat", "cd", 30)
-        v("pod", "vel", 0); v("kick", "d", 70)
-        fx.update({"b_swing": r.randint(20, 45), "b_x_mode": 11, "b_x_x": r.randint(55, 85), "b_x_y": r.randint(40, 70),
-                   "b_x_gain": -8, "b_x_dly": 30, "b_dly_one": 3, "b_dly_two": 4, "b_dly_cut": 3000, "b_eq_hi": -2, "b_eq_amp": 3})
-    else:  # breakbeat
-        v("kick", "sat", r.randint(20, 50)); v("snare", "sat", r.randint(20, 60)); v("snare", "shp", r.randint(0, 50))
-        v("tie", "vel", 2); v("tie", "d", 35)
-        fx.update({"b_swing": r.randint(0, 15), "b_dirt": r.randint(10, 35), "b_x_mode": r.choice([19, 20, 14, 7]),
-                   "b_x_x": r.randint(30, 70), "b_x_y": r.randint(30, 70), "b_x_gain": -8, "b_x_len": r.choice([1, 2, 4]),
-                   "b_remix": r.randint(1, 127), "b_remix_rate": r.choice([2, 3])})
+        fx.update({"b_swing": r.randint(25, 50), "b_flt_trk": r.randint(0, 20) if cx else 0, "b_eq_lo": 1.5, "b_eq_hi": -1})
+        fx.update(X([11, 10, 5, 8], (25, 70), (30, 70)) if cx else X([0, 11], (30, 50), (40, 60)))
+    elif genre == "house":           # warm 909, claps, organ / rhodes, garage swing
+        v("kick", "sat", r.randint(5, 20)); v("snare", "sat", r.randint(0, 15)); v("hat", "acc", 60)
+        fx.update({"b_swing": r.randint(15, 35), "b_dirt": r.randint(3, 10), "b_eq_amp": r.randint(2, 5)})
+        fx.update(X([11, 4], (40, 70), (40, 60)) if cx else X([0, 0, 11], (40, 60), (40, 60)))
+    elif genre == "techhouse":       # raw Chicago / Detroit: acid basslines, 707 / 808, jacking hats
+        v("tie", "ft", 0); v("tie", "cut", r.choice([900, 1400, 2200])); v("tie", "res", r.randint(30, 55)); v("tie", "d", 55)
+        fx.update({"b_swing": r.randint(10, 30), "b_norm": 1, "b_dirt": r.randint(3, 12)})
+        fx.update(X([4, 18, 3, 11], (30, 70), (20, 60)) if cx else X([0, 3], (50, 70), (20, 40)))
+    elif genre == "deephouse":       # dusty, dub chords, funky bass, Koze-style quirks
+        v("tie", "d", 80); v("tie", "a", 5); v("tie", "gain", -6); v("hat", "cd", 30)
+        fx.update({"b_swing": r.randint(20, 45), "b_eq_hi": -2, "b_eq_amp": 3, "b_dirt": r.randint(5, 15)})
+        fx.update(dict(X([11], (55, 85), (40, 70)), b_x_dly=30) if cx else X([0, 11], (50, 70), (40, 60)))
+    else:                            # breakbeat = electro: 808 booms, snappy snares, zaps, robotic bass
+        v("kick", "sat", r.randint(5, 25)); v("snare", "sat", r.randint(10, 30))
+        fx.update({"b_swing": r.randint(0, 10), "b_dirt": r.randint(4, 14)})
+        fx.update(dict(X([19, 20, 14, 7], (30, 70), (30, 70)), b_x_len=r.choice([1, 2, 4])) if cx else X([0, 0, 14], (20, 40), (20, 40)))
+        if cx: fx.update({"b_remix": r.randint(1, 127), "b_remix_rate": r.choice([2, 3])})
     P.update(fx)
-    for k in ("b_dly_gain", "b_x_gain"):           # FX returns never above -16 dB by default
-        P[k] = min(float(P.get(k, -16)), -16.0)
-    P["b_dly_gain"] = -60.0                         # delay return at minimum by default (raise it by hand)
+    P["b_x_gain"] = min(float(P.get("b_x_gain", -16)), -16.0)   # FX returns never above -16 dB by default
+    P["b_dly_gain"] = -60.0                                      # delay return at minimum (raise it by hand)
     return P, smp
 
-def lanes_to_samples(preset, genre, r):
+def lanes_to_samples(preset, genre, r, cx=1):
     """Tie / Pod lanes: the column height selects the sample of the module list (notch 1 = bottom = last sample).
     Every note points to the kit's sample, sometimes alternated with 1-2 other samples of the same genre."""
     for module, lane in (("Tie", "tie"), ("Pod", "pod")):
@@ -275,14 +247,14 @@ def lanes_to_samples(preset, genre, r):
         main = preset["samples"][module]
         alts = [f for f in files if f != main and any(genre in it["tags"] for it in manifest["modules"][module] if it["file"][:-4] == f)]
         r.shuffle(alts)
-        choices = [main] + alts[:2]
+        choices = [main] + (alts[:2] if cx else [])
         for pat in preset["patterns"]:
             out = []
             for v in pat[lane]:
                 if v <= 0.001:
                     out.append(0.0); continue
                 # louder / higher original steps keep the main sample, the others alternate
-                name = main if (v >= 0.45 or r.random() < 0.6) else r.choice(choices)
+                name = main if (not cx or v >= 0.45 or r.random() < 0.6) else r.choice(choices)
                 i = files.index(name)
                 out.append(round((n - i) / n, 4))
             pat[lane] = out
@@ -291,17 +263,20 @@ def lanes_to_samples(preset, genre, r):
 
 def b_preset(genre, idx, r):
     lo, hi = BPM[genre]
-    length = r.choice([32, 32, 64]) if genre == "rominimal" else (r.choice([16, 16, 32]) if genre in ("minimal", "microhouse", "techno") else 16)
-    kit, smp = b_kit(genre, r)
-    pats = b_patterns(genre, r, length)
+    cx = 0 if idx < 8 else 1                       # 8 simple + 8 intricate presets per genre
+    if cx: length = r.choice([32, 64]) if genre in ("rominimal", "microhouse") else r.choice([16, 32, 32])
+    else:  length = 32 if genre == "rominimal" and r.random() < 0.5 else 16
+    kit, smp = b_kit(genre, r, cx)
+    pats = b_patterns(genre, r, length, cx)
     lanes = {"b_len": length, "b_tie_len": length, "b_pod_len": length, "b_mod_len": length}
-    if genre in ("minimal", "rominimal", "microhouse", "techno") and r.random() < 0.6:
+    if cx and genre in ("minimal", "rominimal", "microhouse", "techno", "deephouse") and r.random() < 0.7:
         lanes["b_pod_len"] = r.choice([12, 14, 20, 24, 28, 30]) if length >= 32 else r.choice([10, 12, 14])   # polymeter
-    if genre == "rominimal" and r.random() < 0.5:
+    if cx and genre in ("rominimal", "microhouse") and r.random() < 0.5:
         lanes["b_mod_len"] = r.choice([24, 48, 64])
     kit.update(lanes)
-    preset = {"name": NAMES[genre][idx], "genre": LABEL[genre], "bpm": r.randint(lo, hi), "params": kit, "samples": smp, "patterns": pats}
-    return lanes_to_samples(preset, genre, r)
+    preset = {"name": NAMES[genre][idx], "genre": LABEL[genre], "level": "Complex" if cx else "Simple",
+              "bpm": r.randint(lo, hi), "params": kit, "samples": smp, "patterns": pats}
+    return lanes_to_samples(preset, genre, r, cx)
 
 
 # ------------------------------------------------------------------------------- Section A (Microtonic kit)
@@ -309,15 +284,21 @@ def patch(role, genre, r):
     """Returns a drum patch in natural units for the Microtonic-style voice."""
     j = lambda a, b: round(r.uniform(a, b), 2)
     if role == "kick":
-        base = {"techno": (44, 52, 300, 600, 3, 25), "minimal": (50, 60, 150, 300, 0, 8), "microhouse": (55, 70, 70, 180, 0, 12),
-                "rominimal": (46, 56, 160, 420, 0, 4), "chicago": (48, 56, 250, 500, 5, 30), "techhouse": (48, 56, 200, 400, 3, 18),
-                "deephouse": (45, 54, 300, 650, 0, 8), "breakbeat": (52, 64, 150, 300, 10, 40)}[genre]
+        # (freq lo, hi, decay lo, hi, distort lo, hi) - tuned on the reference styles
+        base = {"techno": (44, 50, 380, 700, 8, 30),      # long rumble-ready kicks (CVO, Alarico)
+                "minimal": (58, 72, 60, 170, 0, 6),       # tiny dry clicks (Jelinek, Farben)
+                "microhouse": (48, 60, 200, 450, 0, 8),   # soft round kicks (Villalobos, Zavor)
+                "rominimal": (48, 56, 160, 380, 0, 4),    # round, short-medium (Barac, Sublee)
+                "house": (48, 54, 280, 520, 3, 15),       # warm 909 (Kerri Chandler)
+                "techhouse": (46, 56, 180, 450, 5, 25),   # raw 707/808/909 (Adonis, Saunderson)
+                "deephouse": (46, 54, 300, 600, 5, 18),   # dusty, saturated (Mr G, UGLH)
+                "breakbeat": (42, 50, 500, 1100, 2, 15)}[genre]   # electro 808 booms (Silicon Scally)
         return dict(osc_wave=0, osc_freq=j(base[0], base[1]), osc_atk=0, osc_dcy=j(base[2], base[3]), pm_mode=0,
                     pm_amt=j(18, 40), pm_rate=j(30, 45), n_mode=0, n_freq=j(1500, 4000), n_q=0.9, n_stereo=0, n_env=0,
-                    n_atk=0, n_dcy=j(6, 20), mix=j(3, 12), dist=j(base[4], base[5]), eq_freq=j(70, 110), eq_gain=j(0, 4),
-                    level=0, pan=0, choke=0, vel_osc=60, vel_noise=60, vel_mod=0)
+                    n_atk=0, n_dcy=j(6, 20), mix=j(3, 12), dist=j(base[4], base[5]), eq_freq=j(70, 110), eq_gain=j(0, 3),
+                    level=-2.5, pan=0, choke=0, vel_osc=60, vel_noise=60, vel_mod=0)
     if role == "snare":
-        clap = genre in ("chicago", "techhouse", "deephouse") or r.random() < 0.3
+        clap = genre in ("house", "techhouse", "deephouse") or r.random() < 0.3
         rim = genre in ("minimal", "rominimal", "microhouse") and r.random() < 0.6
         if rim:
             return dict(osc_wave=1, osc_freq=j(600, 1400), osc_atk=0, osc_dcy=j(15, 45), pm_mode=0, pm_amt=j(-6, 0), pm_rate=j(5, 15),
@@ -358,15 +339,15 @@ def patch(role, genre, r):
 ROLES = ["kick", "snare", "ch", "oh", "perc", "perc", "tone", "fx"]
 CH_NAMES = {"kick": "Kick", "snare": "Snare", "ch": "CH", "oh": "OH", "perc": "Perc", "tone": "Tone", "fx": "FX"}
 
-def a_pattern(genre, r, L):
+def a_pattern(genre, r, L, cx=1):
     """8 channels x L steps, each step digit: bit0 trig, bit1 accent, bit2 fill."""
-    b = b_patterns(genre, r, L)[r.randint(0, 3)]
+    b = b_patterns(genre, r, L, cx)[0 if not cx else r.randint(0, 3)]
     tr = lambda st: [int(c) for c in st]
     k, sn, ch, oh = (tr(x) for x in b["trig"])
     perc1 = [1 if x > 0.001 else 0 for x in b["pod"]]
-    perc2 = sprinkle([0] * L, 0.1 if genre in ("rominimal", "microhouse") else 0.05, r, 1)
+    perc2 = sprinkle([0] * L, (0.1 if genre in ("rominimal", "microhouse") else 0.05) if cx else 0.0, r, 1)
     tone = [1 if x > 0.001 else 0 for x in b["tie"]]
-    fx = [1 if (i % 16 == 15 and r.random() < 0.5) else 0 for i in range(L)]
+    fx = [1 if (cx and i % 16 == 15 and r.random() < 0.5) else 0 for i in range(L)]
     rows = [k, sn, ch, oh, perc1, perc2, tone, fx]
     out = []
     for ri, row in enumerate(rows):
@@ -375,21 +356,23 @@ def a_pattern(genre, r, L):
             v = row[i]
             d = 0
             if v: d |= 1
-            if v == 2 or (v and r.random() < 0.12): d |= 2
-            if not v and ri in (1, 2, 4, 5) and i % 16 >= 12 and r.random() < 0.25: d |= 4      # fill-only notes at bar end
+            if v == 2 or (cx and v and r.random() < 0.12): d |= 2
+            if cx and not v and ri in (1, 2, 4, 5) and i % 16 >= 12 and r.random() < 0.25: d |= 4      # fill-only notes at bar end
             steps.append(d)
         out.append("".join(str(x) for x in steps))
     return out
 
 def a_preset(genre, idx, r):
     lo, hi = BPM[genre]
-    L = r.choice([32, 32, 64]) if genre == "rominimal" else (r.choice([16, 32]) if genre in ("minimal", "microhouse") else 16)
+    cx = 0 if idx < 8 else 1                       # 8 simple + 8 intricate presets per genre
+    if cx: L = r.choice([32, 64]) if genre in ("rominimal", "microhouse") else r.choice([16, 32])
+    else:  L = 32 if genre == "rominimal" and r.random() < 0.5 else 16
     kit = [patch(role, genre, r) for role in ROLES]
-    swing = {"rominimal": (25, 50), "microhouse": (30, 55), "deephouse": (20, 40), "chicago": (10, 30), "techhouse": (15, 30),
+    swing = {"rominimal": (25, 50), "microhouse": (30, 55), "deephouse": (20, 40), "house": (15, 35), "techhouse": (15, 30),
              "minimal": (5, 20), "techno": (0, 8), "breakbeat": (0, 15)}[genre]
-    return {"name": NAMES[genre][idx], "genre": LABEL[genre], "bpm": r.randint(lo, hi),
+    return {"name": NAMES[genre][idx], "genre": LABEL[genre], "level": "Complex" if cx else "Simple", "bpm": r.randint(lo, hi),
             "names": [CH_NAMES[x] + ("" if x not in ("perc",) else str(1 + ROLES[:i].count("perc"))) for i, x in enumerate(ROLES)],
-            "kit": kit, "len": L, "steps": a_pattern(genre, r, L), "swing": r.randint(*swing), "fillrate": r.choice([3, 3, 4, 5])}
+            "kit": kit, "len": L, "steps": a_pattern(genre, r, L, cx), "swing": r.randint(*swing) if cx else r.randint(swing[0], (swing[0] + swing[1]) // 2), "fillrate": r.choice([3, 3, 4, 5])}
 
 
 def main():

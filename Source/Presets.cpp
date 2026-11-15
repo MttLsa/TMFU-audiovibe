@@ -30,7 +30,7 @@ namespace
         if (auto* arr = v.getProperty ("presets", var()).getArray())
             for (auto& p : *arr)
                 out.push_back ({ p.getProperty ("name", "").toString(), p.getProperty ("genre", "").toString(),
-                                 (int) p.getProperty ("bpm", 120), p });
+                                 (int) p.getProperty ("bpm", 120), p, p.getProperty ("level", "").toString() });
         return out;
     }
 }

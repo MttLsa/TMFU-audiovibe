@@ -64,15 +64,41 @@ bool SampleLibrary::hasLegacy()
 
 void SampleLibrary::installFactoryIfMissing()
 {
+    // Installs the embedded factory library on first run, and upgrades it when the plug-in ships a newer one.
+    // Upgrade: the files listed in the previously installed manifest (factory files only) are removed, then the
+    // new files are extracted. User files, Legacy folders and user folders are never touched.
     const auto root = rootFolder();
+    MemoryInputStream in (BinaryData::factory_samples_zip, BinaryData::factory_samples_zipSize, false);
+    ZipFile zip (in);
+    auto readVersion = [] (const var& v) { return (int) v.getProperty ("version", 1); };
+    var embeddedManifest;
+    if (auto* e = zip.getEntry ("manifest.json"))
+        if (std::unique_ptr<InputStream> s2 (zip.createStreamForEntry (*e)); s2 != nullptr)
+            embeddedManifest = JSON::parse (s2->readEntireStreamAsString());
+    const auto installedFile = root.getChildFile ("manifest.json");
+    const var installedManifest = installedFile.existsAsFile() ? JSON::parse (installedFile.loadFileAsString()) : var();
+
     bool missing = false;
     for (int m = 0; m < numModules; ++m)
         if (audioFilesIn (folderFor (m, twinbox)).isEmpty()) missing = true;
-    if (! missing) return;
+    const bool upgrade = installedManifest.isObject() && readVersion (installedManifest) < readVersion (embeddedManifest);
+    if (! missing && ! upgrade) return;
+
     root.createDirectory();
-    MemoryInputStream in (BinaryData::factory_samples_zip, BinaryData::factory_samples_zipSize, false);
-    ZipFile zip (in);
-    const auto r = zip.uncompressTo (root, false);   // never overwrite user changes
+    if (upgrade)
+        if (auto* mods = installedManifest.getProperty ("modules", var()).getDynamicObject())
+            for (auto& mod : mods->getProperties())
+                if (auto* files = mod.value.getArray())
+                    for (auto& f : *files)
+                    {
+                        const String name = f.getProperty ("file", "").toString();
+                        if (name.isEmpty() || name.containsAnyOf ("/\\")) continue;
+                        const auto folder = root.getChildFile ("Twinbox " + mod.name.toString());
+                        folder.getChildFile (name).deleteFile();
+                        folder.getChildFile ("open").getChildFile (name).deleteFile();
+                        folder.getChildFile (".twinbox_pitch.txt").deleteFile();
+                    }
+    const auto r = zip.uncompressTo (root, upgrade);   // overwrite only when upgrading the factory set
     if (r.failed()) DBG ("Twinbox: factory sample install failed: " << r.getErrorMessage());
 }
 

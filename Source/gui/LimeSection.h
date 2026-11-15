@@ -45,11 +45,13 @@ public:
     void mouseDown (const juce::MouseEvent&) override;
     void mouseDrag (const juce::MouseEvent&) override;
     void mouseUp (const juce::MouseEvent&) override { dragRow = -1; }
+    bool keyPressed (const juce::KeyPress&) override;          // arrows edit the selected Tie / Pod / Mod column
+    void focusLost (FocusChangeType) override { repaint(); }
     void setPage (int p) { page = p; repaint(); }
     int  getPage() const { return page; }
     int  visibleSteps() const { return big ? 32 : 16; }
     int  numPages() const { return params::numLimeSteps / visibleSteps(); }
-    void setLowerLane (int l) { lowerLane = l; repaint(); }   // compact view: which value lane is shown
+    void setLowerLane (int l) { lowerLane = l; if (! big) selLane = -1; repaint(); }   // compact view: which value lane is shown
     int  lowerLaneShown() const { return lowerLane; }
     juce::Rectangle<float> rowBounds (int row) const;        // rows: 0..3 trig, 4..6 value (big) or 4 (compact)
 
@@ -65,6 +67,9 @@ private:
     bool big;
     int page = 0, lowerLane = 0;
     int dragRow = -1, lastStep = -1; uint8_t dragVal = 0;
+    int selLane = -1, selStep = -1;   // keyboard selection (value lanes 4..6)
+    bool wavMode (int lane) const;
+    void setValue (int lane, int step, float v, bool audition);
     std::array<int, 4> lastPlay { -2, -2, -2, -2 };
 };
 

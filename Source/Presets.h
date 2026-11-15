@@ -9,7 +9,7 @@ class TwinboxProcessor;
 class PresetLibrary
 {
 public:
-    struct Item { juce::String name, genre; int bpm = 120; juce::var data; };
+    struct Item { juce::String name, genre; int bpm = 120; juce::var data; juce::String level; };
     static const PresetLibrary& get();
     const std::vector<Item>& items (int section) const { return section == 0 ? a : b; }
     juce::StringArray genres() const;
