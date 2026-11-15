@@ -45,7 +45,12 @@ void ModuleEngine::prepare (double sampleRate, int maxBlock)
     int maxIn = 0;
     for (auto& v : voices)
     {
-        v.st->presetDefault (2, (float) sr);
+        if (percussive)
+        {
+            const int block = (int) (sr * 0.05) & ~1;   // ~50 ms window, 12.5 ms hop: attacks stay crisp
+            v.st->configure (2, block, block / 4);
+        }
+        else v.st->presetDefault (2, (float) sr);
         v.needSeek = true; v.semisInit = false; v.curSeg = -1; v.prevOn = false;
         maxIn = jmax (maxIn, kSub * 16 + v.st->blockSamples() + v.st->intervalSamples() + 16);
     }
@@ -70,13 +75,6 @@ void ModuleEngine::Voice::buildSegments()
     const int N = loop->numSamples();
     std::vector<double> b { 0.0 };
     for (auto f : loop->onsets) b.push_back (f * LB);
-    // safety grid: a split on every 1/16 that has no transient within 1/32 (keeps long sounds in time)
-    for (double g = 0.25; g < LB - 1e-9; g += 0.25)
-    {
-        bool near = false;
-        for (auto o : b) if (std::abs (o - g) < 0.125) { near = true; break; }
-        if (! near) b.push_back (g);
-    }
     std::sort (b.begin(), b.end());
     for (auto x : b) if (segBeat.empty() || x - segBeat.back() > 1.0e-4) segBeat.push_back (x);
     for (size_t k = 0; k < segBeat.size(); ++k) segStart.push_back (jlimit (0, N - 1, (int) std::lround (segBeat[k] / LB * N)));
@@ -96,7 +94,7 @@ void ModuleEngine::assign (Voice& v, LoopPtr l)
 {
     v.loop = std::move (l);
     v.needSeek = true; v.semisInit = false;
-    v.isBeats = mode == 1 || (mode < 0 && v.loop != nullptr && v.loop->info.voiced < 0.45f);
+    v.isBeats = mode == 1;
     v.buildSegments();
 }
 
@@ -212,8 +210,11 @@ void ModuleEngine::renderComplex (Voice& v, float* outL, float* outR, int s0, in
     };
     if (v.needSeek) seek();
     double want = (procB - v.feedBeat) / bps;
-    if (want < -4.0 || want > m * 16.0) { seek(); want = (procB - v.feedBeat) / bps; }
-    const int count = jlimit (0, (int) inL.size(), (int) std::lround (want));
+    // small position changes (groove / tempo moving) are absorbed by the stretcher (it simply gets less or more
+    // input); only real jumps (> 250 ms) re-seek, which would be audible
+    const double jump = 0.25 * sr;
+    if (want < -jump || want > jump) { seek(); ++reseeks; want = (procB - v.feedBeat) / bps; }
+    const int count = jlimit (0, jmin ((int) inL.size(), m * 8), (int) std::lround (want));
     readSource (L, v.feedBeat, count, bps, region, inL.data(), inR.data());
     v.feedBeat += count * bps;
     if (! v.semisInit) { v.semisSm = semis; v.semisInit = true; }
@@ -240,7 +241,7 @@ void ModuleEngine::renderBeats (Voice& v, float* outL, float* outR, int s0, int 
         v.schedSwing = swing; v.schedGrid = ctx.swingGrid;
     }
     const double ratio = std::pow (2.0, (double) semis / 12.0);   // drums: pitch by resampling each slice
-    const double fadeOut = jmax (8.0, 0.002 * sr), fadeIn = jmax (4.0, 0.001 * sr);
+    const double fadeOut = jmax (8.0, 0.006 * sr), fadeIn = jmax (4.0, 0.001 * sr);
     const double dq = m > 1 ? (qArr[(size_t) (s0 + m - 1)] - qArr[(size_t) s0]) / (m - 1) : ctx.ppqPerSample;
     const double bpo = jmax (1.0e-9, ctx.raw ? dq * L.bpm / jmax (1.0, ctx.bpm) : dq);   // loop beats per output sample
     // slices are identified by a running number (region cycle, loop repeat, slice index), never by their time:
@@ -314,6 +315,11 @@ void ModuleEngine::process (float* outL, float* outR, int n, const BlockContext&
     if ((int) qArr.size() < n) { qArr.resize ((size_t) n + 64); tmpL.resize ((size_t) n + 64); tmpR.resize ((size_t) n + 64); }
     std::fill (outL, outL + n, 0.0f);
     std::fill (outR, outR + n, 0.0f);
+    if (p.warp != mode)
+    {
+        mode = p.warp;
+        for (auto& v : voices) { v.isBeats = mode == 1; v.needSeek = true; v.curSeg = -1; v.prevOn = false; }
+    }
     const bool running = ctx.playing && p.on && voices[active].loop != nullptr;
     if (ctx.jumped) { offset = ctx.ppq * (p.tempo * ctx.rateMul - 1.0); for (auto& v : voices) { v.needSeek = true; v.curSeg = -1; v.prevOn = false; } lastLoopStep = -1.0; }
     if (! running) { for (auto& v : voices) { v.needSeek = true; v.curSeg = -1; v.prevOn = false; } if (! ctx.playing) playPos = -1.0f; }
@@ -338,6 +344,11 @@ void ModuleEngine::process (float* outL, float* outR, int n, const BlockContext&
                 const float v = lfoValue (k, ppqS, p) * p.lfoDepth[k];
                 if (p.lfoTarget[k] == lb::tLoop) loopMod += v; else mod[p.lfoTarget[k]] += v;
             }
+        // ---- groove amount glides (~150 ms) so a moving SWING knob never makes the timeline jump
+        swingSm += (ctx.swing - swingSm) * (1.0f - std::exp (-(float) m / (0.15f * (float) sr)));
+        if (std::abs (ctx.swing - swingSm) < 1.0e-4f) swingSm = ctx.swing;
+        BlockContext cx = ctx;
+        cx.swing = swingSm;
         // ---- musical position (TEMPO incl. LFO and turntable speed)
         const double rate = jlimit (0.125, 8.0, (double) p.tempo * std::pow (2.0, (double) mod[lb::tTempo]) * ctx.rateMul);
         for (int i = s0; i < s0 + m; ++i)
@@ -364,13 +375,13 @@ void ModuleEngine::process (float* outL, float* outR, int n, const BlockContext&
 
             const auto& L = *voices[active].loop;
             const double region = regionBeats (L, p);
-            const float semis = jlimit (-48.0f, 48.0f, ctx.semitones + 12.0f * mod[lb::tPitch] + 12.0f * (float) std::log2 (ctx.rateMul));
-            renderVoice (voices[active], outL, outR, s0, m, p, ctx, semis, region);
+            const float semis = jlimit (-48.0f, 48.0f, cx.semitones + 12.0f * mod[lb::tPitch] + 12.0f * (float) std::log2 (cx.rateMul));
+            renderVoice (voices[active], outL, outR, s0, m, p, cx, semis, region);
             if (xfade < 1.0f)
             {
                 auto& old = voices[1 - active];
                 const double oregion = old.loop != nullptr ? regionBeats (*old.loop, p) : region;
-                renderVoice (old, tmpL.data(), tmpR.data(), s0, m, p, ctx, semis, oregion);
+                renderVoice (old, tmpL.data(), tmpR.data(), s0, m, p, cx, semis, oregion);
                 const float inc = (float) (1.0 / ((voices[active].isBeats ? 0.005 : 0.02) * sr));
                 for (int i = s0; i < s0 + m; ++i)
                 {
@@ -383,7 +394,7 @@ void ModuleEngine::process (float* outL, float* outR, int n, const BlockContext&
             // ---- slice gate, ADSR, clip gain (output timeline)
             const double loopBeats = jmax (1, L.beats);
             const double bpo = (qArr[(size_t) (s0 + m - 1)] - qArr[(size_t) s0]) / jmax (1, m - 1);
-            const double regionSamples = region / jmax (1.0e-12, ctx.raw ? bpo * L.bpm / jmax (1.0, ctx.bpm) : bpo);
+            const double regionSamples = region / jmax (1.0e-12, cx.raw ? bpo * L.bpm / jmax (1.0, cx.bpm) : bpo);
             const double regionSec = regionSamples / sr;
             float sl0 = jlimit (0.0f, 1.0f, p.sStart + 0.25f * mod[lb::tSliceStart]);
             float sl1 = jlimit (0.0f, 1.0f, p.sEnd + 0.25f * mod[lb::tSliceEnd]);
@@ -392,7 +403,7 @@ void ModuleEngine::process (float* outL, float* outR, int n, const BlockContext&
             ignoreUnused (loopBeats);
             for (int i = s0; i < s0 + m; ++i)
             {
-                const double U = loopBeat (qArr[(size_t) i], L, ctx);
+                const double U = loopBeat (qArr[(size_t) i], L, cx);
                 const double ph = posMod (U, region) / region;
                 if (i == 0) playPos = (float) ph;
                 float g = 1.0f;

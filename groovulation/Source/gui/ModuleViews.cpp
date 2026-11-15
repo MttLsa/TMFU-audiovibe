@@ -396,7 +396,7 @@ void ModuleStrip::resized()
 ModuleEditor::ModuleEditor (GroovulationProcessor& p) : proc (p), display (p, 0, true)
 {
     addAndMakeVisible (display);
-    for (auto* c : std::initializer_list<Component*> { &grid, &keySrc, &ftype, &lenMinus, &lenPlus, &lenOrig, &volReset, &slice, &fade, &volA, &dpp,
+    for (auto* c : std::initializer_list<Component*> { &grid, &keySrc, &ftype, &warp, &lenMinus, &lenPlus, &lenOrig, &volReset, &slice, &fade, &volA, &dpp,
                                                        &prev, &next, &rnd, &sim, &browser,
                                                        &pAmp, &pAdsr, &pPitch, &pFilter, &pDirt, &pDelay, &pReverb, &pLfo1, &pLfo2, &pLfo3 })
         addAndMakeVisible (c);
@@ -478,6 +478,8 @@ void ModuleEditor::attachAll()
     grid.attach (s, lb::pid (m, "grid"));
     keySrc.attach (s, lb::pid (m, "keysrc"), { "AUDIO", "FILE NAME" });
     ftype.attach (s, lb::pid (m, "ftype"));
+    warp.attach (s, lb::pid (m, "warp"), { "COMPLEX", "BEATS" });
+    warp.setTooltip ("WARP: COMPLEX = high quality time-stretch (default), BEATS = transient slices (no stretching, gaps at slower tempos)");
     slice.attach (s, lb::pid (m, "slice")); fade.attach (s, lb::pid (m, "fade")); volA.attach (s, lb::pid (m, "vola")); dpp.attach (s, lb::pid (m, "dpp"));
     comboAtt.clear();
     comboAtt.push_back (std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (s, lb::pid (m, "lfo1shape"), l1shape));
@@ -500,7 +502,7 @@ void ModuleEditor::setModule (int m)
     const bool isCustom = module == lb::custom;
     for (auto* b : std::initializer_list<Component*> { &prev, &next, &rnd, &sim, &browser }) b->setVisible (! isCustom);
     floppy.setVisible (isCustom); clear.setVisible (isCustom);
-    for (auto* sg : { &grid, &keySrc, &ftype }) sg->setAccent (c);
+    for (auto* sg : { &grid, &keySrc, &ftype, &warp }) sg->setAccent (c);
     for (auto* t : { &slice, &fade, &volA, &dpp }) t->setColour (TextButton::buttonOnColourId, c);
     attachAll();
     shownLoop = nullptr;
@@ -643,7 +645,11 @@ void ModuleEditor::resized()
     auto inP = [] (Panel& p) { return p.getBounds().withTrimmedTop (Panel::headerH + 2).reduced (4, 2); };
     layoutRow (inP (pAmp), { &gain, &pan });
     layoutRow (inP (pAdsr), { &atk, &dec, &sus, &rel });
-    layoutRow (inP (pPitch), { &pitch, &tempo });
+    {
+        auto pp = inP (pPitch);
+        warp.setBounds (pp.removeFromTop (22).reduced (6, 0));
+        layoutRow (pp, { &pitch, &tempo });
+    }
     {
         auto f = inP (pFilter);
         ftype.setBounds (f.removeFromTop (22).reduced (6, 0));

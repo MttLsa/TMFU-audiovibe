@@ -30,12 +30,15 @@ Mixer di loop e campioni a 12 moduli, nello stile di Twinbox con i colori di un 
   device Scale di Ableton). PITCH funziona ancora: il risultato va sulla nota più vicina della scala.
 - **RAW**: tempo e intonazione originali; PITCH e TEMPO restano manuali.
 
-## Motori audio
-- **DRUMS → BEATS**: il loop viene tagliato sui transienti (più una griglia di sicurezza a 1/16) e ogni fetta viene
-  suonata intatta al suo tempo, come il warp "Beats" + Groove di Ableton. Lo swing **sposta** le fette senza
-  stirarle: nessun degrado del suono.
-- **BASS, MELODIC, VOCALS, FX → COMPLEX**: time-stretch / pitch-shift polifonico ad alta qualità (Signalsmith Stretch,
-  classe "Complex Pro"); lo swing è un warp continuo (sin²), senza scalini.
+## Motori audio (WARP, per modulo)
+- **COMPLEX** (default, tutti i moduli): time-stretch / pitch-shift polifonico ad alta qualità (Signalsmith Stretch,
+  classe "Complex Pro"). Sui DRUMS usa una finestra di analisi più corta (~50 ms), così gli attacchi restano netti.
+  Lo swing è un warp continuo (sin²) e la quantità di swing scorre in ~150 ms, quindi muovere il knob non crea
+  salti né scalini.
+- **BEATS** (opzione): il loop viene tagliato sui transienti e ogni fetta suona intatta al suo tempo, come la
+  modalità "Beats" di Ableton. Se il tempo del progetto è molto diverso da quello del loop, le fette lasciano
+  dei buchi: per questo il default è COMPLEX.
+- I loop vengono ricampionati alla frequenza del progetto come segnali ciclici (nessun buco al giro del loop).
 - I cambi di loop (LOOP SELECT, SIMILAR, LFO → Loop) vanno in dissolvenza incrociata tra due voci.
 
 ## Ogni modulo
@@ -76,7 +79,7 @@ sceglie quale suonare, con crossfade. Non legge dal disco durante la riproduzion
 ## Build
 ```
 cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release
-./packaging/macos/make_pkg.sh 1.1.0        # installer .pkg (macOS)
+./packaging/macos/make_pkg.sh 1.1.2        # installer .pkg (macOS)
 cmake -B build -DGROOV_BUILD_TESTS=ON && cmake --build build --target GroovulationTest   # test offline
 ```
 Su GitHub l'installer viene costruito automaticamente (workflow `groovulation`).

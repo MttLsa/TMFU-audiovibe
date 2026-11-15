@@ -101,6 +101,8 @@ AudioProcessorValueTreeState::ParameterLayout lb::createLayout()
         add (std::make_unique<APB> (id ("fade"), n + "Slice Fades", true));
         add (std::make_unique<APB> (id ("vola"), n + "Volume Automation", false));
         add (std::make_unique<APC> (id ("keysrc"), n + "Type (key source)", StringArray { "Audio", "File Name" }, 0));
+        // time engine: COMPLEX = high quality time-stretch (default, all modules), BEATS = transient slices
+        add (std::make_unique<APC> (id ("warp"), n + "Warp Mode", StringArray { "Complex", "Beats" }, 0));
     }
 
     // ---------------- global

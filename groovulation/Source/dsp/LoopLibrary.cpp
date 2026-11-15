@@ -374,12 +374,27 @@ LoopPtr LoopLibrary::load (const LoopEntry& e, double targetRate)
         d->audio = std::move (src);
     else
     {
-        const int outLen = (int) std::floor (len / ratio);
+        // the loop is cyclic: resample [tail | loop | head] so both ends get real neighbours (no silence at the
+        // end, no pre-ring at the start), then remove the interpolator's latency -> sample-accurate timing
+        const int outLen = (int) std::lround (len / ratio);
+        const int pad = jmin (len, 1024);
+        AudioBuffer<float> ext (1, len + 2 * pad);
+        std::vector<float> tmp;
         d->audio.setSize (2, outLen);
         for (int c = 0; c < 2; ++c)
         {
+            const float* in = src.getReadPointer (c);
+            float* e = ext.getWritePointer (0);
+            for (int i = 0; i < pad; ++i) e[i] = in[len - pad + i];
+            std::copy (in, in + len, e + pad);
+            for (int i = 0; i < pad; ++i) e[pad + len + i] = in[i % len];
             WindowedSincInterpolator interp;
-            interp.process (ratio, src.getReadPointer (c), d->audio.getWritePointer (c), outLen, len, 0);
+            const double lat = interp.getBaseLatency();
+            const int start = (int) std::lround ((pad + lat) / ratio);
+            const int total = (int) std::floor ((len + 2 * pad) / ratio) - 2;
+            tmp.assign ((size_t) jmax (total, start + outLen), 0.0f);
+            interp.process (ratio, e, tmp.data(), total, len + 2 * pad, 0);
+            std::copy (tmp.begin() + start, tmp.begin() + start + outLen, d->audio.getWritePointer (c));
         }
     }
     // onsets at the playback rate (more precise than the analysis ones)

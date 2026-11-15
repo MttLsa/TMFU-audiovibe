@@ -27,6 +27,7 @@ struct ModuleParams
     int lfoRate[lb::numLfos] { 10, 10, 10 }, lfoShape[lb::numLfos] {}, lfoTarget[lb::numLfos] {}; float lfoDepth[lb::numLfos] {};
     int grid = 5, steps = 0;
     bool slice = false; float sStart = 0, sEnd = 1; bool fade = true; bool volA = false;
+    int warp = 0;   // 0 = COMPLEX (time-stretch), 1 = BEATS (transient slices)
     bool usesLoopLfo() const { for (int k = 0; k < lb::numLfos; ++k) if (lfoTarget[k] == lb::tLoop && std::abs (lfoDepth[k]) > 0.0005f) return true; return false; }
 };
 
@@ -46,12 +47,13 @@ struct BlockContext
 };
 
 // -------------------------------------------------------------------------------------------------
-//  One loop module, locked to the host position. Two playback engines:
-//   BEATS   (drums)  - the loop is cut at its transients (plus a 1/16 safety grid); every slice is
-//                      replayed untouched at its (groove-shifted) time, like Ableton's "Beats" warp
-//                      mode + Groove: swing moves slices instead of stretching audio.
-//   COMPLEX (others) - polyphonic phase-vocoder time-stretch / pitch-shift (Signalsmith Stretch,
-//                      "Complex Pro" class); swing is a smooth (C1-continuous) time warp, no steps.
+//  One loop module, locked to the host position. Two playback engines (WARP):
+//   COMPLEX (default, every module) - polyphonic phase-vocoder time-stretch / pitch-shift (Signalsmith
+//                      Stretch, "Complex Pro" class); swing is a smooth (C1-continuous) time warp, no steps.
+//                      Drums use a shorter analysis window for sharper attacks.
+//   BEATS   (option) - the loop is cut at its transients and every slice is replayed untouched at its
+//                      (groove-shifted) time, like Ableton's "Beats" mode: slices end early / leave gaps
+//                      when the tempo differs a lot from the loop's.
 //  Loop changes (LOOP SELECT, SIMILAR, LFO -> Loop) crossfade between two voices.
 //  Plus slice gate, ADSR, clip-gain automation, filter, dirt, delay, reverb and 3 LFOs.
 // -------------------------------------------------------------------------------------------------
@@ -65,8 +67,8 @@ public:
     const LoopPtr& getLoop() const;
     void setVolEnvelope (VolPtr v) { std::atomic_store (&vol, std::move (v)); }         // any thread
     void setPool (PoolPtr p) { std::atomic_store (&pool, std::move (p)); }              // any thread (LFO -> Loop)
-    // 1 = BEATS (drums), 0 = COMPLEX, -1 = decided per loop (CUSTOM: unpitched material -> BEATS)
-    void setMode (int m) { mode = m; }
+    // percussive material: shorter stretch window (sharper transients); call before prepare()
+    void setPercussive (bool p) { percussive = p; }
 
     // renders into outL/outR (replaces their content)
     void process (float* outL, float* outR, int n, const BlockContext& ctx, const ModuleParams& p);
@@ -78,7 +80,8 @@ public:
     // UI feedback
     std::atomic<float> playPos { -1.0f };   // position in region 0..1
     std::atomic<float> level { 0.0f };
-    std::atomic<int> sameSliceRestarts { 0 };   // diagnostics (tests): a slice restarted over itself = glitch
+    std::atomic<int> sameSliceRestarts { 0 };
+    std::atomic<int> reseeks { 0 };             // diagnostics (tests): audible re-seeks of the stretcher while playing   // diagnostics (tests): a slice restarted over itself = glitch
 
 private:
     using Stretch = signalsmith::stretch::SignalsmithStretch<float, void>;
@@ -105,6 +108,7 @@ private:
 
     double sr = 44100.0;
     int mode = 0;
+    bool percussive = false;
     void assign (Voice& v, LoopPtr l);
     Voice voices[2];
     int active = 0;
@@ -114,6 +118,7 @@ private:
     PoolPtr pool;
     // musical position: q = ppq + offset (offset grows when TEMPO / LFO / turntable speed differ from 1)
     double offset = 0.0;
+    float swingSm = 0.0f;
     std::vector<double> qArr;
     std::vector<float> tmpL, tmpR, inL, inR;
     double lastLoopStep = -1.0;

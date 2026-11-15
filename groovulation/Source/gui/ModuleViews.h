@@ -92,7 +92,7 @@ private:
     int module = 0;
     WaveDisplay display;
     // toolbar
-    Segmented grid, keySrc, ftype;
+    Segmented grid, keySrc, ftype, warp;
     juce::TextButton lenMinus { "-" }, lenPlus { "+" }, lenOrig { "ORIG" }, volReset { "RESET VOL" };
     Toggle slice { "SLICE" }, fade { "FADE 0.5ms" }, volA { "VOL.A" }, dpp { "PING-PONG" };
     juce::TextButton prev { "<" }, next { ">" }, rnd { "RND" }, sim { "SIMILAR" }, clear { "CLEAR" };
@@ -101,7 +101,7 @@ private:
     juce::ComboBox browser;
     std::vector<int> browserIndices;
     // panels
-    Panel pAmp { "Gain / Pan", theme::red }, pAdsr { "ADSR", theme::red }, pPitch { "Pitch / Tempo", theme::red },
+    Panel pAmp { "Gain / Pan", theme::red }, pAdsr { "ADSR", theme::red }, pPitch { "Pitch / Tempo / Warp", theme::red },
           pFilter { "Cutoff", theme::red }, pDirt { "Dirt", theme::red }, pDelay { "Delay", theme::red },
           pReverb { "Reverb", theme::red }, pLfo1 { "LFO 1", theme::red }, pLfo2 { "LFO 2", theme::red }, pLfo3 { "LFO 3", theme::red };
     Knob gain { "Gain" }, pan { "Pan" }, atk { "A" }, dec { "D" }, sus { "S" }, rel { "R" },

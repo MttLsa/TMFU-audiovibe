@@ -155,6 +155,28 @@ int main (int argc, char** argv)
         }
         check (tempoOk >= (int) db->entries.size() * 8 / 10, "tempo without the name: " + String (tempoOk) + "/" + String ((int) db->entries.size()));
     }
+    // resampling (44.1 -> 48 kHz) keeps the loop cyclic: same length/timing, no silence at the end
+    {
+        for (auto& e : db->entries)
+        {
+            if (e.info.type != lb::kick) continue;
+            auto l = LoopLibrary::load (e, 48000.0);
+            const int N = l->numSamples();
+            const double expectN = e.info.numSamples * 48000.0 / e.info.sampleRate;
+            // energy of the last 4 ms vs the same span of the original file
+            AudioFormatManager fm2; fm2.registerBasicFormats();
+            std::unique_ptr<AudioFormatReader> rd (fm2.createReaderFor (File (e.path)));
+            const int Ns = (int) rd->lengthInSamples, span = (int) (0.004 * rd->sampleRate);
+            AudioBuffer<float> sb (1, span); rd->read (&sb, 0, span, Ns - span, true, false);
+            double tail = 0, head = 0;
+            for (int i = N - (int) (0.004 * 48000); i < N; ++i) tail += l->audio.getSample (0, i) * l->audio.getSample (0, i);
+            for (int i = 0; i < span; ++i) head += sb.getSample (0, i) * sb.getSample (0, i);
+            tail /= 0.004 * 48000; head /= span;
+            const bool ok = std::abs (N - expectN) < 1.0 && std::abs (tail - head) < 0.1 * head + 1e-9;
+            if (! ok) std::cout << "    resample: " << e.name << " N " << N << " vs " << expectN << " tail " << tail << " before " << head << "\n";
+            check (ok, "resampled loop has no silent end: " + e.name);
+        }
+    }
     // kick detection decides KICK vs BOTTOM; vocals / fx only in their modules
     {
         int kickOk = 0, kickN = 0, noKickOk = 0, noKickN = 0, voxfx = 0, voxfxN = 0;
@@ -337,6 +359,22 @@ int main (int argc, char** argv)
                 const double srr = 48000.0; const int bs = 512;
                 AudioBuffer<float> buf (2 + 2 * lb::numModules, bs), outB (1, (int) (srr * 4.0));
                 MidiBuffer midi;
+                // COMPLEX (default): moving the knob must not make the stretcher re-seek
+                {
+                    const int s0c = proc->reseeks (lb::top);
+                    setP (*proc, "swingOn", 1);
+                    for (int pos = 0; pos + bs <= outB.getNumSamples(); pos += bs)
+                    {
+                        ph.ppq = 8.0 + pos / srr * ph.bpm / 60.0;
+                        setP (*proc, "swing", 0.5f + 0.5f * (float) std::sin (pos / srr * 3.0));
+                        proc->processBlock (buf, midi);
+                    }
+                    setP (*proc, "swingOn", 0);
+                    const int rs = proc->reseeks (lb::top) - s0c;
+                    std::cout << "  info COMPLEX re-seeks while the knob moved: " << rs << "\n";
+                    check (rs == 0, "COMPLEX warp: no re-seeks (jumps) while the SWING knob moves");
+                }
+                setP (*proc, lb::pid (lb::top, "warp"), 1);   // BEATS engine
                 setP (*proc, "swingOn", 1);
                 const int restarts0 = proc->sliceRestarts (lb::top);
                 for (int pos = 0; pos + bs <= outB.getNumSamples(); pos += bs)
@@ -349,17 +387,57 @@ int main (int argc, char** argv)
                 setP (*proc, "swingOn", 0);
                 const int restarts = proc->sliceRestarts (lb::top) - restarts0;
                 std::cout << "  info drum slices restarted over themselves while the knob moved: " << restarts << "\n";
-                check (restarts == 0, "drums: no slice restarts while the SWING knob moves");
+                check (restarts == 0, "BEATS warp: no slice restarts while the SWING knob moves");
+                setP (*proc, lb::pid (lb::top, "warp"), 0);
                 const float moving = clickiness (outB, 4800);
                 setP (*proc, "swingOn", 1); setP (*proc, "swing", 0.6f);
                 const float fixed = clickiness (renderBuf (4.0), 4800);
                 setP (*proc, "swingOn", 0);
                 std::cout << "  info drum click index: swing fixed " << fixed << ", knob moving " << moving << "\n";
-                check (moving < fixed * 1.5f, "drums: moving the SWING knob while playing stays clean");
+                check (moving < fixed * 1.5f, "moving the SWING knob while playing stays clean");
             }
             std::cout << "  info swing: " << moved << " off-beat slices moved, " << steady << " on-beat slices in place, of " << checked << "\n";
             check (checked > 8 && moved + steady >= checked * 8 / 10, "drum swing moves the off-beat slices by the groove amount");
             setP (*proc, lb::pid (lb::top, "solo"), 0);
+        }
+        // 1b) KICK module: every factory kick loop at the project tempo (124 BPM): no holes cut into the sound
+        {
+            setP (*proc, lb::pid (lb::kick, "solo"), 1);
+            auto dbx = proc->library->db();
+            int worst = 0; String worstName;
+            for (int i = 0; i < (int) dbx->entries.size(); ++i)
+            {
+                if (dbx->entries[(size_t) i].info.type != lb::kick) continue;
+                proc->selectLoop (lb::kick, i);
+                for (int w = 0; w < 40 && proc->currentLoop (lb::kick)->path != dbx->entries[(size_t) i].path; ++w) pump (50);
+                render (*proc, ph, 0.3);
+                const int rs0 = proc->reseeks (lb::kick);
+                auto b = renderBuf (4.0);
+                std::cout << "      reseeks during render: " << proc->reseeks (lb::kick) - rs0 << "\n";
+                outDir.getChildFile ("q_tmp.wav").copyFileTo (outDir.getChildFile ("kick_" + dbx->entries[(size_t) i].name + ".wav"));
+                const float* d = b.getReadPointer (0);
+                float pk = 0; for (int k = 0; k < b.getNumSamples(); ++k) pk = jmax (pk, std::abs (d[k]));
+                // a "hole": >= 1 ms of near-silence right after audible sound (the sound was chopped, not decayed)
+                int holes = 0, run = 0;
+                for (int k = 4800; k < b.getNumSamples(); ++k)
+                {
+                    if (std::abs (d[k]) < pk * 0.002f) ++run;
+                    else
+                    {
+                        if (run >= 48)
+                        {
+                            double e = 0; const int a0 = k - run - 240;
+                            for (int j = jmax (0, a0); j < k - run; ++j) e += d[j] * d[j];
+                            if (std::sqrt (e / 240.0) > pk * 0.05f) { ++holes; std::cout << "      hole at " << (k - run) << " len " << run << "\n"; }
+                        }
+                        run = 0;
+                    }
+                }
+                std::cout << "    kick " << dbx->entries[(size_t) i].name << ": holes " << holes << "\n";
+                if (holes > worst) { worst = holes; worstName = dbx->entries[(size_t) i].name; }
+            }
+            check (worst == 0, "KICK module: no chopped holes in any kick loop (worst " + String (worst) + " " + worstName + ")");
+            setP (*proc, lb::pid (lb::kick, "solo"), 0);
         }
         // 2) beat repeat: no click when the repeats end and the loop comes back (Insert mode)
         {
@@ -372,12 +450,14 @@ int main (int argc, char** argv)
             std::cout << "  info click index pad: plain " << base << ", beat repeat " << br << "\n";
             check (br < base * 2.5f, "beat repeat: no clicks at the repeat boundaries");
             // 3) cutoff with a fast LFO: no zipper / glitches
-            setP (*proc, lb::pid (lb::pad, "cut"), 1200.0f); setP (*proc, lb::pid (lb::pad, "res"), 0.4f);
+            // reference: the filter standing still at the most open point the LFO reaches (800 Hz x 2^2 = 3.2 kHz)
+            setP (*proc, lb::pid (lb::pad, "cut"), 3200.0f); setP (*proc, lb::pid (lb::pad, "res"), 0.4f);
             const float still = clickiness (renderBuf (3.0), 48000);
-            setP (*proc, lb::pid (lb::pad, "lfo1target"), (float) lb::tCutoff); setP (*proc, lb::pid (lb::pad, "lfo1depth"), 1.0f); setP (*proc, lb::pid (lb::pad, "lfo1rate"), 4.0f);
+            setP (*proc, lb::pid (lb::pad, "cut"), 800.0f);
+            setP (*proc, lb::pid (lb::pad, "lfo1target"), (float) lb::tCutoff); setP (*proc, lb::pid (lb::pad, "lfo1depth"), 0.5f); setP (*proc, lb::pid (lb::pad, "lfo1rate"), 4.0f);
             const float lfo = clickiness (renderBuf (3.0), 48000);
             std::cout << "  info click index filter: static " << still << ", fast LFO " << lfo << "\n";
-            check (lfo < still * 2.0f, "cutoff LFO: smooth (no zipper)");
+            check (lfo < still * 1.5f, "cutoff LFO (fast 1/16 sweep): smooth, no zipper");
             setP (*proc, lb::pid (lb::pad, "lfo1depth"), 0.0f); setP (*proc, lb::pid (lb::pad, "cut"), 20000.0f); setP (*proc, lb::pid (lb::pad, "res"), 0.1f);
             setP (*proc, lb::pid (lb::pad, "solo"), 0);
         }

@@ -38,8 +38,8 @@ namespace lb
     }
     // modules whose loops follow SCALE (Custom: only when its loop is pitched)
     inline bool isTonal (int m) { return m == bass || m == chords || m == pad || m == synth || m == vocals; }
-    // drums use the transient-slice ("Beats") engine, the rest the high quality time-stretch ("Complex")
-    inline bool usesBeats (int m) { return m < 5; }
+    // drums get a shorter analysis window in the time-stretch (sharper attacks)
+    inline bool isPercussive (int m) { return m < 5; }
 
     inline juce::String pid (int module, const char* name) { return "m" + juce::String (module + 1) + "_" + name; }
 

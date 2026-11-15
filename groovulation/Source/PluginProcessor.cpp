@@ -9,12 +9,12 @@ namespace
     enum P { pOn, pSolo, pGain, pPan, pAtk, pDec, pSus, pRel, pPitch, pTempo, pFtype, pCut, pRes, pDirt,
              pDtime, pDfb, pDmix, pDpp, pRsize, pRdecay, pRdamp, pRpre, pRmix,
              pL1rate, pL1shape, pL1depth, pL1target, pL2rate, pL2shape, pL2depth, pL2target, pL3rate, pL3shape, pL3depth, pL3target,
-             pGrid, pSteps, pSlice, pSstart, pSend, pFade, pVola, pKeysrc, pCount };
+             pGrid, pSteps, pSlice, pSstart, pSend, pFade, pVola, pKeysrc, pWarp, pCount };
     const char* const pNames[pCount] { "on", "solo", "gain", "pan", "atk", "dec", "sus", "rel", "pitch", "tempo", "ftype", "cut", "res", "dirt",
         "dtime", "dfb", "dmix", "dpp", "rsize", "rdecay", "rdamp", "rpre", "rmix",
         "lfo1rate", "lfo1shape", "lfo1depth", "lfo1target", "lfo2rate", "lfo2shape", "lfo2depth", "lfo2target",
         "lfo3rate", "lfo3shape", "lfo3depth", "lfo3target",
-        "grid", "steps", "slice", "sstart", "send", "fade", "vola", "keysrc" };
+        "grid", "steps", "slice", "sstart", "send", "fade", "vola", "keysrc", "warp" };
 
 }
 
@@ -40,7 +40,7 @@ GroovulationProcessor::GroovulationProcessor()
         volPoints[(size_t) m] = { { 0.0f, volUnityY }, { 1.0f, volUnityY } };
         volShared[(size_t) m] = std::make_shared<VolEnvelope> (volPoints[(size_t) m]);
         engines[(size_t) m].setVolEnvelope (volShared[(size_t) m]);
-        engines[(size_t) m].setMode (lb::usesBeats (m) ? 1 : (m == lb::custom ? -1 : 0));
+        engines[(size_t) m].setPercussive (lb::isPercussive (m));
         similarAnchor[(size_t) m] = -1;
         applied[(size_t) m] = 0.0f;
     }
@@ -103,6 +103,7 @@ ModuleParams GroovulationProcessor::readParams (int m) const
     p.lfoRate[2] = (int) v (pL3rate); p.lfoShape[2] = (int) v (pL3shape); p.lfoDepth[2] = v (pL3depth); p.lfoTarget[2] = (int) v (pL3target);
     p.grid = (int) v (pGrid); p.steps = (int) v (pSteps);
     p.slice = v (pSlice) > 0.5f; p.sStart = v (pSstart); p.sEnd = v (pSend); p.fade = v (pFade) > 0.5f; p.volA = v (pVola) > 0.5f;
+    p.warp = (int) v (pWarp);
     return p;
 }
 
@@ -579,7 +580,7 @@ GroovulationProcessor::PrintResult GroovulationProcessor::printModules (std::fun
         BlockContext ctx = base;
         ctx.semitones = computeSemitones (m, loop.get(), p, ctx.raw);
         ModuleEngine e;
-        e.setMode (lb::usesBeats (m) ? 1 : (m == lb::custom ? -1 : 0));
+        e.setPercussive (lb::isPercussive (m));
         constexpr int bs = 512;
         e.prepare (rate, bs);
         e.setLoop (loop);
