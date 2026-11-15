@@ -377,9 +377,23 @@ int main (int argc, char** argv)
         waitLibrary (p);
         for (int i = 0; i < 300 && p.library.set (SampleLibrary::tie)->size() == 0; ++i) Thread::sleep (10);
         auto tieSet = p.library.set (SampleLibrary::tie);
-        int pitched = 0, onC = 0;
-        for (auto& smp : tieSet->samples) if (smp->pitch >= 0) { ++pitched; const int pc = ((int) std::round (smp->pitch) % 12 + 12) % 12; if (pc == 0) ++onC; }
-        report ("Tie factory samples analysed", pitched > tieSet->size() / 2, String (pitched) + "/" + String (tieSet->size()) + " pitched, " + String (onC) + " detected on C");
+        int pitched = 0, onC = 0, basses = 0, bassOnC = 0, other = 0;
+        for (int i = 0; i < tieSet->size(); ++i)
+        {
+            const auto& smp = tieSet->samples[(size_t) i];
+            const String nm = tieSet->names[i];
+            const bool isBass = nm.contains ("Bass") || nm.contains ("Sub");
+            const bool isChord = nm.contains (" Cm") || nm.contains (" Csus");
+            if (! isBass && ! isChord) ++other;                          // Tie holds only basses and chords
+            if (smp->pitch < 0) continue;
+            ++pitched;
+            const int pc = ((int) std::round (smp->pitch) % 12 + 12) % 12;
+            if (pc == 0) ++onC;
+            if (isBass) { ++basses; if (pc == 0) ++bassOnC; }
+        }
+        report ("Tie factory samples analysed", pitched > tieSet->size() / 2 && basses >= 20 && bassOnC == basses && other == 0,
+                String (pitched) + "/" + String (tieSet->size()) + " pitched, " + String (onC) + " on C; basses on C: " + String (bassOnC) + "/" + String (basses)
+                + "; non bass/chord samples: " + String (other));
 
         // 3) SCALE: play a pitched sample, measure the output pitch
         auto renderAudition = [&] (int idx, double seconds) -> float

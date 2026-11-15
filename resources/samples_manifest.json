@@ -1,5 +1,5 @@
 {
- "version": 4,
+ "version": 5,
  "genres": [
   "techno",
   "minimal",
@@ -593,580 +593,908 @@
   ],
   "Tie": [
    {
-    "file": "T01 Tek Dub Chord m7.wav",
+    "file": "T01 Upright Bass Pizz C.wav",
+    "tags": [
+     "minimal",
+     "microhouse",
+     "deephouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "T02 Upright Bass Soft C.wav",
+    "tags": [
+     "minimal",
+     "microhouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "T03 Upright Bass Hard C.wav",
+    "tags": [
+     "minimal",
+     "deephouse",
+     "house"
+    ]
+   },
+   {
+    "file": "T04 Electric Bass Finger C.wav",
+    "tags": [
+     "house",
+     "deephouse",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "T05 Electric Bass Soft C.wav",
+    "tags": [
+     "deephouse",
+     "microhouse",
+     "house"
+    ]
+   },
+   {
+    "file": "T06 Electric Bass Punch C.wav",
+    "tags": [
+     "house",
+     "techhouse",
+     "breakbeat"
+    ]
+   },
+   {
+    "file": "T07 Swag Bass C.wav",
+    "tags": [
+     "techhouse",
+     "house",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "T08 Swag Bass Soft C.wav",
+    "tags": [
+     "deephouse",
+     "rominimal",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "T09 Glowly Bass Stab C.wav",
+    "tags": [
+     "techno",
+     "techhouse",
+     "minimal"
+    ]
+   },
+   {
+    "file": "T10 Glowly Bass Short C.wav",
+    "tags": [
+     "minimal",
+     "rominimal",
+     "techno"
+    ]
+   },
+   {
+    "file": "T11 Woodsy Bass C.wav",
+    "tags": [
+     "deephouse",
+     "microhouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "T12 Thick Bass C.wav",
+    "tags": [
+     "techno",
+     "techhouse",
+     "breakbeat",
+     "house"
+    ]
+   },
+   {
+    "file": "T13 Trance Bass C.wav",
+    "tags": [
+     "techno",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "T14 Voxy Bass C.wav",
+    "tags": [
+     "microhouse",
+     "minimal",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "T15 Voxy Bass Hit C.wav",
+    "tags": [
+     "microhouse",
+     "rominimal",
+     "minimal"
+    ]
+   },
+   {
+    "file": "T16 Drop Bass C.wav",
+    "tags": [
+     "breakbeat",
+     "techno"
+    ]
+   },
+   {
+    "file": "T17 Sub Bass C.wav",
+    "tags": [
+     "techno",
+     "minimal",
+     "microhouse",
+     "rominimal",
+     "house",
+     "techhouse",
+     "deephouse",
+     "breakbeat"
+    ]
+   },
+   {
+    "file": "T18 Deep Sub C.wav",
+    "tags": [
+     "deephouse",
+     "house",
+     "techno"
+    ]
+   },
+   {
+    "file": "T19 Rumble Bass C.wav",
     "tags": [
      "techno"
     ]
    },
    {
-    "file": "T02 Tek Rumble Bass C.wav",
+    "file": "T20 Rolling Bass C.wav",
     "tags": [
+     "rominimal",
+     "minimal",
      "techno"
     ]
    },
    {
-    "file": "T03 Tek Low Tom C.wav",
+    "file": "T21 Pluck Bass C.wav",
     "tags": [
-     "techno"
-    ]
-   },
-   {
-    "file": "T04 Tek Dark Pad Cm.wav",
-    "tags": [
-     "techno"
-    ]
-   },
-   {
-    "file": "T05 Tek Conga C.wav",
-    "tags": [
-     "techno"
-    ]
-   },
-   {
-    "file": "T06 Tek Soft Stab Cm.wav",
-    "tags": [
-     "techno"
-    ]
-   },
-   {
-    "file": "T07 Min Upright Bass C.wav",
-    "tags": [
-     "minimal"
-    ]
-   },
-   {
-    "file": "T08 Min Jazz Rhodes Cm9.wav",
-    "tags": [
-     "minimal"
-    ]
-   },
-   {
-    "file": "T09 Min Soft Organ C.wav",
-    "tags": [
-     "minimal"
-    ]
-   },
-   {
-    "file": "T10 Min Muted Guitar C.wav",
-    "tags": [
-     "minimal"
-    ]
-   },
-   {
-    "file": "T11 Min Tom C.wav",
-    "tags": [
-     "minimal"
-    ]
-   },
-   {
-    "file": "T12 Min Felt Bass C.wav",
-    "tags": [
-     "minimal"
-    ]
-   },
-   {
-    "file": "T13 Mic Sub Bass C.wav",
-    "tags": [
+     "rominimal",
      "microhouse"
     ]
    },
    {
-    "file": "T14 Mic Vox Ah C.wav",
+    "file": "T22 Rubber Bass C.wav",
     "tags": [
+     "techhouse",
      "microhouse"
     ]
    },
    {
-    "file": "T15 Mic Vox Oh C.wav",
+    "file": "T23 Funky Bass C.wav",
     "tags": [
-     "microhouse"
-    ]
-   },
-   {
-    "file": "T16 Mic Conga C.wav",
-    "tags": [
-     "microhouse"
-    ]
-   },
-   {
-    "file": "T17 Mic Celestial Pad.wav",
-    "tags": [
-     "microhouse"
-    ]
-   },
-   {
-    "file": "T18 Mic Rubber Bass C.wav",
-    "tags": [
-     "microhouse"
-    ]
-   },
-   {
-    "file": "T19 Ro Rolling Bass C.wav",
-    "tags": [
-     "rominimal"
-    ]
-   },
-   {
-    "file": "T20 Ro Pluck Bass C.wav",
-    "tags": [
-     "rominimal"
-    ]
-   },
-   {
-    "file": "T21 Ro Soft Pad Cm.wav",
-    "tags": [
-     "rominimal"
-    ]
-   },
-   {
-    "file": "T22 Ro Log Tom C.wav",
-    "tags": [
-     "rominimal"
-    ]
-   },
-   {
-    "file": "T23 Ro Conga C.wav",
-    "tags": [
-     "rominimal"
-    ]
-   },
-   {
-    "file": "T24 Ro Dub Tone C.wav",
-    "tags": [
-     "rominimal"
-    ]
-   },
-   {
-    "file": "T25 House Organ Bass C.wav",
-    "tags": [
+     "deephouse",
      "house"
     ]
    },
    {
-    "file": "T26 House Organ Chord Cm7.wav",
+    "file": "T24 Organ Bass C.wav",
     "tags": [
-     "house"
-    ]
-   },
-   {
-    "file": "T27 House Rhodes Cm9.wav",
-    "tags": [
-     "house"
-    ]
-   },
-   {
-    "file": "T28 House Piano Chord Cm.wav",
-    "tags": [
-     "house"
-    ]
-   },
-   {
-    "file": "T29 House Deep Bass C.wav",
-    "tags": [
-     "house"
-    ]
-   },
-   {
-    "file": "T30 House Garage Stab.wav",
-    "tags": [
-     "house"
-    ]
-   },
-   {
-    "file": "T31 TH Acid C.wav",
-    "tags": [
-     "techhouse"
-    ]
-   },
-   {
-    "file": "T32 TH Detroit Strings Cm.wav",
-    "tags": [
-     "techhouse"
-    ]
-   },
-   {
-    "file": "T33 TH Chord Stab Cm.wav",
-    "tags": [
-     "techhouse"
-    ]
-   },
-   {
-    "file": "T34 TH Rubber Bass C.wav",
-    "tags": [
-     "techhouse"
-    ]
-   },
-   {
-    "file": "T35 TH Tom C.wav",
-    "tags": [
-     "techhouse"
-    ]
-   },
-   {
-    "file": "T36 TH Conga C.wav",
-    "tags": [
-     "techhouse"
-    ]
-   },
-   {
-    "file": "T37 Deep Dub Chord Cm7.wav",
-    "tags": [
+     "house",
      "deephouse"
     ]
    },
    {
-    "file": "T38 Deep Warm Pad Cm9.wav",
+    "file": "T25 Electro Bass C.wav",
     "tags": [
-     "deephouse"
+     "breakbeat",
+     "techhouse"
     ]
    },
    {
-    "file": "T39 Deep Funky Bass C.wav",
-    "tags": [
-     "deephouse"
-    ]
-   },
-   {
-    "file": "T40 Deep Lofi Rhodes Cm7.wav",
-    "tags": [
-     "deephouse"
-    ]
-   },
-   {
-    "file": "T41 Deep Conga C.wav",
-    "tags": [
-     "deephouse"
-    ]
-   },
-   {
-    "file": "T42 Deep Sub C.wav",
-    "tags": [
-     "deephouse"
-    ]
-   },
-   {
-    "file": "T43 Electro Bass C.wav",
+    "file": "T26 Robot Bass C.wav",
     "tags": [
      "breakbeat"
     ]
    },
    {
-    "file": "T44 Electro Robot Bass C.wav",
+    "file": "T27 Acid Bass C.wav",
     "tags": [
-     "breakbeat"
+     "techhouse"
     ]
    },
    {
-    "file": "T45 Electro 808 Tom C.wav",
+    "file": "T28 Felt Bass C.wav",
     "tags": [
-     "breakbeat"
+     "minimal",
+     "microhouse"
     ]
    },
    {
-    "file": "T46 Electro Minor Stab.wav",
+    "file": "T29 Rhodes Cm7.wav",
     "tags": [
-     "breakbeat"
+     "house",
+     "deephouse",
+     "microhouse",
+     "minimal",
+     "rominimal"
     ]
    },
    {
-    "file": "T47 Electro Saw Bass C.wav",
+    "file": "T30 Rhodes Cm9.wav",
     "tags": [
-     "breakbeat"
+     "house",
+     "deephouse",
+     "microhouse",
+     "minimal",
+     "rominimal"
     ]
    },
    {
-    "file": "T48 Electro Conga C.wav",
+    "file": "T31 Rhodes Cm11 Open.wav",
     "tags": [
-     "breakbeat"
+     "deephouse",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "T32 Rhodes Csus.wav",
+    "tags": [
+     "house",
+     "deephouse",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "T33 Rhodes Cm Short.wav",
+    "tags": [
+     "minimal",
+     "rominimal",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "T34 Piano Cm7.wav",
+    "tags": [
+     "house",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "T35 Piano Cm9.wav",
+    "tags": [
+     "house",
+     "deephouse",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "T36 Piano Cmadd9.wav",
+    "tags": [
+     "house",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "T37 Piano Cm Short.wav",
+    "tags": [
+     "minimal",
+     "techhouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "T38 Piano Cm6 Low.wav",
+    "tags": [
+     "deephouse",
+     "minimal"
+    ]
+   },
+   {
+    "file": "T39 Dub Chord Cm7.wav",
+    "tags": [
+     "techno",
+     "deephouse",
+     "minimal"
+    ]
+   },
+   {
+    "file": "T40 Garage Stab Cm9.wav",
+    "tags": [
+     "house",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "T41 Minor Stab Cm.wav",
+    "tags": [
+     "breakbeat",
+     "techno",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "T42 Soft Stab Cm7.wav",
+    "tags": [
+     "techno",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "T43 Strings Cm7.wav",
+    "tags": [
+     "techhouse",
+     "techno",
+     "house"
+    ]
+   },
+   {
+    "file": "T44 Pad Cm9.wav",
+    "tags": [
+     "deephouse",
+     "microhouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "T45 Dark Pad Cm.wav",
+    "tags": [
+     "techno",
+     "minimal"
+    ]
+   },
+   {
+    "file": "T46 Organ Chord Cm7.wav",
+    "tags": [
+     "house",
+     "deephouse"
     ]
    }
   ],
   "Pod": [
    {
-    "file": "P01 Tek Low Tom.wav",
+    "file": "P01 808 Tom Low.wav",
     "tags": [
-     "techno"
-    ]
-   },
-   {
-    "file": "P02 Tek Mid Tom.wav",
-    "tags": [
-     "techno"
-    ]
-   },
-   {
-    "file": "P03 Tek Rimshot.wav",
-    "tags": [
-     "techno"
-    ]
-   },
-   {
-    "file": "P04 Tek Conga Lo.wav",
-    "tags": [
-     "techno"
-    ]
-   },
-   {
-    "file": "P05 Tek Shaker.wav",
-    "tags": [
-     "techno"
-    ]
-   },
-   {
-    "file": "P06 Tek Tom Echo.wav",
-    "tags": [
-     "techno"
-    ]
-   },
-   {
-    "file": "P07 Min Soft Rim.wav",
-    "tags": [
-     "minimal"
-    ]
-   },
-   {
-    "file": "P08 Min Tight Tom.wav",
-    "tags": [
-     "minimal"
-    ]
-   },
-   {
-    "file": "P09 Min Bongo.wav",
-    "tags": [
-     "minimal"
-    ]
-   },
-   {
-    "file": "P10 Min Shaker.wav",
-    "tags": [
-     "minimal"
-    ]
-   },
-   {
-    "file": "P11 Min Muted Conga.wav",
-    "tags": [
-     "minimal"
-    ]
-   },
-   {
-    "file": "P12 Min Rim Echo.wav",
-    "tags": [
-     "minimal"
-    ]
-   },
-   {
-    "file": "P13 Mic Conga Hi.wav",
-    "tags": [
-     "microhouse"
-    ]
-   },
-   {
-    "file": "P14 Mic Conga Lo.wav",
-    "tags": [
-     "microhouse"
-    ]
-   },
-   {
-    "file": "P15 Mic Bongo.wav",
-    "tags": [
-     "microhouse"
-    ]
-   },
-   {
-    "file": "P16 Mic Shaker Long.wav",
-    "tags": [
-     "microhouse"
-    ]
-   },
-   {
-    "file": "P17 Mic Rimshot.wav",
-    "tags": [
-     "microhouse"
-    ]
-   },
-   {
-    "file": "P18 Mic Tom Hi.wav",
-    "tags": [
-     "microhouse"
-    ]
-   },
-   {
-    "file": "P19 Ro Log Tom.wav",
-    "tags": [
-     "rominimal"
-    ]
-   },
-   {
-    "file": "P20 Ro Conga Slap.wav",
-    "tags": [
-     "rominimal"
-    ]
-   },
-   {
-    "file": "P21 Ro Bongo Lo.wav",
-    "tags": [
-     "rominimal"
-    ]
-   },
-   {
-    "file": "P22 Ro Soft Rim.wav",
-    "tags": [
-     "rominimal"
-    ]
-   },
-   {
-    "file": "P23 Ro Shaker.wav",
-    "tags": [
-     "rominimal"
-    ]
-   },
-   {
-    "file": "P24 Ro Tom Echo.wav",
-    "tags": [
-     "rominimal"
-    ]
-   },
-   {
-    "file": "P25 House Shaker.wav",
-    "tags": [
+     "techno",
+     "techhouse",
+     "breakbeat",
      "house"
     ]
    },
    {
-    "file": "P26 House Conga.wav",
+    "file": "P02 808 Tom Mid.wav",
     "tags": [
+     "techno",
+     "techhouse",
+     "breakbeat",
      "house"
     ]
    },
    {
-    "file": "P27 House Bongo Hi.wav",
+    "file": "P03 808 Tom Hi.wav",
     "tags": [
+     "techno",
+     "techhouse",
+     "breakbeat",
      "house"
     ]
    },
    {
-    "file": "P28 House Rimshot.wav",
+    "file": "P04 808 Conga Low.wav",
     "tags": [
-     "house"
-    ]
-   },
-   {
-    "file": "P29 House Tom.wav",
-    "tags": [
-     "house"
-    ]
-   },
-   {
-    "file": "P30 House Conga Lo.wav",
-    "tags": [
-     "house"
-    ]
-   },
-   {
-    "file": "P31 TH Low Tom.wav",
-    "tags": [
-     "techhouse"
-    ]
-   },
-   {
-    "file": "P32 TH Rim Perc.wav",
-    "tags": [
-     "techhouse"
-    ]
-   },
-   {
-    "file": "P33 TH Conga.wav",
-    "tags": [
-     "techhouse"
-    ]
-   },
-   {
-    "file": "P34 TH Bongo.wav",
-    "tags": [
-     "techhouse"
-    ]
-   },
-   {
-    "file": "P35 TH Shaker.wav",
-    "tags": [
-     "techhouse"
-    ]
-   },
-   {
-    "file": "P36 TH Tom Hi.wav",
-    "tags": [
-     "techhouse"
-    ]
-   },
-   {
-    "file": "P37 Deep Lofi Conga.wav",
-    "tags": [
-     "deephouse"
-    ]
-   },
-   {
-    "file": "P38 Deep Dub Rim.wav",
-    "tags": [
-     "deephouse"
-    ]
-   },
-   {
-    "file": "P39 Deep Brush Shaker.wav",
-    "tags": [
-     "deephouse"
-    ]
-   },
-   {
-    "file": "P40 Deep Soft Tom.wav",
-    "tags": [
-     "deephouse"
-    ]
-   },
-   {
-    "file": "P41 Deep Bongo.wav",
-    "tags": [
-     "deephouse"
-    ]
-   },
-   {
-    "file": "P42 Deep Conga Lo.wav",
-    "tags": [
-     "deephouse"
-    ]
-   },
-   {
-    "file": "P43 Electro 808 Tom Lo.wav",
-    "tags": [
+     "techno",
+     "minimal",
+     "microhouse",
+     "rominimal",
+     "house",
+     "techhouse",
+     "deephouse",
      "breakbeat"
     ]
    },
    {
-    "file": "P44 Electro 808 Tom Hi.wav",
+    "file": "P05 808 Conga Mid.wav",
     "tags": [
+     "techno",
+     "minimal",
+     "microhouse",
+     "rominimal",
+     "house",
+     "techhouse",
+     "deephouse",
      "breakbeat"
     ]
    },
    {
-    "file": "P45 Electro 808 Conga.wav",
+    "file": "P06 808 Conga Hi.wav",
     "tags": [
+     "techno",
+     "minimal",
+     "microhouse",
+     "rominimal",
+     "house",
+     "techhouse",
+     "deephouse",
      "breakbeat"
     ]
    },
    {
-    "file": "P46 Electro Rimshot.wav",
+    "file": "P07 909 Tom Low.wav",
     "tags": [
+     "techno",
+     "techhouse",
+     "house"
+    ]
+   },
+   {
+    "file": "P08 909 Tom Mid.wav",
+    "tags": [
+     "techno",
+     "techhouse",
+     "house"
+    ]
+   },
+   {
+    "file": "P09 909 Tom Hi.wav",
+    "tags": [
+     "techno",
+     "techhouse",
+     "house"
+    ]
+   },
+   {
+    "file": "P10 LM2 Conga Hi.wav",
+    "tags": [
+     "house",
+     "deephouse",
+     "microhouse",
+     "minimal",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "P11 LM2 Conga HiHi.wav",
+    "tags": [
+     "house",
+     "deephouse",
+     "microhouse",
+     "minimal",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "P12 LM2 Conga Mid.wav",
+    "tags": [
+     "house",
+     "deephouse",
+     "microhouse",
+     "minimal",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "P13 LM2 Conga Low.wav",
+    "tags": [
+     "house",
+     "deephouse",
+     "microhouse",
+     "minimal",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "P14 LM2 Conga LowLow.wav",
+    "tags": [
+     "house",
+     "deephouse",
+     "microhouse",
+     "minimal",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "P15 LM2 Tom Hi.wav",
+    "tags": [
+     "house",
      "breakbeat"
     ]
    },
    {
-    "file": "P47 Electro Shaker.wav",
+    "file": "P16 LM2 Tom Mid.wav",
     "tags": [
+     "house",
      "breakbeat"
     ]
    },
    {
-    "file": "P48 Electro Tom Mid.wav",
+    "file": "P17 LM2 Tom Low.wav",
     "tags": [
+     "house",
+     "breakbeat",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "P18 LM2 Stick.wav",
+    "tags": [
+     "minimal",
+     "microhouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "P19 LM2 Snare Soft.wav",
+    "tags": [
+     "house",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "P20 505 Conga Hi.wav",
+    "tags": [
+     "techhouse",
+     "house",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "P21 505 Conga Low.wav",
+    "tags": [
+     "techhouse",
+     "house",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "P22 505 Tom Hi.wav",
+    "tags": [
+     "breakbeat",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "P23 505 Tom Mid.wav",
+    "tags": [
+     "breakbeat",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "P24 505 Tom Low.wav",
+    "tags": [
+     "breakbeat",
+     "techhouse",
+     "techno"
+    ]
+   },
+   {
+    "file": "P25 505 Rim.wav",
+    "tags": [
+     "minimal",
+     "techhouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "P26 505 Snare.wav",
+    "tags": [
+     "breakbeat",
+     "house"
+    ]
+   },
+   {
+    "file": "P27 CR78 Bongo Hi.wav",
+    "tags": [
+     "minimal",
+     "microhouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "P28 CR78 Bongo Low.wav",
+    "tags": [
+     "minimal",
+     "microhouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "P29 CR78 Conga Low.wav",
+    "tags": [
+     "minimal",
+     "microhouse",
+     "rominimal",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "P30 CR78 Rim.wav",
+    "tags": [
+     "minimal",
+     "rominimal",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "P31 Conga Open.wav",
+    "tags": [
+     "techno",
+     "minimal",
+     "microhouse",
+     "rominimal",
+     "house",
+     "techhouse",
+     "deephouse",
+     "breakbeat"
+    ]
+   },
+   {
+    "file": "P32 Conga Muted.wav",
+    "tags": [
+     "microhouse",
+     "rominimal",
+     "minimal",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "P33 Quinto Open.wav",
+    "tags": [
+     "microhouse",
+     "rominimal",
+     "house"
+    ]
+   },
+   {
+    "file": "P34 Quinto Muted.wav",
+    "tags": [
+     "microhouse",
+     "rominimal",
+     "minimal"
+    ]
+   },
+   {
+    "file": "P35 Tumba Open.wav",
+    "tags": [
+     "deephouse",
+     "house",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "P36 Tumba Muted.wav",
+    "tags": [
+     "rominimal",
+     "microhouse",
+     "minimal"
+    ]
+   },
+   {
+    "file": "P37 Bongo Hi.wav",
+    "tags": [
+     "microhouse",
+     "rominimal",
+     "house"
+    ]
+   },
+   {
+    "file": "P38 Bongo Hi Muted.wav",
+    "tags": [
+     "minimal",
+     "microhouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "P39 Bongo Low.wav",
+    "tags": [
+     "microhouse",
+     "rominimal",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "P40 Bongo Low Muted.wav",
+    "tags": [
+     "minimal",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "P41 Tom Hi Mallet.wav",
+    "tags": [
+     "techno",
+     "minimal",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "P42 Darbuka Doum.wav",
+    "tags": [
+     "microhouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "P43 Darbuka Tek.wav",
+    "tags": [
+     "microhouse",
+     "rominimal",
+     "minimal"
+    ]
+   },
+   {
+    "file": "P44 Frame Drum Low.wav",
+    "tags": [
+     "techno",
+     "deephouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "P45 Frame Drum Muted.wav",
+    "tags": [
+     "minimal",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "P46 Cajon Bass.wav",
+    "tags": [
+     "deephouse",
+     "microhouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "P47 Cajon Slap.wav",
+    "tags": [
+     "microhouse",
+     "rominimal",
+     "house"
+    ]
+   },
+   {
+    "file": "P48 Claves.wav",
+    "tags": [
+     "house",
+     "rominimal",
+     "minimal",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "P49 Claves Soft.wav",
+    "tags": [
+     "minimal",
+     "microhouse",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "P50 Log Drum Hi.wav",
+    "tags": [
+     "rominimal",
+     "microhouse",
+     "minimal"
+    ]
+   },
+   {
+    "file": "P51 Log Drum Low.wav",
+    "tags": [
+     "rominimal",
+     "microhouse",
+     "techno"
+    ]
+   },
+   {
+    "file": "P52 Snare Soft Brushy.wav",
+    "tags": [
+     "deephouse",
+     "house",
+     "breakbeat"
+    ]
+   },
+   {
+    "file": "P53 Snare Ghost.wav",
+    "tags": [
+     "breakbeat",
+     "house",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "P54 Sidestick.wav",
+    "tags": [
+     "minimal",
+     "rominimal",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "P55 Pi Tom Hi.wav",
+    "tags": [
+     "techno",
+     "breakbeat",
+     "house"
+    ]
+   },
+   {
+    "file": "P56 Pi Tom Mid.wav",
+    "tags": [
+     "techno",
+     "breakbeat",
+     "house"
+    ]
+   },
+   {
+    "file": "P57 Pi Tom Low.wav",
+    "tags": [
+     "techno",
+     "breakbeat",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "P58 Tabla Ghe.wav",
+    "tags": [
+     "microhouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "P59 Tabla Te.wav",
+    "tags": [
+     "microhouse",
+     "minimal"
+    ]
+   },
+   {
+    "file": "P60 Tabla Ke.wav",
+    "tags": [
+     "minimal",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "P61 Dissonant Hit Low.wav",
+    "tags": [
+     "techno",
+     "minimal"
+    ]
+   },
+   {
+    "file": "P62 Dissonant Hit Mid.wav",
+    "tags": [
+     "techno",
+     "techhouse"
+    ]
+   },
+   {
+    "file": "P63 Dissonant Stab.wav",
+    "tags": [
+     "minimal",
+     "microhouse"
+    ]
+   },
+   {
+    "file": "P64 Dissonant Soft Cluster.wav",
+    "tags": [
+     "deephouse",
+     "microhouse",
+     "rominimal"
+    ]
+   },
+   {
+    "file": "P65 Dissonant Dub Hit.wav",
+    "tags": [
+     "techno",
+     "deephouse"
+    ]
+   },
+   {
+    "file": "P66 Dissonant Tom Cluster.wav",
+    "tags": [
+     "techno",
      "breakbeat"
     ]
    }

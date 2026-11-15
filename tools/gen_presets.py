@@ -120,35 +120,39 @@ SIMPLE = {
   "X---x---X---x---|----X-------X---|xx-xxx-xxx-xxx-x|--x---x---x---x-|-x-----x-x------|--x-------x-----",   # 16ths + roll fill
   "X---x---X---x---|----X--x----X---|--x---x---x---x-|--x-------x-----|x-x---x---x-x---|-------x-------x",   # jack
  ],
+ # minimal / microhouse / rominimal: four-on-the-floor kick, percussion on beats 2 and 4, hat on every off-beat, 55-60 % swing
+ # (Attack "minimal house"), electro-style closed hat on 8ths + micro percussion (Attack, Villalobos "Dexter"), very low-velocity
+ # rimshots / congas between the main beats (Samplesound), knocks around straight hats (MusicRadar minimal groove),
+ # a tuned tom pattern as the hypnotic element, closed hat on the 8th and 16th divisions for shuffle (Attack).
  "minimal": [
-  "X---x---X---x---|----x-------x---|--x---x---x---x-|----------------|x---------x-----|-------x-------x",
-  "X---x---X---x---|------------x---|x-x-x-x-x-x-x-x-|----------------|---x------x-----|---x---x--------",
-  "X---x---X---x---|----x-------x--x|-x--x--x-x--x--x|----------------|x-----x---------|----x-----x--x--",
-  "X-----x-X---x---|----x-------x---|--x---x---x---x-|----------------|--x-------x-----|x--------x------",
-  "X---x---X---x---|----------------|xx-xxx-xxx-xxx-x|----------------|x------x--------|--x---x---x---x-",
-  "X---x---X---x--x|----x-------x---|---x---x---x---x|----------------|--x--x--------x-|-x-------x------",
-  "X---x---X---x---|----x---------x-|--x---xx--x---x-|----------------|x---x-------x---|-----x-------x--",
-  "X---x--xX---x---|----x-------x---|-xx--xx--xx--xx-|----------------|--x-------x---x-|---x---x---x---x",
+  "X---x---X---x---|----x-------x---|--x---x---x---x-|----------------|x---------x-----|-x-------x------",   # minimal house: perc 2&4, off-beat hat, ghost perc
+  "X---x---X---x---|------------x---|x-x-x-x-x-x-x-x-|----------------|---x------x-----|---x--x----x--x-",   # 8th closed hats (Dexter) + micro perc
+  "X---x---X---x---|----x-------x---|--x---x---x---x-|----------------|x-----x---------|---x--x----x---x",   # knocks around straight hats
+  "X---x---X---x---|----------------|--x---x---x---x-|----------------|--x-------x-----|x--x--x---x--x--",   # hypnotic tuned toms 3-3-2 / 3-3
+  "X---x---X---x---|----x-------x---|-------x-------x|--x---x---x---x-|x------x--------|----------x-----",   # off-beat open hat + shuffle on 8 / 16
+  "X---x---X---x---|----x-----------|--x---x---x---x-|----------------|---x-------x----|-x--x--x-x--x---",   # rimshot / conga between the beats
+  "X---x---X---x---|------------x---|--x-------x---x-|----------------|x---------------|-----x--------x-",   # space: very sparse
+  "X---x---X---x---|----x-------x---|--x---x---x---x-|----------------|--x--x--------x-|x--x--x--x--x--x",   # dotted-8th perc against the 4/4
  ],
  "microhouse": [
-  "X---x---X---x---|----x-------x---|x-x-x-x-x-x-x-x-|----------------|--x-------x-----|---x--x----x--x-",
-  "X---x---X---x---|------------x---|x-xxx-xxx-xxx-xx|----------------|x--x------x-----|-x-----x-x------",
-  "X---x--xX---x---|----x-------x---|--x---x---x---x-|----------------|--x--x----x-----|x-----x---x-----",
-  "X---x---X---x---|----x-------x--x|xx-xxx-xxx-xxx-x|----------------|-----x-------x--|--x---x---x---x-",
-  "X---x---X--xx---|----x-------x---|x-x-x-x-x-x-x-x-|----------------|x---------x--x--|---x-------x----",
-  "X---x---X---x---|----------------|-xx--xx--xx--xx-|----------------|--x---x---x-----|x--x--x---x--x--",
-  "X---x---X---x---|----x-------x---|x-x-x-xxx-x-x-xx|--------------x-|---x---x--------|-----x--x----x--",
-  "X---x---X-x-x---|----x-------x---|--x---x---x---x-|----------------|x-x-------x-----|-x---x---x---x--",
+  "X---x---X---x---|----x-------x---|--x---x---x---x-|----------------|--x-------x-----|xxx-xx-xxx-xxx-x",   # clap 2&4, off-beat hat, shaker micro perc
+  "X---x---X---x---|------------x---|x-x-x-x-x-x-x-x-|------x-------x-|x--x------x-----|-x---x---x---x--",   # 8th electro hats + open-hat noise
+  "X---x---X---x---|----x-------xx--|--x---x---x---x-|----------------|--x--x----x-----|x-x-----x-x-----",   # stutter clap + glitch pairs
+  "X---x---X---x---|----x-------x---|-------x-------x|--x---x---x---x-|-----x-------x--|--x-------x---x-",   # off-beat open hat + 8/16 shuffle
+  "X---x---X---x---|----------------|--x---x---x---x-|----------------|x---------x--x--|-x-x--x--x-x--x-",   # conga / bongo dialogue
+  "X---x---X---x--x|----x-------x---|xx-xxx-xxx-xxx-x|----------------|x-x-------x-----|---x-------x----",   # 16th clicks + kick pickup
+  "X---x---X---x---|----x-------x---|--x---x---x---x-|----------------|--x-------x-----|------x-------x-",   # vocal / bass snippets, space
+  "X---x---X---x---|----x-------x---|x-x-x-x-x-x-x-x-|----------------|---x---x--------|x--x--x--x--x---",   # rolling dotted percussion
  ],
  "rominimal": [
-  "X---x---X---x---|----------------|--x---x---x---x-|----------------|--x----x--x----x|---x-------x----",
-  "X---x---X--xx---|------------x---|-xx--x-x-xx--x-x|----------------|--x--x----x--x--|x-----x---------",
-  "X---x--xX---x---|----------------|--xx--x---x--xx-|----------------|--x-x--x--x-x--x|------x-------x-",
-  "X-----x-X---x---|----x-----------|--x---x---x---x-|----------------|x--x--x---x--x--|--x-------x-----",
-  "X---x---X---x---|----------------|x-x-x-x-x-x-x-x-|----------------|---x---x---x---x|-x-----x-x------",
-  "X---x---X---x--x|------------x---|--x---xx--x---x-|----------------|--x-------x--x--|x--x--x---x-----",
-  "X---x---X---x---|----x-------x---|-x-x-x-x-x-x-x-x|----------------|--x---x---xx----|---x-----x------",
-  "X---x---X--xx---|----------------|--x---x---x---x-|----------------|-x---x-x-x---x--|-----x-------x--",
+  "X---x---X---x---|----------------|--x---x---x---x-|----------------|--x---x---x---x-|-x---x---x---x--",   # rolling off-beat bass + rims between beats
+  "X---x---X---x---|------------x---|--x---x---x---x-|----------------|--xx--x---xx--x-|x-------x-------",   # rolling 16th bass, clap only on 4
+  "X---x---X---x---|----------------|x-xxx-xxx-xxx-xx|----------------|-x-----x-x------|---x------x-----",   # no snare, busy hats, log drum
+  "X---x---X---x---|----------------|--x---x---x---x-|----------------|x--x------x-----|--x--x-x--x--x-x",   # conga conversation
+  "X---x---X---x---|------------x---|-------x-------x|--x---x---x---x-|--x-------x--x--|-----x-------x--",   # shuffle on 8 / 16 + off-beat open hat
+  "X---x---X--xx---|----------------|--x---x---x---x-|----------------|--x--x----x--x--|x-----x---x-----",   # Barac-style double kick + bongos
+  "X---x---X---x---|----------------|--x---x---x---x-|----------------|x---------x-----|x--x--x---x--x--",   # hypnotic tumba / tom 3-3-2
+  "X---x---X---x---|----x-----------|--x---x---x---x-|----------------|-x---x-x-x---x--|-------x-------x",   # rolling bass, sparse rim
  ],
  "deephouse": [
   "X---x---X---x---|----x-------x---|--x---x---x---x-|----------------|x-------x-------|---x-------x----",
@@ -337,7 +341,7 @@ def b_kit(genre, r, cx=1, idx=0):
         fx.update(X([11, 9, 6], (40, 75), (30, 60)) if cx else X([0, 11], (40, 60), (40, 60)))
     elif genre == "minimal":         # dry clicks, lofi, space
         v("kick", "d", 70); v("snare", "d", 40); v("pod", "cut", 6000); v("tie", "d", 60)
-        fx.update({"b_swing": r.randint(5, 18)})
+        fx.update({"b_swing": r.randint(15, 30)})
         fx.update(X([16, 10, 3], (20, 60), (20, 60)) if cx else X([0, 0, 16], (20, 40), (20, 40)))
     elif genre == "microhouse":      # organic, rolling, swung, vocal snippets
         v("hat", "mod", 1 if cx else 0); v("tie", "d", 60); v("snare", "flam", r.choice([0, 0, 25]) if cx else 0)

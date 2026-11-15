@@ -493,105 +493,166 @@ HATS = {
                 ("Electro Soft Cymbal", (0.12, 5000, 0.2, 330), 1.1, {}), ("Electro Soft Hat", (0.035, 6500, 0.3, 470), 0.4, {})],
 }
 
-# ===== TIE (tonal, rooted on C unless the name says otherwise; soft: no bells / blips)
-add("Tie", "Tek Dub Chord m7", "techno",   lambda s: delay_fx(tonal(chord(C3, "m7"), [1] * 4, 0.5, kind="saw", cutoff=800, cut_env=1.0, q=0.9, tau=0.15, detune=0.006, drive=1.0), 0.75, 130, 0.45, 0.4, 1600))
-add("Tie", "Tek Rumble Bass C", "techno",  lambda s: softbass(C2, 1.0, 0.5, cutoff=220, sub=0.8))
-add("Tie", "Tek Low Tom C", "techno",      lambda s: tom(C3, 0.28, seed=s))
-add("Tie", "Tek Dark Pad Cm", "techno",    lambda s: strings(chord(C3, "min"), 2.0, attack=0.4, cutoff=1200))
-add("Tie", "Tek Conga C", "techno",        lambda s: conga(C3 * 2, 0.16, seed=s))
-add("Tie", "Tek Soft Stab Cm", "techno",   lambda s: strings(chord(C3, "m7"), 0.6, attack=0.01, cutoff=1600) * env_exp(t_axis(0.6), 0.15))
-add("Tie", "Min Upright Bass C", "minimal", lambda s: karplus(C2, 1.0, 0.994, 0.3, s, 0.55))
-add("Tie", "Min Jazz Rhodes Cm9", "minimal", lambda s: svf(rhodes(chord(C3, "m9"), 1.4, 0.8, 1.0), 4000, 0.7, "lp"))
-add("Tie", "Min Soft Organ C", "minimal",  lambda s: organ([C3], 0.5, (1, 0.6, 0.2, 0.1, 0, 0), click=0.1, tau=0.25))
-add("Tie", "Min Muted Guitar C", "minimal", lambda s: karplus(C3, 0.4, 0.985, 0.4, s, 0.5))
-add("Tie", "Min Tom C", "minimal",         lambda s: tom(C3, 0.12, seed=s))
-add("Tie", "Min Felt Bass C", "minimal",   lambda s: softbass(C2, 0.35, 0.12, cutoff=400, kind="sine"))
-add("Tie", "Mic Sub Bass C", "microhouse", lambda s: tonal([C2], [1], 0.9, tau=0.45, drive=1.0))
-add("Tie", "Mic Vox Ah C", "microhouse",   lambda s: formant(C3, "a", 0.9, 0.35))
-add("Tie", "Mic Vox Oh C", "microhouse",   lambda s: formant(C3, "o", 0.7, 0.25))
-add("Tie", "Mic Conga C", "microhouse",    lambda s: conga(C3 * 2, 0.14, seed=s))
-add("Tie", "Mic Celestial Pad", "microhouse", lambda s: strings(chord(C3, "maj9"), 2.5, attack=0.6, cutoff=2200, detune=0.01))
-add("Tie", "Mic Rubber Bass C", "microhouse", lambda s: softbass(C2, 0.6, 0.22, cutoff=500, q=1.0, cut_env=1.5))
-add("Tie", "Ro Rolling Bass C", "rominimal", lambda s: softbass(C2, 0.5, 0.2, cutoff=450, sub=0.8))
-add("Tie", "Ro Pluck Bass C", "rominimal", lambda s: softbass(C2, 0.5, 0.18, cutoff=350, q=1.2, cut_env=2.5))
-add("Tie", "Ro Soft Pad Cm", "rominimal",  lambda s: strings(chord(C3, "m9"), 2.0, attack=0.3, cutoff=1600, detune=0.006))
-add("Tie", "Ro Log Tom C", "rominimal",    lambda s: tom(C3, 0.2, drop=0.2, stick=0.2, seed=s))
-add("Tie", "Ro Conga C", "rominimal",      lambda s: conga(C3 * 2, 0.12, slap=0.2, seed=s))
-add("Tie", "Ro Dub Tone C", "rominimal",   lambda s: tonal([C2, C3 * 1.498], [1, 0.2], 0.9, kind="sine", tau=0.45, drive=1.0, vib=0.003))
-add("Tie", "House Organ Bass C", "house",  lambda s: organ([C2], 0.5, (1, 0.9, 0.2, 0.3, 0.0, 0.0), click=0.2, tau=0.25))
-add("Tie", "House Organ Chord Cm7", "house", lambda s: organ(chord(C3, "m7"), 0.7, (1, 0.7, 0.3, 0.2, 0.1, 0.0), click=0.15, tau=0.35))
-add("Tie", "House Rhodes Cm9", "house",    lambda s: rhodes(chord(C3, "m9"), 1.6, 1.0, 1.2))
-add("Tie", "House Piano Chord Cm", "house", lambda s: svf(rhodes(chord(C3, "m7"), 1.5, 0.7, 0.8) + 0.3 * tonal(chord(C3, "m7"), [1] * 4, 1.5, kind="saw", cutoff=1500, tau=0.5, drive=1.0), 3500, 0.7, "lp"))
-add("Tie", "House Deep Bass C", "house",   lambda s: tonal([C2, C3], [1, 0.15], 0.6, tau=0.3, drive=1.0))
-add("Tie", "House Garage Stab", "house",   lambda s: tonal(chord(C3, "m9"), [1] * 5, 0.4, kind="saw", cutoff=1500, cut_env=0.8, tau=0.12, detune=0.005, drive=1.0))
-add("Tie", "TH Acid C", "techhouse",       lambda s: acid(C2, 0.35, cutoff=450, env=3.5, res=0.8, decay=0.12, drive=1.2))
-add("Tie", "TH Detroit Strings Cm", "techhouse", lambda s: strings(chord(C3, "m7"), 2.2, attack=0.35, cutoff=2500, detune=0.01))
-add("Tie", "TH Chord Stab Cm", "techhouse", lambda s: tonal(chord(C3, "min"), [1] * 3, 0.5, kind="saw", cutoff=1800, cut_env=1.0, tau=0.15, detune=0.006, drive=1.0))
-add("Tie", "TH Rubber Bass C", "techhouse", lambda s: softbass(C2, 0.4, 0.14, cutoff=500, q=1.1, cut_env=2.0))
-add("Tie", "TH Tom C", "techhouse",        lambda s: tom(C2 * 2, 0.2, seed=s))
-add("Tie", "TH Conga C", "techhouse",      lambda s: conga(C3 * 2, 0.13, slap=0.15, seed=s))
-add("Tie", "Deep Dub Chord Cm7", "deephouse", lambda s: delay_fx(tonal(chord(C3, "m7"), [1] * 4, 0.6, kind="saw", cutoff=750, cut_env=0.8, q=0.9, tau=0.2, detune=0.004, drive=1.0), 0.75, 120, 0.45, 0.4, 1400))
-add("Tie", "Deep Warm Pad Cm9", "deephouse", lambda s: strings(chord(C3, "m9"), 2.5, attack=0.5, cutoff=1400, detune=0.008))
-add("Tie", "Deep Funky Bass C", "deephouse", lambda s: softbass(C2, 0.35, 0.12, cutoff=700, q=1.2, cut_env=1.5, sub=0.6))
-add("Tie", "Deep Lofi Rhodes Cm7", "deephouse", lambda s: svf(rhodes(chord(C3, "m7"), 1.6, 0.9, 1.0), 3000, 0.7, "lp"))
-add("Tie", "Deep Conga C", "deephouse",    lambda s: conga(C3 * 2, 0.15, seed=s))
-add("Tie", "Deep Sub C", "deephouse",      lambda s: tonal([C2], [1], 0.9, tau=0.5, drive=1.0))
-add("Tie", "Electro Bass C", "breakbeat",  lambda s: softbass(C2, 0.4, 0.15, cutoff=600, q=1.2, cut_env=2.0))
-add("Tie", "Electro Robot Bass C", "breakbeat", lambda s: softbass(C2, 0.5, 0.2, cutoff=350, kind="square", q=1.5, cut_env=4.0))
-add("Tie", "Electro 808 Tom C", "breakbeat", lambda s: tom(C2 * 2, 0.3, drop=0.3, stick=0.05, seed=s))
-add("Tie", "Electro Minor Stab", "breakbeat", lambda s: tonal(chord(C3, "min"), [1] * 3, 0.5, kind="saw", cutoff=2000, cut_env=1, tau=0.15, detune=0.01, drive=1.0))
-add("Tie", "Electro Saw Bass C", "breakbeat", lambda s: softbass(C2, 0.5, 0.25, cutoff=800, sub=0.4))
-add("Tie", "Electro Conga C", "breakbeat", lambda s: conga(C3 * 2, 0.14, seed=s))
+# ===== TIE: only basses and chords, all in C (basses tuned to C, chords on a C root, C minor family)
+import free_sources as FS
+ALL = ["techno", "minimal", "microhouse", "rominimal", "house", "techhouse", "deephouse", "breakbeat"]
+DEEP = ["house", "deephouse", "microhouse", "minimal", "rominimal"]
+TEK = ["techno", "techhouse", "breakbeat"]
+RHODES = os.path.join(FS.DANI, "jlearman", "rhodes-mki", "jRhodes3d-mono")
+PIANO = os.path.join(FS.DANI, "splendid-grand-piano")
+def bass_sample(path, length=1.6, oct=None): return FS.to_c(FS.dani(*path.split("/"), length=length), oct)
+def rhodes_chord(kind, root=48, voicing=None, length=2.0): return FS.chord(RHODES, FS.cnotes(kind, root, voicing), "_3.", length)
+def piano_chord(kind, root=48, voicing=None, length=2.0): return FS.chord(PIANO, FS.cnotes(kind, root, voicing), "Mf-", length)
+def synth_chord(kind, length=0.6, cutoff=1500, tau=0.18, kind_osc="saw"):
+    return tonal([FS.hz(m) for m in FS.cnotes(kind, 48)], [1] * len(FS.C[kind]), length, kind=kind_osc, cutoff=cutoff, cut_env=0.8, tau=tau, detune=0.005, drive=1.0)
 
-# ===== POD (soft percussion: toms, congas, bongos, rimshots, shakers)
-add("Pod", "Tek Low Tom", "techno",        lambda s: tom(95, 0.25, seed=s))
-add("Pod", "Tek Mid Tom", "techno",        lambda s: tom(140, 0.2, seed=s))
-add("Pod", "Tek Rimshot", "techno",        lambda s: softrim(450, 0.03, seed=s))
-add("Pod", "Tek Conga Lo", "techno",       lambda s: conga(200, 0.16, seed=s))
-add("Pod", "Tek Shaker", "techno",         lambda s: shaker(0.25, 0.06, 5500, s))
-add("Pod", "Tek Tom Echo", "techno",       lambda s: delay_fx(tom(120, 0.15, seed=s), 0.375, 130, 0.4, 0.35, 1500))
-add("Pod", "Min Soft Rim", "minimal",      lambda s: softrim(520, 0.02, seed=s))
-add("Pod", "Min Tight Tom", "minimal",     lambda s: tom(180, 0.08, seed=s))
-add("Pod", "Min Bongo", "minimal",         lambda s: conga(420, 0.07, seed=s))
-add("Pod", "Min Shaker", "minimal",        lambda s: shaker(0.15, 0.03, 6500, s))
-add("Pod", "Min Muted Conga", "minimal",   lambda s: conga(330, 0.12, seed=s, mute=True))
-add("Pod", "Min Rim Echo", "minimal",      lambda s: delay_fx(softrim(500, 0.02, seed=s), 0.375, 124, 0.35, 0.3, 1800))
-add("Pod", "Mic Conga Hi", "microhouse",   lambda s: conga(340, 0.12, slap=0.1, seed=s))
-add("Pod", "Mic Conga Lo", "microhouse",   lambda s: conga(220, 0.16, seed=s))
-add("Pod", "Mic Bongo", "microhouse",      lambda s: conga(430, 0.08, seed=s))
-add("Pod", "Mic Shaker Long", "microhouse", lambda s: shaker(0.4, 0.12, 5000, s, att=0.06))
-add("Pod", "Mic Rimshot", "microhouse",    lambda s: softrim(480, 0.025, seed=s))
-add("Pod", "Mic Tom Hi", "microhouse",     lambda s: tom(200, 0.12, seed=s))
-add("Pod", "Ro Log Tom", "rominimal",      lambda s: tom(160, 0.2, drop=0.15, stick=0.2, seed=s))
-add("Pod", "Ro Conga Slap", "rominimal",   lambda s: conga(320, 0.1, slap=0.4, seed=s))
-add("Pod", "Ro Bongo Lo", "rominimal",     lambda s: conga(360, 0.09, seed=s))
-add("Pod", "Ro Soft Rim", "rominimal",     lambda s: softrim(560, 0.02, seed=s))
-add("Pod", "Ro Shaker", "rominimal",       lambda s: shaker(0.2, 0.05, 6000, s))
-add("Pod", "Ro Tom Echo", "rominimal",     lambda s: delay_fx(tom(150, 0.12, seed=s), 0.75, 124, 0.4, 0.3, 1400))
-add("Pod", "House Shaker", "house",        lambda s: shaker(0.3, 0.07, 6000, s, att=0.02))
-add("Pod", "House Conga", "house",         lambda s: conga(300, 0.14, slap=0.1, seed=s))
-add("Pod", "House Bongo Hi", "house",      lambda s: conga(480, 0.07, seed=s))
-add("Pod", "House Rimshot", "house",       lambda s: softrim(500, 0.03, seed=s))
-add("Pod", "House Tom", "house",           lambda s: tom(130, 0.2, seed=s))
-add("Pod", "House Conga Lo", "house",      lambda s: conga(210, 0.18, seed=s))
-add("Pod", "TH Low Tom", "techhouse",      lambda s: tom(110, 0.22, seed=s))
-add("Pod", "TH Rim Perc", "techhouse",     lambda s: softrim(600, 0.025, seed=s))
-add("Pod", "TH Conga", "techhouse",        lambda s: conga(280, 0.13, slap=0.15, seed=s))
-add("Pod", "TH Bongo", "techhouse",        lambda s: conga(450, 0.07, seed=s))
-add("Pod", "TH Shaker", "techhouse",       lambda s: shaker(0.2, 0.05, 6500, s))
-add("Pod", "TH Tom Hi", "techhouse",       lambda s: tom(190, 0.14, seed=s))
-add("Pod", "Deep Lofi Conga", "deephouse", lambda s: svf(conga(260, 0.14, seed=s), 3500, 0.7, "lp"))
-add("Pod", "Deep Dub Rim", "deephouse",    lambda s: delay_fx(softrim(460, 0.03, seed=s), 0.75, 120, 0.45, 0.4, 1400))
-add("Pod", "Deep Brush Shaker", "deephouse", lambda s: shaker(0.35, 0.1, 4500, s, att=0.04))
-add("Pod", "Deep Soft Tom", "deephouse",   lambda s: tom(120, 0.22, stick=0.05, seed=s))
-add("Pod", "Deep Bongo", "deephouse",      lambda s: conga(400, 0.08, seed=s))
-add("Pod", "Deep Conga Lo", "deephouse",   lambda s: conga(200, 0.18, seed=s))
-add("Pod", "Electro 808 Tom Lo", "breakbeat", lambda s: tom(100, 0.3, drop=0.3, stick=0.05, seed=s))
-add("Pod", "Electro 808 Tom Hi", "breakbeat", lambda s: tom(180, 0.2, drop=0.3, stick=0.05, seed=s))
-add("Pod", "Electro 808 Conga", "breakbeat", lambda s: conga(330, 0.12, seed=s))
-add("Pod", "Electro Rimshot", "breakbeat", lambda s: softrim(520, 0.025, seed=s))
-add("Pod", "Electro Shaker", "breakbeat",  lambda s: shaker(0.2, 0.05, 6000, s))
-add("Pod", "Electro Tom Mid", "breakbeat", lambda s: tom(140, 0.24, drop=0.3, stick=0.05, seed=s))
+# basses from free libraries (CC0)
+add("Tie", "Upright Bass Pizz C", ["minimal", "microhouse", "deephouse", "rominimal"], lambda s: bass_sample("dsmolken/double-bass/pizz/pizz_c1_mb.ogg", 1.4))
+add("Tie", "Upright Bass Soft C", ["minimal", "microhouse", "rominimal"],               lambda s: bass_sample("dsmolken/double-bass/pizz/pizz_c1_pb.ogg", 1.2))
+add("Tie", "Upright Bass Hard C", ["minimal", "deephouse", "house"],                    lambda s: bass_sample("dsmolken/double-bass/pizz/pizz_c1_fb.ogg", 1.2))
+add("Tie", "Electric Bass Finger C", ["house", "deephouse", "techhouse"],               lambda s: bass_sample("dsmolken/meatbass/Samples/pizz/c1_vl2_rr1.ogg", 1.4))
+add("Tie", "Electric Bass Soft C", ["deephouse", "microhouse", "house"],                lambda s: bass_sample("dsmolken/meatbass/Samples/pizz/c1_vl1_rr1.ogg", 1.4))
+add("Tie", "Electric Bass Punch C", ["house", "techhouse", "breakbeat"],                lambda s: bass_sample("dsmolken/meatbass/Samples/pizz/c1_vl3_rr1.ogg", 1.2))
+add("Tie", "Swag Bass C", ["techhouse", "house", "deephouse"],                          lambda s: bass_sample("dsmolken/swagbass/notes/c2_f_rr1.ogg", 1.4))
+add("Tie", "Swag Bass Soft C", ["deephouse", "rominimal", "microhouse"],                lambda s: bass_sample("dsmolken/swagbass/notes/c2_p_rr1.ogg", 1.4))
+add("Tie", "Glowly Bass Stab C", ["techno", "techhouse", "minimal"],                    lambda s: bass_sample("dsmolken/glowlybass/staccato/c3_staccato_rr1.ogg", 0.6))
+add("Tie", "Glowly Bass Short C", ["minimal", "rominimal", "techno"],                   lambda s: bass_sample("dsmolken/glowlybass/staccato/c3_staccato_rr3.ogg", 0.6))
+add("Tie", "Woodsy Bass C", ["deephouse", "microhouse", "rominimal"],                   lambda s: bass_sample("sample-pi/bass/bass_woodsy_c.ogg", 1.6))
+add("Tie", "Thick Bass C", TEK + ["house"],                                              lambda s: bass_sample("sample-pi/bass/bass_thick_c.ogg", 1.6))
+add("Tie", "Trance Bass C", ["techno", "techhouse"],                                    lambda s: bass_sample("sample-pi/bass/bass_trance_c.ogg", 1.2))
+add("Tie", "Voxy Bass C", ["microhouse", "minimal", "techhouse"],                       lambda s: bass_sample("sample-pi/bass/bass_voxy_c.ogg", 1.4))
+add("Tie", "Voxy Bass Hit C", ["microhouse", "rominimal", "minimal"],                   lambda s: bass_sample("sample-pi/bass/bass_voxy_hit_c.ogg", 0.5))
+add("Tie", "Drop Bass C", ["breakbeat", "techno"],                                      lambda s: bass_sample("sample-pi/bass/bass_drop_c.ogg", 1.6))
+# synth basses (Twinbox)
+add("Tie", "Sub Bass C", ALL,                                    lambda s: tonal([C2], [1], 0.9, tau=0.45, drive=1.0))
+add("Tie", "Deep Sub C", ["deephouse", "house", "techno"],       lambda s: tonal([C2], [1], 1.2, tau=0.6, drive=1.0))
+add("Tie", "Rumble Bass C", ["techno"],                          lambda s: softbass(C2, 1.0, 0.5, cutoff=220, sub=0.8))
+add("Tie", "Rolling Bass C", ["rominimal", "minimal", "techno"], lambda s: softbass(C2, 0.5, 0.2, cutoff=450, sub=0.8))
+add("Tie", "Pluck Bass C", ["rominimal", "microhouse"],          lambda s: softbass(C2, 0.5, 0.18, cutoff=350, q=1.2, cut_env=2.5))
+add("Tie", "Rubber Bass C", ["techhouse", "microhouse"],         lambda s: softbass(C2, 0.4, 0.14, cutoff=500, q=1.1, cut_env=2.0))
+add("Tie", "Funky Bass C", ["deephouse", "house"],               lambda s: softbass(C2, 0.35, 0.12, cutoff=700, q=1.2, cut_env=1.5, sub=0.6))
+add("Tie", "Organ Bass C", ["house", "deephouse"],               lambda s: organ([C2], 0.5, (1, 0.9, 0.2, 0.3, 0.0, 0.0), click=0.2, tau=0.25))
+add("Tie", "Electro Bass C", ["breakbeat", "techhouse"],         lambda s: softbass(C2, 0.4, 0.15, cutoff=600, q=1.2, cut_env=2.0))
+add("Tie", "Robot Bass C", ["breakbeat"],                        lambda s: softbass(C2, 0.5, 0.2, cutoff=350, kind="square", q=1.5, cut_env=4.0))
+add("Tie", "Acid Bass C", ["techhouse"],                         lambda s: acid(C2, 0.35, cutoff=450, env=3.5, res=0.8, decay=0.12, drive=1.2))
+add("Tie", "Felt Bass C", ["minimal", "microhouse"],             lambda s: softbass(C2, 0.35, 0.12, cutoff=400, kind="sine"))
+# chords from free libraries: Rhodes 1977 Mark I (CC0) and Steinway grand (Public Domain), C minor family
+add("Tie", "Rhodes Cm7", DEEP,                              lambda s: rhodes_chord("m7"))
+add("Tie", "Rhodes Cm9", DEEP,                              lambda s: rhodes_chord("m9"))
+add("Tie", "Rhodes Cm11 Open", ["deephouse", "microhouse"], lambda s: rhodes_chord("m11", 36, "open"))
+add("Tie", "Rhodes Csus", ["house", "deephouse", "techhouse"], lambda s: rhodes_chord("sus"))
+add("Tie", "Rhodes Cm Short", ["minimal", "rominimal", "microhouse"], lambda s: rhodes_chord("min", 48, None, 0.5))
+add("Tie", "Piano Cm7", ["house", "deephouse"],             lambda s: piano_chord("m7"))
+add("Tie", "Piano Cm9", ["house", "deephouse", "microhouse"], lambda s: piano_chord("m9"))
+add("Tie", "Piano Cmadd9", ["house", "techhouse"],          lambda s: piano_chord("madd9"))
+add("Tie", "Piano Cm Short", ["minimal", "techhouse", "rominimal"], lambda s: piano_chord("min", 48, None, 0.45))
+add("Tie", "Piano Cm6 Low", ["deephouse", "minimal"],       lambda s: piano_chord("m6", 36, "open"))
+# synth chords (Twinbox)
+add("Tie", "Dub Chord Cm7", ["techno", "deephouse", "minimal"], lambda s: delay_fx(tonal([FS.hz(m) for m in FS.cnotes("m7")], [1] * 4, 0.5, kind="saw", cutoff=800, cut_env=1.0, q=0.9, tau=0.15, detune=0.006, drive=1.0), 0.75, 125, 0.45, 0.4, 1600))
+add("Tie", "Garage Stab Cm9", ["house", "techhouse"],     lambda s: synth_chord("m9", 0.4, 1500, 0.12))
+add("Tie", "Minor Stab Cm", ["breakbeat", "techno", "techhouse"], lambda s: synth_chord("min", 0.5, 2000, 0.15))
+add("Tie", "Soft Stab Cm7", ["techno", "rominimal"],      lambda s: strings(chord(C3, "m7"), 0.6, attack=0.01, cutoff=1600) * env_exp(t_axis(0.6), 0.15))
+add("Tie", "Strings Cm7", ["techhouse", "techno", "house"], lambda s: strings(chord(C3, "m7"), 2.2, attack=0.35, cutoff=2500, detune=0.01))
+add("Tie", "Pad Cm9", ["deephouse", "microhouse", "rominimal"], lambda s: strings(chord(C3, "m9"), 2.5, attack=0.5, cutoff=1400, detune=0.008))
+add("Tie", "Dark Pad Cm", ["techno", "minimal"],          lambda s: strings(chord(C3, "min"), 2.0, attack=0.4, cutoff=1200))
+add("Tie", "Organ Chord Cm7", ["house", "deephouse"],     lambda s: organ(chord(C3, "m7"), 0.7, (1, 0.7, 0.3, 0.2, 0.1, 0.0), click=0.15, tau=0.35))
+
+# ===== POD: 808 / 909 toms and congas (circuit models) + non-metallic percussion from free libraries
+def tr808_tom(f, decay, noise=0.12, length=None, seed=1):
+    """TR-808 tom/conga: bridged-T resonator ringing at f with a small pitch drop, plus a pink-noise burst."""
+    length = length or min(1.4, decay * 7); t = t_axis(length); r = rng(seed)
+    fc = f * (1 + 0.06 * env_exp(t, 0.025))
+    x = osc_sine(fc) * env_exp(t, decay)
+    if noise: x += noise * svf(np.cumsum(r.standard_normal(len(t))) * 0.02, 3000, 0.7, "lp") * env_ad(t, 0.001, decay * 0.4)
+    return x
+
+def tr909_tom(f, decay, length=None, seed=1):
+    """TR-909 tom: three detuned oscillators (waveshaped sine) with a fast downward sweep, plus a short noise attack."""
+    length = length or min(1.4, decay * 7); t = t_axis(length); r = rng(seed)
+    fc = f * (1 + 0.9 * env_exp(t, 0.012) + 0.12 * env_exp(t, 0.09))
+    body = sum(np.tanh(1.6 * osc_sine(fc * k)) * a for k, a in ((1, 1), (1.006, 0.5), (1.48, 0.12)))
+    x = body / 1.6 * env_exp(t, decay)
+    x += 0.25 * svf(r.standard_normal(len(t)), 2500, 0.7, "lp") * env_exp(t, 0.012)
+    return x
+
+def dissonant(notes, length=0.7, tau=0.22, cutoff=1200, seed=1, kind="saw"):
+    """Soft dissonant hit: cluster of close intervals, low-passed (no bells / metal)."""
+    t = t_axis(length)
+    x = sum(osc_saw(np.full_like(t, FS.hz(m))) if kind == "saw" else osc_sine(np.full_like(t, FS.hz(m))) for m in notes) / len(notes)
+    return svf(x, cutoff * (1 + 1.5 * env_exp(t, 0.03)), 0.8, "lp") * env_ad(t, 0.002, tau)
+
+VC = os.path.join("vcsl", "Struck Membranophones"); VI = os.path.join("vcsl", "Struck Idiophones")
+SOFT = lambda x, lp=6500: svf(x, lp, 0.6, "lp")                      # gentle top roll-off: no harsh / metallic highs
+D = lambda *p, length=1.0: SOFT(FS.dani(*os.path.join(*p).split(os.sep), length=length))
+O = lambda *p, length=1.0: SOFT(FS.ora(*os.path.join(*p).split(os.sep), length=length), 5000)
+
+# 808 toms / congas
+add("Pod", "808 Tom Low", ["techno", "techhouse", "breakbeat", "house"], lambda s: tr808_tom(92, 0.22, seed=s))
+add("Pod", "808 Tom Mid", ["techno", "techhouse", "breakbeat", "house"], lambda s: tr808_tom(132, 0.17, seed=s))
+add("Pod", "808 Tom Hi", ["techno", "techhouse", "breakbeat", "house"],  lambda s: tr808_tom(186, 0.13, seed=s))
+add("Pod", "808 Conga Low", ALL,  lambda s: tr808_tom(170, 0.11, noise=0.0, seed=s))
+add("Pod", "808 Conga Mid", ALL,  lambda s: tr808_tom(255, 0.09, noise=0.0, seed=s))
+add("Pod", "808 Conga Hi", ALL,   lambda s: tr808_tom(370, 0.07, noise=0.0, seed=s))
+# 909 toms
+add("Pod", "909 Tom Low", ["techno", "techhouse", "house"], lambda s: tr909_tom(98, 0.2, seed=s))
+add("Pod", "909 Tom Mid", ["techno", "techhouse", "house"], lambda s: tr909_tom(140, 0.16, seed=s))
+add("Pod", "909 Tom Hi", ["techno", "techhouse", "house"],  lambda s: tr909_tom(196, 0.12, seed=s))
+# LinnDrum LM-2 (Public Domain)
+for nm, fn, g in [("LM2 Conga Hi", "conga-h", DEEP), ("LM2 Conga HiHi", "conga-hh", DEEP), ("LM2 Conga Mid", "conga-m", DEEP),
+                  ("LM2 Conga Low", "conga-l", DEEP), ("LM2 Conga LowLow", "conga-ll", DEEP), ("LM2 Tom Hi", "tom-h", ["house", "breakbeat"]),
+                  ("LM2 Tom Mid", "tom-m", ["house", "breakbeat"]), ("LM2 Tom Low", "tom-l", ["house", "breakbeat", "deephouse"]),
+                  ("LM2 Stick", "stick-m", ["minimal", "microhouse", "rominimal"]), ("LM2 Snare Soft", "snare-l", ["house", "deephouse"])]:
+    add("Pod", nm, g, (lambda f: lambda s: O("LM-2", "samples", f + ".wav"))(fn))
+# Roland TR-505 (Public Domain)
+for nm, fn, g in [("505 Conga Hi", "tr505-conga-h", ["techhouse", "house", "microhouse"]), ("505 Conga Low", "tr505-conga-l", ["techhouse", "house", "microhouse"]),
+                  ("505 Tom Hi", "tr505-tom-h", ["breakbeat", "techhouse"]), ("505 Tom Mid", "tr505-tom-m", ["breakbeat", "techhouse"]),
+                  ("505 Tom Low", "tr505-tom-l", ["breakbeat", "techhouse", "techno"]), ("505 Rim", "tr505-rim", ["minimal", "techhouse", "rominimal"]),
+                  ("505 Snare", "tr505-snare", ["breakbeat", "house"])]:
+    add("Pod", nm, g, (lambda f: lambda s: O("TR-505", "samples", f + ".wav"))(fn))
+# Roland CR-78 (Public Domain)
+for nm, fn, g in [("CR78 Bongo Hi", "bongo-h", ["minimal", "microhouse", "rominimal"]), ("CR78 Bongo Low", "bongo-l", ["minimal", "microhouse", "rominimal"]),
+                  ("CR78 Conga Low", "conga-l", ["minimal", "microhouse", "rominimal", "deephouse"]), ("CR78 Rim", "rim", ["minimal", "rominimal", "microhouse"])]:
+    add("Pod", nm, g, (lambda f: lambda s: O("CR-78", "samples", f + ".wav"))(fn))
+# VCSL acoustic percussion (CC0)
+for nm, path, g in [
+    ("Conga Open", (VC, "Conga", "Conga_HitN_v2_rr1_Sum.ogg"), ALL),
+    ("Conga Muted", (VC, "Conga", "Conga_HitFM_v2_rr1_Sum.ogg"), ["microhouse", "rominimal", "minimal", "deephouse"]),
+    ("Quinto Open", (VC, "Conga", "Quinto_HitN_v2_rr1_Sum.ogg"), ["microhouse", "rominimal", "house"]),
+    ("Quinto Muted", (VC, "Conga", "Quinto_HitFM1_v2_rr1_Sum.ogg"), ["microhouse", "rominimal", "minimal"]),
+    ("Tumba Open", (VC, "Conga", "Tumba_HitN_v2_rr1_Sum.ogg"), ["deephouse", "house", "rominimal"]),
+    ("Tumba Muted", (VC, "Conga", "Tumba_HitFM_v3_rr1_Sum.ogg"), ["rominimal", "microhouse", "minimal"]),
+    ("Bongo Hi", (VC, "Bongos", "BongoH_Hit1_v2_rr1_Mid.ogg"), ["microhouse", "rominimal", "house"]),
+    ("Bongo Hi Muted", (VC, "Bongos", "BongoH_HitMuted1_v2_rr1_Mid.ogg"), ["minimal", "microhouse", "rominimal"]),
+    ("Bongo Low", (VC, "Bongos", "BongoL_Hit1_v2_rr1_Mid.ogg"), ["microhouse", "rominimal", "deephouse"]),
+    ("Bongo Low Muted", (VC, "Bongos", "BongoL_HitMuted2_v2_rr1_Mid.ogg"), ["minimal", "rominimal"]),
+    ("Tom Hi Mallet", (VC, "Tom 1", "Mallet", "TomH_HitM_v3_rr1_Mid.ogg"), ["techno", "minimal", "deephouse"]),
+    ("Darbuka Doum", (VC, "Darbuka", "Darbuka_1_hit_vl2_rr1.ogg"), ["microhouse", "rominimal"]),
+    ("Darbuka Tek", (VC, "Darbuka", "Darbuka_3_hit_vl1_rr1.ogg"), ["microhouse", "rominimal", "minimal"]),
+    ("Frame Drum Low", (VC, "Frame Drum", "HDrumL_Hit_v2_rr1_Sum.ogg"), ["techno", "deephouse", "rominimal"]),
+    ("Frame Drum Muted", (VC, "Frame Drum", "HDrumS_HitMuted_v2_rr1_Sum.ogg"), ["minimal", "microhouse"]),
+    ("Cajon Bass", (VI, "Cajon", "Cajon_hit1_mp_rr1.ogg"), ["deephouse", "microhouse", "rominimal"]),
+    ("Cajon Slap", (VI, "Cajon", "Cajon_hit3_mp_rr1.ogg"), ["microhouse", "rominimal", "house"]),
+    ("Claves", (VI, "Claves", "Claves1_Hit_v2_rr1_Mid.ogg"), ["house", "rominimal", "minimal", "microhouse"]),
+    ("Claves Soft", (VI, "Claves", "Claves2_Hit_v1_rr1_Mid.ogg"), ["minimal", "microhouse", "deephouse"]),
+    ("Log Drum Hi", (VI, "Slit Drum", "LogDrumHi_MedM_v2_rr1_Sum.ogg"), ["rominimal", "microhouse", "minimal"]),
+    ("Log Drum Low", (VI, "Slit Drum", "LogDrumLo_MedM_v2_rr1_Sum.ogg"), ["rominimal", "microhouse", "techno"]),
+    ("Snare Soft Brushy", (VC, "Snare Drum, Modern 1", "Snare2_HitNS_v2_rr1_Mid.ogg"), ["deephouse", "house", "breakbeat"]),
+    ("Snare Ghost", (VC, "Snare Drum, Modern 2", "Snare3M_HitNS_v2_rr1_Mid.ogg"), ["breakbeat", "house", "techhouse"]),
+    ("Sidestick", (VC, "Snare Drum, Rope Tension", "RopeSnare_sidestick_Main_vl2_rr1.ogg"), ["minimal", "rominimal", "deephouse"]),
+    ]:
+    add("Pod", nm, g, (lambda pp: lambda s: D(*pp))(path))
+# Sample Pi (CC0)
+for nm, fn, g in [("Pi Tom Hi", "tom/drum_tom_hi_soft", ["techno", "breakbeat", "house"]), ("Pi Tom Mid", "tom/drum_tom_mid_soft", ["techno", "breakbeat", "house"]),
+                  ("Pi Tom Low", "tom/drum_tom_lo_soft", ["techno", "breakbeat", "deephouse"]), ("Tabla Ghe", "tabla/tabla_ghe1", ["microhouse", "rominimal"]),
+                  ("Tabla Te", "tabla/tabla_te1", ["microhouse", "minimal"]), ("Tabla Ke", "tabla/tabla_ke1", ["minimal", "rominimal"])]:
+    add("Pod", nm, g, (lambda f: lambda s: D("sample-pi", "drums", "one-shots", *(f + ".ogg").split("/")))(fn))
+# soft dissonant hits (Twinbox)
+add("Pod", "Dissonant Hit Low", ["techno", "minimal"],        lambda s: dissonant([36, 37, 42, 47], 0.8, 0.25, 600))
+add("Pod", "Dissonant Hit Mid", ["techno", "techhouse"],      lambda s: dissonant([48, 49, 54, 59], 0.6, 0.18, 1200))
+add("Pod", "Dissonant Stab", ["minimal", "microhouse"],       lambda s: dissonant([60, 61, 66, 70], 0.4, 0.1, 1800))
+add("Pod", "Dissonant Soft Cluster", ["deephouse", "microhouse", "rominimal"], lambda s: dissonant([55, 56, 61, 65], 0.9, 0.3, 900, kind="sine"))
+add("Pod", "Dissonant Dub Hit", ["techno", "deephouse"],      lambda s: delay_fx(dissonant([43, 44, 49, 54], 0.4, 0.12, 900), 0.75, 125, 0.4, 0.35, 1400))
+add("Pod", "Dissonant Tom Cluster", ["techno", "breakbeat"],  lambda s: tr808_tom(110, 0.2, length=1.0, seed=s) + tr808_tom(117, 0.2, length=1.0, seed=s + 1) + tr808_tom(156, 0.15, length=1.0, seed=s + 2))
 
 GENRES = ["techno", "minimal", "microhouse", "rominimal", "house", "techhouse", "deephouse", "breakbeat"]
 seed = 1000
@@ -599,7 +660,7 @@ for module in ("Kick", "Snare", "Tie", "Pod"):
     prefix = module[0]
     for i, (name, genre, fn) in enumerate(G[module]):
         seed += 1
-        write(module, f"{prefix}{i + 1:02d} {name}", fn(seed), [genre])
+        write(module, f"{prefix}{i + 1:02d} {name}", fn(seed), genre if isinstance(genre, list) else [genre])
 i = 0
 for genre in GENRES:
     for name, (tau, hp, metal, base), otau, extra in HATS[genre]:
@@ -609,10 +670,11 @@ for genre in GENRES:
         write("Hat", fname, hat(otau, hp, metal, base, max(0.3, otau * 6), seed=seed, **extra), [genre], subdir="open")
 
 with open(os.path.join(OUT, "manifest.json"), "w") as f:
-    json.dump({"version": 4, "genres": GENRES, "modules": manifest}, f, indent=1)
+    json.dump({"version": 5, "genres": GENRES, "modules": manifest}, f, indent=1)
 print({k: len(v) for k, v in manifest.items()})
 
 import zipfile, shutil
+shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "resources", "SAMPLE_CREDITS.md"), os.path.join(OUT, "SAMPLE_CREDITS.md"))
 zpath = os.path.join(os.path.dirname(os.path.abspath(OUT)), "factory_samples.zip")
 with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED) as z:
     for root, _, files in os.walk(OUT):
