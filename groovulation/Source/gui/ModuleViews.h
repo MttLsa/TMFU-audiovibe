@@ -17,12 +17,15 @@ public:
     void mouseUp (const juce::MouseEvent&) override;
     void mouseDoubleClick (const juce::MouseEvent&) override;
     void mouseMove (const juce::MouseEvent&) override;
+    bool keyPressed (const juce::KeyPress&) override;
     std::function<void()> onClick;   // non-interactive displays: select the module
 private:
     void timerCallback() override;
     float param (const char* name) const;
     void setParam (const char* name, float v);
     double regionBeats() const;
+    double regionMs() const;                 // length of the loop region in milliseconds at the current tempo
+    void setSliceMs (bool start, double ms);
     juce::Rectangle<float> plot() const;
     float xToPos (float x) const;
     float posToX (float p) const;
@@ -37,6 +40,8 @@ private:
     Drag drag = none;
     int dragIndex = -1;
     VolEnvelope env;
+    int lastMarker = 0;                      // 0 = S, 1 = E (arrow keys nudge it)
+    float dragStartPos = 0.0f, dragStartX = 0.0f;
     float lastPos = -1.0f;
 };
 
@@ -92,7 +97,7 @@ private:
     int module = 0;
     WaveDisplay display;
     // toolbar
-    Segmented grid, keySrc, ftype, warp;
+    Segmented grid, keySrc, ftype, warp, slsnap;
     juce::TextButton lenMinus { "-" }, lenPlus { "+" }, lenOrig { "ORIG" }, volReset { "RESET VOL" };
     Toggle slice { "SLICE" }, fade { "FADE 0.5ms" }, volA { "VOL.A" }, dpp { "PING-PONG" };
     juce::TextButton prev { "<" }, next { ">" }, rnd { "RND" }, sim { "SIMILAR" }, clear { "CLEAR" };

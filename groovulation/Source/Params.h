@@ -44,11 +44,11 @@ namespace lb
     inline juce::String pid (int module, const char* name) { return "m" + juce::String (module + 1) + "_" + name; }
 
     // ---------------- grid (display + loop length in grid steps -> polyrhythms)
-    inline const juce::StringArray& gridNames() { static juce::StringArray s { "1/1", "1/2", "1/4", "1/8", "1/12", "1/16", "1/24", "1/32" }; return s; }
+    inline const juce::StringArray& gridNames() { static juce::StringArray s { "1/1", "1/2", "1/4", "1/8", "1/12", "1/16", "1/24", "1/32", "1/48", "1/64" }; return s; }
     inline double gridBeats (int i)
     {
-        static const double b[] { 4.0, 2.0, 1.0, 0.5, 1.0 / 3.0, 0.25, 1.0 / 6.0, 0.125 };
-        return b[juce::jlimit (0, 7, i)];
+        static const double b[] { 4.0, 2.0, 1.0, 0.5, 1.0 / 3.0, 0.25, 1.0 / 6.0, 0.125, 1.0 / 12.0, 0.0625 };
+        return b[juce::jlimit (0, 9, i)];
     }
     constexpr int maxSteps = 128;   // 0 = original loop length
 

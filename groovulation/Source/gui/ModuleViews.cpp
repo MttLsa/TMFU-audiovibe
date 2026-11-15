@@ -25,7 +25,12 @@ namespace
 WaveDisplay::WaveDisplay (GroovulationProcessor& p, int m, bool inter) : proc (p), module (m), interactive (inter)
 {
     startTimerHz (30);
-    if (interactive) setTooltip ("SLICE: drag the S / E markers.  VOL.A: click to add a point, drag to move, double-click to delete.");
+    if (interactive)
+    {
+        setTooltip ("SLICE: drag the S / E markers (SNAP ms: 1 ms steps, shift = 0.1 ms; arrow keys nudge the last marker: 1 ms, shift 0.1 ms, alt/cmd 10 ms).  "
+                    "VOL.A: click to add a point, drag to move, double-click to delete.");
+        setWantsKeyboardFocus (true);
+    }
 }
 
 float WaveDisplay::param (const char* name) const { return proc.apvts.getRawParameterValue (lb::pid (module, name))->load(); }
@@ -37,6 +42,37 @@ double WaveDisplay::regionBeats() const
     const int steps = (int) param ("steps");
     if (steps > 0) return steps * lb::gridBeats ((int) param ("grid"));
     return l != nullptr ? (double) jmax (1, l->beats) : 4.0;
+}
+
+double WaveDisplay::regionMs() const
+{
+    auto l = proc.currentLoop (module);
+    const double tempo = jmax (0.01f, param ("tempo"));
+    const bool raw = proc.apvts.getRawParameterValue ("raw")->load() > 0.5f;
+    const double bpm = raw && l != nullptr ? l->bpm : jmax (1.0, proc.currentBpm());
+    return regionBeats() * 60000.0 / bpm / tempo;
+}
+
+void WaveDisplay::setSliceMs (bool start, double ms)
+{
+    const double R = jmax (1.0e-6, regionMs());
+    const float p = (float) jlimit (0.0, 1.0, ms / R);
+    if (start) setParam ("sstart", jmin (p, param ("send") - (float) (0.1 / R)));
+    else setParam ("send", jmax (p, param ("sstart") + (float) (0.1 / R)));
+}
+
+bool WaveDisplay::keyPressed (const KeyPress& k)
+{
+    if (! interactive || param ("slice") < 0.5f) return false;
+    const int code = k.getKeyCode();
+    if (code != KeyPress::leftKey && code != KeyPress::rightKey) return false;
+    const auto mods = k.getModifiers();
+    const double step = (mods.isShiftDown() ? 0.1 : (mods.isAltDown() || mods.isCommandDown() ? 10.0 : 1.0)) * (code == KeyPress::leftKey ? -1.0 : 1.0);
+    const double R = regionMs();
+    const double cur = (lastMarker == 0 ? param ("sstart") : param ("send")) * R;
+    setSliceMs (lastMarker == 0, std::round ((cur + step) * 10.0) / 10.0);
+    repaint();
+    return true;
 }
 
 Rectangle<float> WaveDisplay::plot() const { return getLocalBounds().toFloat().reduced (5.0f, 5.0f); }
@@ -127,6 +163,25 @@ void WaveDisplay::paint (Graphics& g)
             }
         }
     }
+    // slice positions in milliseconds
+    if (sliceOn && interactive)
+    {
+        const double Rms = regionMs();
+        g.setFont (theme::mono (11.5f, true));
+        for (int k = 0; k < 2; ++k)
+        {
+            const float pk = k == 0 ? s0 : s1;
+            const String txt = (k == 0 ? "S " : "E ") + String (pk * Rms, 1) + " ms";
+            const float x = posToX (pk);
+            auto box = Rectangle<float> (k == 0 ? x + 3.0f : x - 93.0f, r.getBottom() - 18.0f, 90.0f, 15.0f);
+            g.setColour (theme::lcdBg.withAlpha (0.85f)); g.fillRect (box);
+            g.setColour (lastMarker == k && hasKeyboardFocus (false) ? theme::red.darker (0.3f) : theme::lcdInk);
+            g.drawText (txt, box, k == 0 ? Justification::centredLeft : Justification::centredRight);
+        }
+        g.setColour (theme::lcdInk);
+        g.drawText ("SLICE " + String ((s1 - s0) * Rms, 1) + " ms" + (param ("slsnap") < 0.5f ? "  (SNAP ms)" : "  (SNAP grid)"),
+                    r.reduced (4, 2).translated (0, 15), Justification::topLeft);
+    }
     // clip-gain automation
     if (volOn)
     {
@@ -191,6 +246,7 @@ void WaveDisplay::mouseMove (const MouseEvent& e)
 void WaveDisplay::mouseDown (const MouseEvent& e)
 {
     if (! interactive) { if (onClick) onClick(); return; }
+    grabKeyboardFocus();
     drag = none;
     const bool sliceOn = param ("slice") > 0.5f, volOn = param ("vola") > 0.5f;
     if (sliceOn)
@@ -218,7 +274,16 @@ void WaveDisplay::mouseDown (const MouseEvent& e)
         // click elsewhere: move the nearest marker there
         const float pos = xToPos (e.position.x);
         drag = std::abs (pos - param ("sstart")) < std::abs (pos - param ("send")) ? sliceStart : sliceEnd;
+        lastMarker = drag == sliceStart ? 0 : 1;
+        if (param ("slsnap") < 0.5f) { setSliceMs (drag == sliceStart, std::round (pos * regionMs())); dragStartPos = pos; dragStartX = e.position.x; return; }
         mouseDrag (e);
+        return;
+    }
+    if (drag == sliceStart || drag == sliceEnd)
+    {
+        lastMarker = drag == sliceStart ? 0 : 1;
+        dragStartPos = drag == sliceStart ? param ("sstart") : param ("send");
+        dragStartX = e.position.x;
     }
 }
 
@@ -228,6 +293,18 @@ void WaveDisplay::mouseDrag (const MouseEvent& e)
     const double R = regionBeats();
     auto l = proc.currentLoop (module);
     float pos = xToPos (e.position.x);
+    if ((drag == sliceStart || drag == sliceEnd) && param ("slsnap") < 0.5f)
+    {
+        // SNAP ms: free movement in 1 ms steps; shift = fine (10x slower, 0.1 ms steps)
+        const bool fine = e.mods.isShiftDown();
+        const double w = jmax (1.0f, plot().getWidth());
+        const double p = dragStartPos + (e.position.x - dragStartX) / w * (fine ? 0.1 : 1.0);
+        const double stepMs = fine ? 0.1 : 1.0;
+        const double Rms = regionMs();
+        setSliceMs (drag == sliceStart, std::round (jlimit (0.0, 1.0, p) * Rms / stepMs) * stepMs);
+        repaint();
+        return;
+    }
     if (! e.mods.isShiftDown() && R > 0)   // snap to the grid (shift = free)
     {
         const double gb = lb::gridBeats ((int) param ("grid"));
@@ -396,7 +473,7 @@ void ModuleStrip::resized()
 ModuleEditor::ModuleEditor (GroovulationProcessor& p) : proc (p), display (p, 0, true)
 {
     addAndMakeVisible (display);
-    for (auto* c : std::initializer_list<Component*> { &grid, &keySrc, &ftype, &warp, &lenMinus, &lenPlus, &lenOrig, &volReset, &slice, &fade, &volA, &dpp,
+    for (auto* c : std::initializer_list<Component*> { &grid, &keySrc, &ftype, &warp, &slsnap, &lenMinus, &lenPlus, &lenOrig, &volReset, &slice, &fade, &volA, &dpp,
                                                        &prev, &next, &rnd, &sim, &browser,
                                                        &pAmp, &pAdsr, &pPitch, &pFilter, &pDirt, &pDelay, &pReverb, &pLfo1, &pLfo2, &pLfo3 })
         addAndMakeVisible (c);
@@ -479,6 +556,8 @@ void ModuleEditor::attachAll()
     keySrc.attach (s, lb::pid (m, "keysrc"), { "AUDIO", "FILE NAME" });
     ftype.attach (s, lb::pid (m, "ftype"));
     warp.attach (s, lb::pid (m, "warp"), { "COMPLEX", "BEATS" });
+    slsnap.attach (s, lb::pid (m, "slsnap"), { "MS", "GRID" });
+    slsnap.setTooltip ("SLICE markers: MS = move in milliseconds (shift = 0.1 ms, arrow keys nudge), GRID = snap to the grid");
     warp.setTooltip ("WARP: COMPLEX = high quality time-stretch (default), BEATS = transient slices (no stretching, gaps at slower tempos)");
     slice.attach (s, lb::pid (m, "slice")); fade.attach (s, lb::pid (m, "fade")); volA.attach (s, lb::pid (m, "vola")); dpp.attach (s, lb::pid (m, "dpp"));
     comboAtt.clear();
@@ -502,7 +581,7 @@ void ModuleEditor::setModule (int m)
     const bool isCustom = module == lb::custom;
     for (auto* b : std::initializer_list<Component*> { &prev, &next, &rnd, &sim, &browser }) b->setVisible (! isCustom);
     floppy.setVisible (isCustom); clear.setVisible (isCustom);
-    for (auto* sg : { &grid, &keySrc, &ftype, &warp }) sg->setAccent (c);
+    for (auto* sg : { &grid, &keySrc, &ftype, &warp, &slsnap }) sg->setAccent (c);
     for (auto* t : { &slice, &fade, &volA, &dpp }) t->setColour (TextButton::buttonOnColourId, c);
     attachAll();
     shownLoop = nullptr;
@@ -594,20 +673,21 @@ void ModuleEditor::resized()
     r.removeFromTop (44);
     // toolbar (two lines)
     auto tb = r.removeFromTop (40);
-    grid.setBounds (tb.removeFromLeft (300).withTrimmedBottom (2));
+    grid.setBounds (tb.removeFromLeft (370).withTrimmedBottom (2));
     tb.removeFromLeft (10);
     auto lenA = tb.removeFromLeft (130).withTrimmedTop (14).withTrimmedBottom (2);
     lenMinus.setBounds (lenA.removeFromLeft (32).reduced (1, 0));
     lenPlus.setBounds (lenA.removeFromLeft (32).reduced (1, 0));
     lenOrig.setBounds (lenA.reduced (1, 0));
     tb.removeFromLeft (10);
-    auto tg = tb.removeFromLeft (330).withTrimmedTop (14).withTrimmedBottom (2);
-    slice.setBounds (tg.removeFromLeft (70).reduced (1, 0));
+    auto tg = tb.removeFromLeft (430).withTrimmedTop (14).withTrimmedBottom (2);
+    slice.setBounds (tg.removeFromLeft (64).reduced (1, 0));
+    slsnap.setBounds (tg.removeFromLeft (96).reduced (2, 0));
     fade.setBounds (tg.removeFromLeft (90).reduced (1, 0));
     volA.setBounds (tg.removeFromLeft (70).reduced (1, 0));
     volReset.setBounds (tg.removeFromLeft (90).reduced (1, 0));
     tb.removeFromLeft (10);
-    keySrc.setBounds (tb.removeFromLeft (190).withTrimmedBottom (2));
+    keySrc.setBounds (tb.removeFromLeft (170).withTrimmedBottom (2));
     tb.removeFromLeft (10);
     auto ls = tb.withTrimmedTop (14).withTrimmedBottom (2);
     prev.setBounds (ls.removeFromLeft (28).reduced (1, 0));

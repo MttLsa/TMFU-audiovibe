@@ -568,6 +568,15 @@ int main (int argc, char** argv)
         check (k != nullptr && k->info.type == lb::kick, "restored session: a BOTTOM loop saved in KICK is replaced by a kick loop (" + (k ? k->name : String ("-")) + ")");
     }
 
+    // ---- grid down to 1/64 (also as loop length unit) renders
+    {
+        check (lb::gridNames().size() == 10 && lb::gridNames()[9] == "1/64" && std::abs (lb::gridBeats (9) - 0.0625) < 1e-12, "grid goes down to 1/64");
+        setP (*proc, lb::pid (lb::bass, "grid"), 9.0f); setP (*proc, lb::pid (lb::bass, "steps"), 23.0f);
+        auto stx = render (*proc, ph, 2.0);
+        check (stx.nans == 0 && stx.peak > 0.001f, "loop length in 1/64 steps (23 x 1/64) renders");
+        setP (*proc, lb::pid (lb::bass, "steps"), 0.0f); setP (*proc, lb::pid (lb::bass, "grid"), 5.0f);
+    }
+
     // ---- print
     proc->setSnapshotName ("TestSnapshot");
     auto pr = proc->printModules();
@@ -585,6 +594,8 @@ int main (int argc, char** argv)
         setP (*proc, "deck", 0); setP (*proc, "scaleOn", 1); setP (*proc, "swingOn", 0);
         for (int m = 0; m < lb::numModules; ++m) { setP (*proc, lb::pid (m, "steps"), 0); setP (*proc, lb::pid (m, "pitch"), 0); }
         setP (*proc, lb::pid (6, "vola"), 1);
+        setP (*proc, lb::pid (6, "slice"), 1); setP (*proc, lb::pid (6, "sstart"), 0.1234f); setP (*proc, lb::pid (6, "send"), 0.8f);
+        setP (*proc, lb::pid (6, "grid"), 9.0f);
         VolEnvelope env { { 0.0f, volUnityY }, { 0.3f, 0.6f }, { 0.55f, 1.0f }, { 1.0f, volUnityY } };
         proc->setVolEnvelope (6, env);
         render (*proc, ph, 1.0);
