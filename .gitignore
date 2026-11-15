@@ -6,3 +6,4 @@ JUCE/
 docs_screenshot.png
 resources/samples/
 build-asan/
+groovulation/build/
