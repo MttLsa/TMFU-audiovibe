@@ -78,6 +78,7 @@ public:
     // UI feedback
     std::atomic<float> playPos { -1.0f };   // position in region 0..1
     std::atomic<float> level { 0.0f };
+    std::atomic<int> sameSliceRestarts { 0 };   // diagnostics (tests): a slice restarted over itself = glitch
 
 private:
     using Stretch = signalsmith::stretch::SignalsmithStretch<float, void>;
@@ -90,7 +91,7 @@ private:
         // beats
         std::vector<double> segBeat, segSched; std::vector<int> segStart, segEnd;
         float schedSwing = -1.0f; int schedGrid = -1;
-        double curAbs = 0; int curSeg = -1; double curSrc = 0; float curGain = 1.0f;
+        long long curId = 0; int curSeg = -1; double curSrc = 0; float curGain = 1.0f;
         bool prevOn = false; double prevSrc = 0; float prevGain = 0;
         void buildSegments();
     };

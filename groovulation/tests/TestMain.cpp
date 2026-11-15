@@ -332,6 +332,31 @@ int main (int argc, char** argv)
             std::cout << "\n    wet:";
             for (auto o : ow) std::cout << " " << String (o * total / beatSec, 3);
             std::cout << "\n";
+            // moving the SWING knob while playing must not break the drum slices
+            {
+                const double srr = 48000.0; const int bs = 512;
+                AudioBuffer<float> buf (2 + 2 * lb::numModules, bs), outB (1, (int) (srr * 4.0));
+                MidiBuffer midi;
+                setP (*proc, "swingOn", 1);
+                const int restarts0 = proc->sliceRestarts (lb::top);
+                for (int pos = 0; pos + bs <= outB.getNumSamples(); pos += bs)
+                {
+                    ph.ppq = pos / srr * ph.bpm / 60.0;
+                    setP (*proc, "swing", 0.5f + 0.5f * (float) std::sin (pos / srr * 3.0));   // knob moving all the time
+                    proc->processBlock (buf, midi);
+                    outB.copyFrom (0, pos, buf, 0, 0, bs);
+                }
+                setP (*proc, "swingOn", 0);
+                const int restarts = proc->sliceRestarts (lb::top) - restarts0;
+                std::cout << "  info drum slices restarted over themselves while the knob moved: " << restarts << "\n";
+                check (restarts == 0, "drums: no slice restarts while the SWING knob moves");
+                const float moving = clickiness (outB, 4800);
+                setP (*proc, "swingOn", 1); setP (*proc, "swing", 0.6f);
+                const float fixed = clickiness (renderBuf (4.0), 4800);
+                setP (*proc, "swingOn", 0);
+                std::cout << "  info drum click index: swing fixed " << fixed << ", knob moving " << moving << "\n";
+                check (moving < fixed * 1.5f, "drums: moving the SWING knob while playing stays clean");
+            }
             std::cout << "  info swing: " << moved << " off-beat slices moved, " << steady << " on-beat slices in place, of " << checked << "\n";
             check (checked > 8 && moved + steady >= checked * 8 / 10, "drum swing moves the off-beat slices by the groove amount");
             setP (*proc, lb::pid (lb::top, "solo"), 0);

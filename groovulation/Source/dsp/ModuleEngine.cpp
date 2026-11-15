@@ -243,6 +243,17 @@ void ModuleEngine::renderBeats (Voice& v, float* outL, float* outR, int s0, int 
     const double fadeOut = jmax (8.0, 0.002 * sr), fadeIn = jmax (4.0, 0.001 * sr);
     const double dq = m > 1 ? (qArr[(size_t) (s0 + m - 1)] - qArr[(size_t) s0]) / (m - 1) : ctx.ppqPerSample;
     const double bpo = jmax (1.0e-9, ctx.raw ? dq * L.bpm / jmax (1.0, ctx.bpm) : dq);   // loop beats per output sample
+    // slices are identified by a running number (region cycle, loop repeat, slice index), never by their time:
+    // when the groove (SWING knob) moves, the slice that is playing keeps playing untouched and only the
+    // following slices use the new timing.
+    const long long nL = jmax (1LL, (long long) std::ceil (region / loopBeats - 1.0e-9));
+    auto floorDiv = [] (long long x, long long d) { return x >= 0 ? x / d : -((-x + d - 1) / d); };
+    auto absOf = [&] (long long id)
+    {
+        const long long base = floorDiv (id, S), k = id - base * S;
+        const long long c = floorDiv (base, nL), lc = base - c * nL;
+        return (double) c * region + (double) lc * loopBeats + v.segSched[(size_t) k];
+    };
     for (int i = s0; i < s0 + m; ++i)
     {
         const double U = loopBeat (qArr[(size_t) i], L, ctx);
@@ -250,30 +261,27 @@ void ModuleEngine::renderBeats (Voice& v, float* outL, float* outR, int s0, int 
         const double inRegion = U - cyc * region;
         const double loopCyc = std::floor (inRegion / loopBeats);
         const double inLoop = inRegion - loopCyc * loopBeats;
-        int k = (int) (std::upper_bound (v.segSched.begin(), v.segSched.end(), inLoop) - v.segSched.begin()) - 1;
-        double sched;
-        if (k < 0) { k = S - 1; sched = v.segSched[(size_t) k] - loopBeats; }
-        else sched = v.segSched[(size_t) k];
-        const double absStart = cyc * region + loopCyc * loopBeats + sched;
-        if (v.curSeg < 0 || std::abs (absStart - v.curAbs) > 1.0e-9)
+        const int k = (int) (std::upper_bound (v.segSched.begin(), v.segSched.end(), inLoop) - v.segSched.begin()) - 1;
+        const long long id = ((long long) cyc * nL + (long long) loopCyc) * S + k;   // k = -1 -> last slice of the previous loop
+        if (v.curSeg < 0 || id > v.curId)
         {
-            const double elapsed = (inLoop - sched) / bpo;   // output samples since the slice should have started
-            const double startSrc = v.segStart[(size_t) k] + elapsed * ratio;
+            const double startAbs = absOf (id);
+            const double elapsed = (U - startAbs) / bpo;          // output samples since the slice should have started
+            const int ks = (int) (id - floorDiv (id, S) * S);
+            const double startSrc = v.segStart[(size_t) ks] + elapsed * ratio;
             if (v.curSeg >= 0 && std::abs (v.curSrc - startSrc) < 2.0)
-                v.curSeg = k;                                   // contiguous audio: just carry on
+                v.curSeg = ks;                                  // contiguous audio: just carry on
             else
             {
-                if (v.curSeg >= 0) { v.prevOn = true; v.prevSrc = v.curSrc; v.prevGain = v.curGain; }
-                v.curSeg = k; v.curSrc = startSrc;
+                if (v.curSeg >= 0) { v.prevOn = true; v.prevSrc = v.curSrc; v.prevGain = v.curGain; if (ks == v.curSeg) ++sameSliceRestarts; }
+                v.curSeg = ks; v.curSrc = startSrc;
                 v.curGain = elapsed * ratio > fadeIn * 4.0 ? 0.0f : 1.0f;   // starting inside a slice: fade in
             }
-            v.curAbs = absStart;
+            v.curId = id;
         }
         // will the slice run out before the next one starts (slower tempo / lower pitch)? -> fade out before its end
         const int k1 = v.curSeg;
-        const double nextSched = k1 + 1 < S ? v.segSched[(size_t) k1 + 1] : v.segSched[0] + loopBeats;
-        double nextAbs = v.curAbs - sched + nextSched;
-        nextAbs = jmin (nextAbs, (cyc + 1.0) * region);
+        const double nextAbs = jmin (absOf (v.curId + 1), (cyc + 1.0) * region);
         const double toNext = (nextAbs - U) / bpo;
         const double remaining = (v.segEnd[(size_t) k1] - v.curSrc) / ratio;
         float env = 1.0f;

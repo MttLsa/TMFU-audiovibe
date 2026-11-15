@@ -53,6 +53,7 @@ public:
     // ---------------- scale info for the UI
     float appliedSemitones (int module) const { return applied[(size_t) module].load(); }
     float moduleLevel (int module) const { return engines[(size_t) module].level.load(); }
+    int sliceRestarts (int module) const { return engines[(size_t) module].sameSliceRestarts.load(); }
     float modulePlayPos (int module) const { return engines[(size_t) module].playPos.load(); }
     float masterLevel() const { return masterPeak.load(); }
     double currentBpm() const { return bpmNow.load(); }
