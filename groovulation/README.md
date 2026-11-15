@@ -4,7 +4,7 @@ Mixer di loop e campioni a 12 moduli, nello stile di Twinbox con i colori di un 
 
 | Sezione | Moduli |
 |---|---|
-| **DRUMS** | 1 Kick (solo loop con cassa), 2 Snare/Clap, 3 Bottom (tom e suoni medio-bassi, senza cassa o "no kick"), 4 Top, 5 Percussion |
+| **DRUMS** | 1 Kick (file con kick / bd / bass drum / cassa nel nome), 2 Snare/Clap, 3 Bottom (tom e suoni medio-bassi senza cassa forte, o "no kick"), 4 Top, 5 Percussion |
 | **CUSTOM** | 6 Custom: vuoto di default, ci carichi qualsiasi file col floppy o trascinandolo sul modulo |
 | **BASS** | 7 Bass |
 | **MELODIC** | 8 Melodic 01 (chords & stabs), 9 Melodic 02 (pad), 10 Melodic 03 (synth) |
@@ -13,10 +13,16 @@ Mixer di loop e campioni a 12 moduli, nello stile di Twinbox con i colori di un 
 ## Libreria e riconoscimento
 - Cartelle: `/Users/Shared/Groovulation/` → `Loops` (55 loop di fabbrica: House, Deep House, Micro House, Minimal, Techno),
   `PRINT`, `Snapshots`, `Database`. Le cartelle personali si aggiungono da **MENU → Add loop folder to scan**.
-- **Tipo del loop**: Vocals ed FX si riconoscono dal nome di file e cartelle; i loop "no kick" vanno in Bottom.
-  La cassa è decisa dall'**analisi audio** (transienti nella banda 30–100 Hz): un loop con cassa udibile va in Kick
-  anche se si chiama "bottom", un file chiamato "kick" senza cassa va in Bottom. Se il nome non dice nulla, il tipo
-  lo decide un classificatore audio (k-NN) che impara dai loop con il nome giusto.
+- **Tipo del loop**:
+  - **KICK**: solo i file con "kick", "bd", "bass drum" o "cassa" nel nome (anche attaccati, es. "KickLoop01"),
+    purché il nome non contenga "no kick" / "no_kick" / "nokick" / "without kick" / "kickless".
+  - **BOTTOM**: i file "no kick", i tom e i loop di batteria senza una cassa forte. La cassa la misura l'analisi
+    audio, con i transienti nella banda 30–100 Hz sincronizzati con i colpi.
+  - Un loop di batteria con cassa forte ma senza "kick" nel nome (es. "Drum Loop 01") non viene caricato.
+  - **VOCALS / FX**: per nome (vocal, vox, voice, acapella, choir… / fx, sfx, riser, sweep, impact, whoosh…).
+    Questi loop non finiscono mai in altri moduli.
+  - Se il nome non dice nulla, il tipo lo decide un classificatore audio (k-NN) che impara dai loop con il nome
+    giusto.
 - Vengono esclusi i loop più lunghi di 32 battute al tempo del progetto e quelli più corti di una battuta.
 - **Loop simili**: descrittore di timbro (MFCC), spettro, dinamica, ritmo e armonia; distanza pesata e famiglie
   k-means per tipo. Il registro leggibile si trova in `Database/similar_loops.json`.
@@ -79,7 +85,7 @@ sceglie quale suonare, con crossfade. Non legge dal disco durante la riproduzion
 ## Build
 ```
 cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release
-./packaging/macos/make_pkg.sh 1.1.2        # installer .pkg (macOS)
+./packaging/macos/make_pkg.sh 1.1.3        # installer .pkg (macOS)
 cmake -B build -DGROOV_BUILD_TESTS=ON && cmake --build build --target GroovulationTest   # test offline
 ```
 Su GitHub l'installer viene costruito automaticamente (workflow `groovulation`).

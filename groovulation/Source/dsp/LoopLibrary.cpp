@@ -6,7 +6,7 @@ using namespace juce;
 
 namespace
 {
-    constexpr int kDbVersion = 4;
+    constexpr int kDbVersion = 6;
     const char* const audioWildcard = "*.wav;*.aif;*.aiff;*.flac;*.mp3;*.ogg;*.m4a;*.caf";
 
     // feature weights for the similarity space (drums vs tonal material)
@@ -88,6 +88,9 @@ void LoopLibrary::installFactoryIfMissing()
     bool missing = false;
     for (int m = 0; m < lb::numModules; ++m)
         if (lb::folderName (m).isNotEmpty() && factoryFolder().getChildFile (lb::folderName (m)).findChildFiles (File::findFiles, false, audioWildcard).isEmpty()) missing = true;
+    // files of the 1.0 factory set that are no longer part of it ("Bottom Groove" loops had a kick in them)
+    for (auto& f : factoryFolder().getChildFile ("03 Bottom").findChildFiles (File::findFiles, false, "* Bottom Groove *bpm.wav"))
+        f.deleteFile();
     if (! missing && vInst >= vEmb) return;
     // upgrade: remove the files of the previously installed factory set (user files are never touched)
     if (installed.isObject() && vInst < vEmb)
@@ -198,7 +201,7 @@ void LoopLibrary::run()
             e.info = analysis::analyse (fm, it.file, it.keywords);
             ++analysed;
         }
-        if (e.info.ok && e.info.type >= 0) d->entries.push_back (std::move (e));
+        if (e.info.ok && e.info.type >= 0) d->entries.push_back (std::move (e));   // (excluded = -2 is dropped)
         progress = (float) ++done / (float) std::max<size_t> (1, items.size());
     }
     // files without a type keyword: classified by their nearest named neighbours
@@ -208,8 +211,14 @@ void LoopLibrary::run()
         if (labelled.size() >= 9)
             for (auto& e : d->entries)
                 if (! e.info.typeFromName)
-                    e.info.type = analysis::decideType (classifyByNeighbours (labelled, e.info), e.info, false);
+                {
+                    int t = classifyByNeighbours (labelled, e.info);
+                    if (t == lb::kick) t = -1;   // KICK is for files named "kick" only
+                    e.info.type = analysis::decideType (t, e.info, false, false);
+                    if (e.info.type == -1) e.info.type = e.info.kickScore >= analysis::kickThreshold ? analysis::excluded : lb::bottom;
+                }
         for (auto& e : d->entries) if (e.info.type == lb::custom) e.info.type = lb::bottom;   // the library never feeds CUSTOM
+        d->entries.erase (std::remove_if (d->entries.begin(), d->entries.end(), [] (const LoopEntry& e) { return e.info.type < 0; }), d->entries.end());
     }
     finalise (*d);
     std::atomic_store (&database, DbPtr (d));
@@ -384,16 +393,16 @@ LoopPtr LoopLibrary::load (const LoopEntry& e, double targetRate)
         for (int c = 0; c < 2; ++c)
         {
             const float* in = src.getReadPointer (c);
-            float* e = ext.getWritePointer (0);
-            for (int i = 0; i < pad; ++i) e[i] = in[len - pad + i];
-            std::copy (in, in + len, e + pad);
-            for (int i = 0; i < pad; ++i) e[pad + len + i] = in[i % len];
+            float* ex = ext.getWritePointer (0);
+            for (int i = 0; i < pad; ++i) ex[i] = in[len - pad + i];
+            std::copy (in, in + len, ex + pad);
+            for (int i = 0; i < pad; ++i) ex[pad + len + i] = in[i % len];
             WindowedSincInterpolator interp;
             const double lat = interp.getBaseLatency();
             const int start = (int) std::lround ((pad + lat) / ratio);
             const int total = (int) std::floor ((len + 2 * pad) / ratio) - 2;
             tmp.assign ((size_t) jmax (total, start + outLen), 0.0f);
-            interp.process (ratio, e, tmp.data(), total, len + 2 * pad, 0);
+            interp.process (ratio, ex, tmp.data(), total, len + 2 * pad, 0);
             std::copy (tmp.begin() + start, tmp.begin() + start + outLen, d->audio.getWritePointer (c));
         }
     }

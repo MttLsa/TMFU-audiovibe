@@ -20,7 +20,7 @@ FOLDERS = ["01 Kick", "02 Snare-Clap", "03 Bottom", "04 Top", "05 Percussion", "
 NOTE = {"C": 0, "C#": 1, "D": 2, "D#": 3, "E": 4, "F": 5, "F#": 6, "G": 7, "G#": 8, "A": 9, "A#": 10, "B": 11}
 MAJOR = [0, 2, 4, 5, 7, 9, 11]
 MINOR = [0, 2, 3, 5, 7, 8, 10]
-manifest = {"version": 3, "folders": {}}
+manifest = {"version": 4, "folders": {}}
 
 
 def rng(seed):
@@ -139,6 +139,19 @@ def tom(seed, f0=180, decay=0.18):
     return np.sin(np.cumsum(2 * np.pi * f / SR)) * np.exp(-t / decay)
 
 
+def drum_tom(seed, f0=200, decay=0.22):
+    """Membrane tom: inharmonic modes (1, 1.59, 2.14), small pitch drop, noisy stick / skin attack."""
+    n = int(SR * decay * 4)
+    t = np.arange(n) / SR
+    r = rng(seed)
+    bend = 1 + 0.12 * np.exp(-t / 0.04)
+    s = np.zeros(n)
+    for ratio, amp, dk in ((1.0, 1.0, 1.0), (1.59, 0.55, 0.6), (2.14, 0.35, 0.4)):
+        s += amp * np.sin(np.cumsum(2 * np.pi * f0 * ratio * bend / SR)) * np.exp(-t / (decay * dk))
+    s += 0.5 * fft_filter(r.standard_normal(n), lo=1200, hi=5000) * np.exp(-t / 0.012)
+    return s
+
+
 def conga(seed, f0=260, decay=0.12):
     n = int(SR * decay * 4)
     t = np.arange(n) / SR
@@ -252,8 +265,12 @@ def make_drums():
         tp = {"House": ([2, 7, 10, 14], [130, 165, 210]), "Deep House": ([3, 6, 11, 13], [115, 140, 175]),
               "Micro House": ([1, 5, 6, 9, 13, 14], [180, 220, 260]), "Minimal": ([3, 10, 14], [150, 190, 230]),
               "Techno": ([2, 3, 6, 10, 11, 14], [105, 125, 150])}[genre]
-        x = pattern(bpm, 2, tp[0], lambda st: tom(seed + 3, tp[1][st % 3], 0.16), sw) \
-            + 0.45 * pattern(bpm, 2, [0, 4, 8, 12] if genre != "Micro House" else [4, 12], lambda st: conga(seed + 4, 190, 0.09), sw)
+        # (no hits on the four kick positions 0/4/8/12, tuned above the kick range)
+        tp = {"House": ([2, 7, 10, 14], [190, 240, 290]), "Deep House": ([3, 6, 11, 13], [170, 210, 255]),
+              "Micro House": ([1, 5, 6, 9, 13, 14], [230, 280, 330]), "Minimal": ([3, 10, 14], [200, 250, 300]),
+              "Techno": ([2, 3, 6, 10, 11, 14], [175, 215, 260])}[genre]
+        x = pattern(bpm, 2, tp[0], lambda st: drum_tom(seed + 3 + st, tp[1][st % 3], 0.2), sw) \
+            + 0.4 * pattern(bpm, 2, [1, 5, 9, 15] if genre != "Micro House" else [7, 15], lambda st: conga(seed + 4, 240, 0.08), sw)
         write(FOLDERS[2], f"{genre} Bottom Toms No Kick {bpm}bpm", x, {"bpm": bpm, "bars": 2, "genre": genre})
         # 04 Top
         if genre == "House":

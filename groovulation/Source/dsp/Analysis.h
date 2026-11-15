@@ -54,10 +54,13 @@ namespace analysis
     // keyword classifier on file + folder names (module index); returns -1 if nothing matched
     int typeFromName (const juce::String& pathText);
     bool nameSaysNoKick (const juce::String& pathText);
-    // final module type: vocals / fx names are final, "no kick" -> Bottom, drum material with an audible
-    // kick -> Kick (the audio wins over the name), "kick" without a kick -> Bottom
-    constexpr float kickThreshold = 0.35f;
-    int decideType (int nameType, const Result& r, bool noKickName);
+    bool nameSaysKick (const juce::String& pathText);   // kick / bd / bass drum / cassa, and not "no kick"
+    constexpr int excluded = -2;                       // drum loop with a loud kick but not named "kick": not loaded
+    // final module type: vocals / fx names are final; KICK only for files named kick / bd / bass drum / cassa
+    // (not "no kick"); "no kick" -> Bottom; other drum loops with a loud kick are excluded (not loaded)
+    constexpr float kickThreshold = 0.5f;    // un-named / other drum loops: clear, loud kick -> KICK
+    constexpr float kickAbsent = 0.1f;       // loops named "kick" go to BOTTOM only below this
+    int decideType (int nameType, const Result& r, bool noKickName, bool kickName);
     // key from a name ("bass rocket league Gmin" -> G minor, "pad D" -> D major); false if none
     bool keyFromName (const juce::String& name, int& root, bool& minor);
     // BPM from a name ("120bpm", "128 BPM", "_95_"), 0 if none

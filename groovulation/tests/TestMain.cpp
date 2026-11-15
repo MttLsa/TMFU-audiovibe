@@ -190,6 +190,12 @@ int main (int argc, char** argv)
             if (e.info.type != lb::vocals && e.info.type != lb::fx) check (! n.contains ("vocal") && ! n.contains (" fx"), "no vocals / fx outside VOCALS / FX: " + e.name);
             std::cout << "    kick score " << String (e.info.kickScore, 2) << "  " << e.name << "\n";
         }
+        for (int t : { lb::kick, lb::bottom })
+        {
+            std::cout << "    module " << lb::moduleName (t) << ":";
+            for (int i : db->byType[(size_t) t]) std::cout << " [" << db->entries[(size_t) i].name << "]";
+            std::cout << "\n";
+        }
         check (kickOk == kickN && kickN > 0, "kick loops -> KICK: " + String (kickOk) + "/" + String (kickN));
         check (noKickOk == noKickN && noKickN > 0, "'no kick' loops -> BOTTOM: " + String (noKickOk) + "/" + String (noKickN));
         check (voxfx == voxfxN && voxfxN > 0, "vocals / fx -> their modules: " + String (voxfx) + "/" + String (voxfxN));
@@ -208,11 +214,69 @@ int main (int argc, char** argv)
             std::unique_ptr<AudioFormatWriter> w (wav.createWriterFor (new FileOutputStream (f), 44100.0, 1, 16, {}, 0));
             w->writeFromAudioSampleBuffer (b, 0, b.getNumSamples());
         };
+        // a long 808-style kick loop without "kick" in the name must still be found
+        {
+            const int n808 = (int) (44100 * 60.0 / 124.0 * 8);
+            AudioBuffer<float> k8 (1, n808); k8.clear();
+            for (int hit = 0; hit < 4; ++hit)
+                for (int i = 0; i < (int) (44100 * 0.9) && hit * n808 / 4 + i < n808; ++i)
+                {
+                    const double t = i / 44100.0;
+                    const double ph2 = 2 * MathConstants<double>::pi * (48.0 * t + 40.0 * 0.03 * (1 - std::exp (-t / 0.03)));
+                    k8.setSample (0, hit * n808 / 4 + i, (float) (0.8 * std::sin (ph2) * std::exp (-t / 0.6)));
+                }
+            auto f8 = outDir.getChildFile ("Loop A 124bpm.wav"); writeWav (f8, k8);
+            const auto r8 = analysis::analyse (fm, f8, f8.getFullPathName());
+            check (r8.type == analysis::excluded, "808 kick loop NOT named kick -> not loaded (score " + String (r8.kickScore, 2) + ")");
+        }
+        // realistic user loops, named the way people name them
+        {
+            File kf, hf, cf, tf, pf, bf;
+            for (auto& e : db->entries)
+            {
+                if (e.name.startsWith ("Techno Kick")) kf = File (e.path);
+                if (e.name.startsWith ("Techno Top")) hf = File (e.path);
+                if (e.name.startsWith ("House Clap")) cf = File (e.path);
+                if (e.name.startsWith ("Deep House Bottom")) tf = File (e.path);
+                if (e.name.startsWith ("House Perc")) pf = File (e.path);
+                if (e.name.startsWith ("Techno Bass")) bf = File (e.path);
+            }
+            auto mixOf = [&] (std::initializer_list<std::pair<File, float>> parts)
+            {
+                AudioBuffer<float> m (1, 1 << 22); int len = 1 << 22;
+                m.clear();
+                for (auto& pt : parts) { auto b2 = readAll (pt.first); len = jmin (len, b2.getNumSamples()); m.addFrom (0, 0, b2, 0, 0, jmin (b2.getNumSamples(), m.getNumSamples()), pt.second); }
+                m.setSize (1, len, true);
+                return m;
+            };
+            struct Case { const char* name; AudioBuffer<float> audio; int expect; };
+            std::vector<Case> cases;
+            cases.push_back ({ "Drum Loop 01 128bpm.wav", mixOf ({ { kf, 0.6f }, { hf, 0.4f }, { cf, 0.4f } }), analysis::excluded });
+            cases.push_back ({ "BD_Loop_02 128bpm.wav", mixOf ({ { kf, 0.8f } }), lb::kick });
+            cases.push_back ({ "Cassa Loop 124bpm.wav", mixOf ({ { kf, 0.8f } }), lb::kick });
+            cases.push_back ({ "KickLoop03 124bpm.wav", mixOf ({ { kf, 0.8f } }), lb::kick });
+            cases.push_back ({ "Groove_no_kick 124bpm.wav", mixOf ({ { tf, 0.8f }, { hf, 0.3f } }), lb::bottom });
+            cases.push_back ({ "Perc Loop NoKick 124bpm.wav", mixOf ({ { pf, 0.8f } }), lb::bottom });
+            cases.push_back ({ "Kick Bass Rumble 132bpm.wav", mixOf ({ { kf, 0.6f }, { bf, 0.5f } }), lb::kick });
+            cases.push_back ({ "Tom Groove 121bpm.wav", mixOf ({ { tf, 0.8f } }), lb::bottom });
+            cases.push_back ({ "Conga Loop 124bpm.wav", mixOf ({ { pf, 0.8f } }), lb::perc });
+            cases.push_back ({ "Top Loop 132bpm.wav", mixOf ({ { hf, 0.8f } }), lb::top });
+            cases.push_back ({ "Synth Phrase 124bpm Am.wav", mixOf ({ { bf, 0.3f } }), lb::synth });
+            cases.push_back ({ "Kick Reverse Build 124bpm.wav", mixOf ({ { kf, 0.8f } }), lb::kick });
+            for (auto& c : cases)
+            {
+                auto f = outDir.getChildFile (c.name); writeWav (f, c.audio);
+                const auto rr = analysis::analyse (fm, f, f.getFullPathName());
+                auto nm = [] (int t) { return t == analysis::excluded ? String ("(not loaded)") : lb::moduleName (t); };
+                check (rr.type == c.expect, String ("user loop '") + c.name + "' -> " + nm (rr.type) + " (expected " + nm (c.expect)
+                                            + ", kick score " + String (rr.kickScore, 2) + ")");
+            }
+        }
         auto f1 = outDir.getChildFile ("Groove Bottom Full 124bpm.wav"); writeWav (f1, mix);
         auto f2 = outDir.getChildFile ("Kick Loop Toms 124bpm.wav"); writeWav (f2, tb);
         const auto r1 = analysis::analyse (fm, f1, f1.getFullPathName()), r2 = analysis::analyse (fm, f2, f2.getFullPathName());
-        check (r1.type == lb::kick, "'bottom' groove with a loud kick -> KICK (score " + String (r1.kickScore, 2) + ")");
-        check (r2.type == lb::bottom, "'kick' file without a kick -> BOTTOM (score " + String (r2.kickScore, 2) + ")");
+        check (r1.type == analysis::excluded, "'bottom' groove with a loud kick -> not in BOTTOM / not in KICK (score " + String (r1.kickScore, 2) + ")");
+        check (r2.type == lb::kick, "file named 'kick' -> KICK (by name)");
     }
     // key-from-name parser
     {
@@ -442,6 +506,12 @@ int main (int argc, char** argv)
         // 2) beat repeat: no click when the repeats end and the loop comes back (Insert mode)
         {
             setP (*proc, lb::pid (lb::pad, "solo"), 1);
+            {
+                auto dbx = proc->library->db();
+                for (int i = 0; i < (int) dbx->entries.size(); ++i) if (dbx->entries[(size_t) i].name.startsWith ("House Pad")) proc->selectLoop (lb::pad, i);
+                for (int i = 0; i < 40 && ! proc->currentLoop (lb::pad)->name.startsWith ("House Pad"); ++i) pump (50);
+                render (*proc, ph, 0.5);
+            }
             const float base = clickiness (renderBuf (4.0), 48000);
             setP (*proc, "brOn", 1); setP (*proc, "brInterval", 3); setP (*proc, "brOffset", 2); setP (*proc, "brGrid", 2);
             setP (*proc, "brChance", 1.0f); setP (*proc, "brGate", 2); setP (*proc, "brMode", 1);
