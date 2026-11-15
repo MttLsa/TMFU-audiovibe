@@ -1,5 +1,5 @@
 {
- "version": 3,
+ "version": 4,
  "genres": [
   "techno",
   "minimal",
@@ -19,7 +19,7 @@
     ]
    },
    {
-    "file": "K02 Tek Rumble Dist.wav",
+    "file": "K02 Tek Rumble Soft.wav",
     "tags": [
      "techno"
     ]
@@ -61,7 +61,7 @@
     ]
    },
    {
-    "file": "K09 Min Lofi.wav",
+    "file": "K09 Min Felt.wav",
     "tags": [
      "minimal"
     ]
@@ -115,7 +115,7 @@
     ]
    },
    {
-    "file": "K18 Mic Dusty.wav",
+    "file": "K18 Mic Warm.wav",
     "tags": [
      "microhouse"
     ]
@@ -163,7 +163,7 @@
     ]
    },
    {
-    "file": "K26 House 909 Drive.wav",
+    "file": "K26 House 909 Clean.wav",
     "tags": [
      "house"
     ]
@@ -187,13 +187,13 @@
     ]
    },
    {
-    "file": "K30 House Sat.wav",
+    "file": "K30 House Round.wav",
     "tags": [
      "house"
     ]
    },
    {
-    "file": "K31 TH 808 Raw.wav",
+    "file": "K31 TH 808 Clean.wav",
     "tags": [
      "techhouse"
     ]
@@ -205,7 +205,7 @@
     ]
    },
    {
-    "file": "K33 TH 909 Raw.wav",
+    "file": "K33 TH 909.wav",
     "tags": [
      "techhouse"
     ]
@@ -235,7 +235,7 @@
     ]
    },
    {
-    "file": "K38 Deep Lofi Thump.wav",
+    "file": "K38 Deep Thump.wav",
     "tags": [
      "deephouse"
     ]
@@ -289,13 +289,13 @@
     ]
    },
    {
-    "file": "K47 Electro Click.wav",
+    "file": "K47 Electro Tight.wav",
     "tags": [
      "breakbeat"
     ]
    },
    {
-    "file": "K48 Electro Dist 808.wav",
+    "file": "K48 Electro 808 Mid.wav",
     "tags": [
      "breakbeat"
     ]
@@ -303,145 +303,145 @@
   ],
   "Snare": [
    {
-    "file": "S01 Tek Noise Snare.wav",
+    "file": "S01 Tek Soft Snare.wav",
     "tags": [
      "techno"
     ]
    },
    {
-    "file": "S02 Tek Metal Clap.wav",
+    "file": "S02 Tek Room Clap.wav",
     "tags": [
      "techno"
     ]
    },
    {
-    "file": "S03 Tek Industrial.wav",
+    "file": "S03 Tek Dark Snare.wav",
     "tags": [
      "techno"
     ]
    },
    {
-    "file": "S04 Tek Rim Echo.wav",
+    "file": "S04 Tek Clap Dry.wav",
     "tags": [
      "techno"
     ]
    },
    {
-    "file": "S05 Tek Clap Dry.wav",
+    "file": "S05 Tek Wide Clap.wav",
     "tags": [
      "techno"
     ]
    },
    {
-    "file": "S06 Tek Gated.wav",
+    "file": "S06 Tek Long Snare.wav",
     "tags": [
      "techno"
     ]
    },
    {
-    "file": "S07 Min Click Snare.wav",
+    "file": "S07 Min Soft Snare.wav",
     "tags": [
      "minimal"
     ]
    },
    {
-    "file": "S08 Min Micro Rim.wav",
+    "file": "S08 Min Tiny Clap.wav",
     "tags": [
      "minimal"
     ]
    },
    {
-    "file": "S09 Min Brush.wav",
+    "file": "S09 Min Brush Snare.wav",
     "tags": [
      "minimal"
     ]
    },
    {
-    "file": "S10 Min Snap Glitch.wav",
+    "file": "S10 Min Felt Clap.wav",
     "tags": [
      "minimal"
     ]
    },
    {
-    "file": "S11 Min Lofi Snare.wav",
+    "file": "S11 Min Paper Snare.wav",
     "tags": [
      "minimal"
     ]
    },
    {
-    "file": "S12 Min Paper.wav",
+    "file": "S12 Min Room Snare.wav",
     "tags": [
      "minimal"
     ]
    },
    {
-    "file": "S13 Mic Finger Snap.wav",
+    "file": "S13 Mic Organic Clap.wav",
     "tags": [
      "microhouse"
     ]
    },
    {
-    "file": "S14 Mic Rim Wood.wav",
+    "file": "S14 Mic Soft Snare.wav",
     "tags": [
      "microhouse"
     ]
    },
    {
-    "file": "S15 Mic Organic Clap.wav",
+    "file": "S15 Mic Hand Clap.wav",
     "tags": [
      "microhouse"
     ]
    },
    {
-    "file": "S16 Mic Shaker Snare.wav",
+    "file": "S16 Mic Dust Snare.wav",
     "tags": [
      "microhouse"
     ]
    },
    {
-    "file": "S17 Mic Dust Snare.wav",
+    "file": "S17 Mic Warm Clap.wav",
     "tags": [
      "microhouse"
     ]
    },
    {
-    "file": "S18 Mic Knock.wav",
+    "file": "S18 Mic Short Snare.wav",
     "tags": [
      "microhouse"
     ]
    },
    {
-    "file": "S19 Ro Rimshot.wav",
+    "file": "S19 Ro Short Clap.wav",
     "tags": [
      "rominimal"
     ]
    },
    {
-    "file": "S20 Ro Tight Rim.wav",
+    "file": "S20 Ro Soft Snare.wav",
     "tags": [
      "rominimal"
     ]
    },
    {
-    "file": "S21 Ro Short Clap.wav",
+    "file": "S21 Ro Room Clap.wav",
     "tags": [
      "rominimal"
     ]
    },
    {
-    "file": "S22 Ro Wood Click.wav",
+    "file": "S22 Ro Tight Snare.wav",
     "tags": [
      "rominimal"
     ]
    },
    {
-    "file": "S23 Ro Snap Room.wav",
+    "file": "S23 Ro Velvet Clap.wav",
     "tags": [
      "rominimal"
     ]
    },
    {
-    "file": "S24 Ro Soft Snare.wav",
+    "file": "S24 Ro Ghost Snare.wav",
     "tags": [
      "rominimal"
     ]
@@ -465,19 +465,19 @@
     ]
    },
    {
-    "file": "S28 House Snap.wav",
+    "file": "S28 House Soft Clap.wav",
     "tags": [
      "house"
     ]
    },
    {
-    "file": "S29 House Rim.wav",
+    "file": "S29 House 909 Snare.wav",
     "tags": [
      "house"
     ]
    },
    {
-    "file": "S30 House 909 Snare.wav",
+    "file": "S30 House Room Snare.wav",
     "tags": [
      "house"
     ]
@@ -501,19 +501,19 @@
     ]
    },
    {
-    "file": "S34 TH Rimshot.wav",
+    "file": "S34 TH Tight Clap.wav",
     "tags": [
      "techhouse"
     ]
    },
    {
-    "file": "S35 TH Raw Snare.wav",
+    "file": "S35 TH Warm Snare.wav",
     "tags": [
      "techhouse"
     ]
    },
    {
-    "file": "S36 TH Tight Clap.wav",
+    "file": "S36 TH Layer Clap.wav",
     "tags": [
      "techhouse"
     ]
@@ -525,19 +525,19 @@
     ]
    },
    {
-    "file": "S38 Deep Lofi Snare.wav",
+    "file": "S38 Deep Warm Snare.wav",
     "tags": [
      "deephouse"
     ]
    },
    {
-    "file": "S39 Deep Snap.wav",
+    "file": "S39 Deep Short Clap.wav",
     "tags": [
      "deephouse"
     ]
    },
    {
-    "file": "S40 Deep Dub Rim.wav",
+    "file": "S40 Deep Dub Clap.wav",
     "tags": [
      "deephouse"
     ]
@@ -573,19 +573,19 @@
     ]
    },
    {
-    "file": "S46 Electro Gated.wav",
+    "file": "S46 Electro Break Snare.wav",
     "tags": [
      "breakbeat"
     ]
    },
    {
-    "file": "S47 Electro Zap Snare.wav",
+    "file": "S47 Electro Soft 808.wav",
     "tags": [
      "breakbeat"
     ]
    },
    {
-    "file": "S48 Electro Rim.wav",
+    "file": "S48 Electro Room Clap.wav",
     "tags": [
      "breakbeat"
     ]
@@ -593,7 +593,7 @@
   ],
   "Tie": [
    {
-    "file": "T01 Tek Dub Stab m7.wav",
+    "file": "T01 Tek Dub Chord m7.wav",
     "tags": [
      "techno"
     ]
@@ -605,7 +605,7 @@
     ]
    },
    {
-    "file": "T03 Tek Hypno Pluck.wav",
+    "file": "T03 Tek Low Tom C.wav",
     "tags": [
      "techno"
     ]
@@ -617,13 +617,13 @@
     ]
    },
    {
-    "file": "T05 Tek Sci-Fi Stab.wav",
+    "file": "T05 Tek Conga C.wav",
     "tags": [
      "techno"
     ]
    },
    {
-    "file": "T06 Tek Drone C.wav",
+    "file": "T06 Tek Soft Stab Cm.wav",
     "tags": [
      "techno"
     ]
@@ -641,7 +641,7 @@
     ]
    },
    {
-    "file": "T09 Min Grain Organ C.wav",
+    "file": "T09 Min Soft Organ C.wav",
     "tags": [
      "minimal"
     ]
@@ -653,13 +653,13 @@
     ]
    },
    {
-    "file": "T11 Min Vibes C.wav",
+    "file": "T11 Min Tom C.wav",
     "tags": [
      "minimal"
     ]
    },
    {
-    "file": "T12 Min Click Bass C.wav",
+    "file": "T12 Min Felt Bass C.wav",
     "tags": [
      "minimal"
     ]
@@ -683,7 +683,7 @@
     ]
    },
    {
-    "file": "T16 Mic Marimba C.wav",
+    "file": "T16 Mic Conga C.wav",
     "tags": [
      "microhouse"
     ]
@@ -719,13 +719,13 @@
     ]
    },
    {
-    "file": "T22 Ro Kalimba C.wav",
+    "file": "T22 Ro Log Tom C.wav",
     "tags": [
      "rominimal"
     ]
    },
    {
-    "file": "T23 Ro Bell C.wav",
+    "file": "T23 Ro Conga C.wav",
     "tags": [
      "rominimal"
     ]
@@ -779,31 +779,31 @@
     ]
    },
    {
-    "file": "T32 TH Acid Accent C.wav",
+    "file": "T32 TH Detroit Strings Cm.wav",
     "tags": [
      "techhouse"
     ]
    },
    {
-    "file": "T33 TH Acid Square C.wav",
+    "file": "T33 TH Chord Stab Cm.wav",
     "tags": [
      "techhouse"
     ]
    },
    {
-    "file": "T34 TH Detroit Strings Cm.wav",
+    "file": "T34 TH Rubber Bass C.wav",
     "tags": [
      "techhouse"
     ]
    },
    {
-    "file": "T35 TH Chord Stab Cm.wav",
+    "file": "T35 TH Tom C.wav",
     "tags": [
      "techhouse"
     ]
    },
    {
-    "file": "T36 TH Raw Bass C.wav",
+    "file": "T36 TH Conga C.wav",
     "tags": [
      "techhouse"
     ]
@@ -833,7 +833,7 @@
     ]
    },
    {
-    "file": "T41 Deep Koze Toy C.wav",
+    "file": "T41 Deep Conga C.wav",
     "tags": [
      "deephouse"
     ]
@@ -845,7 +845,7 @@
     ]
    },
    {
-    "file": "T43 Electro Square Bass C.wav",
+    "file": "T43 Electro Bass C.wav",
     "tags": [
      "breakbeat"
     ]
@@ -857,7 +857,7 @@
     ]
    },
    {
-    "file": "T45 Electro Bleep Lead C.wav",
+    "file": "T45 Electro 808 Tom C.wav",
     "tags": [
      "breakbeat"
     ]
@@ -875,7 +875,7 @@
     ]
    },
    {
-    "file": "T48 Electro Vocoder Oh.wav",
+    "file": "T48 Electro Conga C.wav",
     "tags": [
      "breakbeat"
     ]
@@ -883,73 +883,73 @@
   ],
   "Pod": [
    {
-    "file": "P01 Tek Metal Perc.wav",
+    "file": "P01 Tek Low Tom.wav",
     "tags": [
      "techno"
     ]
    },
    {
-    "file": "P02 Tek Clank.wav",
+    "file": "P02 Tek Mid Tom.wav",
     "tags": [
      "techno"
     ]
    },
    {
-    "file": "P03 Tek Noise Sweep.wav",
+    "file": "P03 Tek Rimshot.wav",
     "tags": [
      "techno"
     ]
    },
    {
-    "file": "P04 Tek Tom.wav",
+    "file": "P04 Tek Conga Lo.wav",
     "tags": [
      "techno"
     ]
    },
    {
-    "file": "P05 Tek Hypno Blip.wav",
+    "file": "P05 Tek Shaker.wav",
     "tags": [
      "techno"
     ]
    },
    {
-    "file": "P06 Tek Shot.wav",
+    "file": "P06 Tek Tom Echo.wav",
     "tags": [
      "techno"
     ]
    },
    {
-    "file": "P07 Min Vinyl Loop.wav",
+    "file": "P07 Min Soft Rim.wav",
     "tags": [
      "minimal"
     ]
    },
    {
-    "file": "P08 Min Glitch Click.wav",
+    "file": "P08 Min Tight Tom.wav",
     "tags": [
      "minimal"
     ]
    },
    {
-    "file": "P09 Min Micro Blip.wav",
+    "file": "P09 Min Bongo.wav",
     "tags": [
      "minimal"
     ]
    },
    {
-    "file": "P10 Min Granular Burst.wav",
+    "file": "P10 Min Shaker.wav",
     "tags": [
      "minimal"
     ]
    },
    {
-    "file": "P11 Min Jazz Cymbal Chop.wav",
+    "file": "P11 Min Muted Conga.wav",
     "tags": [
      "minimal"
     ]
    },
    {
-    "file": "P12 Min Pop.wav",
+    "file": "P12 Min Rim Echo.wav",
     "tags": [
      "minimal"
     ]
@@ -973,55 +973,55 @@
     ]
    },
    {
-    "file": "P16 Mic Woodblock.wav",
+    "file": "P16 Mic Shaker Long.wav",
     "tags": [
      "microhouse"
     ]
    },
    {
-    "file": "P17 Mic Vox Hey.wav",
+    "file": "P17 Mic Rimshot.wav",
     "tags": [
      "microhouse"
     ]
    },
    {
-    "file": "P18 Mic Shaker Long.wav",
+    "file": "P18 Mic Tom Hi.wav",
     "tags": [
      "microhouse"
     ]
    },
    {
-    "file": "P19 Ro Wood Perc.wav",
+    "file": "P19 Ro Log Tom.wav",
     "tags": [
      "rominimal"
     ]
    },
    {
-    "file": "P20 Ro Clave.wav",
+    "file": "P20 Ro Conga Slap.wav",
     "tags": [
      "rominimal"
     ]
    },
    {
-    "file": "P21 Ro Click Perc.wav",
+    "file": "P21 Ro Bongo Lo.wav",
     "tags": [
      "rominimal"
     ]
    },
    {
-    "file": "P22 Ro Log Drum.wav",
+    "file": "P22 Ro Soft Rim.wav",
     "tags": [
      "rominimal"
     ]
    },
    {
-    "file": "P23 Ro Metal Tic.wav",
+    "file": "P23 Ro Shaker.wav",
     "tags": [
      "rominimal"
     ]
    },
    {
-    "file": "P24 Ro Water Drop.wav",
+    "file": "P24 Ro Tom Echo.wav",
     "tags": [
      "rominimal"
     ]
@@ -1033,139 +1033,139 @@
     ]
    },
    {
-    "file": "P26 House Tambourine.wav",
+    "file": "P26 House Conga.wav",
     "tags": [
      "house"
     ]
    },
    {
-    "file": "P27 House Conga.wav",
+    "file": "P27 House Bongo Hi.wav",
     "tags": [
      "house"
     ]
    },
    {
-    "file": "P28 House Cowbell.wav",
+    "file": "P28 House Rimshot.wav",
     "tags": [
      "house"
     ]
    },
    {
-    "file": "P29 House Vox Uh.wav",
+    "file": "P29 House Tom.wav",
     "tags": [
      "house"
     ]
    },
    {
-    "file": "P30 House Bongo Hi.wav",
+    "file": "P30 House Conga Lo.wav",
     "tags": [
      "house"
     ]
    },
    {
-    "file": "P31 TH 808 Cowbell.wav",
+    "file": "P31 TH Low Tom.wav",
     "tags": [
      "techhouse"
     ]
    },
    {
-    "file": "P32 TH 707 Tamb.wav",
+    "file": "P32 TH Rim Perc.wav",
     "tags": [
      "techhouse"
     ]
    },
    {
-    "file": "P33 TH Rim Perc.wav",
+    "file": "P33 TH Conga.wav",
     "tags": [
      "techhouse"
     ]
    },
    {
-    "file": "P34 TH Tom.wav",
+    "file": "P34 TH Bongo.wav",
     "tags": [
      "techhouse"
     ]
    },
    {
-    "file": "P35 TH Perc Stab.wav",
+    "file": "P35 TH Shaker.wav",
     "tags": [
      "techhouse"
     ]
    },
    {
-    "file": "P36 TH Clave 808.wav",
+    "file": "P36 TH Tom Hi.wav",
     "tags": [
      "techhouse"
     ]
    },
    {
-    "file": "P37 Deep Vinyl.wav",
+    "file": "P37 Deep Lofi Conga.wav",
     "tags": [
      "deephouse"
     ]
    },
    {
-    "file": "P38 Deep Dub Perc.wav",
+    "file": "P38 Deep Dub Rim.wav",
     "tags": [
      "deephouse"
     ]
    },
    {
-    "file": "P39 Deep Lofi Conga.wav",
+    "file": "P39 Deep Brush Shaker.wav",
     "tags": [
      "deephouse"
     ]
    },
    {
-    "file": "P40 Deep Vox Snip.wav",
+    "file": "P40 Deep Soft Tom.wav",
     "tags": [
      "deephouse"
     ]
    },
    {
-    "file": "P41 Deep Steel Pan.wav",
+    "file": "P41 Deep Bongo.wav",
     "tags": [
      "deephouse"
     ]
    },
    {
-    "file": "P42 Deep Toy Blip.wav",
+    "file": "P42 Deep Conga Lo.wav",
     "tags": [
      "deephouse"
     ]
    },
    {
-    "file": "P43 Electro Zap.wav",
+    "file": "P43 Electro 808 Tom Lo.wav",
     "tags": [
      "breakbeat"
     ]
    },
    {
-    "file": "P44 Electro Laser.wav",
+    "file": "P44 Electro 808 Tom Hi.wav",
     "tags": [
      "breakbeat"
     ]
    },
    {
-    "file": "P45 Electro 808 Cowbell.wav",
+    "file": "P45 Electro 808 Conga.wav",
     "tags": [
      "breakbeat"
     ]
    },
    {
-    "file": "P46 Electro Robot Voice.wav",
+    "file": "P46 Electro Rimshot.wav",
     "tags": [
      "breakbeat"
     ]
    },
    {
-    "file": "P47 Electro Bleep.wav",
+    "file": "P47 Electro Shaker.wav",
     "tags": [
      "breakbeat"
     ]
    },
    {
-    "file": "P48 Electro 808 Tom.wav",
+    "file": "P48 Electro Tom Mid.wav",
     "tags": [
      "breakbeat"
     ]
@@ -1173,13 +1173,13 @@
   ],
   "Hat": [
    {
-    "file": "H01 Tek Metal 909.wav",
+    "file": "H01 Tek 909 Hat.wav",
     "tags": [
      "techno"
     ]
    },
    {
-    "file": "H02 Tek Steel.wav",
+    "file": "H02 Tek Soft Steel.wav",
     "tags": [
      "techno"
     ]
@@ -1281,13 +1281,13 @@
     ]
    },
    {
-    "file": "H19 House Ride.wav",
+    "file": "H19 House Soft Ride.wav",
     "tags": [
      "house"
     ]
    },
    {
-    "file": "H20 House Tamb.wav",
+    "file": "H20 House Shaker.wav",
     "tags": [
      "house"
     ]
@@ -1353,13 +1353,13 @@
     ]
    },
    {
-    "file": "H31 Electro Cymbal.wav",
+    "file": "H31 Electro Soft Cymbal.wav",
     "tags": [
      "breakbeat"
     ]
    },
    {
-    "file": "H32 Electro Metal.wav",
+    "file": "H32 Electro Soft Hat.wav",
     "tags": [
      "breakbeat"
     ]

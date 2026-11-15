@@ -3,6 +3,8 @@
 #include "../Source/PluginEditor.h"
 #include "../Source/Presets.h"
 #include <juce_audio_formats/juce_audio_formats.h>
+#include <map>
+#include <set>
 
 using namespace juce;
 
@@ -267,21 +269,86 @@ int main (int argc, char** argv)
             }
     }
 
-    // ---------------------------------------------------------------- B presets: FX returns <= -16 dB, knobs reach 0 dB
+    // ---------------------------------------------------------------- B presets: every FX gain at -60 dB / off, knobs reach 0 dB
     {
         int bad = 0;
         for (auto& it : PresetLibrary::get().items (1))
             if (auto* prm = it.data.getProperty ("params", var()).getDynamicObject())
-                for (auto* id : { params::bDlyGain, params::bXGain })
-                    if ((float) prm->getProperty (id) > -16.0f + 1.0e-3f) ++bad;
-        for (auto& it : PresetLibrary::get().items (1))
-            if (auto* prm = it.data.getProperty ("params", var()).getDynamicObject())
-                if ((float) prm->getProperty (params::bDlyGain) > -59.9f) ++bad;
+            {
+                for (auto* id : { params::bDlyGain, params::bXGain, "b_pulp_gain" })
+                    if ((float) prm->getProperty (id) > -59.9f) ++bad;
+                for (auto* id : { params::bDirt, params::bEqAmp, params::bMagMix })
+                    if ((float) prm->getProperty (id) > 0.001f) ++bad;
+            }
         TwinboxProcessor p;
         auto* d = p.apvts.getParameter (params::bDlyGain); auto* x = p.apvts.getParameter (params::bXGain);
+        auto* pg = p.apvts.getParameter (params::b (params::pulp, params::lv::gain));
+        auto def = [] (juce::RangedAudioParameter* q) { return q->convertFrom0to1 (q->getDefaultValue()); };
         const bool range = std::abs (d->getNormalisableRange().end) < 1.0e-6f && std::abs (x->getNormalisableRange().end) < 1.0e-6f
-                        && std::abs (d->convertFrom0to1 (d->getDefaultValue()) + 60.0f) < 0.01f && std::abs (x->convertFrom0to1 (x->getDefaultValue()) + 16.0f) < 0.01f;
-        report ("B preset FX gain <= -16 dB", bad == 0 && range, String (bad) + " values above -16 dB; knob max 0 dB, default -16 dB: " + (range ? "yes" : "no"));
+                        && std::abs (def (d) + 60.0f) < 0.01f && std::abs (def (x) + 60.0f) < 0.01f && std::abs (def (pg) + 60.0f) < 0.01f;
+        report ("B preset FX gains at -60 dB", bad == 0 && range, String (bad) + " FX values above minimum; delay/xFx/Pulp default -60 dB: " + (range ? "yes" : "no"));
+    }
+
+    // ---------------------------------------------------------------- B simple presets: 8 different grooves per genre, Tie/Pod velocity excursion
+    {
+        std::map<String, std::set<String>> grooves; int flatVel = 0, presets = 0;
+        for (auto& it : PresetLibrary::get().items (1))
+        {
+            auto* pats = it.data.getProperty ("patterns", var()).getArray();
+            if (pats == nullptr || pats->isEmpty()) continue;
+            const auto& a = (*pats)[0];
+            if (it.level == "Simple")
+            {
+                String key;
+                if (auto* tr = a.getProperty ("trig", var()).getArray()) for (auto& t : *tr) key << t.toString() << "|";
+                for (auto* ln : { "tie", "pod" })
+                    if (auto* v = a.getProperty (ln, var()).getArray()) for (auto& x : *v) key << ((float) x > 0.001f ? "x" : "-");
+                grooves[it.genre].insert (key);
+            }
+            // velocity excursion on the notes of Tie / Pod
+            float lo = 1.0f, hi = 0.0f;
+            for (auto* ln : { "tieVel", "podVel" })
+                if (auto* v = a.getProperty (ln, var()).getArray())
+                    for (int i = 0; i < v->size(); ++i)
+                        if ((float) (*v)[i] < 0.999f) { lo = jmin (lo, (float) (*v)[i]); hi = jmax (hi, (float) (*v)[i]); }
+            ++presets;
+            if (hi > 0.0f && hi - lo < 0.15f) ++flatVel;
+        }
+        int minDistinct = 99; String info;
+        for (auto& g : grooves) { minDistinct = jmin (minDistinct, (int) g.second.size()); info << g.first << " " << (int) g.second.size() << "  "; }
+        report ("B simple presets: distinct grooves", minDistinct == 8, info);
+        report ("B Tie/Pod velocity excursion", flatVel <= presets / 10, String (flatVel) + " of " + String (presets) + " presets with flat velocity");
+    }
+
+    // ---------------------------------------------------------------- Tie / Pod step velocity reaches the voice (also with VEL = wav)
+    {
+        TwinboxProcessor p;
+        waitLibrary (p);
+        auto playPeak = [&] (float vel, int velMode)
+        {
+            auto& P = p.lime.pattern (0);
+            P.clear();
+            P.value[LimeEngine::laneTie][0].store (0.6f);
+            P.vel[LimeEngine::laneTie][0].store (vel);
+            setP (p, params::bPattern, 0);
+            setP (p, params::b (params::tie, params::lv::vel), (float) velMode);
+            p.setPlayConfigDetails (0, 2, 44100, 512); p.prepareToPlay (44100, 512);
+            setP (p, params::gXfade, 100); setP (p, params::bFxMix, 0);
+            for (int v : { params::kick, params::snare, params::hat, params::pod, params::pulp }) setP (p, params::b (v, params::lv::on), 0);
+            setP (p, params::gRun, 1);
+            AudioBuffer<float> buf (2, 512); MidiBuffer m; float pk = 0.0f;
+            for (int b2 = 0; b2 < 20; ++b2) { p.processBlock (buf, m); pk = jmax (pk, buf.getMagnitude (0, 512)); }
+            setP (p, params::gRun, 0);
+            return pk;
+        };
+        const float loud = playPeak (1.0f, 1), soft = playPeak (0.4f, 1), loud0 = playPeak (1.0f, 0), soft0 = playPeak (0.4f, 0);
+        p.lime.pattern (0).vel[LimeEngine::lanePod][5].store (0.37f);
+        MemoryBlock mb; p.getStateInformation (mb);
+        TwinboxProcessor q; q.setStateInformation (mb.getData(), (int) mb.getSize());
+        const bool stateOk = std::abs (q.lime.pattern (0).vel[LimeEngine::lanePod][5].load() - 0.37f) < 0.01f;
+        report ("Tie/Pod step velocity", loud > 0.01f && soft < loud * 0.8f && soft0 < loud0 * 0.8f && stateOk,
+                "VEL=wav peak vel 1.0: " + String (loud, 3) + ", vel 0.4: " + String (soft, 3) + "; VEL=--: " + String (loud0, 3) + " / " + String (soft0, 3)
+                + ", state: " + (stateOk ? "ok" : "lost"));
     }
 
     // ---------------------------------------------------------------- pitch detection, SCALE, manual pitch, on/off kept

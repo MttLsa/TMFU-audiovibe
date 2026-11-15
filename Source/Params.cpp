@@ -130,7 +130,7 @@ Layout createLayout()
         auto id = [v] (const char* k) { return b (v, k); };
         const bool sampler = v != pulp;
         addBool  (l, id (lv::on),   P + "On", true);
-        addFloat (l, id (lv::gain), P + "Gain", NormalisableRange<float> (-60.f, 6.f), v == hat ? -4.f : (v >= tie ? -5.f : 0.f), dbText);
+        addFloat (l, id (lv::gain), P + "Gain", NormalisableRange<float> (-60.f, 6.f), v == hat ? -4.f : (v == pulp ? -60.f : (v >= tie ? -5.f : 0.f)), dbText);
         addFloat (l, id (lv::pan),  P + "Pan", bip, v == tie ? -20.f : (v == pod ? 25.f : (v == pulp ? 10.f : 0.f)), panText);
         if (v <= hat) addFloat (l, id (lv::acc), P + "Accent", pctR, 50.f, pctText);
         if (v == tie || v == pod) addFloat (l, id (lv::vamt), P + "V>A", pctR, 70.f, pctText);
@@ -264,7 +264,7 @@ Layout createLayout()
     addFloat  (l, bXParam, "B xFx Parameter X", pctR, 50.f, pctText);
     addFloat  (l, bXAdd,   "B xFx Additional", pctR, 50.f, pctText);
     addFloat  (l, bXDly,   "B xFx Delay Input", pctR, 0.f, [] (float x, int) { return x < 1 ? String ("dry") : (x > 99 ? String ("post-delay") : String (roundToInt (x)) + " %"); });
-    addFloat  (l, bXGain,  "B xFx Gain", NormalisableRange<float> (-60.f, 0.f), -16.f, dbText);
+    addFloat  (l, bXGain,  "B xFx Gain", NormalisableRange<float> (-60.f, 0.f), -60.f, dbText);
     addFloat  (l, bXLo,    "B xFx Low Cut", logRange (20.f, 2000.f, 150.f), 20.f, hzText);
     addFloat  (l, bXHi,    "B xFx High Cut", logRange (500.f, 20000.f, 5000.f), 20000.f, hzText);
     addFloat  (l, bXSpd,   "B xFx Speed (XY playback/record)", pctR, 50.f,

@@ -266,8 +266,16 @@ void LimeSeqGrid::paint (Graphics& g)
                 if (v > 0.001f)
                 {
                     const float top = c.getBottom() - c.getHeight() * v;
-                    g.setColour ((lane == 6 ? theme::accentG : theme::accentB).withMultipliedAlpha (beyond ? 0.3f : 0.9f));
+                    const float sv = lane < 6 ? P.vel[(size_t) (lane - 4)][(size_t) st].load() : 1.0f;
+                    g.setColour ((lane == 6 ? theme::accentG : theme::accentB).withMultipliedAlpha ((beyond ? 0.3f : 0.9f) * (0.35f + 0.65f * sv)));
                     g.fillRect (Rectangle<float>::leftTopRightBottom (c.getX() + 1, top, c.getRight() - 1, c.getBottom()));
+                    if (lane < 6)
+                    {
+                        // step velocity: white tick (Alt/Option + drag or Alt + arrows to edit)
+                        const float vy = c.getBottom() - c.getHeight() * sv;
+                        g.setColour (Colours::white.withAlpha (beyond ? 0.25f : 0.8f));
+                        g.fillRect (Rectangle<float> (c.getX() + 1, jlimit (c.getY(), c.getBottom() - 2.0f, vy - 1.0f), c.getWidth() - 2, 2.0f));
+                    }
                 }
                 if ((lane == 4 || lane == 5) && v > 0.001f && big && (int) getParam (proc.apvts, b (lane == 4 ? tie : pod, lv::vel)) == 1)
                 {
@@ -349,6 +357,13 @@ bool LimeSeqGrid::keyPressed (const KeyPress& key)
     if (key.isKeyCode (KeyPress::upKey) || key.isKeyCode (KeyPress::downKey))
     {
         const int dir = key.isKeyCode (KeyPress::upKey) ? 1 : -1;
+        if (key.getModifiers().isAltDown() && selLane < 6)
+        {
+            auto& cell = proc.lime.pattern (editPattern()).vel[(size_t) (selLane - 4)][(size_t) selStep];
+            cell.store (jlimit (0.05f, 1.0f, cell.load() + (float) dir * (shift ? 0.25f : 0.05f)));
+            repaint();
+            return true;
+        }
         if (wavMode (selLane))
         {
             const int n = jmin (128, proc.library.set (selLane == 4 ? SampleLibrary::tie : SampleLibrary::pod)->size());
@@ -395,6 +410,12 @@ void LimeSeqGrid::edit (int row, int st, const MouseEvent& e, bool first)
     {
         const auto rb = rowBounds (row);
         float v = jlimit (0.0f, 1.0f, (rb.getBottom() - (float) e.y) / rb.getHeight());
+        if (lane < 6 && e.mods.isAltDown())
+        {
+            // Alt / Option + drag: step velocity (the column height keeps its value / sample)
+            P.vel[(size_t) (lane - 4)][(size_t) st].store (jlimit (0.05f, 1.0f, v));
+            return;
+        }
         if ((lane == 4 || lane == 5) && (int) getParam (proc.apvts, b (lane == 4 ? tie : pod, lv::vel)) == 1)
         {
             // Tie / Pod with VEL = wav: one notch per sample of the module's list (max 128); notch 1 = bottom of the list

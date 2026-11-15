@@ -25,16 +25,19 @@ public:
     {
         std::array<std::array<std::atomic<uint8_t>, NS>, numTrigLanes> trig;   // 0 off, 1 on, 2 accent
         std::array<std::array<std::atomic<float>, NS>, numValueLanes> value;   // Tie/Pod: 0 = off; Mod: 0..1
+        std::array<std::array<std::atomic<float>, NS>, 2> vel;                  // Tie/Pod per-step velocity 0..1 (default 1)
         Pattern() { clear(); }
         void clear()
         {
             for (auto& l : trig) for (auto& s : l) s.store (0);
             for (auto& l : value) for (auto& s : l) s.store (0.0f);
+            for (auto& l : vel) for (auto& s : l) s.store (1.0f);
         }
         void copyFrom (const Pattern& o)
         {
             for (size_t l = 0; l < trig.size(); ++l) for (size_t s = 0; s < (size_t) NS; ++s) trig[l][s].store (o.trig[l][s].load());
             for (size_t l = 0; l < value.size(); ++l) for (size_t s = 0; s < (size_t) NS; ++s) value[l][s].store (o.value[l][s].load());
+            for (size_t l = 0; l < vel.size(); ++l) for (size_t s = 0; s < (size_t) NS; ++s) vel[l][s].store (o.vel[l][s].load());
         }
     };
 

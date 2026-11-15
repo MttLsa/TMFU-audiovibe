@@ -136,6 +136,11 @@ void PresetLibrary::applyB (TwinboxProcessor& p, const Item& it, bool kit, bool 
                     if (auto* vals = pd.getProperty (lanes[l], var()).getArray())
                         for (int st = 0; st < jmin (numLimeSteps, vals->size()); ++st)
                             P.value[(size_t) l][(size_t) st].store (jlimit (0.0f, 1.0f, (float) (*vals)[st]));
+                const char* velLanes[] { "tieVel", "podVel" };
+                for (int l = 0; l < 2; ++l)
+                    if (auto* vals = pd.getProperty (velLanes[l], var()).getArray())
+                        for (int st = 0; st < jmin (numLimeSteps, vals->size()); ++st)
+                            P.vel[(size_t) l][(size_t) st].store (jlimit (0.0f, 1.0f, (float) (*vals)[st]));
             }
     if (tempo) setNatural (s, gTempo, (float) it.bpm);
 }

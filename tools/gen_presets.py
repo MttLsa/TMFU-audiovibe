@@ -83,19 +83,150 @@ def s(p):
     return "".join(str(v) for v in p)
 
 
+
+# ------------------------------------------------------------------------------- simple grooves (8 different per genre)
+# "kick|snare|c-hat|o-hat|tie|pod" (16 steps, x = note, X = accent, - = rest). Sources for the house / techno /
+# tech house grids: four-on-the-floor kick on 1-5-9-13, clap/snare on 5 and 13, open hat on the off-beats 3-7-11-15,
+# shaker on the remaining 16ths, 16th hats with velocity accents, tresillo 3+3+2 percussion, low toms among the kicks,
+# snare rolls on 13-16 as fills (ampedstudio.com, musicradar.com, attackmagazine.com "Beat dissected", beatkitchen.io).
+SIMPLE = {
+ "house": [
+  "X---x---X---x---|----X-------X---|----------------|--x---x---x---x-|---x-------x----|xx-xxx-xxx-xxx-x",   # classic: oh off-beats + shaker 16ths
+  "X---x---X---x---|----X-------X---|xxxxxxxxxxxxxxxx|--x---x---x---x-|x-----x---x-----|------x-------x-",   # 16th hats
+  "X---x---X---x---|----X-------X---|x-x-x-xxx-x-x-xx|--x-------x-----|--x--x----x--x--|---x------x--x--",   # garage skip
+  "X---x---X---x-x-|----X-------X---|--x---x---x---x-|----------------|x--x--x---x--x--|-------x-------x",   # chicago jack
+  "X---x---X---x---|----x-------x---|----------------|--x---x---x---x-|---x------x-----|x--x--x---x--x--",   # deep stripped + conga 3-3-2
+  "X---x---X---x---|----X-------X---|-x-x-x-x-x-x-x-x|--x---x---x---x-|--x-------x---x-|---x-------x-----",  # off-beat 16ths
+  "X---x---X---x---|----X-------X--x|x-x-x-x-x-x-x-x-|--x---x---x---x-|x------x--x-----|-----x-------x--",   # clap pickup
+  "X---x---X---x---|----X-------X---|x-xxx-xxx-xxx-xx|----------------|--x---x-x-----x-|x--x--x---x-x---",   # latin clave
+ ],
+ "techno": [
+  "X---x---X---x---|----------------|xxxxxxxxxxxxxxxx|--x---x---x---x-|--x---x---x---x-|----------------",   # driving + off-beat rumble
+  "X---x---X---x---|----------------|--x---x---x---x-|----------------|--xx--xx--xx--xx|-------x-------x",   # rolling rumble
+  "X---x---X---x---|----X-------X---|xxxxxxxxxxxxxxxx|--x---x---x---x-|x------x--x-----|----------------",   # detroit / belleville
+  "X---x---X---x---|----------------|--x---x---x---x-|----------------|--x---x---x---x-|x--x--x-x--x--x-",   # tresillo percussion
+  "X---x---X---x---|----------------|xx-xxx-xxx-xxx-x|------x-------x-|----------------|--x-----x-x---x-",   # low toms among kicks
+  "X---x---X---x---|--------X-------|x-x-x-x-x-x-x-x-|--x---x---x---x-|--x-------x-----|---x---x---x---x",   # half-time snare
+  "X---x---X---x---|------------X---|--x---x---x---x-|--------------x-|--x--x----x--x--|-x-------x------",   # sparse hypnotic
+  "X---x---X---x-x-|----x-------x---|x-xxx-xxx-xxx-xx|--x---x---x---x-|------x-------x-|--x--x----x--x--",   # broken 4/4
+ ],
+ "techhouse": [
+  "X---x---X---x---|----X-------X---|--x---x---x---x-|----------------|---x-------x----|-x-x-x-x-x-x-x-x",   # off-beat hats + shaker
+  "X---x---X---x---|----X-------X---|xxXxxxXxxxXxxxXx|--x---x---x---x-|--x-------x--x--|------x-------x-",   # velocity shuffle
+  "X---x---X---x---|----X-------X-x-|-x-x-x-x-x-x-x-x|--x---x---x---x-|x--x---x--x-----|---x-------x----",   # ghost clap
+  "X---x---X---x---|----X-------X---|--x---x---x---x-|----------------|--xx--x---xx--x-|-------x-------x",   # rolling bassline
+  "X---x---X---x---|----X-------X---|--x---x---x---x-|----------------|x--x-----x----x-|----------------",   # acid (5 notes)
+  "X---x---X---x---|----X-------X---|--x---x---x---x-|------x-------x-|----------x-----|x--x--x---x--x--",   # percussive conga
+  "X---x---X---x---|----X-------X---|xx-xxx-xxx-xxx-x|--x---x---x---x-|-x-----x-x------|--x-------x-----",   # 16ths + roll fill
+  "X---x---X---x---|----X--x----X---|--x---x---x---x-|--x-------x-----|x-x---x---x-x---|-------x-------x",   # jack
+ ],
+ "minimal": [
+  "X---x---X---x---|----x-------x---|--x---x---x---x-|----------------|x---------x-----|-------x-------x",
+  "X---x---X---x---|------------x---|x-x-x-x-x-x-x-x-|----------------|---x------x-----|---x---x--------",
+  "X---x---X---x---|----x-------x--x|-x--x--x-x--x--x|----------------|x-----x---------|----x-----x--x--",
+  "X-----x-X---x---|----x-------x---|--x---x---x---x-|----------------|--x-------x-----|x--------x------",
+  "X---x---X---x---|----------------|xx-xxx-xxx-xxx-x|----------------|x------x--------|--x---x---x---x-",
+  "X---x---X---x--x|----x-------x---|---x---x---x---x|----------------|--x--x--------x-|-x-------x------",
+  "X---x---X---x---|----x---------x-|--x---xx--x---x-|----------------|x---x-------x---|-----x-------x--",
+  "X---x--xX---x---|----x-------x---|-xx--xx--xx--xx-|----------------|--x-------x---x-|---x---x---x---x",
+ ],
+ "microhouse": [
+  "X---x---X---x---|----x-------x---|x-x-x-x-x-x-x-x-|----------------|--x-------x-----|---x--x----x--x-",
+  "X---x---X---x---|------------x---|x-xxx-xxx-xxx-xx|----------------|x--x------x-----|-x-----x-x------",
+  "X---x--xX---x---|----x-------x---|--x---x---x---x-|----------------|--x--x----x-----|x-----x---x-----",
+  "X---x---X---x---|----x-------x--x|xx-xxx-xxx-xxx-x|----------------|-----x-------x--|--x---x---x---x-",
+  "X---x---X--xx---|----x-------x---|x-x-x-x-x-x-x-x-|----------------|x---------x--x--|---x-------x----",
+  "X---x---X---x---|----------------|-xx--xx--xx--xx-|----------------|--x---x---x-----|x--x--x---x--x--",
+  "X---x---X---x---|----x-------x---|x-x-x-xxx-x-x-xx|--------------x-|---x---x--------|-----x--x----x--",
+  "X---x---X-x-x---|----x-------x---|--x---x---x---x-|----------------|x-x-------x-----|-x---x---x---x--",
+ ],
+ "rominimal": [
+  "X---x---X---x---|----------------|--x---x---x---x-|----------------|--x----x--x----x|---x-------x----",
+  "X---x---X--xx---|------------x---|-xx--x-x-xx--x-x|----------------|--x--x----x--x--|x-----x---------",
+  "X---x--xX---x---|----------------|--xx--x---x--xx-|----------------|--x-x--x--x-x--x|------x-------x-",
+  "X-----x-X---x---|----x-----------|--x---x---x---x-|----------------|x--x--x---x--x--|--x-------x-----",
+  "X---x---X---x---|----------------|x-x-x-x-x-x-x-x-|----------------|---x---x---x---x|-x-----x-x------",
+  "X---x---X---x--x|------------x---|--x---xx--x---x-|----------------|--x-------x--x--|x--x--x---x-----",
+  "X---x---X---x---|----x-------x---|-x-x-x-x-x-x-x-x|----------------|--x---x---xx----|---x-----x------",
+  "X---x---X--xx---|----------------|--x---x---x---x-|----------------|-x---x-x-x---x--|-----x-------x--",
+ ],
+ "deephouse": [
+  "X---x---X---x---|----x-------x---|--x---x---x---x-|----------------|x-------x-------|---x-------x----",
+  "X---x---X---x---|----x-------x---|x-x-x-x-x-x-x-x-|--x---x---x---x-|---x------x-----|-x-----x-x---x--",
+  "X---x---X---x--x|----x-------x---|xx-xxx-xxx-xxx-x|----------------|x------x--x-----|------x-------x-",
+  "X---x---X---x---|------------x---|--x---x---x---x-|----------------|--x-------x-----|x--x--x---x--x--",
+  "X---x---X-x-x---|----x-------x---|-x-x-x-x-x-x-x-x|----------------|x--x------x-----|---x---x--------",
+  "X---x---X---x---|----x-------x--x|--x---x---x---x-|--------------x-|-----x-------x--|-x-------x------",
+  "X---x---X---x---|----x-------x---|x-xxx-xxx-xxx-xx|----------------|x---x-------x---|--x-------x---x-",
+  "X---x---X---x---|----x-------x---|--x---xx--x---xx|----------------|--x---x---x-----|-----x--x----x--",
+ ],
+ "breakbeat": [
+  "X-------X-x-----|----X-------X---|x-x-x-x-x-x-x-x-|----------------|x-------x-x-----|---------------x",
+  "X------x--X-----|----X-------X---|xxxxxxxxxxxxxxxx|----------------|x------x--x-----|-------x--------",
+  "X---------X--x--|----X-------X---|x-x-x-x-x-x-x-x-|--------------x-|x---------x-----|------x---------",
+  "X--x------X-----|----X--x----X---|x-x-x-x-x-x-x-x-|----------------|x--x------x-----|-----------x----",
+  "X-x-------x-x---|----X-------X---|x-xxx-xxx-xxx-xx|----------------|x-x-------x-x---|--------x-------",
+  "X------x-x------|----X-------X--x|xxxxxxxxxxxxxxxx|----------------|x------x-x------|---x-------x----",
+  "X-----x---x-----|----X-------X---|x-x-x-x-x-x-x-x-|------x-------x-|x-----x---x-----|-------x-------x",
+  "X--x--x---X-----|----X-------X-x-|x-x-x-x-x-x-x-x-|----------------|x--x--x---x-----|--x-------x-----",
+ ],
+}
+ACID_PRESETS = {4, 12}            # tech house: only these presets use the acid sample on Tie
+
+def step_vel(i, accent, r, spread=1.0):
+    """Human velocity for Tie / Pod: downbeats loud, 8th off-beats medium, 16ths soft, plus random excursion."""
+    base = 0.92 if i % 4 == 0 else (0.74 if i % 4 == 2 else 0.52)
+    if accent: base = max(base, 0.98)
+    v = base + r.uniform(-0.2, 0.15) * spread
+    return round(max(0.3, min(1.0, v)), 2)
+
+def simple_patterns(genre, idx, r, L):
+    tpl = [x for x in SIMPLE[genre][idx % 8].split("|")]
+    tile16 = lambda st: [st[i % 16] for i in range(L)]
+    k, sn, ch, oh, tie, pod = (tile16(x) for x in tpl)
+    trig = lambda row: [2 if c == "X" else (1 if c == "x" else 0) for c in row]
+    pats = []
+    for variant in range(4):
+        K, S, CH, OH = trig(k), trig(sn), trig(ch), trig(oh)
+        T = [c != "-" for c in tie]; P = [c != "-" for c in pod]
+        if variant == 1:              # B: answer phrase - the 2nd half of each bar moves a little
+            for b0 in range(0, L, 16):
+                free = [b0 + j for j in (9, 13, 15) if not T[b0 + j]]
+                if free: T[r.choice(free)] = True
+                moved = [b0 + j for j in range(8, 16) if P[b0 + j]]
+                if moved:
+                    j = r.choice(moved); P[j] = False; P[min(L - 1, j + 1)] = True
+        if variant == 2:              # C: stripped back
+            OH = [0] * L; P = [False] * L
+        if variant == 3:              # D: fill at the end of the bar
+            if genre in ("techno", "techhouse", "house"):
+                for i in range(L - 4, L): S[i] = 1          # 16th snare roll on 13-16
+            else:
+                S[L - 1] = 1; K[L - 3] = 1 if K[L - 3] == 0 else K[L - 3]
+        tv = [step_vel(i % 16, tie[i] == "X", r) if T[i] else 1.0 for i in range(L)]
+        pv = [step_vel(i % 16, pod[i] == "X", r) if P[i] else 1.0 for i in range(L)]
+        pats.append({"len": L, "trig": ["".join(map(str, x)) for x in (K, S, CH, OH)],
+                     "tie": [0.6 if t else 0.0 for t in T], "pod": [0.6 if q else 0.0 for q in P],
+                     "tieVel": tv, "podVel": pv, "mod": [0.5] * L})
+    return pats
+
 # ------------------------------------------------------------------------------- Section B (Limelite kit)
-def pick(module, genre, r, prefer=None):
+def pick(module, genre, r, prefer=None, acid=False):
     items = manifest["modules"][module]
     cands = [it["file"][:-4] for it in items if genre in it["tags"] and not (module == "Kick" and "Ghost" in it["file"])]
+    if module == "Tie":
+        cands = [c for c in cands if ("Acid" in c) == acid] or cands
     if prefer:
         pc = [c for c in cands if any(w.lower() in c.lower() for w in prefer)]
         if pc:
             cands = pc
     return r.choice(cands or [it["file"][:-4] for it in items])
 
-def b_patterns(genre, r, length, cx=1):
-    """4 patterns (A-D). cx = 0: simple, essential groove; cx = 1: intricate (ghosts, polyrhythm, bar variations)."""
+def b_patterns(genre, r, length, cx=1, idx=0):
+    """4 patterns (A-D). cx = 0: simple, essential groove (one of 8 different grooves); cx = 1: intricate."""
     L = length
+    if not cx:
+        return simple_patterns(genre, idx, r, L)
     T = lambda st: tile(grid(st), L)
     def ghosts(p, prob, avoid=None):            # add soft notes only in the intricate version
         return sprinkle(p, prob, r, 1, avoid) if cx else p
@@ -154,8 +285,8 @@ def b_patterns(genre, r, length, cx=1):
             sn = T("----X-------X---") if not cx else ghosts(T("----X-------X--x"), 0.04, k)
             ch = accent_some(T("xxxxxxxxxxxxxxxx"), 0.0, r) if not cx else [2 if i % 4 == 2 else (1 if v else 0) for i, v in enumerate(thin(T("xxxxxxxxxxxxxxxx"), 0.12, r))]
             oh = T("--x---x---x---x-")
-            acid_pos = r.choice([{0, 3, 6, 8, 10, 11, 14}, {0, 2, 3, 6, 8, 11, 12, 14}, {0, 3, 4, 7, 8, 10, 13}])
-            tie = vals(acid_pos, 0.6, 0.9) if not cx else vals(acid_pos | {r.randint(0, 15), r.randint(0, 15)}, 0.3, 0.95)     # acid line
+            bass_pos = r.choice([{0, 3, 8, 11, 14}, {2, 6, 10, 13}, {3, 7, 10, 11}, {0, 6, 10}])
+            tie = vals(bass_pos, 0.3, 0.95, 0.85)                                                                  # bass / acid line
             pod = vals({3, 7, 11, 15}, 0.5, 0.8, 0.6) if not cx else [round(r.uniform(0.3, 0.9), 2) if x else 0.0 for x in tile(euclid(5, 16, 2), L)]
         elif genre == "deephouse":               # Mr G / UGLH / Sid Le Rock (DJ Koze) / Edit Murphy: dusty, dub, funky
             k = T("X---x---X---x---") if not cx else T(r.choice(["X---x---X---x--x", "X---x---X-x-x---"]))
@@ -181,15 +312,18 @@ def b_patterns(genre, r, length, cx=1):
             oh = [0] * L
         import math
         mod = [round(0.5 + (0.5 * math.sin(i / L * 6.283 * r.choice([1, 2, 3])) * r.choice([0.4, 0.8, 1.0]) if cx else 0.0), 2) for i in range(L)]
+        tv = [step_vel(i % 16, False, r, 1.3) if tie[i] > 0.001 else 1.0 for i in range(L)]
+        pv = [step_vel(i % 16, False, r, 1.3) if pod[i] > 0.001 else 1.0 for i in range(L)]
         pats.append({"len": L, "trig": [s(k[:L]), s(sn[:L]), s(ch[:L]), s(oh[:L])],
-                     "tie": [round(x, 3) for x in tie[:L]], "pod": [round(x, 3) for x in pod[:L]],
+                     "tie": [round(x, 3) for x in tie[:L]], "pod": [round(x, 3) for x in pod[:L]], "tieVel": tv, "podVel": pv,
                      "mod": [max(0.0, min(1.0, x)) for x in mod[:L]]})
     return pats
 
-def b_kit(genre, r, cx=1):
+def b_kit(genre, r, cx=1, idx=0):
     P = {}
     def v(voice, key, val): P[f"b_{voice}_{key}"] = val
-    smp = {m: pick(m, genre, r) for m in ("Kick", "Snare", "Hat", "Tie", "Pod")}
+    prefer = {"Tie": ["Rumble", "Bass"]} if (genre == "techno" and idx in (0, 1, 3, 8, 9)) else {}
+    smp = {m: pick(m, genre, r, prefer.get(m), acid=(genre == "techhouse" and idx in ACID_PRESETS)) for m in ("Kick", "Snare", "Hat", "Tie", "Pod")}
     v("kick", "gain", 0); v("snare", "gain", -3); v("hat", "gain", -6); v("tie", "gain", -4); v("pod", "gain", -7); v("pulp", "gain", -9)
     v("kick", "d", 100); v("snare", "d", 60); v("hat", "cd", 35); v("hat", "od", 65); v("tie", "d", 70); v("pod", "d", 70)
     v("tie", "pan", -12); v("pod", "pan", r.choice([-30, 25, 35])); v("hat", "pan", r.choice([-8, 8, 12]))
@@ -234,8 +368,10 @@ def b_kit(genre, r, cx=1):
         fx.update(dict(X([19, 20, 14, 7], (30, 70), (30, 70)), b_x_len=r.choice([1, 2, 4])) if cx else X([0, 0, 14], (20, 40), (20, 40)))
         if cx: fx.update({"b_remix": r.randint(1, 127), "b_remix_rate": r.choice([2, 3])})
     P.update(fx)
-    P["b_x_gain"] = min(float(P.get("b_x_gain", -16)), -16.0)   # FX returns never above -16 dB by default
-    P["b_dly_gain"] = -60.0                                      # delay return at minimum (raise it by hand)
+    # every FX starts silent / off: raise it by hand (delay, xFx, Pulp at -60 dB; Dirt, EQ sat, Magic at 0)
+    P.update({"b_x_gain": -60.0, "b_dly_gain": -60.0, "b_pulp_gain": -60.0, "b_dirt": 0, "b_eq_amp": 0, "b_mag_mix": 0})
+    for voice in ("kick", "snare", "hat", "tie", "pod"):          # no drive on the sample voices
+        P["b_%s_sat" % voice] = 0
     return P, smp
 
 def lanes_to_samples(preset, genre, r, cx=1):
@@ -245,7 +381,7 @@ def lanes_to_samples(preset, genre, r, cx=1):
         files = sorted(it["file"][:-4] for it in manifest["modules"][module])
         n = len(files)
         main = preset["samples"][module]
-        alts = [f for f in files if f != main and any(genre in it["tags"] for it in manifest["modules"][module] if it["file"][:-4] == f)]
+        alts = [f for f in files if f != main and "Acid" not in f and any(genre in it["tags"] for it in manifest["modules"][module] if it["file"][:-4] == f)]
         r.shuffle(alts)
         choices = [main] + (alts[:2] if cx else [])
         for pat in preset["patterns"]:
@@ -266,8 +402,8 @@ def b_preset(genre, idx, r):
     cx = 0 if idx < 8 else 1                       # 8 simple + 8 intricate presets per genre
     if cx: length = r.choice([32, 64]) if genre in ("rominimal", "microhouse") else r.choice([16, 32, 32])
     else:  length = 32 if genre == "rominimal" and r.random() < 0.5 else 16
-    kit, smp = b_kit(genre, r, cx)
-    pats = b_patterns(genre, r, length, cx)
+    kit, smp = b_kit(genre, r, cx, idx)
+    pats = b_patterns(genre, r, length, cx, idx)
     lanes = {"b_len": length, "b_tie_len": length, "b_pod_len": length, "b_mod_len": length}
     if cx and genre in ("minimal", "rominimal", "microhouse", "techno", "deephouse") and r.random() < 0.7:
         lanes["b_pod_len"] = r.choice([12, 14, 20, 24, 28, 30]) if length >= 32 else r.choice([10, 12, 14])   # polymeter
@@ -285,14 +421,14 @@ def patch(role, genre, r):
     j = lambda a, b: round(r.uniform(a, b), 2)
     if role == "kick":
         # (freq lo, hi, decay lo, hi, distort lo, hi) - tuned on the reference styles
-        base = {"techno": (44, 50, 380, 700, 8, 30),      # long rumble-ready kicks (CVO, Alarico)
+        base = {"techno": (44, 50, 380, 700, 0, 6),      # long rumble-ready kicks (CVO, Alarico)
                 "minimal": (58, 72, 60, 170, 0, 6),       # tiny dry clicks (Jelinek, Farben)
-                "microhouse": (48, 60, 200, 450, 0, 8),   # soft round kicks (Villalobos, Zavor)
+                "microhouse": (48, 60, 200, 450, 0, 4),   # soft round kicks (Villalobos, Zavor)
                 "rominimal": (48, 56, 160, 380, 0, 4),    # round, short-medium (Barac, Sublee)
-                "house": (48, 54, 280, 520, 3, 15),       # warm 909 (Kerri Chandler)
-                "techhouse": (46, 56, 180, 450, 5, 25),   # raw 707/808/909 (Adonis, Saunderson)
-                "deephouse": (46, 54, 300, 600, 5, 18),   # dusty, saturated (Mr G, UGLH)
-                "breakbeat": (42, 50, 500, 1100, 2, 15)}[genre]   # electro 808 booms (Silicon Scally)
+                "house": (48, 54, 280, 520, 0, 4),       # warm 909 (Kerri Chandler)
+                "techhouse": (46, 56, 180, 450, 0, 5),   # raw 707/808/909 (Adonis, Saunderson)
+                "deephouse": (46, 54, 300, 600, 0, 4),   # dusty, saturated (Mr G, UGLH)
+                "breakbeat": (42, 50, 500, 1100, 0, 4)}[genre]   # electro 808 booms (Silicon Scally)
         return dict(osc_wave=0, osc_freq=j(base[0], base[1]), osc_atk=0, osc_dcy=j(base[2], base[3]), pm_mode=0,
                     pm_amt=j(18, 40), pm_rate=j(30, 45), n_mode=0, n_freq=j(1500, 4000), n_q=0.9, n_stereo=0, n_env=0,
                     n_atk=0, n_dcy=j(6, 20), mix=j(3, 12), dist=j(base[4], base[5]), eq_freq=j(70, 110), eq_gain=j(0, 3),
@@ -339,9 +475,9 @@ def patch(role, genre, r):
 ROLES = ["kick", "snare", "ch", "oh", "perc", "perc", "tone", "fx"]
 CH_NAMES = {"kick": "Kick", "snare": "Snare", "ch": "CH", "oh": "OH", "perc": "Perc", "tone": "Tone", "fx": "FX"}
 
-def a_pattern(genre, r, L, cx=1):
+def a_pattern(genre, r, L, cx=1, idx=0):
     """8 channels x L steps, each step digit: bit0 trig, bit1 accent, bit2 fill."""
-    b = b_patterns(genre, r, L, cx)[0 if not cx else r.randint(0, 3)]
+    b = b_patterns(genre, r, L, cx, idx)[0 if not cx else r.randint(0, 3)]
     tr = lambda st: [int(c) for c in st]
     k, sn, ch, oh = (tr(x) for x in b["trig"])
     perc1 = [1 if x > 0.001 else 0 for x in b["pod"]]
@@ -372,7 +508,7 @@ def a_preset(genre, idx, r):
              "minimal": (5, 20), "techno": (0, 8), "breakbeat": (0, 15)}[genre]
     return {"name": NAMES[genre][idx], "genre": LABEL[genre], "level": "Complex" if cx else "Simple", "bpm": r.randint(lo, hi),
             "names": [CH_NAMES[x] + ("" if x not in ("perc",) else str(1 + ROLES[:i].count("perc"))) for i, x in enumerate(ROLES)],
-            "kit": kit, "len": L, "steps": a_pattern(genre, r, L, cx), "swing": r.randint(*swing) if cx else r.randint(swing[0], (swing[0] + swing[1]) // 2), "fillrate": r.choice([3, 3, 4, 5])}
+            "kit": kit, "len": L, "steps": a_pattern(genre, r, L, cx, idx), "swing": r.randint(*swing) if cx else r.randint(swing[0], (swing[0] + swing[1]) // 2), "fillrate": r.choice([3, 3, 4, 5])}
 
 
 def main():

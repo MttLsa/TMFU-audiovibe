@@ -487,12 +487,14 @@ void LimeEngine::process (float* L, float* R, int n, const BlockTime& bt, const 
             {
                 const int step = (int) (k % len);
                 laneSteps[(size_t) uiIdx].store (step);
-                const float v = patterns[(size_t) currentPattern.load()].value[(size_t) laneIdx][(size_t) step].load();
+                auto& cp = patterns[(size_t) currentPattern.load()];
+                const float v = cp.value[(size_t) laneIdx][(size_t) step].load();
                 const int off = bt.toSample (ppq);
                 if (laneIdx == laneMod) push ({ off, -1, 0.0f, v, true });
                 else if (v > 0.001f)
                 {
-                    push ({ off, laneIdx == laneTie ? tTie : tPod, 1.0f, v, false });
+                    const float sv = juce::jlimit (0.0f, 1.0f, cp.vel[(size_t) laneIdx][(size_t) step].load());
+                    push ({ off, laneIdx == laneTie ? tTie : tPod, sv, v, false });
                 }
             });
         };
@@ -722,6 +724,12 @@ juce::ValueTree LimeEngine::saveState() const
             for (int st = 0; st < NS; ++st) v.add (juce::String (patterns[(size_t) pi].value[(size_t) l][(size_t) st].load(), 3));
             pt.setProperty ("v" + juce::String (l), v.joinIntoString (","), nullptr);
         }
+        for (int l = 0; l < 2; ++l)
+        {
+            juce::StringArray v;
+            for (int st = 0; st < NS; ++st) v.add (juce::String (patterns[(size_t) pi].vel[(size_t) l][(size_t) st].load(), 3));
+            pt.setProperty ("vel" + juce::String (l), v.joinIntoString (","), nullptr);
+        }
         vt.appendChild (pt, nullptr);
     }
     return vt;
@@ -755,6 +763,12 @@ void LimeEngine::loadState (const juce::ValueTree& vt)
             juce::StringArray v; v.addTokens (pt.getProperty ("v" + juce::String (l)).toString(), ",", {});
             for (int st = 0; st < NS; ++st)
                 patterns[(size_t) pi].value[(size_t) l][(size_t) st].store (st < v.size() ? jlimit (0.0f, 1.0f, v[st].getFloatValue()) : 0.0f);
+        }
+        for (int l = 0; l < 2; ++l)
+        {
+            juce::StringArray v; v.addTokens (pt.getProperty ("vel" + juce::String (l)).toString(), ",", {});
+            for (int st = 0; st < NS; ++st)
+                patterns[(size_t) pi].vel[(size_t) l][(size_t) st].store (st < v.size() ? jlimit (0.0f, 1.0f, v[st].getFloatValue()) : 1.0f);
         }
     }
 }

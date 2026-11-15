@@ -1,4 +1,4 @@
-# TWINBOX — groovebox ibrida VST3 / AU (v2.5)
+# TWINBOX — groovebox ibrida VST3 / AU (v2.6)
 
 Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in un solo plugin:
 
@@ -8,7 +8,7 @@ Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in 
 | **B — Groovebox** (in basso) | NI Reaktor **Limelite 1.3** | 6 voci (Kick, Snare, Hat, Tie, Pod, **Pulp**), sequencer A–D fino a **64 step** con catena di pattern e motore **Remix**, effetti Filter / EQ / Magic / Delay / xFx (23 modi) / Mix / Out |
 | **GLOBAL CONTROL** (a destra, comprimibile) | — | Crossfader A↔B, filtro master **Cutoff** (manopola grande) HP/BP/LP + **Resonance**, Master, Tempo / Run |
 
-📖 **Manuale d'uso completo (PDF):** [docs/Twinbox_Manuale_v2.5.0.pdf](docs/Twinbox_Manuale_v2.5.0.pdf)
+📖 **Manuale d'uso completo (PDF):** [docs/Twinbox_Manuale_v2.6.0.pdf](docs/Twinbox_Manuale_v2.6.0.pdf)
 
 ![Interfaccia principale](docs/gui_main.png)
 
@@ -36,6 +36,7 @@ Parametri, nomi e organizzazione vengono dall'analisi del file originale (dettag
 - Pattern A–D.
 - Griglia KICK / SNARE / C-HAT / O-HAT: clic = acceso/spento, tasto destro = accento (quadrato grande).
 - Corsie a valori TIE / POD / MOD a barre: 0 = spento, la linea centrale di TIE è la nota base.
+- **Velocity per step su TIE e POD**: la tacca bianca nella colonna è la velocity della nota. **Alt/Option + trascina** la imposta, **Alt + ↑/↓** la cambia di 5 % (con Shift di 25 %). Vale anche con VEL = wav, e viene salvata con pattern e preset.
 - 64 step in 4 pagine.
 - Catena di pattern: **ON**, lunghezza, 8 slot A–D, **LOCK**. Più COPY / PASTE.
 
@@ -92,7 +93,7 @@ Ogni sampler (Kick, Snare, Hat, Tie, Pod) ha la manopola **WAV** e un menu per s
 
 | Pulsante | Cartella |
 |---|---|
-| **TWB** | `Twinbox Kick`, `Twinbox Snare`, … (libreria di fabbrica v3: 48 kick, 48 snare/clap/rim, 32 coppie di hat, 48 Tie, 48 Pod, 6 per genere; installata al primo avvio e aggiornata automaticamente quando esce una nuova libreria, senza toccare i file tuoi) |
+| **TWB** | `Twinbox Kick`, `Twinbox Snare`, … (libreria di fabbrica v4: 48 kick puliti, 48 snare e clap morbidi, 32 coppie di hat, 48 Tie (bassi, accordi, pad, tom e conga intonati), 48 Pod (tom, conga, bongo, rimshot, shaker), 6 per genere; installata al primo avvio e aggiornata automaticamente quando esce una nuova libreria, senza toccare i file tuoi) |
 | **LEG** | `Legacy Kick`, `Legacy Snare`, … (campioni originali di Limelite, vedi sotto) |
 | **📁** | una cartella a tua scelta, impostabile per ogni modulo e salvata col progetto |
 
@@ -116,14 +117,14 @@ I campioni restano solo sul tuo computer.
 
 ## Preset di genere: 128 per sezione
 
-Ogni sezione ha un pulsante **BROWSER**. I preset sono 16 per ciascuno degli 8 generi: Techno, Minimal, Microhouse, Rominimal, House, Tech House, Deep House, Breakbeat. Per ogni genere 8 sono **SIMPLE** (groove essenziali) e 8 **COMPLEX** (poliritmi, ghost note, variazioni). Kit e suoni sono costruiti sui riferimenti di ogni genere: per esempio CVO e Alarico per la Techno, Jan Jelinek e Farben per la Minimal, Villalobos e Zavor per la Microhouse, Barac e Sublee per la Rominimal, Kerri Chandler per la House, Adonis e Kevin Saunderson per la Tech House, Mr G e DJ Koze per la Deep House, Silicon Scally per la Breakbeat (electro).
+Ogni sezione ha un pulsante **BROWSER**. I preset sono 16 per ciascuno degli 8 generi: Techno, Minimal, Microhouse, Rominimal, House, Tech House, Deep House, Breakbeat. Per ogni genere 8 sono **SIMPLE** (8 groove essenziali tutti diversi: per House, Techno e Tech House sono i groove classici del genere, cioè cassa in quattro, clap su 2 e 4, open hat in levare, shaker sui sedicesimi, hat a sedicesimi con accenti, percussioni 3+3+2, tom fra le casse, rullata di snare come fill) e 8 **COMPLEX** (poliritmi, ghost note, variazioni). Kit e suoni sono costruiti sui riferimenti di ogni genere: per esempio CVO e Alarico per la Techno, Jan Jelinek e Farben per la Minimal, Villalobos e Zavor per la Microhouse, Barac e Sublee per la Rominimal, Kerri Chandler per la House, Adonis e Kevin Saunderson per la Tech House, Mr G e DJ Koze per la Deep House, Silicon Scally per la Breakbeat (electro).
 
 - **Sezione A**: kit di 8 drum patch con nomi + pattern (fino a 64 step), swing e fill rate. Il pattern viene caricato nello slot corrente.
 - **Sezione B**: snapshot completo (campioni, voci, effetti, lunghezze, swing, Remix) + pattern A–D.
 - Opzioni: caricare solo il kit, solo i pattern, e impostare il tempo.
-- I knob GAIN di Delay e xFx arrivano al massimo a 0 dB. Il Delay parte da −60 dB (al minimo) in ogni preset, xFx da −16 dB o meno, così il kit dry resta in primo piano.
+- I knob GAIN di Delay e xFx arrivano al massimo a 0 dB. In ogni preset (e di default) **tutti gli effetti partono spenti**: Delay, xFx e Pulp a −60 dB, Dirt, EQ AMP e Magic a 0. Li alzi tu a mano.
+- Nessun preset usa drive/saturazione sulle voci. Nella Tech House l'acid compare solo in 2 preset su 16.
 - Caricare un preset non cambia mai lo stato acceso/spento dei moduli (Pulp compreso).
-- I livelli degli effetti dei preset B sono calibrati: ogni effetto (Delay, xFx, Magic) aggiunge al massimo **+2,5 dB** RMS rispetto al segnale dry. Il ricalcolo si fa con `TwinboxTest <out> "" calibrate resources/presets_B.json resources/presets_B.json`.
 
 Il Rominimal segue i riferimenti indicati (Villalobos, Bauch, Barac, Ohm Hourani, Sublee, Zavor, 118–130 BPM):
 - groove lunghi da 32 o 64 step;
@@ -158,7 +159,7 @@ JUCE 8.0.4 viene scaricato in automatico.
 Il workflow `.github/workflows/build.yml`:
 - compila le tre piattaforme;
 - su macOS verifica l'AU con `auval`;
-- produce l'installer **`Twinbox-2.5.0-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
+- produce l'installer **`Twinbox-2.6.0-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
 
 Gli script che generano campioni e preset (`resources/`) sono `tools/gen_samples.py` e `tools/gen_presets.py`.
 
