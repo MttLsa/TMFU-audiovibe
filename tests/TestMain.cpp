@@ -351,6 +351,36 @@ int main (int argc, char** argv)
                 + ", state: " + (stateOk ? "ok" : "lost"));
     }
 
+    // ---------------------------------------------------------------- Hat filter type LP / BP / HP, Sat on Hat and Pod
+    {
+        auto hit = [] (int voice, int target, std::function<void (TwinboxProcessor&)> cfg) -> std::pair<double, double>
+        {
+            TwinboxProcessor p; waitLibrary (p);
+            for (int v = 0; v < params::numLimeVoices; ++v) setP (p, params::b (v, params::lv::on), v == voice ? 1.0f : 0.0f);
+            setP (p, params::gXfade, 100); setP (p, params::bFxMix, 0);
+            cfg (p);
+            p.setPlayConfigDetails (0, 2, 48000, 512); p.prepareToPlay (48000, 512);
+            p.lime.audition (target, 1.0f);
+            AudioBuffer<float> buf (2, 512); MidiBuffer m; double e = 0, hf = 0; float prev = 0;
+            for (int blk = 0; blk < 40; ++blk)
+            {
+                buf.clear(); p.processBlock (buf, m);
+                for (int i = 0; i < 512; ++i) { const float x = buf.getSample (0, i); e += x * x; hf += (x - prev) * (x - prev); prev = x; }
+            }
+            return { std::sqrt (e), hf / jmax (1.0e-12, e) };      // energy, brightness (high-frequency ratio)
+        };
+        using namespace params;
+        auto hatMode = [&] (int mode, float hz) { return hit (hat, LimeEngine::tCHat, [=] (TwinboxProcessor& p) { setP (p, b (hat, lv::ft), (float) mode); setP (p, b (hat, lv::cut), hz); }); };
+        const auto lp = hatMode (0, 600.0f), bp = hatMode (1, 3000.0f), hp = hatMode (2, 6000.0f), def = hatMode (2, 20.0f);
+        const bool filtOk = lp.second < bp.second && bp.second < hp.second && def.first > 0.0;
+        auto satOf = [&] (int voice, int target, float sat) { return hit (voice, target, [=] (TwinboxProcessor& p) { setP (p, b (voice, lv::sat), sat); setP (p, b (voice, lv::gain), 0.0f); }); };
+        const auto h0 = satOf (hat, LimeEngine::tCHat, 0), h1 = satOf (hat, LimeEngine::tCHat, 80), p0 = satOf (pod, LimeEngine::tPod, 0), p1 = satOf (pod, LimeEngine::tPod, 80);
+        const bool satOk = h1.first > h0.first * 1.05 && p1.first > p0.first * 1.05;
+        report ("Hat filter LP/BP/HP + Sat on Hat/Pod", filtOk && satOk,
+                "brightness LP " + String (lp.second, 4) + " < BP " + String (bp.second, 4) + " < HP " + String (hp.second, 4)
+                + "; energy with Sat 80 %: hat x" + String (h1.first / jmax (1e-9, h0.first), 2) + ", pod x" + String (p1.first / jmax (1e-9, p0.first), 2));
+    }
+
     // ---------------------------------------------------------------- per-track nudge: measured onset of a hit on beat 2
     {
         auto onsetMs = [] (bool sectionB, float nudgeMs) -> double

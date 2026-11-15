@@ -263,9 +263,9 @@ void LimeEngine::renderSampleVoice (int voice, Voice& v, float* dl, float* dr, i
     const float res = G (k[kRes], 0);
     const double q = 0.55 + res * 0.01 * 9.0;
     int fmode = 0;
-    if (voice == snare || voice == tie || voice == pod) fmode = (int) G (k[kFt], 0);
-    if (voice == hat) fmode = 2;
-    const bool useFilter = voice == hat ? v.cut > 25.0f : (v.cut < 19500.0f || res > 1.0f);
+    if (voice == snare || voice == tie || voice == pod || voice == hat) fmode = (int) G (k[kFt], voice == hat ? 2.0f : 0.0f);
+    // LP: active below 19.5 kHz, HP: active above 25 Hz, BP: always (or whenever there is resonance)
+    const bool useFilter = res > 1.0f || (fmode == 0 ? v.cut < 19500.0f : (fmode == 2 ? v.cut > 25.0f : true));
     if (useFilter) { v.flt[0].set (v.cut, sr, q); v.flt[1].set (v.cut, sr, q); }
     const bool lowcut = voice == kick && G (k[kLo], 0) > 0.5f;
     if (lowcut) { v.hp[0].set (80.0, sr, 0.8); v.hp[1].set (80.0, sr, 0.8); }
@@ -275,7 +275,7 @@ void LimeEngine::renderSampleVoice (int voice, Voice& v, float* dl, float* dr, i
     const float pw = std::pow (2.0f, -shp * 1.6f);
     const float drive = 1.0f + sat * 12.0f, satNorm = 1.0f / std::tanh (drive);
     const float noise = voice == tie ? G (k[kNoise], 0) * 0.01f : 0.0f;
-    const float tieSat = voice == tie ? G (k[kSat], 0) * 0.01f : 0.0f;
+    const float tieSat = (voice == tie || voice == hat || voice == pod) ? G (k[kSat], 0) * 0.01f : 0.0f;   // soft saturation
     const double portCoef = voice == tie ? 1.0 - std::exp (-1.0 / (sr * (0.002 + std::pow (G (k[kPort], 0) * 0.01, 2.0) * 0.6))) : 1.0;
     const double fmRatio = voice == tie ? std::pow (2.0, G (k[kMp], 12) / 12.0) : 1.0;
     if (v.manualPitch && v.set != nullptr && v.smpIndex >= 0 && v.smpIndex < v.set->size())

@@ -1,4 +1,4 @@
-# TWINBOX — groovebox ibrida VST3 / AU (v2.8)
+# TWINBOX — groovebox ibrida VST3 / AU (v2.9)
 
 Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in un solo plugin:
 
@@ -8,7 +8,7 @@ Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in 
 | **B — Groovebox** (in basso) | NI Reaktor **Limelite 1.3** | 6 voci (Kick, Snare, Hat, Tie, Pod, **Pulp**), sequencer A–D fino a **64 step** con catena di pattern e motore **Remix**, effetti Filter / EQ / Magic / Delay / xFx (23 modi) / Mix / Out |
 | **GLOBAL CONTROL** (a destra, comprimibile) | — | Crossfader A↔B, filtro master **Cutoff** (manopola grande) HP/BP/LP + **Resonance**, Master, Tempo / Run |
 
-📖 **Manuale d'uso completo (PDF):** [docs/Twinbox_Manuale_v2.8.0.pdf](docs/Twinbox_Manuale_v2.8.0.pdf)
+📖 **Manuale d'uso completo (PDF):** [docs/Twinbox_Manuale_v2.9.0.pdf](docs/Twinbox_Manuale_v2.9.0.pdf)
 
 ![Interfaccia principale](docs/gui_main.png)
 
@@ -60,9 +60,9 @@ Parametri, nomi e organizzazione vengono dall'analisi del file originale (dettag
 |---|---|
 | **Kick** | NUDGE, GAIN, ACC, PAN, **WAV** (selezione campione), TUNE, ST, H, D, SAT, SHP, SM, MOD (`-- / wav / tune / cut`), LO (low cut), CUT, RES |
 | **Snare** | come il Kick, con filtro LP/BP/HP al posto del low cut, MOD anche su `flam`, e il controllo FLAM |
-| **Hat** | GAIN, ACC, PAN, TUNE, CD, OD, LINK, MOD, CUT (passa-alto), RES. Un solo campione; il partner "open" è opzionale |
+| **Hat** | GAIN, ACC, PAN, TUNE, CD, OD, LINK, **SAT**, MOD, filtro **LP/BP/HP** (default HP), CUT, RES. Un solo campione; il partner "open" è opzionale |
 | **Tie** | voce tonale: GAIN, V>A, PAN, TUNE, PORT, ST, A, D, FM, MP, NOISE, SAT, VEL (`wav / tune / att / dcy / st / fm / cut`), filtro LP/BP/HP, CUT, RES |
-| **Pod** | GAIN, V>A, PAN, TUNE, ST, A, D, ZAP, VEL (`wav / tune / att / dcy / zap / cut`), filtro, CUT, RES |
+| **Pod** | GAIN, V>A, PAN, TUNE, ST, A, D, ZAP, **SAT**, VEL (`wav / tune / att / dcy / zap / cut`), filtro, CUT, RES |
 | **Pulp** | oscillatore che segue l'intonazione: TUNE, PORT, GAIN, PAN, **sorgente d'ingresso** (Kick / Snare / Hat / Tie / Pod / All), **IN GAIN**, LO, HI, D, OSC (Sine / Input / Noise), filtro comb COMB, FB, FREQ, FM, CUT. Pulp viene riattivato dai colpi della sorgente scelta e ne segue l'altezza |
 
 **Effetti**
@@ -164,7 +164,7 @@ JUCE 8.0.4 viene scaricato in automatico.
 Il workflow `.github/workflows/build.yml`:
 - compila le tre piattaforme;
 - su macOS verifica l'AU con `auval`;
-- produce l'installer **`Twinbox-2.8.0-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
+- produce l'installer **`Twinbox-2.9.0-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
 
 Gli script che generano campioni e preset (`resources/`) sono `tools/gen_samples.py` e `tools/gen_presets.py`.
 

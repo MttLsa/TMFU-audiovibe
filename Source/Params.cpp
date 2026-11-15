@@ -175,10 +175,12 @@ Layout createLayout()
         if (v == pod) addChoice (l, id (lv::vel), P + "Vel Dest", StringArray { "--", "wav", "tune", "att", "dcy", "zap", "cut" }, 0);
         if (v == kick) addBool (l, id (lv::lo), P + "Low Cut", false);
         if (v == snare || v == tie || v == pod) addChoice (l, id (lv::ft), P + "Filter Type", StringArray { "LP", "BP", "HP" }, 0);
+        if (v == hat) addChoice (l, id (lv::ft), P + "Filter Type", StringArray { "LP", "BP", "HP" }, 2);          // HP by default (as before)
+        if (v == hat || v == pod) addFloat (l, id (lv::sat), P + "Saturation", pctR, 0.f, pctText);
         if (v == snare) addFloat (l, id (lv::flam), P + "Flam", pctR, 0.f, pctText);
         if (sampler)
         {
-            if (v == hat) addFloat (l, id (lv::cut), P + "Cutoff (HP)", logRange (20.f, 16000.f, 1000.f), 20.f, hzText);
+            if (v == hat) addFloat (l, id (lv::cut), P + "Cutoff", logRange (20.f, 20000.f, 1000.f), 20.f, hzText);
             else          addFloat (l, id (lv::cut), P + "Cutoff", logRange (20.f, 20000.f, 1500.f), 20000.f, hzText);
             addFloat (l, id (lv::res), P + "Resonance", pctR, 0.f, pctText);
         }

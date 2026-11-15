@@ -747,6 +747,29 @@ LimeModulePanel::LimeModulePanel (TwinboxProcessor& p, int v, bool b2) : Control
     nudge = std::make_unique<NudgeBox> (theme::accentB);              // per-module timing offset
     nudge->attach (p.apvts, b (v, lv::nudge));
     addAndMakeVisible (*nudge);
+    if (v == hat)
+    {
+        // switching the Hat filter type from the UI moves an unusable cutoff to a sensible one (LP at 20 Hz would be silent)
+        if (auto* ft = p.apvts.getParameter (b (v, lv::ft)))
+        {
+            ftWatch = std::make_unique<ParameterAttachment> (*ft, [this, &p] (float m)
+            {
+                const int mode = roundToInt (m);
+                if (lastFt >= 0 && mode != lastFt)
+                    if (auto* c = p.apvts.getParameter (b (hat, lv::cut)))
+                    {
+                        const float hz = c->convertFrom0to1 (c->getValue());
+                        float target = -1.0f;
+                        if (mode == 0 && hz < 200.0f) target = 20000.0f;
+                        else if (mode == 2 && hz > 15000.0f) target = 20.0f;
+                        else if (mode == 1 && (hz < 200.0f || hz > 15000.0f)) target = 6000.0f;
+                        if (target > 0.0f) c->setValueNotifyingHost (c->convertTo0to1 (target));
+                    }
+                lastFt = mode;
+            });
+            ftWatch->sendInitialUpdate();
+        }
+    }
     if (v == tie || v == pod)
     {
         scaleBtn = std::make_unique<Toggle> ("SCALE", theme::accentB);
@@ -782,8 +805,8 @@ LimeModulePanel::LimeModulePanel (TwinboxProcessor& p, int v, bool b2) : Control
             break;
         case hat:
             row ({ K (lv::gain, "Gain"), K (lv::acc, "Acc"), K (lv::pan, "Pan"), W, K (lv::tune, "Tune") });
-            row ({ K (lv::cd, "CD"), K (lv::od, "OD"), T (lv::link, "Link"), nullptr, nullptr });
-            row ({ combo (b (v, lv::mod)), K (lv::cut, "Cut"), K (lv::res, "Res"), nullptr });
+            row ({ K (lv::cd, "CD"), K (lv::od, "OD"), T (lv::link, "Link"), K (lv::sat, "Sat"), nullptr });
+            row ({ combo (b (v, lv::mod)), seg (b (v, lv::ft)), K (lv::cut, "Cut"), K (lv::res, "Res"), nullptr });
             break;
         case tie:
             row ({ K (lv::gain, "Gain"), K (lv::vamt, "V>A"), K (lv::pan, "Pan"), W, K (lv::tune, "Tune"), K (lv::port, "Port") });
@@ -792,7 +815,7 @@ LimeModulePanel::LimeModulePanel (TwinboxProcessor& p, int v, bool b2) : Control
             break;
         default: // pod
             row ({ K (lv::gain, "Gain"), K (lv::vamt, "V>A"), K (lv::pan, "Pan"), W, K (lv::tune, "Tune"), K (lv::st, "St") });
-            row ({ K (lv::att, "A"), K (lv::dcy, "D"), K (lv::zap, "Zap"), nullptr, nullptr, nullptr });
+            row ({ K (lv::att, "A"), K (lv::dcy, "D"), K (lv::zap, "Zap"), K (lv::sat, "Sat"), nullptr, nullptr });
             row ({ combo (b (v, lv::vel)), seg (b (v, lv::ft)), K (lv::cut, "Cut"), K (lv::res, "Res"), nullptr, nullptr });
             break;
     }
