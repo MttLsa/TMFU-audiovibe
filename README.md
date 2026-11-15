@@ -159,6 +159,12 @@ Il Rominimal segue i riferimenti indicati (Villalobos, Bauch, Barac, Ohm Hourani
 - Note MIDI della sezione A: 36–43 → canali A1–A8.
 - Note MIDI della sezione B: 48–54 → Kick, Snare, Hat chiuso, Hat aperto, Tie, Pod, Pulp.
 
+## Se l'AU non compare
+
+- L'installer mette l'AU in `/Library/Audio/Plug-Ins/Components/Twinbox.component` e il VST3 in `/Library/Audio/Plug-Ins/VST3/Twinbox.vst3`. Nella finestra "Tipo di installazione" (Personalizza) entrambe le voci devono essere spuntate.
+- Se hai copie vecchie di `Twinbox.component` in altre cartelle (per esempio `~/Library/Audio/Plug-Ins/Components`), cancellale.
+- Ableton Live (anche Live 9): Preferenze → File/Cartelle → **Usa Audio Units** attivo, poi **Rescan** (o riavvia Live). Logic: Plug-in Manager → *Reset & Rescan*.
+
 ## Compilazione
 
 ```bash
