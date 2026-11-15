@@ -2,6 +2,8 @@
 
 Mixer di loop e campioni a 12 moduli, nello stile di Twinbox con i colori di un MPC 60 vintage.
 
+📖 **Manuale d'uso (PDF):** [docs/Groovulation_Manuale_v1.1.7.pdf](docs/Groovulation_Manuale_v1.1.7.pdf)
+
 | Sezione | Moduli |
 |---|---|
 | **DRUMS** | 1 Kick (file con kick / bd / bass drum / cassa nel nome), 2 Snare/Clap, 3 Bottom (tom e suoni medio-bassi senza cassa forte, o "no kick"), 4 Top, 5 Percussion |
