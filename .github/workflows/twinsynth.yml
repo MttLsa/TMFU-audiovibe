@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-15          # AU + VST3 + Standalone, universal binary (Intel + Apple Silicon)
+    runs-on: macos-15-intel    # AU + VST3 + Standalone, universal binary (Intel + Apple Silicon); arm64 runners unavailable
     steps:
       - uses: actions/checkout@v5
       - name: Configure
