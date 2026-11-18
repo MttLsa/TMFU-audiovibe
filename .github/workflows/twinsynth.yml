@@ -4,6 +4,8 @@ on:
   push:
     branches: [ main ]
     paths: [ "Twinsynth/**", ".github/workflows/twinsynth.yml" ]
+  pull_request:
+    paths: [ "Twinsynth/**", ".github/workflows/twinsynth.yml" ]
   workflow_dispatch:
 
 jobs:
