@@ -1,0 +1,30 @@
+name: twinsynth
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ "Twinsynth/**", ".github/workflows/twinsynth.yml" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15          # AU + VST3 + Standalone, universal binary (Intel + Apple Silicon)
+    steps:
+      - uses: actions/checkout@v5
+      - name: Configure
+        run: cmake -S Twinsynth -B Twinsynth/build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build Twinsynth/build --config Release --parallel
+      - name: Validate AU
+        run: |
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R Twinsynth/build/Twinsynth_artefacts/Release/AU/Twinsynth.component ~/Library/Audio/Plug-Ins/Components/
+          killall -9 AudioComponentRegistrar || true
+          auval -v aumu Twsy Twnb
+      - uses: actions/upload-artifact@v5
+        with:
+          name: Twinsynth-macOS
+          path: |
+            Twinsynth/build/Twinsynth_artefacts/Release/VST3
+            Twinsynth/build/Twinsynth_artefacts/Release/AU
+            Twinsynth/build/Twinsynth_artefacts/Release/Standalone
