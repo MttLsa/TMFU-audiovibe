@@ -127,7 +127,7 @@ public:
 private:
     void timerCallback() override;
     TwinboxProcessor& proc; int module;
-    juce::Slider slider;
+    FineSlider slider;          // sample select: drag or arrows step through the samples
     juce::String name;
     int size = 0;
 };

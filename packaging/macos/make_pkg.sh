@@ -46,7 +46,7 @@ pkgbuild --root "$OUT/vst3" --component-plist "$OUT/vst3-components.plist" \
 cat > "$OUT/distribution.xml" <<XML
 <?xml version="1.0" encoding="utf-8"?>
 <installer-gui-script minSpecVersion="1">
-  <title>Twinbox ${VERSION}</title>
+  <title>TMFU audiovibe - Twinbox ${VERSION}</title>
   <options customize="allow" require-scripts="false" hostArchitectures="x86_64,arm64"/>
   <domains enable_localSystem="true"/>
   <choices-outline>

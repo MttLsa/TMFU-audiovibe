@@ -639,6 +639,7 @@ WavKnob::WavKnob (TwinboxProcessor& p, int m, Colour accent) : proc (p), module 
     slider.setColour (Slider::rotarySliderFillColourId, accent);
     slider.setRotaryParameters (MathConstants<float>::pi * 1.2f, MathConstants<float>::pi * 2.8f, true);
     slider.setMouseDragSensitivity (300);
+    slider.dragPixels = 300;                                  // sample select keeps a coarse drag (one sample per few pixels)
     slider.setRange (0, 1, 1);
     slider.onValueChange = [this]
     {
@@ -647,7 +648,7 @@ WavKnob::WavKnob (TwinboxProcessor& p, int m, Colour accent) : proc (p), module 
     slider.onDragStart = [this] { proc.apvts.getParameter (b (module, lv::wav))->beginChangeGesture(); };
     slider.onDragEnd   = [this] { proc.apvts.getParameter (b (module, lv::wav))->endChangeGesture(); };
     addAndMakeVisible (slider);
-    setTooltip ("WAV: sample select (steps through the samples of the current folder)");
+    setTooltip ("WAV: sample select (steps through the samples of the current folder). Click it, then use the arrow keys");
     startTimerHz (15);
     timerCallback();
 }
@@ -684,7 +685,11 @@ void WavKnob::paint (Graphics& g)
     g.setFont (theme::font (fh));
     g.setColour (theme::textDim);
     g.drawFittedText ("Wav", 0, 0, getWidth(), capH, Justification::centred, 1, 0.7f);
-    g.setColour (slider.isMouseOverOrDragging() ? slider.findColour (Slider::rotarySliderFillColourId) : theme::text);
+    g.setColour (slider.isMouseOverOrDragging() || slider.hasKeyboardFocus (false) ? slider.findColour (Slider::rotarySliderFillColourId) : theme::text);
+    if (slider.hasKeyboardFocus (false))                      // keyboard focus: the arrows step through the samples
+    {
+        g.drawRoundedRectangle (slider.getBounds().toFloat().expanded (2.0f), 4.0f, 1.2f);
+    }
     // show the sample name without the numeric prefix ("K03 Warehouse 9" -> "Warehouse 9")
     String shown = name;
     if (shown.length() > 4 && CharacterFunctions::isDigit (shown[1]) && shown[3] == ' ') shown = shown.substring (4);

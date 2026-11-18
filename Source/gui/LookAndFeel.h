@@ -53,8 +53,10 @@ public:
 // -------------------------------------------------------------------------------------
 //  Knob: rotary slider + caption + value readout. Re-attachable to another parameter.
 // -------------------------------------------------------------------------------------
-// Rotary slider with fine resolution (600 px for the whole range, Shift = 4x finer) and keyboard control:
-// click a knob, then Up / Right = increase, Down / Left = decrease (1 %; Shift = 0.1 %; discrete values: one step).
+// Rotary slider with fine resolution (1000 px for the whole range, Shift = 4x finer) and keyboard control:
+// click a knob, then Up / Right = increase, Down / Left = decrease:
+//  - stepped parameters (choices, integers, sample select): one step;  - "unit" parameters (Pan): 1 unit;
+//  - continuous parameters (cutoff, gain, sat, ...): 0.2 % of the range (Shift: 0.02 %).
 class FineSlider : public juce::Slider
 {
 public:
@@ -63,7 +65,8 @@ public:
     bool keyPressed (const juce::KeyPress&) override;
     void focusGained (FocusChangeType) override { repaintParent(); }
     void focusLost (FocusChangeType) override { repaintParent(); }
-    int dragPixels = 600;
+    int dragPixels = 1000;
+    double unitStep = 0.0;     // > 0: arrows move by this amount in natural units (e.g. 1 for Pan)
 private:
     void repaintParent() { if (auto* p = getParentComponent()) p->repaint(); }
 };
