@@ -252,6 +252,7 @@ private:
     Knob levelB { "Level B", theme::accentB };
     std::unique_ptr<NormButton> normBtn;
     std::unique_ptr<MidiTargetButton> midiBtn;
+    Toggle seqBtn { "SEQ", theme::accentB };
     juce::String status;
     std::unique_ptr<juce::FileChooser> chooser;
 

@@ -1081,6 +1081,9 @@ LimeSection::LimeSection (TwinboxProcessor& p) : proc (p)
     normBtn = std::make_unique<NormButton> (p, 1, theme::accentB);
     midiBtn = std::make_unique<MidiTargetButton> (p, 1, theme::accentB);
     addAndMakeVisible (*normBtn); addAndMakeVisible (*midiBtn);
+    seqBtn.attach (p.apvts, bSeq);
+    seqBtn.setTooltip ("SEQ: sequencer of Section B on / off. Off: the patterns keep running silently, the MIDI keyboard still plays.");
+    addAndMakeVisible (seqBtn);
 
     seq = std::make_unique<LimeSeqPanel> (p, false);
     lfo = std::make_unique<LfoPanel> (p, 1);
@@ -1186,6 +1189,7 @@ void LimeSection::resized()
     header.removeFromRight (10);
     normBtn->setBounds (header.removeFromRight (58).withSizeKeepingCentre (54, 24));
     midiBtn->setBounds (header.removeFromRight (58).withSizeKeepingCentre (54, 24));
+    seqBtn.setBounds (header.removeFromRight (58).withSizeKeepingCentre (54, 24));
     r.removeFromTop (4);
     const int W = r.getWidth();
 

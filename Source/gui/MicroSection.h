@@ -117,6 +117,7 @@ private:
     Knob morph { "Morph", theme::accentA }, level { "Level A", theme::accentA };
     std::unique_ptr<NormButton> normBtn;
     std::unique_ptr<MidiTargetButton> midiBtn;
+    Toggle seqBtn { "SEQ", theme::accentA };
 
     // channel list
     struct ChannelRow : public juce::Component

@@ -115,6 +115,8 @@ namespace params
     inline const char* bDirt = "b_dirt", *bGain = "b_gain", *bTune = "b_tune";
     // NORM buttons: output normaliser of each section (A and B)
     inline const char* aNorm = "a_norm", *bNorm = "b_norm";
+    // SEQ buttons: sequencer of each section on / off (independent of MIDI)
+    inline const char* aSeq = "a_seq", *bSeq = "b_seq";
     // FILTER
     inline const char* bFltCut = "b_flt_cut", *bFltTrk = "b_flt_trk", *bFltSm = "b_flt_sm", *bFltMod = "b_flt_mod";
     // EQ

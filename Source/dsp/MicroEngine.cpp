@@ -185,6 +185,7 @@ void MicroEngine::bind (ParamSource& apvts)
     pFillRate = apvts.get (aFillRate);
     pFill     = apvts.get (aFill);
     pLevel    = apvts.get (aLevel);
+    pSeq      = apvts.get (aSeq);
 }
 
 void MicroEngine::prepare (double sr)
@@ -254,6 +255,7 @@ void MicroEngine::process (float* L, float* R, int numSamples, const BlockTime& 
     else
     {
         const double swing = pSwing->load() * 0.01;
+        const bool seqOn = pSeq == nullptr || pSeq->load() > 0.5f;       // SEQ off: the pattern runs silently (MIDI still plays)
         forEachOnset (btl, 0.25, swing, [&] (long long k, double ppq)
         {
             int cur = currentPattern.load();
@@ -276,7 +278,7 @@ void MicroEngine::process (float* L, float* R, int numSamples, const BlockTime& 
             {
                 if (patch[(size_t) ch].mute) continue;
                 const uint8_t f = pat.steps[(size_t) ch][(size_t) step].load();
-                if ((f & trig) || (fillOn && (f & fill)))
+                if (seqOn && ((f & trig) || (fillOn && (f & fill))))
                 {
                     const double nudge = juce::jlimit (-kNudgeMaxMs, kNudgeMaxMs, (double) pNudge[(size_t) ch]->load());
                     queue.add (ppq + msToPpq (nudge, bt.bpm), { 0, ch, (f & accent) ? 1.0f : 0.5f });

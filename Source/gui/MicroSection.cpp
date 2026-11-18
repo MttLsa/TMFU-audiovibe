@@ -412,6 +412,9 @@ MicroSection::MicroSection (TwinboxProcessor& p) : proc (p), patch (p), grid (p,
     normBtn = std::make_unique<NormButton> (proc, 0, theme::accentA);
     midiBtn = std::make_unique<MidiTargetButton> (proc, 0, theme::accentA);
     addAndMakeVisible (*normBtn); addAndMakeVisible (*midiBtn);
+    seqBtn.attach (proc.apvts, aSeq);
+    seqBtn.setTooltip ("SEQ: sequencer of Section A on / off. Off: the patterns keep running silently, the MIDI keyboard still plays.");
+    addAndMakeVisible (seqBtn);
 
     for (int i = 0; i < numMicroChannels; ++i) addAndMakeVisible (rows.add (new ChannelRow (*this, i)));
 
@@ -585,6 +588,7 @@ void MicroSection::resized()
     header.removeFromRight (10);
     normBtn->setBounds (header.removeFromRight (58).withTrimmedTop (14).reduced (2, 2));
     midiBtn->setBounds (header.removeFromRight (58).withTrimmedTop (14).reduced (2, 2));
+    seqBtn.setBounds (header.removeFromRight (58).withTrimmedTop (14).reduced (2, 2));
     header.removeFromRight (16);
     storeR.setBounds (header.removeFromRight (70).withTrimmedTop (14).reduced (2, 2));
     morph.setBounds (header.removeFromRight (64).expanded (0, 4));

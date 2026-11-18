@@ -153,6 +153,7 @@ private:
     };
     std::array<ChannelParams, NC> cp;
     std::array<std::atomic<float>*, NC> pNudge {};
+    std::atomic<float>* pSeq = nullptr;
     LookaheadWindow look;
     NudgeQueue<TriggerEvent> queue;
     std::atomic<float>* pPattern = nullptr, *pSwing = nullptr, *pFillRate = nullptr, *pFill = nullptr, *pLevel = nullptr;

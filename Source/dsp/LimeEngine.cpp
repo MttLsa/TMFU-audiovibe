@@ -361,8 +361,10 @@ void LimeEngine::process (float* L, float* R, int n, const BlockTime& bt, const 
     const BlockTime btl = look.next (bt, msToPpq (kNudgeMaxMs + 1.0, bt.bpm), reset);   // look-ahead for negative nudge
     if (reset || ! bt.playing) queue.clear();
     // queue a sequencer event at its onset + the module nudge (Mod lane values are not nudged)
+    const bool seqOn = p (bSeq)->load() > 0.5f;              // SEQ off: no sequencer notes (Mod lane and MIDI still work)
     auto qpush = [&] (double ppq, Ev e)
     {
+        if (! seqOn && ! e.isMod) return;
         static const int voiceOfTarget[] { kick, snare, hat, hat, tie, pod };
         double ms = 0.0;
         if (! e.isMod && e.target >= 0 && e.target < numTargets)

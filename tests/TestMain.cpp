@@ -493,6 +493,17 @@ int main (int argc, char** argv)
                 "MIDI A: A hits " + String (a.first) + ", B hits " + String (a.second) + "; MIDI B: A hits " + String (b.first) + ", B hits " + String (b.second)
                 + " (note 43 on B = Snare, the row repeats every 6 keys)");
 
+        // SEQ off: the sequencer stops playing, the MIDI keyboard still plays
+        {
+            TwinboxProcessor p; waitLibrary (p);
+            setP (p, params::aSeq, 0); setP (p, params::bSeq, 0); setP (p, params::gRun, 1); setP (p, params::gMidiTarget, 1);
+            p.setPlayConfigDetails (0, 2, 48000, 512); p.prepareToPlay (48000, 512);
+            AudioBuffer<float> buf (2, 512); MidiBuffer m;
+            for (int i = 0; i < 200; ++i) { m.clear(); if (i == 100) m.addEvent (MidiMessage::noteOn (1, 36, (uint8) 100), 0); p.processBlock (buf, m); }
+            int aHits = 0; for (int c = 0; c < 8; ++c) aHits += p.micro.hitCount (c);
+            int bHits = 0; for (int t = 0; t < LimeEngine::numTargets; ++t) bHits += p.lime.hitCount (t);
+            report ("SEQ off (MIDI still plays)", aHits == 0 && bHits == 1, "2 s of playback with SEQ off: A hits " + String (aHits) + ", B hits " + String (bHits) + " (1 = the MIDI note)");
+        }
         OutputNorm nrm; nrm.prepare (48000);
         std::vector<float> L (48000), R (48000);
         double inR = 0, outR = 0; float outPk = 0;

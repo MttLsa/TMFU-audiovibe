@@ -127,6 +127,7 @@ AudioProcessorValueTreeState::ParameterLayout createLayout()
     addFloat  (l, aMorph, "A Morph", NormalisableRange<float> (0.f, 1.f), 0.f,
                [] (float v, int) { return String (roundToInt (v * 100)) + " %"; });
     addBool   (l, aNorm, "A NORM (output normaliser)", false);
+    addBool   (l, aSeq,  "A SEQ (sequencer on)", true);
     addFloat  (l, aLevel, "A Master", NormalisableRange<float> (-60.f, 6.f), 0.f, dbText);
 
     // ===================================================================== SECTION B (Limelite 1.3)
@@ -223,6 +224,7 @@ AudioProcessorValueTreeState::ParameterLayout createLayout()
     addFloat  (l, bGain, "B Gain (Master)", NormalisableRange<float> (-60.f, 6.f), 0.f, dbText);
     addFloat  (l, bTune, "B Tune", NormalisableRange<float> (-12.f, 12.f), 0.f, stText);
     addBool   (l, bNorm, "B NORM (output normaliser)", false);
+    addBool   (l, bSeq,  "B SEQ (sequencer on)", true);
 
     addFloat  (l, bFltCut, "B Filter Cutoff", logRange (40.f, 20000.f, 1500.f), 20000.f, hzText);
     addFloat  (l, bFltTrk, "B Filter Track", bip, 0.f, pctText);
@@ -288,7 +290,7 @@ AudioProcessorValueTreeState::ParameterLayout createLayout()
         {
             const String id = p->getParameterID(), name = p->getName (64);
             const bool inSection = sec == 0 ? (id.startsWith ("a") && ! id.startsWith ("a_lfo")) : (id.startsWith ("b_") && ! id.startsWith ("b_lfo"));
-            if (! inSection || id == aMorph) continue;
+            if (! inSection || id == aMorph || id == aSeq || id == bSeq) continue;
             String group;
             if (sec == 0)
                 group = id[1] >= '1' && id[1] <= '8' ? "Channel " + String::charToString (id[1]) : String ("Section A");

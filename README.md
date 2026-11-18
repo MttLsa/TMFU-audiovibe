@@ -23,6 +23,7 @@ Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in 
 - Knob **A** (attacco) su Kick, Snare e Hat.
 - **NORM** (A e B, nell'intestazione): normalizza l'uscita della sezione verso un livello medio costante e attiva un **limiter** a −1 dBFS; la spia rossa indica quando il limiter lavora.
 - **MIDI** (A e B): la tastiera / i pad suonano la sezione scelta, una alla volta.
+- **SEQ** (A e B): accende / spegne il sequencer della sezione, indipendentemente dal MIDI (spento = la sezione suona solo dalla tastiera).
 - Volumi di A e B bilanciati (stesso livello medio) e limiter di sicurezza sull'uscita a −0,3 dBFS: niente clipping.
 - Knob a risoluzione fine (Shift = ancora più fine) e controllabili con le **frecce** della tastiera dopo un clic; doppio clic al centro per Acc, V>A, Pan e Tune dei moduli B.
 - Finestra ridimensionabile liberamente: massimizzata riempie tutto lo schermo (l'altezza decide la scala, la larghezza in più allarga le sezioni).
