@@ -104,7 +104,7 @@ void PresetLibrary::applyB (TwinboxProcessor& p, const Item& it, bool kit, bool 
         // samples are referenced by name inside the factory "Twinbox <Module>" folders
         if (auto* smp = d.getProperty ("samples", var()).getDynamicObject())
         {
-            static const char* mods[] { "Kick", "Snare", "Hat", "Tie", "Pod" };
+            static const char* mods[] { "Kick", "Snare", "Hat", "Belt", "Capsule" };
             for (int m = 0; m < SampleLibrary::numModules; ++m)
             {
                 const String name = smp->getProperty (mods[m]).toString();

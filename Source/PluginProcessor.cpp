@@ -5,11 +5,10 @@ using namespace params;
 
 namespace
 {
-    // MIDI note map
-    //   36..43  -> Section A channels 1..8
-    //   48..54  -> Section B: Kick, Snare, Hat closed, Hat open, Tie, Pod, Pulp
-    constexpr int microNoteBase = 36;
-    constexpr int limeNoteBase  = 48;
+    // MIDI note map (one section at a time, chosen with the MIDI A / MIDI B buttons)
+    //   Section A: 36..43 -> channels 1..8 (repeats every 8 keys)
+    //   Section B: 36..41 -> Kick, Snare, Hat closed, Hat open, Tie, Pod (repeats every 6 keys)
+    constexpr int midiNoteBase = 36;
 }
 
 TwinboxProcessor::TwinboxProcessor()
@@ -33,6 +32,9 @@ TwinboxProcessor::TwinboxProcessor()
     pTempo = apvts.getRawParameterValue (gTempo);
     pRun = apvts.getRawParameterValue (gRun);
     pMorph = apvts.getRawParameterValue (aMorph);
+    pNormA = apvts.getRawParameterValue (aNorm);
+    pNormB = apvts.getRawParameterValue (bNorm);
+    pMidiTarget = apvts.getRawParameterValue (gMidiTarget);
 
     for (int ch = 0; ch < numMicroChannels; ++ch)
         for (auto* s : mt::patchSuffixes())
@@ -57,6 +59,7 @@ void TwinboxProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     bufA.setSize (2, samplesPerBlock);
     bufB.setSize (2, samplesPerBlock);
     gFilt[0].reset(); gFilt[1].reset();
+    normA.prepare (sampleRate); normB.prepare (sampleRate); safety.prepare (sampleRate);
     midiA.reserve (256); midiB.reserve (256);
     wasPlaying = false;
 }
@@ -112,15 +115,21 @@ void TwinboxProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mid
         if (! m.isNoteOn()) continue;
         const int note = m.getNoteNumber();
         const float vel = m.getFloatVelocity();
-        if (note >= microNoteBase && note < microNoteBase + numMicroChannels)
-            midiA.push_back ({ meta.samplePosition, note - microNoteBase, vel });
-        else if (note >= limeNoteBase && note < limeNoteBase + LimeEngine::numTargets)
-            midiB.push_back ({ meta.samplePosition, note - limeNoteBase, vel });
+        // the MIDI keyboard / pads play ONE section at a time (MIDI A / MIDI B buttons): from C1 (note 36) upwards,
+        // one sound per key; the row repeats every 8 (A) / 6 (B) keys so a 16-pad grid (Push, MPC...) covers it twice
+        if (note < midiNoteBase) continue;
+        const int idx = note - midiNoteBase;
+        if (pMidiTarget->load() < 0.5f)
+            midiA.push_back ({ meta.samplePosition, idx % numMicroChannels, vel });
+        else
+            midiB.push_back ({ meta.samplePosition, idx % LimeEngine::numTargets, vel });
     }
 
     // ------------------------------------------------------------ engines
     micro.process (bufA.getWritePointer (0), bufA.getWritePointer (1), n, bt, midiA);
     lime.process  (bufB.getWritePointer (0), bufB.getWritePointer (1), n, bt, midiB);
+    normA.process (bufA.getWritePointer (0), bufA.getWritePointer (1), n, pNormA->load() > 0.5f);
+    normB.process (bufB.getWritePointer (0), bufB.getWritePointer (1), n, pNormB->load() > 0.5f);
 
     // ------------------------------------------------------------ A/B mix -> cutoff filter -> master
     const float xTarget = pXfade->load() * 0.01f;
@@ -159,6 +168,11 @@ void TwinboxProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mid
         }
         l *= master; r *= master;
         oL[i] = l; oR[i] = r;
+    }
+    safety.process (oL, oR, n);                              // the output never clips (ceiling -0.3 dBFS)
+    for (int i = 0; i < n; ++i)
+    {
+        const float l = oL[i], r = oR[i];
         pkA = juce::jmax (pkA, std::abs (aL[i]), std::abs (aR[i]));
         pkB = juce::jmax (pkB, std::abs (bL[i]), std::abs (bR[i]));
         pkO = juce::jmax (pkO, std::abs (l), std::abs (r));

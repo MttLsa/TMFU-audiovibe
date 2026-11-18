@@ -5,6 +5,7 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <map>
 #include <set>
+#include <algorithm>
 
 using namespace juce;
 
@@ -64,9 +65,40 @@ int main (int argc, char** argv)
     const File outDir (argc > 1 ? argv[1] : ".");
     const File ens (argc > 2 ? argv[2] : "");
     bool ok = true;
+    if (argc > 3 && String (argv[3]) == "levels")
+    {
+        // loudness of every preset, per section (RMS and peak of the section output, before the master)
+        const auto& lib = PresetLibrary::get();
+        for (int sec = 0; sec < 2; ++sec)
+        {
+            std::vector<double> rms, pk;
+            for (size_t i = 0; i < lib.items (sec).size(); ++i)
+            {
+                TwinboxProcessor p; waitLibrary (p);
+                setP (p, params::gRun, 1); setP (p, params::gXfade, sec == 0 ? 0.0f : 100.0f);
+                if (sec == 0) PresetLibrary::applyA (p, lib.items (0)[i], 0, true, true, true);
+                else          PresetLibrary::applyB (p, lib.items (1)[i], true, true, true);
+                p.setPlayConfigDetails (0, 2, 48000, 512); p.prepareToPlay (48000, 512);
+                AudioBuffer<float> buf (2, 512); MidiBuffer m; double acc = 0; float peak = 0; long cnt = 0;
+                for (int b = 0; b < 48000 * 6 / 512; ++b)
+                {
+                    buf.clear(); p.processBlock (buf, m);
+                    if (b < 48000 / 512) continue;                                     // skip the first second (cross-fade settle)
+                    for (int c = 0; c < 2; ++c) for (int k = 0; k < 512; ++k) { const float v = buf.getSample (c, k); acc += v * v; peak = jmax (peak, std::abs (v)); ++cnt; }
+                }
+                rms.push_back (10.0 * std::log10 (acc / cnt + 1e-12)); pk.push_back (20.0 * std::log10 (peak + 1e-9));
+            }
+            auto sorted = [] (std::vector<double> v) { std::sort (v.begin(), v.end()); return v; };
+            const auto r = sorted (rms), q = sorted (pk);
+            int over = 0; for (auto x : pk) if (x > -1.0) ++over;
+            std::printf ("%s  rms median %.1f dB (p10 %.1f, p90 %.1f)   peak median %.1f dB, max %.1f dB, presets above -1 dBFS: %d/%d\n",
+                         sec ? "B" : "A", r[r.size() / 2], r[r.size() / 10], r[r.size() * 9 / 10], q[q.size() / 2], q.back(), over, (int) q.size());
+        }
+        return 0;
+    }
     if (argc > 5 && String (argv[3]) == "calibrate")
     {
-        // For every Section B preset: limit the level increase that each FX (Delay, xFx, Magic) adds over the dry
+        // For every Section B preset: limit the level increase that each FX (Delay, xFx) adds over the dry
         // signal to +2.5 dB (RMS), by lowering that FX's return gain / mix. Writes the corrected preset file.
         auto root = JSON::parse (File (argv[4]));
         auto* arr = root.getProperty ("presets", var()).getArray();
@@ -88,13 +120,12 @@ int main (int argc, char** argv)
             auto* prm = pv.getProperty ("params", var()).getDynamicObject();
             if (prm == nullptr) continue;
             auto get = [prm] (const char* id, float def) { return prm->hasProperty (id) ? (float) prm->getProperty (id) : def; };
-            const double dry = measure (pv, [] (TwinboxProcessor& p) { setP (p, params::bFxMix, 0); setP (p, params::bMagMix, 0); });
+            const double dry = measure (pv, [] (TwinboxProcessor& p) { setP (p, params::bFxMix, 0); });
             String log;
             struct Fx { const char* id; bool isMix; std::function<void (TwinboxProcessor&)> isolate; };
             const Fx fxs[] = {
-                { params::bDlyGain, false, [] (TwinboxProcessor& p) { setP (p, params::bXGain, -60); setP (p, params::bMagMix, 0); } },
-                { params::bXGain,   false, [] (TwinboxProcessor& p) { setP (p, params::bDlyGain, -60); setP (p, params::bMagMix, 0); } },
-                { params::bMagMix,  true,  [] (TwinboxProcessor& p) { setP (p, params::bDlyGain, -60); setP (p, params::bXGain, -60); } },
+                { params::bDlyGain, false, [] (TwinboxProcessor& p) { setP (p, params::bXGain, -60); } },
+                { params::bXGain,   false, [] (TwinboxProcessor& p) { setP (p, params::bDlyGain, -60); } },
             };
             for (auto& fx : fxs)
             {
@@ -168,10 +199,9 @@ int main (int argc, char** argv)
         TwinboxProcessor p;
         waitLibrary (p);
         setP (p, params::gRun, 1); setP (p, params::gXfade, 100);
-        setP (p, params::bFxMix, 70); setP (p, params::bMagMix, 40); setP (p, params::bMagPitch, 7); setP (p, params::bDirt, 30);
+        setP (p, params::bFxMix, 70); setP (p, params::bDirt, 30);
         setP (p, params::bNorm, 1); setP (p, params::bEqAmp, 6); setP (p, params::bFltTrk, 40); setP (p, params::bFltCut, 3000);
         setP (p, params::bRemix, 37); setP (p, params::bRemixRate, 1); setP (p, params::bChainOn, 1);
-        setP (p, params::b (params::pulp, params::lv::on), 1); setP (p, params::b (params::pulp, params::lv::comb), 50);
         setP (p, params::b (params::kick, params::lv::shp), 60); setP (p, params::b (params::snare, params::lv::flam), 50);
         int bad = 0; String info;
         for (int m = 0; m < params::xfxModeNames().size(); ++m)
@@ -275,18 +305,17 @@ int main (int argc, char** argv)
         for (auto& it : PresetLibrary::get().items (1))
             if (auto* prm = it.data.getProperty ("params", var()).getDynamicObject())
             {
-                for (auto* id : { params::bDlyGain, params::bXGain, "b_pulp_gain" })
+                for (auto* id : { params::bDlyGain, params::bXGain })
                     if ((float) prm->getProperty (id) > -59.9f) ++bad;
-                for (auto* id : { params::bDirt, params::bEqAmp, params::bMagMix })
+                for (auto* id : { params::bDirt, params::bEqAmp })
                     if ((float) prm->getProperty (id) > 0.001f) ++bad;
             }
         TwinboxProcessor p;
         auto* d = p.apvts.getParameter (params::bDlyGain); auto* x = p.apvts.getParameter (params::bXGain);
-        auto* pg = p.apvts.getParameter (params::b (params::pulp, params::lv::gain));
         auto def = [] (juce::RangedAudioParameter* q) { return q->convertFrom0to1 (q->getDefaultValue()); };
         const bool range = std::abs (d->getNormalisableRange().end) < 1.0e-6f && std::abs (x->getNormalisableRange().end) < 1.0e-6f
-                        && std::abs (def (d) + 60.0f) < 0.01f && std::abs (def (x) + 60.0f) < 0.01f && std::abs (def (pg) + 60.0f) < 0.01f;
-        report ("B preset FX gains at -60 dB", bad == 0 && range, String (bad) + " FX values above minimum; delay/xFx/Pulp default -60 dB: " + (range ? "yes" : "no"));
+                        && std::abs (def (d) + 60.0f) < 0.01f && std::abs (def (x) + 60.0f) < 0.01f;
+        report ("B preset FX gains at -60 dB", bad == 0 && range, String (bad) + " FX values above minimum; delay/xFx default -60 dB: " + (range ? "yes" : "no"));
     }
 
     // ---------------------------------------------------------------- B simple presets: 8 different grooves per genre, Tie/Pod velocity excursion
@@ -334,7 +363,7 @@ int main (int argc, char** argv)
             setP (p, params::b (params::tie, params::lv::vel), (float) velMode);
             p.setPlayConfigDetails (0, 2, 44100, 512); p.prepareToPlay (44100, 512);
             setP (p, params::gXfade, 100); setP (p, params::bFxMix, 0);
-            for (int v : { params::kick, params::snare, params::hat, params::pod, params::pulp }) setP (p, params::b (v, params::lv::on), 0);
+            for (int v : { params::kick, params::snare, params::hat, params::pod }) setP (p, params::b (v, params::lv::on), 0);
             setP (p, params::gRun, 1);
             AudioBuffer<float> buf (2, 512); MidiBuffer m; float pk = 0.0f;
             for (int b2 = 0; b2 < 20; ++b2) { p.processBlock (buf, m); pk = jmax (pk, buf.getMagnitude (0, 512)); }
@@ -413,7 +442,7 @@ int main (int argc, char** argv)
         }
         // every parameter of each section is a target
         int nA = (int) params::lfoTargets (0).size(), nB = (int) params::lfoTargets (1).size();
-        report ("LFO targets", nA >= 200 && nB >= 170, "Section A: " + String (nA) + " parameters, Section B: " + String (nB) + " parameters");
+        report ("LFO targets", nA >= 200 && nB >= 150, "Section A: " + String (nA) + " parameters, Section B: " + String (nB) + " parameters");
     }
 
     // ---------------------------------------------------------------- Hat filter type LP / BP / HP, Sat on Hat and Pod
@@ -444,6 +473,43 @@ int main (int argc, char** argv)
         report ("Hat filter LP/BP/HP + Sat on Hat/Pod", filtOk && satOk,
                 "brightness LP " + String (lp.second, 4) + " < BP " + String (bp.second, 4) + " < HP " + String (hp.second, 4)
                 + "; energy with Sat 80 %: hat x" + String (h1.first / jmax (1e-9, h0.first), 2) + ", pod x" + String (p1.first / jmax (1e-9, p0.first), 2));
+    }
+
+    // ---------------------------------------------------------------- MIDI A / MIDI B buttons and NORM (normaliser + limiter)
+    {
+        auto play = [] (int target) -> std::pair<int, int>
+        {
+            TwinboxProcessor p; waitLibrary (p);
+            setP (p, params::gMidiTarget, (float) target);
+            p.setPlayConfigDetails (0, 2, 48000, 512); p.prepareToPlay (48000, 512);
+            AudioBuffer<float> buf (2, 512); MidiBuffer m;
+            m.addEvent (MidiMessage::noteOn (1, 36, (uint8) 100), 0);
+            m.addEvent (MidiMessage::noteOn (1, 43, (uint8) 100), 10);
+            p.processBlock (buf, m);
+            return { p.micro.hitCount (0) + p.micro.hitCount (7), p.lime.hitCount (LimeEngine::tKick) + p.lime.hitCount (LimeEngine::tSnare) };
+        };
+        const auto a = play (0), b = play (1);
+        report ("MIDI keyboard plays one section", a.first == 2 && a.second == 0 && b.first == 0 && b.second == 2,
+                "MIDI A: A hits " + String (a.first) + ", B hits " + String (a.second) + "; MIDI B: A hits " + String (b.first) + ", B hits " + String (b.second)
+                + " (note 43 on B = Snare, the row repeats every 6 keys)");
+
+        OutputNorm nrm; nrm.prepare (48000);
+        std::vector<float> L (48000), R (48000);
+        double inR = 0, outR = 0; float outPk = 0;
+        for (int sec = 0; sec < 4; ++sec)
+        {
+            for (int i = 0; i < 48000; ++i)
+            {
+                const float x = (i % 12000 < 200 ? 1.6f : 0.02f) * (float) std::sin (i * 0.05);   // loud bursts + quiet tail
+                L[(size_t) i] = R[(size_t) i] = x;
+                if (sec == 3) inR += x * x;
+            }
+            nrm.process (L.data(), R.data(), 48000, true);
+            if (sec == 3) for (int i = 0; i < 48000; ++i) { outR += L[(size_t) i] * L[(size_t) i]; outPk = jmax (outPk, std::abs (L[(size_t) i])); }
+        }
+        const double gainDb = 10.0 * std::log10 ((outR + 1e-12) / (inR + 1e-12));
+        report ("NORM normaliser + limiter", outPk <= 0.8913f + 1e-3f && std::abs (gainDb) > 0.5,
+                "peak after NORM " + String (20.0 * std::log10 (outPk), 2) + " dBFS (ceiling -1), level change " + String (gainDb, 1) + " dB");
     }
 
     // ---------------------------------------------------------------- per-track nudge: measured onset of a hit on beat 2
@@ -542,7 +608,7 @@ int main (int argc, char** argv)
         {
             p.setPlayConfigDetails (0, 2, 44100, 512); p.prepareToPlay (44100, 512);
             setP (p, params::gRun, 0); setP (p, params::gXfade, 100); setP (p, params::bFxMix, 0);
-            for (int v : { params::kick, params::snare, params::hat, params::pod, params::pulp }) setP (p, params::b (v, params::lv::on), 0);
+            for (int v : { params::kick, params::snare, params::hat, params::pod }) setP (p, params::b (v, params::lv::on), 0);
             setP (p, params::b (params::tie, params::lv::dcy), 100);
             p.lime.auditionSample (SampleLibrary::tie, idx);
             Sample out; out.sourceRate = 44100;
@@ -635,7 +701,7 @@ int main (int argc, char** argv)
                 setP (p, params::bPattern, 0);
                 p.setPlayConfigDetails (0, 2, 44100, 512); p.prepareToPlay (44100, 512);
                 setP (p, params::gXfade, 100); setP (p, params::bFxMix, 0); setP (p, params::b (params::tie, params::lv::dcy), 100);
-                for (int v : { params::kick, params::snare, params::hat, params::pod, params::pulp }) setP (p, params::b (v, params::lv::on), 0);
+                for (int v : { params::kick, params::snare, params::hat, params::pod }) setP (p, params::b (v, params::lv::on), 0);
                 setP (p, params::gRun, 1);
                 Sample out; out.sourceRate = 44100;
                 AudioBuffer<float> buf (2, 512); MidiBuffer m;
@@ -654,12 +720,12 @@ int main (int argc, char** argv)
                     + " (first file); VEL=--: WAV knob -> " + SampleLibrary::noteName (velMode));
         }
 
-        // 4) loading a preset keeps every module's on/off state (incl. Pulp)
-        setP (p, params::b (params::kick, params::lv::on), 0); setP (p, params::b (params::pulp, params::lv::on), 1);
+        // 4) loading a preset keeps every module's on/off state
+        setP (p, params::b (params::kick, params::lv::on), 0); setP (p, params::b (params::pod, params::lv::on), 1);
         PresetLibrary::applyB (p, PresetLibrary::get().items (1)[5], true, true, false);
         const bool keep = p.apvts.getRawParameterValue (params::b (params::kick, params::lv::on))->load() < 0.5f
-                       && p.apvts.getRawParameterValue (params::b (params::pulp, params::lv::on))->load() > 0.5f;
-        report ("preset load keeps module on/off", keep, keep ? String ("Kick stays off, Pulp stays on") : String ("state changed"));
+                       && p.apvts.getRawParameterValue (params::b (params::pod, params::lv::on))->load() > 0.5f;
+        report ("preset load keeps module on/off", keep, keep ? String ("Kick stays off, Pod stays on") : String ("state changed"));
     }
 
     // ---------------------------------------------------------------- state round trip
@@ -781,7 +847,7 @@ int main (int argc, char** argv)
             int ok = 0;
             for (auto* c : panel.getChildren())
                 if (auto* tb = dynamic_cast<TextButton*> (c))
-                    if (tb->getButtonText() == "TIE" || tb->getButtonText() == "POD" || tb->getButtonText() == "MOD")
+                    if (tb->getButtonText() == "BELT" || tb->getButtonText() == "CAPSULE" || tb->getButtonText() == "MOD")
                         if (panel.getComponentAt (tb->getBounds().getCentre()) == tb) ++ok;
             report ("seq lane buttons clickable", ok == 3, String (ok) + "/3 buttons on top of the grid");
         }

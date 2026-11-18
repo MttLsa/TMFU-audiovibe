@@ -23,7 +23,7 @@ namespace
 
     String hzText (float v, int)   { return v >= 1000.f ? String (v / 1000.f, 2) + " kHz" : String (v, v < 100.f ? 1 : 0) + " Hz"; }
     String msText (float v, int)   { return v >= 1000.f ? String (v / 1000.f, 2) + " s" : String (v, v < 10.f ? 2 : 1) + " ms"; }
-    String pctText (float v, int)  { return String (roundToInt (v)) + " %"; }
+    String pctText (float v, int)  { return std::abs (v - std::round (v)) >= 0.05f ? String (v, 1) + " %" : String (roundToInt (v)) + " %"; }
     String dbText (float v, int)   { return v <= -59.9f ? String ("-inf dB") : String (v, 1) + " dB"; }
     String stText (float v, int)   { return (v > 0 ? "+" : "") + String (v, 1) + " st"; }
     String panText (float v, int)
@@ -126,6 +126,7 @@ AudioProcessorValueTreeState::ParameterLayout createLayout()
     addBool   (l, aFill, "A Fill", false);
     addFloat  (l, aMorph, "A Morph", NormalisableRange<float> (0.f, 1.f), 0.f,
                [] (float v, int) { return String (roundToInt (v * 100)) + " %"; });
+    addBool   (l, aNorm, "A NORM (output normaliser)", false);
     addFloat  (l, aLevel, "A Master", NormalisableRange<float> (-60.f, 6.f), 0.f, dbText);
 
     // ===================================================================== SECTION B (Limelite 1.3)
@@ -135,17 +136,18 @@ AudioProcessorValueTreeState::ParameterLayout createLayout()
     {
         const String P = String (limeVoiceName (v)) + " ";
         auto id = [v] (const char* k) { return b (v, k); };
-        const bool sampler = v != pulp;
+        const bool sampler = true;
         addBool  (l, id (lv::on),   P + "On", true);
-        addFloat (l, id (lv::gain), P + "Gain", NormalisableRange<float> (-60.f, 6.f), v == hat ? -4.f : (v == pulp ? -60.f : (v >= tie ? -5.f : 0.f)), dbText);
-        addFloat (l, id (lv::pan),  P + "Pan", bip, v == tie ? -20.f : (v == pod ? 25.f : (v == pulp ? 10.f : 0.f)), panText);
+        addFloat (l, id (lv::gain), P + "Gain", NormalisableRange<float> (-60.f, 6.f), v == hat ? -4.f : (v >= tie ? -5.f : 0.f), dbText);
+        addFloat (l, id (lv::pan),  P + "Pan", bip, v == tie ? -20.f : (v == pod ? 25.f : 0.f), panText);
         if (v <= hat) addFloat (l, id (lv::acc), P + "Accent", pctR, 50.f, pctText);
         if (v == tie || v == pod) addFloat (l, id (lv::vamt), P + "V>A", pctR, 70.f, pctText);
         if (sampler)  addInt   (l, id (lv::wav), P + "Wave", 0, 255, 0);
         if (sampler)  addFloat (l, id (lv::nudge), P + "Nudge", NormalisableRange<float> (-50.f, 50.f, 0.1f), 0.f, [] (float x, int) { return (x > 0.04f ? "+" : "") + String (x, std::abs (x - std::round (x)) > 0.04f ? 1 : 0) + " ms"; });
         addFloat (l, id (lv::tune), P + "Tune", NormalisableRange<float> (-24.f, 24.f), 0.f, stText);
-        if (v == tie || v == pulp) addFloat (l, id (lv::port), P + "Portamento", pctR, 0.f, pctText);
+        if (v == tie) addFloat (l, id (lv::port), P + "Portamento", pctR, 0.f, pctText);
         if (sampler && v != hat) addFloat (l, id (lv::st), P + "Start", pctR, 0.f, pctText);
+        if (v <= hat) addFloat (l, id (lv::att), P + "Attack", pctR, 0.f, pctText);
         if (v == kick || v == snare)
         {
             addFloat (l, id (lv::hold), P + "Hold", pctR, 0.f, pctText);
@@ -190,32 +192,17 @@ AudioProcessorValueTreeState::ParameterLayout createLayout()
             else          addFloat (l, id (lv::cut), P + "Cutoff", logRange (20.f, 20000.f, 1500.f), 20000.f, hzText);
             addFloat (l, id (lv::res), P + "Resonance", pctR, 0.f, pctText);
         }
-        if (v == pulp)
-        {
-            addFloat (l, id (lv::trkLo),  P + "Track Low", logRange (20.f, 2000.f, 150.f), 40.f, hzText);
-            addFloat (l, id (lv::trkHi),  P + "Track High", logRange (50.f, 5000.f, 600.f), 800.f, hzText);
-            addChoice (l, id (lv::src), P + "Input Source", StringArray { "Kick", "Snare", "Hat", "Tie", "Pod", "All" }, 3);
-            addFloat  (l, id (lv::inGain), P + "Input Gain", NormalisableRange<float> (-24.f, 24.f), 0.f, dbText);
-            addFloat (l, id (lv::dcy),    P + "Decay", pctR, 40.f, pctText);
-            addFloat (l, id (lv::osc),    P + "Osc (Sine-Input-Noise)", pctR, 0.f,
-                      [] (float x, int) { return x < 25 ? String ("Sine") : (x < 75 ? String ("Input") : String ("Noise")); });
-            addFloat (l, id (lv::comb), P + "Comb Mix", pctR, 0.f, pctText);
-            addFloat (l, id (lv::fb),   P + "Comb Feedback", pctR, 50.f, pctText);
-            addFloat (l, id (lv::freq), P + "Comb Freq", logRange (30.f, 4000.f, 300.f), 220.f, hzText);
-            addFloat (l, id (lv::fm),   P + "Comb FM", pctR, 0.f, pctText);
-            addFloat (l, id (lv::cut),  P + "Comb Cutoff", logRange (100.f, 20000.f, 3000.f), 8000.f, hzText);
-        }
     }
 
     const StringArray abcd { "A", "B", "C", "D" };
     addChoice (l, bPattern, "B Pattern", abcd, 0);
     addInt    (l, bLen,    "B Length", 1, numLimeSteps, 16);
     addInt    (l, bStart,  "B Start Step", 1, numLimeSteps, 1);
-    addInt    (l, bTieLen, "B Tie Length", 1, numLimeSteps, 16);
-    addInt    (l, bPodLen, "B Pod Length", 1, numLimeSteps, 16);
+    addInt    (l, bTieLen, "B Belt Length", 1, numLimeSteps, 16);
+    addInt    (l, bPodLen, "B Capsule Length", 1, numLimeSteps, 16);
     addInt    (l, bModLen, "B Mod Length", 1, numLimeSteps, 16);
-    addBool   (l, bTieStr, "B Tie Stretch", false);
-    addBool   (l, bPodStr, "B Pod Stretch", false);
+    addBool   (l, bTieStr, "B Belt Stretch", false);
+    addBool   (l, bPodStr, "B Capsule Stretch", false);
     addBool   (l, bModStr, "B Mod Stretch", false);
     addFloat  (l, bSwing,  "B Swing", pctR, 0.f, pctText);
     addBool   (l, bHalf,   "B Half Tempo", false);
@@ -232,13 +219,10 @@ AudioProcessorValueTreeState::ParameterLayout createLayout()
         addChoice (l, bScaleType, "B Scale", names, 1);
     }
 
-    addFloat  (l, bDirt, "B Dirt", pctR, 0.f, pctText);
+    addFloat  (l, bDirt, "B Trash", pctR, 0.f, pctText);
     addFloat  (l, bGain, "B Gain (Master)", NormalisableRange<float> (-60.f, 6.f), 0.f, dbText);
     addFloat  (l, bTune, "B Tune", NormalisableRange<float> (-12.f, 12.f), 0.f, stText);
-    addBool   (l, bNorm, "B Norm", false);
-    addFloat  (l, bNormAmp, "B Norm Amp", pctR, 50.f, pctText);
-    addFloat  (l, bNormRel, "B Norm Release", pctR, 40.f, pctText);
-    addFloat  (l, bNormSm,  "B Norm Smooth", pctR, 30.f, pctText);
+    addBool   (l, bNorm, "B NORM (output normaliser)", false);
 
     addFloat  (l, bFltCut, "B Filter Cutoff", logRange (40.f, 20000.f, 1500.f), 20000.f, hzText);
     addFloat  (l, bFltTrk, "B Filter Track", bip, 0.f, pctText);
@@ -251,12 +235,6 @@ AudioProcessorValueTreeState::ParameterLayout createLayout()
     addFloat  (l, bEqAmp, "B EQ Amp (saturator)", NormalisableRange<float> (0.f, 24.f), 0.f, dbText);
     addFloat  (l, bEqSplit, "B EQ Split", logRange (60.f, 1000.f, 250.f), 250.f, hzText);
 
-    addFloat  (l, bMagPitch, "B Magic Pitch", NormalisableRange<float> (-12.f, 12.f), 0.f, stText);
-    addFloat  (l, bMagGrain, "B Magic Grain", pctR, 40.f, pctText);
-    addFloat  (l, bMagMod,   "B Magic Mod", bip, 0.f, pctText);
-    addFloat  (l, bMagRmx,   "B Magic Remix", bip, 0.f, pctText);
-    addFloat  (l, bMagMix,   "B Magic Mix", pctR, 0.f, pctText);
-    addFloat  (l, bMagNotch, "B Magic Notch", logRange (100.f, 10000.f, 1000.f), 1000.f, hzText);
 
     addInt    (l, bDlyOne, "B Delay One (16ths)", 1, 16, 3);
     addInt    (l, bDlyTwo, "B Delay Two (16ths)", 1, 16, 4);
@@ -299,6 +277,7 @@ AudioProcessorValueTreeState::ParameterLayout createLayout()
     addFloat  (l, gTempo, "Tempo", NormalisableRange<float> (40.f, 240.f, 0.1f), 124.f,
                [] (float v, int) { return String (v, 1) + " BPM"; });
     addBool   (l, gRun, "Run (internal clock)", false);
+    addChoice (l, gMidiTarget, "MIDI Keyboard Plays", StringArray { "Section A", "Section B" }, 0);
 
     // ===================================================================== LFO targets + LFO parameters
     for (int sec = 0; sec < 2; ++sec)
@@ -321,8 +300,8 @@ AudioProcessorValueTreeState::ParameterLayout createLayout()
                 if (group == "Global")
                 {
                     const String w = name.fromFirstOccurrenceOf (" ", false, false).upToFirstOccurrenceOf (" ", false, false);
-                    if (StringArray { "Delay", "xFx", "EQ", "Magic", "Filter", "Norm", "FX", "Mod" }.contains (w)) group = w == "Mod" ? "FX" : w;
-                    else if (StringArray { "Pattern", "Length", "Start", "Tie", "Pod", "Swing", "Half", "Remix", "Lock", "Scale" }.contains (w)) group = "Sequencer";
+                    if (StringArray { "Delay", "xFx", "EQ", "Filter", "FX", "Mod" }.contains (w)) group = w == "Mod" ? "FX" : w;
+                    else if (StringArray { "Pattern", "Length", "Start", "Belt", "Capsule", "Swing", "Half", "Remix", "Lock", "Scale" }.contains (w)) group = "Sequencer";
                     else group = "Out";
                 }
             }

@@ -1,5 +1,6 @@
 #pragma once
 #include "LfoPanel.h"
+#include "SectionButtons.h"
 #include "LookAndFeel.h"
 #include "../PluginProcessor.h"
 
@@ -178,7 +179,7 @@ private:
         void resized() override;
         PitchWindowContent& owner; int index;
         juce::TextButton play { juce::String::fromUTF8 ("\xe2\x96\xb6") };
-        juce::Slider knob;
+        FineSlider knob;
     };
     void changeListenerCallback (juce::ChangeBroadcaster*) override { rebuild(); }
     void timerCallback() override;
@@ -249,11 +250,13 @@ private:
     juce::ComboBox scaleRoot, scaleType;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> scaleRootAtt, scaleTypeAtt;
     Knob levelB { "Level B", theme::accentB };
+    std::unique_ptr<NormButton> normBtn;
+    std::unique_ptr<MidiTargetButton> midiBtn;
     juce::String status;
     std::unique_ptr<juce::FileChooser> chooser;
 
     std::unique_ptr<LimeSeqPanel> seq;
-    std::unique_ptr<ControlPanel> remix, out, global, pulp, xfx, delay, mix, eq, filter, magic;
+    std::unique_ptr<ControlPanel> remix, out, global, xfx, delay, mix, eq, filter;
     juce::OwnedArray<LimeModulePanel> modules;
     std::map<juce::String, std::unique_ptr<ExpandWindow>> windows;
     std::unique_ptr<LfoPanel> lfo;   // 3 LFOs for Section B (FX row)

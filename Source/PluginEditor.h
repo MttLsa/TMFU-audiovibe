@@ -13,8 +13,10 @@ public:
     explicit MainView (TwinboxProcessor& p);
     void paint (juce::Graphics&) override;
     void resized() override;
-    int designWidth() const;
-    static constexpr int sectionWidth = 1400, heightA = 430, heightB = 740, margin = 8;
+    int designWidth() const;          // preferred width (wide, ~16:10)
+    int minimumWidth() const;         // narrowest layout
+    int sectionWidth() const;         // current width of the two sections (grows with the window)
+    static constexpr int minSectionWidth = 1400, preferredSectionWidth = 1780, heightA = 430, heightB = 740, margin = 8;
     static constexpr int titleH = 46;
     static constexpr int designHeight = titleH + heightA + margin + heightB + margin;
     GlobalPanel global;
@@ -36,6 +38,7 @@ public:
 
 private:
     void updateSizeForGlobal();
+    int designW = 0;
     TwinboxProcessor& proc;
     TwinLookAndFeel lnf;
     juce::TooltipWindow tooltips { this, 600 };

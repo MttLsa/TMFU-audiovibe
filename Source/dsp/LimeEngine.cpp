@@ -66,9 +66,7 @@ void LimeEngine::prepare (double sampleRate, int blockSize)
 {
     sr = sampleRate;
     for (auto& vv : voices) for (auto& v : vv) v.active = false;
-    pulpV.active = false;
-    pulpV.comb.prepare ((int) (sr * 0.1));
-    envFilter.prepare (sr); eq.prepare (sr); magic.prepare (sr); delay.prepare (sr); xfx.prepare (sr); dirtSat.prepare (sr);
+    envFilter.prepare (sr); eq.prepare (sr); delay.prepare (sr); xfx.prepare (sr); dirtSat.prepare (sr);
     const size_t n = (size_t) jmax (blockSize, 4096);
     for (auto* b : { &dryL, &dryR, &tieL, &tieR, &sendL, &sendR, &dlyL, &dlyR, &xL, &xR, &srcMono }) b->assign (n, 0.0f);
     lastLoop = -1;
@@ -98,26 +96,10 @@ int LimeEngine::remap (int pos, int len) const
 //==============================================================================
 void LimeEngine::trigger (int target, float vel, float laneValue, int forcedIndex)
 {
-    const int voice = target <= tSnare ? target : (target <= tOHat ? hat : (target == tTie ? tie : (target == tPod ? pod : pulp)));
+    const int voice = target <= tSnare ? target : (target <= tOHat ? hat : (target == tTie ? tie : pod));
     const auto& k = vk[(size_t) voice];
     if (G (k[kOn], 1.0f) < 0.5f) return;
     hits[(size_t) target].fetch_add (1);
-
-    if (voice == pulp)
-    {
-        pulpV.active = true; pulpV.t = 0; pulpV.vel = vel;
-        return;
-    }
-    // Pulp is (re)triggered by the hits of its selected input source
-    {
-        const int srcSel = (int) G (vk[(size_t) pulp][kSrc], 3);
-        if ((srcSel == 5 || srcSel == voice) && G (vk[(size_t) pulp][kOn], 0) > 0.5f)
-        {
-            float pv = vel;
-            pulpV.active = true; pulpV.t = 0; pulpV.vel = pv;
-            hits[(size_t) tPulp].fetch_add (1);
-        }
-    }
 
     auto set = library.set (moduleOf (voice));
     if (set->size() == 0) return;
@@ -343,66 +325,6 @@ void LimeEngine::renderSampleVoice (int voice, Voice& v, float* dl, float* dr, i
     }
 }
 
-void LimeEngine::renderPulp (const float* src, float* dl, float* dr, int n)
-{
-    const auto& k = vk[(size_t) pulp];
-    if (G (k[kOn], 1) < 0.5f) return;
-    const float lo = G (k[kTrkLo], 40), hi = G (k[kTrkHi], 800);
-    const float hpA = (float) std::exp (-2.0 * kPi * lo / sr), lpA = (float) (1.0 - std::exp (-2.0 * kPi * hi / sr));
-    const float tune = G (k[kTune], 0), dcy = decayTau (G (k[kDcy], 40));
-    const float portC = (float) (1.0 - std::exp (-1.0 / (sr * (0.002 + std::pow (G (k[kPort], 0) * 0.01, 2.0) * 0.5))));
-    const float osc = G (k[kOsc], 0) * 0.01f;
-    const float combMix = G (k[kComb], 0) * 0.01f, combFb = G (k[kFb], 50) * 0.01f * 0.97f;
-    const float combFreq = G (k[kFreq], 220), combFm = G (k[kFm], 0) * 0.01f, combCut = G (k[kCut], 8000);
-    const float gain = juce::Decibels::decibelsToGain (G (k[kGain], 0), -60.0f);
-    const float panN = (G (k[kPan], 0) * 0.01f + 1.0f) * 0.25f * juce::MathConstants<float>::pi;
-    const float gl = std::cos (panN) * 1.41421356f * gain, gr = std::sin (panN) * 1.41421356f * gain;
-    pulpV.combLp.set (combCut, sr, 0.7);
-
-    for (int i = 0; i < n; ++i)
-    {
-        // ---- pitch tracking (band-limited zero crossings)
-        const float in = src[i];
-        pulpV.hpS = hpA * (pulpV.hpS + in - pulpV.hpPrev); pulpV.hpPrev = in;
-        pulpV.lpS += lpA * (pulpV.hpS - pulpV.lpS);
-        ++pulpV.sinceCross;
-        if (pulpV.lastIn <= 0.0f && pulpV.lpS > 0.0f && std::abs (pulpV.lpS) > 1.0e-4f)
-        {
-            const float f = (float) sr / (float) jmax (1, pulpV.sinceCross);
-            if (f >= lo && f <= hi) pulpV.tracked += 0.3f * (f - pulpV.tracked);
-            pulpV.sinceCross = 0;
-        }
-        pulpV.lastIn = pulpV.lpS;
-        pulpV.freqTarget = pulpV.tracked * std::pow (2.0f, tune / 12.0f);
-        pulpV.freq += (pulpV.freqTarget - pulpV.freq) * portC;
-
-        float y = 0.0f;
-        if (pulpV.active)
-        {
-            pulpV.phase += pulpV.freq / sr; if (pulpV.phase >= 1.0) pulpV.phase -= 1.0;
-            const float sine = (float) std::sin (2.0 * kPi * pulpV.phase);
-            pulpV.rng ^= pulpV.rng << 13; pulpV.rng ^= pulpV.rng >> 17; pulpV.rng ^= pulpV.rng << 5;
-            const float nz = (float) pulpV.rng / 4294967295.0f * 2.0f - 1.0f;
-            const float s = osc < 0.5f ? sine * (1.0f - osc * 2.0f) + in * 3.0f * (osc * 2.0f)
-                                       : in * 3.0f * (2.0f - osc * 2.0f) + nz * (osc * 2.0f - 1.0f);
-            const float env = std::exp (-(float) pulpV.t / dcy) * jmin (1.0f, (float) pulpV.t * 2000.0f);
-            y = s * env * pulpV.vel;
-            pulpV.t += 1.0 / sr;
-            if (env < 1.0e-4f && pulpV.t > 0.01) pulpV.active = false;
-        }
-        // ---- comb filter (frequency follows the tracked pitch by FM amount)
-        if (combMix > 0.001f)
-        {
-            const float cf = combFreq * std::pow (2.0f, combFm * std::log2 (jmax (20.0f, pulpV.tracked) / 220.0f));
-            const float d = jlimit (2.0f, (float) pulpV.comb.size - 4.0f, (float) sr / jmax (20.0f, cf));
-            const float c = pulpV.comb.readL (d);
-            pulpV.comb.push (y + pulpV.combLp.process (c, 0) * combFb, 0.0f);
-            y = y * (1.0f - combMix) + c * combMix;
-        }
-        dl[i] += y * gl;
-        dr[i] += y * gr;
-    }
-}
 
 //==============================================================================
 void LimeEngine::process (float* L, float* R, int n, const BlockTime& bt, const std::vector<TriggerEvent>& midi)
@@ -441,7 +363,7 @@ void LimeEngine::process (float* L, float* R, int n, const BlockTime& bt, const 
     // queue a sequencer event at its onset + the module nudge (Mod lane values are not nudged)
     auto qpush = [&] (double ppq, Ev e)
     {
-        static const int voiceOfTarget[] { kick, snare, hat, hat, tie, pod, pulp };
+        static const int voiceOfTarget[] { kick, snare, hat, hat, tie, pod };
         double ms = 0.0;
         if (! e.isMod && e.target >= 0 && e.target < numTargets)
             ms = jlimit (-kNudgeMaxMs, kNudgeMaxMs, (double) G (vk[(size_t) voiceOfTarget[e.target]][kNudge], 0.0f));
@@ -531,44 +453,16 @@ void LimeEngine::process (float* L, float* R, int n, const BlockTime& bt, const 
         }
         const int next = ei < nev ? jmin (n, ev[(size_t) ei].offset) : n;
         const int cnt = jmax (1, next - pos);
-        const int srcSel = (int) G (vk[(size_t) pulp][kSrc], 3);      // 0..4 = Kick..Pod, 5 = All
         for (int vIdx = 0; vIdx < 5; ++vIdx)
-        {
-            const bool isSrc = srcSel == 5 || srcSel == vIdx;
-            if (isSrc)
-            {
-                std::fill (tieL.begin() + pos, tieL.begin() + pos + cnt, 0.0f);
-                std::fill (tieR.begin() + pos, tieR.begin() + pos + cnt, 0.0f);
-            }
             for (auto& v : voices[(size_t) vIdx])
-            {
-                if (isSrc) renderSampleVoice (vIdx, v, tieL.data() + pos, tieR.data() + pos, cnt);
-                else       renderSampleVoice (vIdx, v, dryL.data() + pos, dryR.data() + pos, cnt);
-            }
-            if (isSrc)
-                for (int i = pos; i < pos + cnt; ++i)
-                {
-                    dryL[(size_t) i] += tieL[(size_t) i]; dryR[(size_t) i] += tieR[(size_t) i];
-                    srcMono[(size_t) i] += 0.5f * (tieL[(size_t) i] + tieR[(size_t) i]);
-                }
-        }
+                renderSampleVoice (vIdx, v, dryL.data() + pos, dryR.data() + pos, cnt);
         pos += cnt;
     }
-    // Pulp: tracks / processes the selected input source (Kick, Snare, Hat, Tie, Pod or All) scaled by Input Gain
-    {
-        const float inGain = juce::Decibels::decibelsToGain (G (vk[(size_t) pulp][kIn], 0), -60.0f);
-        for (int i = 0; i < n; ++i) srcMono[(size_t) i] *= inGain;
-        renderPulp (srcMono.data(), dryL.data(), dryR.data(), n);
-    }
-
     // ---------------- FX chain
     FxContext c; c.sr = sr; c.bpm = bt.bpm; c.ppq = bt.ppqStart; c.ppqPerSample = bt.ppqPerSample; c.playing = bt.playing;
     float* dl = dryL.data(); float* dr = dryR.data();
     envFilter.process (dl, dr, n, p (bFltCut)->load(), p (bFltTrk)->load(), p (bFltSm)->load(), p (bFltMod)->load(), modHeld);
     eq.process (dl, dr, n, p (bEqHi)->load(), p (bEqMid)->load(), p (bEqLo)->load(), p (bEqAmp)->load(), p (bEqSplit)->load());
-    const float magSemis = jlimit (-24.0f, 24.0f, p (bMagPitch)->load() + p (bMagMod)->load() * 0.01f * modHeld * 12.0f
-                                                 + p (bMagRmx)->load() * 0.01f * remixPos * 24.0f);
-    magic.process (dl, dr, n, magSemis, p (bMagGrain)->load(), p (bMagMix)->load() * 0.01f, p (bMagNotch)->load());
 
     const bool modIn = p (bModInput)->load() > 0.5f, modMixOn = p (bModMix)->load() > 0.5f;
     const float sendGain = modIn ? modHeld : 1.0f;
@@ -646,13 +540,9 @@ void LimeEngine::process (float* L, float* R, int n, const BlockTime& bt, const 
     float fxMix = p (bFxMix)->load() * 0.01f;
     if (modMixOn) fxMix *= modHeld;
     const float dryAmt = jmin (1.0f, 2.0f - 2.0f * fxMix), wetAmt = jmin (1.0f, 2.0f * fxMix);
-    const bool norm = p (bNorm)->load() > 0.5f;
-    const float nAmp = p (bNormAmp)->load() * 0.01f, nRel = p (bNormRel)->load() * 0.01f, nSm = p (bNormSm)->load() * 0.01f;
-    const float relC = (float) std::exp (-1.0 / (sr * (0.02 + nRel * 1.5)));
     // fixed -8 dB of section headroom (6 voices + FX summing), then OUT Gain (= Level B)
-    constexpr float headroom = 0.4f;   // fixed -8 dB section headroom, applied BEFORE Dirt so Dirt sees output-level signals
+    constexpr float headroom = 0.302f; // fixed -10.4 dB section headroom (same loudness as Section A), applied BEFORE Trash
     const float gain = juce::Decibels::decibelsToGain (p (bGain)->load(), -60.0f);
-    const float target = 0.25f + 0.6f * nAmp;
     for (int i = 0; i < n; ++i)
     {
         dl[i] = dl[i] * dryAmt + (dlyL[(size_t) i] * dlyGain + xL[(size_t) i] * xGain) * wetAmt;
@@ -662,16 +552,7 @@ void LimeEngine::process (float* L, float* R, int n, const BlockTime& bt, const 
     dirtSat.process (dl, dr, n, p (bDirt)->load() * 0.01f);     // DIRT: gentle saturation
     for (int i = 0; i < n; ++i)
     {
-        float l = dl[i], r = dr[i];
-        if (norm)
-        {
-            l /= headroom; r /= headroom;   // Norm keeps working on the pre-headroom scale
-            const float pk = jmax (std::abs (l), std::abs (r));
-            normEnv = pk > normEnv ? normEnv + (0.5f - 0.45f * nSm) * (pk - normEnv) : normEnv * relC;
-            const float g = normEnv > target ? target / normEnv : 1.0f;
-            l = std::tanh (l * g * (1.0f + nAmp * 1.5f)) * 0.95f * headroom;
-            r = std::tanh (r * g * (1.0f + nAmp * 1.5f)) * 0.95f * headroom;
-        }
+        const float l = dl[i], r = dr[i];
         L[i] += l * gain;
         R[i] += r * gain;
     }

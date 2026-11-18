@@ -5,7 +5,7 @@ using namespace juce;
 
 namespace
 {
-    const char* moduleNames[] { "Kick", "Snare", "Hat", "Tie", "Pod" };
+    const char* moduleNames[] { "Kick", "Snare", "Hat", "Belt", "Capsule" };   // Belt / Capsule were called Tie / Pod before v2.12
     const char* sourceKeys[]  { "twinbox", "legacy", "user" };
 
     Array<File> audioFilesIn (const File& folder)
@@ -75,6 +75,12 @@ void SampleLibrary::installFactoryIfMissing()
     if (auto* e = zip.getEntry ("manifest.json"))
         if (std::unique_ptr<InputStream> s2 (zip.createStreamForEntry (*e)); s2 != nullptr)
             embeddedManifest = JSON::parse (s2->readEntireStreamAsString());
+    // v2.12: the Tie / Pod folders are now called Belt / Capsule (Legacy and factory)
+    for (auto [oldName, newName] : { std::pair<const char*, const char*> { "Tie", "Belt" }, { "Pod", "Capsule" } })
+    {
+        const auto oldLeg = root.getChildFile (String ("Legacy ") + oldName), newLeg = root.getChildFile (String ("Legacy ") + newName);
+        if (oldLeg.isDirectory() && ! newLeg.exists()) oldLeg.moveFileTo (newLeg);
+    }
     const auto installedFile = root.getChildFile ("manifest.json");
     const var installedManifest = installedFile.existsAsFile() ? JSON::parse (installedFile.loadFileAsString()) : var();
 
@@ -98,6 +104,16 @@ void SampleLibrary::installFactoryIfMissing()
                         folder.getChildFile ("open").getChildFile (name).deleteFile();
                         folder.getChildFile (".twinbox_pitch.txt").deleteFile();
                     }
+    if (upgrade)                                              // remove the old factory folders if they are now empty
+        for (auto* oldName : { "Twinbox Tie", "Twinbox Pod" })
+        {
+            const auto f = root.getChildFile (oldName);
+            if (f.isDirectory())
+            {
+                f.getChildFile (".twinbox_pitch.txt").deleteFile();
+                if (f.getNumberOfChildFiles (File::findFilesAndDirectories) == 0) f.deleteFile();
+            }
+        }
     const auto r = zip.uncompressTo (root, upgrade);   // overwrite only when upgrading the factory set
     if (r.failed()) DBG ("Twinbox: factory sample install failed: " << r.getErrorMessage());
 }

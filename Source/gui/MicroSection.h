@@ -1,5 +1,6 @@
 #pragma once
 #include "LfoPanel.h"
+#include "SectionButtons.h"
 #include "LookAndFeel.h"
 #include "../PluginProcessor.h"
 
@@ -114,6 +115,8 @@ private:
     juce::OwnedArray<juce::TextButton> patternButtons;
     juce::TextButton storeL { "Store L" }, storeR { "Store R" };
     Knob morph { "Morph", theme::accentA }, level { "Level A", theme::accentA };
+    std::unique_ptr<NormButton> normBtn;
+    std::unique_ptr<MidiTargetButton> midiBtn;
 
     // channel list
     struct ChannelRow : public juce::Component

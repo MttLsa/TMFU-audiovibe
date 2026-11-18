@@ -215,10 +215,24 @@ def simple_patterns(genre, idx, r, L):
     return pats
 
 # ------------------------------------------------------------------------------- Section B (Limelite kit)
+# Minimal: round sounds only - no clicks, ticks, rims, sticks, claves, tabla or other "blip" sounds
+AVOID = {"minimal": {"Kick": ["Click", "Micro", "Tight"], "Hat": ["Tick", "Micro", "Crackle", "Steel", "Cymbal", "Ride"], "Snare": ["Tiny", "Paper", "Brush", "Short"],
+                     "Capsule": ["Rim", "Stick", "Clave", "Tabla", "Sidestick", "Snare", "Dissonant", "Muted", "Darbuka Tek", "Bongo Hi"],
+                     "Belt": ["Stab", "Glowly", "Voxy", "Muted", "Short"]}}
+ROUND = {"Capsule": ["Conga", "Tumba", "Quinto", "Tom", "Log Drum", "Frame Drum Low", "Cajon Bass", "Bongo Low"],
+         "Kick": ["Soft", "Felt", "Round", "Deep", "Sub", "Warm"], "Snare": ["Soft", "Room", "Felt", "Warm", "Velvet"],
+         "Belt": ["Bass", "Rhodes", "Pad", "Piano"], "Hat": ["Soft", "Shaker", "Brushy", "Dark", "Lofi"]}
+
 def pick(module, genre, r, prefer=None, acid=False):
     items = manifest["modules"][module]
     cands = [it["file"][:-4] for it in items if genre in it["tags"] and not (module == "Kick" and "Ghost" in it["file"])]
-    if module == "Tie":
+    avoid = AVOID.get(genre, {}).get(module, [])
+    if avoid:
+        cands = [c for c in cands if not any(w.lower() in c.lower() for w in avoid)]
+        if module in ROUND:      # widen the choice with round sounds of any genre
+            cands += [it["file"][:-4] for it in items if any(w.lower() in it["file"].lower() for w in ROUND[module])
+                      and not any(w.lower() in it["file"].lower() for w in avoid) and it["file"][:-4] not in cands]
+    if module == "Belt":
         cands = [c for c in cands if ("Acid" in c) == acid] or cands
     if prefer:
         pc = [c for c in cands if any(w.lower() in c.lower() for w in prefer)]
@@ -326,8 +340,8 @@ def b_patterns(genre, r, length, cx=1, idx=0):
 def b_kit(genre, r, cx=1, idx=0):
     P = {}
     def v(voice, key, val): P[f"b_{voice}_{key}"] = val
-    prefer = {"Tie": ["Rumble", "Bass"]} if (genre == "techno" and idx in (0, 1, 3, 8, 9)) else {}
-    smp = {m: pick(m, genre, r, prefer.get(m), acid=(genre == "techhouse" and idx in ACID_PRESETS)) for m in ("Kick", "Snare", "Hat", "Tie", "Pod")}
+    prefer = {"Belt": ["Rumble", "Bass"]} if (genre == "techno" and idx in (0, 1, 3, 8, 9)) else {}
+    smp = {m: pick(m, genre, r, prefer.get(m), acid=(genre == "techhouse" and idx in ACID_PRESETS)) for m in ("Kick", "Snare", "Hat", "Belt", "Capsule")}
     v("kick", "gain", 0); v("snare", "gain", -3); v("hat", "gain", -6); v("tie", "gain", -4); v("pod", "gain", -7); v("pulp", "gain", -9)
     v("kick", "d", 100); v("snare", "d", 60); v("hat", "cd", 35); v("hat", "od", 65); v("tie", "d", 70); v("pod", "d", 70)
     v("tie", "pan", -12); v("pod", "pan", r.choice([-30, 25, 35])); v("hat", "pan", r.choice([-8, 8, 12]))
@@ -373,7 +387,9 @@ def b_kit(genre, r, cx=1, idx=0):
         if cx: fx.update({"b_remix": r.randint(1, 127), "b_remix_rate": r.choice([2, 3])})
     P.update(fx)
     # every FX starts silent / off: raise it by hand (delay, xFx, Pulp at -60 dB; Dirt, EQ sat, Magic at 0)
-    P.update({"b_x_gain": -60.0, "b_dly_gain": -60.0, "b_pulp_gain": -60.0, "b_dirt": 0, "b_eq_amp": 0, "b_mag_mix": 0})
+    P.update({"b_x_gain": -60.0, "b_dly_gain": -60.0, "b_dirt": 0, "b_eq_amp": 0})
+    for k in [k for k in P if k.startswith(("b_pulp", "b_mag", "b_norm"))]:   # Pulp, Magic and the old Norm no longer exist
+        del P[k]
     for voice in ("kick", "snare", "hat", "tie", "pod"):          # no drive on the sample voices
         P["b_%s_sat" % voice] = 0
     return P, smp
@@ -381,11 +397,12 @@ def b_kit(genre, r, cx=1, idx=0):
 def lanes_to_samples(preset, genre, r, cx=1):
     """Tie / Pod lanes: the column height selects the sample of the module list (notch 1 = bottom = last sample).
     Every note points to the kit's sample, sometimes alternated with 1-2 other samples of the same genre."""
-    for module, lane in (("Tie", "tie"), ("Pod", "pod")):
+    for module, lane in (("Belt", "tie"), ("Capsule", "pod")):
         files = sorted(it["file"][:-4] for it in manifest["modules"][module])
         n = len(files)
         main = preset["samples"][module]
-        alts = [f for f in files if f != main and "Acid" not in f and any(genre in it["tags"] for it in manifest["modules"][module] if it["file"][:-4] == f)]
+        avoid = AVOID.get(genre, {}).get(module, [])
+        alts = [f for f in files if f != main and "Acid" not in f and not any(w.lower() in f.lower() for w in avoid) and any(genre in it["tags"] for it in manifest["modules"][module] if it["file"][:-4] == f)]
         r.shuffle(alts)
         choices = [main] + (alts[:2] if cx else [])
         for pat in preset["patterns"]:
@@ -426,7 +443,7 @@ def patch(role, genre, r):
     if role == "kick":
         # (freq lo, hi, decay lo, hi, distort lo, hi) - tuned on the reference styles
         base = {"techno": (44, 50, 380, 700, 0, 6),      # long rumble-ready kicks (CVO, Alarico)
-                "minimal": (58, 72, 60, 170, 0, 6),       # tiny dry clicks (Jelinek, Farben)
+                "minimal": (48, 56, 200, 420, 0, 2),      # round, warm kicks (no tiny clicks)
                 "microhouse": (48, 60, 200, 450, 0, 4),   # soft round kicks (Villalobos, Zavor)
                 "rominimal": (48, 56, 160, 380, 0, 4),    # round, short-medium (Barac, Sublee)
                 "house": (48, 54, 280, 520, 0, 4),       # warm 909 (Kerri Chandler)
@@ -453,18 +470,29 @@ def patch(role, genre, r):
                     mix=j(50, 75), dist=j(5, 30), eq_freq=6000, eq_gain=j(0, 5), level=-3, pan=0, choke=0, vel_osc=60, vel_noise=60, vel_mod=0)
     if role in ("ch", "oh"):
         dcy = j(15, 60) if role == "ch" else j(200, 500)
-        if genre in ("microhouse", "minimal"): dcy *= 0.6
+        if genre == "microhouse": dcy *= 0.6
+        if genre == "minimal":                     # soft, dark hats: noise only, low-passed tone
+            return dict(osc_wave=0, osc_freq=j(3000, 5000), osc_atk=0, osc_dcy=j(10, 30), pm_mode=0, pm_amt=0, pm_rate=50,
+                        n_mode=1, n_freq=j(5000, 7500), n_q=j(0.6, 1.0), n_stereo=1, n_env=0, n_atk=j(0, 3), n_dcy=round(dcy, 1),
+                        mix=100, dist=0, eq_freq=8000, eq_gain=j(-6, -2), level=-8, pan=j(-20, 20), choke=1, vel_osc=60, vel_noise=60, vel_mod=0)
         return dict(osc_wave=2, osc_freq=j(2500, 6000), osc_atk=0, osc_dcy=j(10, 40), pm_mode=2, pm_amt=j(6, 20), pm_rate=j(60, 85),
                     n_mode=2, n_freq=j(6500, 11000), n_q=j(0.8, 2.0), n_stereo=1, n_env=0, n_atk=0, n_dcy=round(dcy, 1),
                     mix=j(80, 100), dist=0, eq_freq=10000, eq_gain=j(0, 4), level=-6, pan=j(-20, 20), choke=1, vel_osc=60, vel_noise=60, vel_mod=0)
     if role == "perc":
-        kind = r.choice(["wood", "conga", "tom", "metal", "click"]) if genre != "rominimal" else r.choice(["wood", "conga", "click", "wood"])
+        if genre == "minimal": kind = r.choice(["conga", "tom", "conga"])          # round percussion only
+        else: kind = r.choice(["wood", "conga", "tom", "metal", "click"]) if genre != "rominimal" else r.choice(["wood", "conga", "click", "wood"])
         f = {"wood": (700, 1400), "conga": (220, 420), "tom": (90, 200), "metal": (400, 900), "click": (1500, 3500)}[kind]
         return dict(osc_wave=0 if kind in ("conga", "tom") else r.choice([1, 2]), osc_freq=j(*f), osc_atk=0,
                     osc_dcy=j(30, 90) if kind in ("wood", "click") else j(120, 320), pm_mode=r.choice([0, 0, 1]), pm_amt=j(-3, 14),
                     pm_rate=j(15, 50), n_mode=1, n_freq=j(1500, 6000), n_q=j(1, 4), n_stereo=0, n_env=0, n_atk=0, n_dcy=j(8, 30),
                     mix=j(5, 30), dist=j(0, 15), eq_freq=j(500, 3000), eq_gain=j(0, 6), level=j(-10, -5), pan=j(-45, 45), choke=0,
                     vel_osc=80, vel_noise=60, vel_mod=0)
+    if role == "tone" and genre == "minimal":        # round low sine tone (sub / bass drum-like), no blips
+        return dict(osc_wave=0, osc_freq=j(55, 110), osc_atk=j(1, 6), osc_dcy=j(250, 600), pm_mode=0, pm_amt=j(0, 3), pm_rate=30, n_mode=0,
+                    n_freq=800, n_q=1, n_stereo=0, n_env=0, n_atk=0, n_dcy=10, mix=0, dist=j(0, 8),
+                    eq_freq=j(100, 300), eq_gain=j(0, 3), level=-8, pan=0, choke=0, vel_osc=60, vel_noise=60, vel_mod=0)
+    if role == "fx" and genre == "minimal":          # soft low conga instead of an fx blip
+        return patch("perc", genre, r)
     if role == "tone":
         return dict(osc_wave=r.choice([0, 1, 2]), osc_freq=j(55, 140) if genre in ("techno", "rominimal", "techhouse") else j(200, 600),
                     osc_atk=j(0, 5), osc_dcy=j(120, 400), pm_mode=r.choice([0, 1]), pm_amt=j(0, 5), pm_rate=j(20, 50), n_mode=0,

@@ -146,6 +146,37 @@ void TwinLookAndFeel::drawDocumentWindowTitleBar (DocumentWindow& win, Graphics&
 }
 
 //==============================================================================
+FineSlider::FineSlider()
+{
+    setWantsKeyboardFocus (true);
+    setMouseClickGrabsKeyboardFocus (true);
+}
+
+void FineSlider::mouseDown (const MouseEvent& e)
+{
+    setMouseDragSensitivity (e.mods.isShiftDown() ? dragPixels * 4 : dragPixels);
+    Slider::mouseDown (e);
+}
+
+bool FineSlider::keyPressed (const KeyPress& k)
+{
+    int dir = 0;
+    if (k.isKeyCode (KeyPress::upKey) || k.isKeyCode (KeyPress::rightKey)) dir = 1;
+    if (k.isKeyCode (KeyPress::downKey) || k.isKeyCode (KeyPress::leftKey)) dir = -1;
+    if (dir == 0) return Slider::keyPressed (k);
+    const double interval = getInterval();
+    double v;
+    if (interval > 0.0 && (getMaximum() - getMinimum()) / interval <= 200.0)       // discrete parameter: one step
+        v = getValue() + dir * interval;
+    else
+    {
+        const double prop = valueToProportionOfLength (getValue()) + dir * (k.getModifiers().isShiftDown() ? 0.001 : 0.01);
+        v = proportionOfLengthToValue (jlimit (0.0, 1.0, prop));
+    }
+    setValue (jlimit (getMinimum(), getMaximum(), v), sendNotificationSync);
+    return true;
+}
+
 Knob::Knob (const String& c, Colour a) : caption (c), accent (a)
 {
     slider.setSliderStyle (Slider::RotaryHorizontalVerticalDrag);
@@ -153,7 +184,7 @@ Knob::Knob (const String& c, Colour a) : caption (c), accent (a)
     slider.setColour (Slider::rotarySliderFillColourId, accent);
     slider.setRotaryParameters (MathConstants<float>::pi * 1.2f, MathConstants<float>::pi * 2.8f, true);
     slider.setVelocityBasedMode (false);
-    slider.setMouseDragSensitivity (220);
+    slider.setMouseDragSensitivity (600);
     slider.onValueChange = [this] { repaint(); };
     addAndMakeVisible (slider);
 }
@@ -171,7 +202,10 @@ void Knob::attach (AudioProcessorValueTreeState& s, const String& id)
     param = s.getParameter (id);
     if (param == nullptr) return;
     att = std::make_unique<AudioProcessorValueTreeState::SliderAttachment> (s, id, slider);
-    slider.setDoubleClickReturnValue (true, param->convertFrom0to1 (param->getDefaultValue()));
+    // double-click: back to the default value; Acc, V>A, Pan and Tune of the Section B modules go to the centre (12 o'clock)
+    const bool centre = id.startsWith ("b_") && (id.endsWith ("_acc") || id.endsWith ("_vamt") || id.endsWith ("_pan") || id.endsWith ("_tune"))
+                        && ! id.startsWith ("b_lfo");
+    slider.setDoubleClickReturnValue (true, param->convertFrom0to1 (centre ? 0.5f : param->getDefaultValue()));
     slider.setTooltip (param->getName (64));
     if (caption.isEmpty()) caption = param->getName (32);
     repaint();
@@ -195,8 +229,13 @@ void Knob::paint (Graphics& g)
     g.drawFittedText (caption, 0, 0, getWidth(), capH, Justification::centred, 1, 0.7f);
     if (param != nullptr)
     {
-        g.setColour (slider.isMouseOverOrDragging() ? accent : theme::text);
+        g.setColour (slider.isMouseOverOrDragging() || slider.hasKeyboardFocus (false) ? accent : theme::text);
         g.drawFittedText (param->getCurrentValueAsText(), 0, getHeight() - capH, getWidth(), capH, Justification::centred, 1, 0.7f);
+    }
+    if (slider.hasKeyboardFocus (false))                       // keyboard focus: the arrows move this knob
+    {
+        g.setColour (accent.withAlpha (0.7f));
+        g.drawRoundedRectangle (slider.getBounds().toFloat().expanded (2.0f), 4.0f, 1.2f);
     }
 }
 

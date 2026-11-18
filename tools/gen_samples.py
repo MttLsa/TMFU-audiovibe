@@ -656,11 +656,13 @@ add("Pod", "Dissonant Tom Cluster", ["techno", "breakbeat"],  lambda s: tr808_to
 
 GENRES = ["techno", "minimal", "microhouse", "rominimal", "house", "techhouse", "deephouse", "breakbeat"]
 seed = 1000
+DISPLAY = {"Kick": "Kick", "Snare": "Snare", "Tie": "Belt", "Pod": "Capsule"}     # module names shown to the user
 for module in ("Kick", "Snare", "Tie", "Pod"):
-    prefix = module[0]
+    shown = DISPLAY[module]
+    prefix = shown[0]
     for i, (name, genre, fn) in enumerate(G[module]):
         seed += 1
-        write(module, f"{prefix}{i + 1:02d} {name}", fn(seed), genre if isinstance(genre, list) else [genre])
+        write(shown, f"{prefix}{i + 1:02d} {name}", fn(seed), genre if isinstance(genre, list) else [genre])
 i = 0
 for genre in GENRES:
     for name, (tau, hp, metal, base), otau, extra in HATS[genre]:
@@ -670,7 +672,7 @@ for genre in GENRES:
         write("Hat", fname, hat(otau, hp, metal, base, max(0.3, otau * 6), seed=seed, **extra), [genre], subdir="open")
 
 with open(os.path.join(OUT, "manifest.json"), "w") as f:
-    json.dump({"version": 5, "genres": GENRES, "modules": manifest}, f, indent=1)
+    json.dump({"version": 6, "genres": GENRES, "modules": manifest}, f, indent=1)
 print({k: len(v) for k, v in manifest.items()})
 
 import zipfile, shutil

@@ -1,5 +1,5 @@
 {
- "version": 5,
+ "version": 6,
  "genres": [
   "techno",
   "minimal",
@@ -591,9 +591,9 @@
     ]
    }
   ],
-  "Tie": [
+  "Belt": [
    {
-    "file": "T01 Upright Bass Pizz C.wav",
+    "file": "B01 Upright Bass Pizz C.wav",
     "tags": [
      "minimal",
      "microhouse",
@@ -602,7 +602,7 @@
     ]
    },
    {
-    "file": "T02 Upright Bass Soft C.wav",
+    "file": "B02 Upright Bass Soft C.wav",
     "tags": [
      "minimal",
      "microhouse",
@@ -610,7 +610,7 @@
     ]
    },
    {
-    "file": "T03 Upright Bass Hard C.wav",
+    "file": "B03 Upright Bass Hard C.wav",
     "tags": [
      "minimal",
      "deephouse",
@@ -618,7 +618,7 @@
     ]
    },
    {
-    "file": "T04 Electric Bass Finger C.wav",
+    "file": "B04 Electric Bass Finger C.wav",
     "tags": [
      "house",
      "deephouse",
@@ -626,7 +626,7 @@
     ]
    },
    {
-    "file": "T05 Electric Bass Soft C.wav",
+    "file": "B05 Electric Bass Soft C.wav",
     "tags": [
      "deephouse",
      "microhouse",
@@ -634,7 +634,7 @@
     ]
    },
    {
-    "file": "T06 Electric Bass Punch C.wav",
+    "file": "B06 Electric Bass Punch C.wav",
     "tags": [
      "house",
      "techhouse",
@@ -642,7 +642,7 @@
     ]
    },
    {
-    "file": "T07 Swag Bass C.wav",
+    "file": "B07 Swag Bass C.wav",
     "tags": [
      "techhouse",
      "house",
@@ -650,7 +650,7 @@
     ]
    },
    {
-    "file": "T08 Swag Bass Soft C.wav",
+    "file": "B08 Swag Bass Soft C.wav",
     "tags": [
      "deephouse",
      "rominimal",
@@ -658,7 +658,7 @@
     ]
    },
    {
-    "file": "T09 Glowly Bass Stab C.wav",
+    "file": "B09 Glowly Bass Stab C.wav",
     "tags": [
      "techno",
      "techhouse",
@@ -666,7 +666,7 @@
     ]
    },
    {
-    "file": "T10 Glowly Bass Short C.wav",
+    "file": "B10 Glowly Bass Short C.wav",
     "tags": [
      "minimal",
      "rominimal",
@@ -674,7 +674,7 @@
     ]
    },
    {
-    "file": "T11 Woodsy Bass C.wav",
+    "file": "B11 Woodsy Bass C.wav",
     "tags": [
      "deephouse",
      "microhouse",
@@ -682,7 +682,7 @@
     ]
    },
    {
-    "file": "T12 Thick Bass C.wav",
+    "file": "B12 Thick Bass C.wav",
     "tags": [
      "techno",
      "techhouse",
@@ -691,14 +691,14 @@
     ]
    },
    {
-    "file": "T13 Trance Bass C.wav",
+    "file": "B13 Trance Bass C.wav",
     "tags": [
      "techno",
      "techhouse"
     ]
    },
    {
-    "file": "T14 Voxy Bass C.wav",
+    "file": "B14 Voxy Bass C.wav",
     "tags": [
      "microhouse",
      "minimal",
@@ -706,7 +706,7 @@
     ]
    },
    {
-    "file": "T15 Voxy Bass Hit C.wav",
+    "file": "B15 Voxy Bass Hit C.wav",
     "tags": [
      "microhouse",
      "rominimal",
@@ -714,14 +714,14 @@
     ]
    },
    {
-    "file": "T16 Drop Bass C.wav",
+    "file": "B16 Drop Bass C.wav",
     "tags": [
      "breakbeat",
      "techno"
     ]
    },
    {
-    "file": "T17 Sub Bass C.wav",
+    "file": "B17 Sub Bass C.wav",
     "tags": [
      "techno",
      "minimal",
@@ -734,7 +734,7 @@
     ]
    },
    {
-    "file": "T18 Deep Sub C.wav",
+    "file": "B18 Deep Sub C.wav",
     "tags": [
      "deephouse",
      "house",
@@ -742,13 +742,13 @@
     ]
    },
    {
-    "file": "T19 Rumble Bass C.wav",
+    "file": "B19 Rumble Bass C.wav",
     "tags": [
      "techno"
     ]
    },
    {
-    "file": "T20 Rolling Bass C.wav",
+    "file": "B20 Rolling Bass C.wav",
     "tags": [
      "rominimal",
      "minimal",
@@ -756,61 +756,61 @@
     ]
    },
    {
-    "file": "T21 Pluck Bass C.wav",
+    "file": "B21 Pluck Bass C.wav",
     "tags": [
      "rominimal",
      "microhouse"
     ]
    },
    {
-    "file": "T22 Rubber Bass C.wav",
+    "file": "B22 Rubber Bass C.wav",
     "tags": [
      "techhouse",
      "microhouse"
     ]
    },
    {
-    "file": "T23 Funky Bass C.wav",
+    "file": "B23 Funky Bass C.wav",
     "tags": [
      "deephouse",
      "house"
     ]
    },
    {
-    "file": "T24 Organ Bass C.wav",
+    "file": "B24 Organ Bass C.wav",
     "tags": [
      "house",
      "deephouse"
     ]
    },
    {
-    "file": "T25 Electro Bass C.wav",
+    "file": "B25 Electro Bass C.wav",
     "tags": [
      "breakbeat",
      "techhouse"
     ]
    },
    {
-    "file": "T26 Robot Bass C.wav",
+    "file": "B26 Robot Bass C.wav",
     "tags": [
      "breakbeat"
     ]
    },
    {
-    "file": "T27 Acid Bass C.wav",
+    "file": "B27 Acid Bass C.wav",
     "tags": [
      "techhouse"
     ]
    },
    {
-    "file": "T28 Felt Bass C.wav",
+    "file": "B28 Felt Bass C.wav",
     "tags": [
      "minimal",
      "microhouse"
     ]
    },
    {
-    "file": "T29 Rhodes Cm7.wav",
+    "file": "B29 Rhodes Cm7.wav",
     "tags": [
      "house",
      "deephouse",
@@ -820,7 +820,7 @@
     ]
    },
    {
-    "file": "T30 Rhodes Cm9.wav",
+    "file": "B30 Rhodes Cm9.wav",
     "tags": [
      "house",
      "deephouse",
@@ -830,14 +830,14 @@
     ]
    },
    {
-    "file": "T31 Rhodes Cm11 Open.wav",
+    "file": "B31 Rhodes Cm11 Open.wav",
     "tags": [
      "deephouse",
      "microhouse"
     ]
    },
    {
-    "file": "T32 Rhodes Csus.wav",
+    "file": "B32 Rhodes Csus.wav",
     "tags": [
      "house",
      "deephouse",
@@ -845,7 +845,7 @@
     ]
    },
    {
-    "file": "T33 Rhodes Cm Short.wav",
+    "file": "B33 Rhodes Cm Short.wav",
     "tags": [
      "minimal",
      "rominimal",
@@ -853,14 +853,14 @@
     ]
    },
    {
-    "file": "T34 Piano Cm7.wav",
+    "file": "B34 Piano Cm7.wav",
     "tags": [
      "house",
      "deephouse"
     ]
    },
    {
-    "file": "T35 Piano Cm9.wav",
+    "file": "B35 Piano Cm9.wav",
     "tags": [
      "house",
      "deephouse",
@@ -868,14 +868,14 @@
     ]
    },
    {
-    "file": "T36 Piano Cmadd9.wav",
+    "file": "B36 Piano Cmadd9.wav",
     "tags": [
      "house",
      "techhouse"
     ]
    },
    {
-    "file": "T37 Piano Cm Short.wav",
+    "file": "B37 Piano Cm Short.wav",
     "tags": [
      "minimal",
      "techhouse",
@@ -883,14 +883,14 @@
     ]
    },
    {
-    "file": "T38 Piano Cm6 Low.wav",
+    "file": "B38 Piano Cm6 Low.wav",
     "tags": [
      "deephouse",
      "minimal"
     ]
    },
    {
-    "file": "T39 Dub Chord Cm7.wav",
+    "file": "B39 Dub Chord Cm7.wav",
     "tags": [
      "techno",
      "deephouse",
@@ -898,14 +898,14 @@
     ]
    },
    {
-    "file": "T40 Garage Stab Cm9.wav",
+    "file": "B40 Garage Stab Cm9.wav",
     "tags": [
      "house",
      "techhouse"
     ]
    },
    {
-    "file": "T41 Minor Stab Cm.wav",
+    "file": "B41 Minor Stab Cm.wav",
     "tags": [
      "breakbeat",
      "techno",
@@ -913,14 +913,14 @@
     ]
    },
    {
-    "file": "T42 Soft Stab Cm7.wav",
+    "file": "B42 Soft Stab Cm7.wav",
     "tags": [
      "techno",
      "rominimal"
     ]
    },
    {
-    "file": "T43 Strings Cm7.wav",
+    "file": "B43 Strings Cm7.wav",
     "tags": [
      "techhouse",
      "techno",
@@ -928,7 +928,7 @@
     ]
    },
    {
-    "file": "T44 Pad Cm9.wav",
+    "file": "B44 Pad Cm9.wav",
     "tags": [
      "deephouse",
      "microhouse",
@@ -936,23 +936,23 @@
     ]
    },
    {
-    "file": "T45 Dark Pad Cm.wav",
+    "file": "B45 Dark Pad Cm.wav",
     "tags": [
      "techno",
      "minimal"
     ]
    },
    {
-    "file": "T46 Organ Chord Cm7.wav",
+    "file": "B46 Organ Chord Cm7.wav",
     "tags": [
      "house",
      "deephouse"
     ]
    }
   ],
-  "Pod": [
+  "Capsule": [
    {
-    "file": "P01 808 Tom Low.wav",
+    "file": "C01 808 Tom Low.wav",
     "tags": [
      "techno",
      "techhouse",
@@ -961,7 +961,7 @@
     ]
    },
    {
-    "file": "P02 808 Tom Mid.wav",
+    "file": "C02 808 Tom Mid.wav",
     "tags": [
      "techno",
      "techhouse",
@@ -970,7 +970,7 @@
     ]
    },
    {
-    "file": "P03 808 Tom Hi.wav",
+    "file": "C03 808 Tom Hi.wav",
     "tags": [
      "techno",
      "techhouse",
@@ -979,7 +979,7 @@
     ]
    },
    {
-    "file": "P04 808 Conga Low.wav",
+    "file": "C04 808 Conga Low.wav",
     "tags": [
      "techno",
      "minimal",
@@ -992,7 +992,7 @@
     ]
    },
    {
-    "file": "P05 808 Conga Mid.wav",
+    "file": "C05 808 Conga Mid.wav",
     "tags": [
      "techno",
      "minimal",
@@ -1005,7 +1005,7 @@
     ]
    },
    {
-    "file": "P06 808 Conga Hi.wav",
+    "file": "C06 808 Conga Hi.wav",
     "tags": [
      "techno",
      "minimal",
@@ -1018,7 +1018,7 @@
     ]
    },
    {
-    "file": "P07 909 Tom Low.wav",
+    "file": "C07 909 Tom Low.wav",
     "tags": [
      "techno",
      "techhouse",
@@ -1026,7 +1026,7 @@
     ]
    },
    {
-    "file": "P08 909 Tom Mid.wav",
+    "file": "C08 909 Tom Mid.wav",
     "tags": [
      "techno",
      "techhouse",
@@ -1034,7 +1034,7 @@
     ]
    },
    {
-    "file": "P09 909 Tom Hi.wav",
+    "file": "C09 909 Tom Hi.wav",
     "tags": [
      "techno",
      "techhouse",
@@ -1042,7 +1042,7 @@
     ]
    },
    {
-    "file": "P10 LM2 Conga Hi.wav",
+    "file": "C10 LM2 Conga Hi.wav",
     "tags": [
      "house",
      "deephouse",
@@ -1052,7 +1052,7 @@
     ]
    },
    {
-    "file": "P11 LM2 Conga HiHi.wav",
+    "file": "C11 LM2 Conga HiHi.wav",
     "tags": [
      "house",
      "deephouse",
@@ -1062,7 +1062,7 @@
     ]
    },
    {
-    "file": "P12 LM2 Conga Mid.wav",
+    "file": "C12 LM2 Conga Mid.wav",
     "tags": [
      "house",
      "deephouse",
@@ -1072,7 +1072,7 @@
     ]
    },
    {
-    "file": "P13 LM2 Conga Low.wav",
+    "file": "C13 LM2 Conga Low.wav",
     "tags": [
      "house",
      "deephouse",
@@ -1082,7 +1082,7 @@
     ]
    },
    {
-    "file": "P14 LM2 Conga LowLow.wav",
+    "file": "C14 LM2 Conga LowLow.wav",
     "tags": [
      "house",
      "deephouse",
@@ -1092,21 +1092,21 @@
     ]
    },
    {
-    "file": "P15 LM2 Tom Hi.wav",
+    "file": "C15 LM2 Tom Hi.wav",
     "tags": [
      "house",
      "breakbeat"
     ]
    },
    {
-    "file": "P16 LM2 Tom Mid.wav",
+    "file": "C16 LM2 Tom Mid.wav",
     "tags": [
      "house",
      "breakbeat"
     ]
    },
    {
-    "file": "P17 LM2 Tom Low.wav",
+    "file": "C17 LM2 Tom Low.wav",
     "tags": [
      "house",
      "breakbeat",
@@ -1114,7 +1114,7 @@
     ]
    },
    {
-    "file": "P18 LM2 Stick.wav",
+    "file": "C18 LM2 Stick.wav",
     "tags": [
      "minimal",
      "microhouse",
@@ -1122,14 +1122,14 @@
     ]
    },
    {
-    "file": "P19 LM2 Snare Soft.wav",
+    "file": "C19 LM2 Snare Soft.wav",
     "tags": [
      "house",
      "deephouse"
     ]
    },
    {
-    "file": "P20 505 Conga Hi.wav",
+    "file": "C20 505 Conga Hi.wav",
     "tags": [
      "techhouse",
      "house",
@@ -1137,7 +1137,7 @@
     ]
    },
    {
-    "file": "P21 505 Conga Low.wav",
+    "file": "C21 505 Conga Low.wav",
     "tags": [
      "techhouse",
      "house",
@@ -1145,21 +1145,21 @@
     ]
    },
    {
-    "file": "P22 505 Tom Hi.wav",
+    "file": "C22 505 Tom Hi.wav",
     "tags": [
      "breakbeat",
      "techhouse"
     ]
    },
    {
-    "file": "P23 505 Tom Mid.wav",
+    "file": "C23 505 Tom Mid.wav",
     "tags": [
      "breakbeat",
      "techhouse"
     ]
    },
    {
-    "file": "P24 505 Tom Low.wav",
+    "file": "C24 505 Tom Low.wav",
     "tags": [
      "breakbeat",
      "techhouse",
@@ -1167,7 +1167,7 @@
     ]
    },
    {
-    "file": "P25 505 Rim.wav",
+    "file": "C25 505 Rim.wav",
     "tags": [
      "minimal",
      "techhouse",
@@ -1175,14 +1175,14 @@
     ]
    },
    {
-    "file": "P26 505 Snare.wav",
+    "file": "C26 505 Snare.wav",
     "tags": [
      "breakbeat",
      "house"
     ]
    },
    {
-    "file": "P27 CR78 Bongo Hi.wav",
+    "file": "C27 CR78 Bongo Hi.wav",
     "tags": [
      "minimal",
      "microhouse",
@@ -1190,7 +1190,7 @@
     ]
    },
    {
-    "file": "P28 CR78 Bongo Low.wav",
+    "file": "C28 CR78 Bongo Low.wav",
     "tags": [
      "minimal",
      "microhouse",
@@ -1198,7 +1198,7 @@
     ]
    },
    {
-    "file": "P29 CR78 Conga Low.wav",
+    "file": "C29 CR78 Conga Low.wav",
     "tags": [
      "minimal",
      "microhouse",
@@ -1207,7 +1207,7 @@
     ]
    },
    {
-    "file": "P30 CR78 Rim.wav",
+    "file": "C30 CR78 Rim.wav",
     "tags": [
      "minimal",
      "rominimal",
@@ -1215,7 +1215,7 @@
     ]
    },
    {
-    "file": "P31 Conga Open.wav",
+    "file": "C31 Conga Open.wav",
     "tags": [
      "techno",
      "minimal",
@@ -1228,7 +1228,7 @@
     ]
    },
    {
-    "file": "P32 Conga Muted.wav",
+    "file": "C32 Conga Muted.wav",
     "tags": [
      "microhouse",
      "rominimal",
@@ -1237,7 +1237,7 @@
     ]
    },
    {
-    "file": "P33 Quinto Open.wav",
+    "file": "C33 Quinto Open.wav",
     "tags": [
      "microhouse",
      "rominimal",
@@ -1245,7 +1245,7 @@
     ]
    },
    {
-    "file": "P34 Quinto Muted.wav",
+    "file": "C34 Quinto Muted.wav",
     "tags": [
      "microhouse",
      "rominimal",
@@ -1253,7 +1253,7 @@
     ]
    },
    {
-    "file": "P35 Tumba Open.wav",
+    "file": "C35 Tumba Open.wav",
     "tags": [
      "deephouse",
      "house",
@@ -1261,7 +1261,7 @@
     ]
    },
    {
-    "file": "P36 Tumba Muted.wav",
+    "file": "C36 Tumba Muted.wav",
     "tags": [
      "rominimal",
      "microhouse",
@@ -1269,7 +1269,7 @@
     ]
    },
    {
-    "file": "P37 Bongo Hi.wav",
+    "file": "C37 Bongo Hi.wav",
     "tags": [
      "microhouse",
      "rominimal",
@@ -1277,7 +1277,7 @@
     ]
    },
    {
-    "file": "P38 Bongo Hi Muted.wav",
+    "file": "C38 Bongo Hi Muted.wav",
     "tags": [
      "minimal",
      "microhouse",
@@ -1285,7 +1285,7 @@
     ]
    },
    {
-    "file": "P39 Bongo Low.wav",
+    "file": "C39 Bongo Low.wav",
     "tags": [
      "microhouse",
      "rominimal",
@@ -1293,14 +1293,14 @@
     ]
    },
    {
-    "file": "P40 Bongo Low Muted.wav",
+    "file": "C40 Bongo Low Muted.wav",
     "tags": [
      "minimal",
      "rominimal"
     ]
    },
    {
-    "file": "P41 Tom Hi Mallet.wav",
+    "file": "C41 Tom Hi Mallet.wav",
     "tags": [
      "techno",
      "minimal",
@@ -1308,14 +1308,14 @@
     ]
    },
    {
-    "file": "P42 Darbuka Doum.wav",
+    "file": "C42 Darbuka Doum.wav",
     "tags": [
      "microhouse",
      "rominimal"
     ]
    },
    {
-    "file": "P43 Darbuka Tek.wav",
+    "file": "C43 Darbuka Tek.wav",
     "tags": [
      "microhouse",
      "rominimal",
@@ -1323,7 +1323,7 @@
     ]
    },
    {
-    "file": "P44 Frame Drum Low.wav",
+    "file": "C44 Frame Drum Low.wav",
     "tags": [
      "techno",
      "deephouse",
@@ -1331,14 +1331,14 @@
     ]
    },
    {
-    "file": "P45 Frame Drum Muted.wav",
+    "file": "C45 Frame Drum Muted.wav",
     "tags": [
      "minimal",
      "microhouse"
     ]
    },
    {
-    "file": "P46 Cajon Bass.wav",
+    "file": "C46 Cajon Bass.wav",
     "tags": [
      "deephouse",
      "microhouse",
@@ -1346,7 +1346,7 @@
     ]
    },
    {
-    "file": "P47 Cajon Slap.wav",
+    "file": "C47 Cajon Slap.wav",
     "tags": [
      "microhouse",
      "rominimal",
@@ -1354,7 +1354,7 @@
     ]
    },
    {
-    "file": "P48 Claves.wav",
+    "file": "C48 Claves.wav",
     "tags": [
      "house",
      "rominimal",
@@ -1363,7 +1363,7 @@
     ]
    },
    {
-    "file": "P49 Claves Soft.wav",
+    "file": "C49 Claves Soft.wav",
     "tags": [
      "minimal",
      "microhouse",
@@ -1371,7 +1371,7 @@
     ]
    },
    {
-    "file": "P50 Log Drum Hi.wav",
+    "file": "C50 Log Drum Hi.wav",
     "tags": [
      "rominimal",
      "microhouse",
@@ -1379,7 +1379,7 @@
     ]
    },
    {
-    "file": "P51 Log Drum Low.wav",
+    "file": "C51 Log Drum Low.wav",
     "tags": [
      "rominimal",
      "microhouse",
@@ -1387,7 +1387,7 @@
     ]
    },
    {
-    "file": "P52 Snare Soft Brushy.wav",
+    "file": "C52 Snare Soft Brushy.wav",
     "tags": [
      "deephouse",
      "house",
@@ -1395,7 +1395,7 @@
     ]
    },
    {
-    "file": "P53 Snare Ghost.wav",
+    "file": "C53 Snare Ghost.wav",
     "tags": [
      "breakbeat",
      "house",
@@ -1403,7 +1403,7 @@
     ]
    },
    {
-    "file": "P54 Sidestick.wav",
+    "file": "C54 Sidestick.wav",
     "tags": [
      "minimal",
      "rominimal",
@@ -1411,7 +1411,7 @@
     ]
    },
    {
-    "file": "P55 Pi Tom Hi.wav",
+    "file": "C55 Pi Tom Hi.wav",
     "tags": [
      "techno",
      "breakbeat",
@@ -1419,7 +1419,7 @@
     ]
    },
    {
-    "file": "P56 Pi Tom Mid.wav",
+    "file": "C56 Pi Tom Mid.wav",
     "tags": [
      "techno",
      "breakbeat",
@@ -1427,7 +1427,7 @@
     ]
    },
    {
-    "file": "P57 Pi Tom Low.wav",
+    "file": "C57 Pi Tom Low.wav",
     "tags": [
      "techno",
      "breakbeat",
@@ -1435,49 +1435,49 @@
     ]
    },
    {
-    "file": "P58 Tabla Ghe.wav",
+    "file": "C58 Tabla Ghe.wav",
     "tags": [
      "microhouse",
      "rominimal"
     ]
    },
    {
-    "file": "P59 Tabla Te.wav",
+    "file": "C59 Tabla Te.wav",
     "tags": [
      "microhouse",
      "minimal"
     ]
    },
    {
-    "file": "P60 Tabla Ke.wav",
+    "file": "C60 Tabla Ke.wav",
     "tags": [
      "minimal",
      "rominimal"
     ]
    },
    {
-    "file": "P61 Dissonant Hit Low.wav",
+    "file": "C61 Dissonant Hit Low.wav",
     "tags": [
      "techno",
      "minimal"
     ]
    },
    {
-    "file": "P62 Dissonant Hit Mid.wav",
+    "file": "C62 Dissonant Hit Mid.wav",
     "tags": [
      "techno",
      "techhouse"
     ]
    },
    {
-    "file": "P63 Dissonant Stab.wav",
+    "file": "C63 Dissonant Stab.wav",
     "tags": [
      "minimal",
      "microhouse"
     ]
    },
    {
-    "file": "P64 Dissonant Soft Cluster.wav",
+    "file": "C64 Dissonant Soft Cluster.wav",
     "tags": [
      "deephouse",
      "microhouse",
@@ -1485,14 +1485,14 @@
     ]
    },
    {
-    "file": "P65 Dissonant Dub Hit.wav",
+    "file": "C65 Dissonant Dub Hit.wav",
     "tags": [
      "techno",
      "deephouse"
     ]
    },
    {
-    "file": "P66 Dissonant Tom Cluster.wav",
+    "file": "C66 Dissonant Tom Cluster.wav",
     "tags": [
      "techno",
      "breakbeat"

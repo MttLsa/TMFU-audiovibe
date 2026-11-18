@@ -5,11 +5,11 @@
 
 // =================================================================================================
 //  Section B : groovebox modelled on Limelite 1.3 (Reaktor, NI 2004)
-//   Voices    : Kick, Snare, Hat (closed/open), Tie (tonal), Pod (perc/fx), Pulp (pitch-tracking osc + comb)
+//   Voices    : Kick, Snare, Hat (closed/open), Tie (tonal), Pod (percussion)
 //   Sequencer : patterns A-D, main grid Kick/Snare/C-Hat/O-Hat (off/on/accent), value lanes Tie/Pod/Mod,
 //               own lengths (up to 64) + stretch, start step, swing, half tempo, pattern chain (8 slots),
 //               Remix engine (127 remix patterns, rate, shift, NOW)
-//   FX        : Filter (env) > EQ/Sat > Magic > Delay > xFx > FX Mix > Dirt > Norm > Gain
+//   FX        : Filter (env) > EQ/Sat > Delay > xFx > FX Mix > Dirt > Gain (> NORM)
 // =================================================================================================
 class LimeEngine
 {
@@ -19,7 +19,7 @@ public:
     enum TrigLane { laneKick = 0, laneSnare, laneCHat, laneOHat, numTrigLanes };
     enum ValueLane { laneTie = 0, lanePod, laneMod, numValueLanes };
     // trigger targets (MIDI 48.. / audition)
-    enum Target { tKick = 0, tSnare, tCHat, tOHat, tTie, tPod, tPulp, numTargets };
+    enum Target { tKick = 0, tSnare, tCHat, tOHat, tTie, tPod, numTargets };
 
     struct Pattern
     {
@@ -91,7 +91,6 @@ private:
     void readParams();
     void trigger (int target, float vel, float laneValue, int forcedIndex = -1);
     void renderSampleVoice (int voice, Voice& v, float* dl, float* dr, int n);
-    void renderPulp (const float* trackSrc, float* dl, float* dr, int n);
     int  remap (int pos, int len) const;
     std::atomic<float>* p (const juce::String& id) const;
 
@@ -106,18 +105,9 @@ private:
     std::array<int, 5> nextVoice {};
     double tiePrevRate = 1.0;
 
-    // Pulp
-    struct Pulp
-    {
-        bool active = false; double t = 0, phase = 0; float vel = 1;
-        float freq = 110, freqTarget = 110, tracked = 110;
-        float lastIn = 0; int sinceCross = 0; float hpS = 0, lpS = 0, hpPrev = 0;
-        DelayLine comb; TptSvf combLp;
-        uint32_t rng = 0x1357;
-    } pulpV;
 
     // FX
-    EnvFilter envFilter; EqSat eq; Magic magic; TapeDelay delay; XFx xfx; GentleSat dirtSat;
+    EnvFilter envFilter; EqSat eq; TapeDelay delay; XFx xfx; GentleSat dirtSat;
     static constexpr int xyN = 1024;
     std::array<float, xyN> xyBufX {}, xyBufY {};
     std::atomic<bool> xyHas { false }, xyTouching { false }, xyPlayback { false }, xyRecNow { false }, xyClearReq { false };

@@ -15,9 +15,9 @@ namespace theme
     const juce::Colour track     { 0xff4a4a4a };
     const juce::Colour text      { 0xffd0d0d0 };
     const juce::Colour textDim   { 0xff8c8c8c };
-    const juce::Colour accentA   { 0xffff9a3c };   // Section A — orange
+    const juce::Colour accentA   { 0xff4f8cff };   // Section A — blue
     const juce::Colour accentB   { 0xffb4dc3c };   // Section B — lime
-    const juce::Colour accentG   { 0xff5cc8e6 };   // Global   — cyan
+    const juce::Colour accentG   { 0xffeeeeee };   // Global / output — white
     const juce::Colour stepOff   { 0xff3c3c3c };
     const juce::Colour stepBeat  { 0xff464646 };
 
@@ -53,6 +53,21 @@ public:
 // -------------------------------------------------------------------------------------
 //  Knob: rotary slider + caption + value readout. Re-attachable to another parameter.
 // -------------------------------------------------------------------------------------
+// Rotary slider with fine resolution (600 px for the whole range, Shift = 4x finer) and keyboard control:
+// click a knob, then Up / Right = increase, Down / Left = decrease (1 %; Shift = 0.1 %; discrete values: one step).
+class FineSlider : public juce::Slider
+{
+public:
+    FineSlider();
+    void mouseDown (const juce::MouseEvent&) override;
+    bool keyPressed (const juce::KeyPress&) override;
+    void focusGained (FocusChangeType) override { repaintParent(); }
+    void focusLost (FocusChangeType) override { repaintParent(); }
+    int dragPixels = 600;
+private:
+    void repaintParent() { if (auto* p = getParentComponent()) p->repaint(); }
+};
+
 class Knob : public juce::Component
 {
 public:
@@ -63,7 +78,7 @@ public:
     void setAccent (juce::Colour c);
     void resized() override;
     void paint (juce::Graphics&) override;
-    juce::Slider slider;
+    FineSlider slider;
 
 private:
     juce::String caption;

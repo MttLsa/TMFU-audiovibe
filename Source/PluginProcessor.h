@@ -4,6 +4,7 @@
 #include "Params.h"
 #include "dsp/MicroEngine.h"
 #include "dsp/LimeEngine.h"
+#include "dsp/OutputNorm.h"
 
 class TwinboxProcessor : public juce::AudioProcessor, private juce::Timer
 {
@@ -57,6 +58,7 @@ public:
                        std::function<void (float)> progress = {});
 
     float meter (int which) const { return meters[(size_t) which].load(); }   // 0 = A, 1 = B, 2 = Out
+    bool normLimiting (int section) const { return (section == 0 ? normA : normB).limiting.load(); }
     bool isPlaying() const { return transportPlaying.load(); }
     bool hostIsPlaying() const { return hostPlaying.load(); }
 
@@ -77,6 +79,9 @@ private:
 
     // global filter
     TptSvf gFilt[2];
+    OutputNorm normA, normB;          // NORM buttons of Section A / B
+    SafetyLimiter safety;             // output never clips
+    std::atomic<float>* pNormA = nullptr, *pNormB = nullptr, *pMidiTarget = nullptr;
     float  cutSm = 20000.0f;
     float  xfadeSm = 0.5f;
     juce::AudioBuffer<float> bufA, bufB;

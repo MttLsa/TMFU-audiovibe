@@ -36,13 +36,13 @@ jobs:
           auval -v aumu Twbx Twnb
       - name: Build installer (macOS)
         if: runner.os == 'macOS'
-        run: ./packaging/macos/make_pkg.sh 2.11.0
+        run: ./packaging/macos/make_pkg.sh 2.12.0
       - name: Upload installer (macOS)
         if: runner.os == 'macOS'
         uses: actions/upload-artifact@v5
         with:
           name: Twinbox-macOS-Installer
-          path: build/installer/Twinbox-2.11.0-macOS.pkg
+          path: build/installer/Twinbox-2.12.0-macOS.pkg
       - uses: actions/upload-artifact@v5
         with:
           name: Twinbox-${{ matrix.name }}

@@ -72,10 +72,10 @@ namespace params
 
     // ---------------- Section B (Limelite 1.3 architecture) ----------------
     constexpr int numLimeSteps   = 64;
-    constexpr int numLimeVoices  = 6;
-    enum LimeVoice { kick = 0, snare, hat, tie, pod, pulp };
-    inline const char* limeVoiceName (int v) { static const char* n[] { "Kick", "Snare", "Hat", "Tie", "Pod", "Pulp" }; return n[v]; }
-    inline const char* limeVoiceKey  (int v) { static const char* n[] { "kick", "snare", "hat", "tie", "pod", "pulp" }; return n[v]; }
+    constexpr int numLimeVoices  = 5;
+    enum LimeVoice { kick = 0, snare, hat, tie, pod };
+    inline const char* limeVoiceName (int v) { static const char* n[] { "Kick", "Snare", "Hat", "Belt", "Capsule" }; return n[v]; }   // shown names (Tie -> Belt, Pod -> Capsule)
+    inline const char* limeVoiceKey  (int v) { static const char* n[] { "kick", "snare", "hat", "tie", "pod" }; return n[v]; }
     inline juce::String b (int voice, const char* key) { return juce::String ("b_") + limeVoiceKey (voice) + "_" + key; }
 
     // per-voice keys (see Params.cpp for which voice owns which key)
@@ -112,15 +112,13 @@ namespace params
     inline const char* bRemixRate = "b_remix_rate";
     inline const char* bShift   = "b_shift";
     // OUT
-    inline const char* bDirt = "b_dirt", *bGain = "b_gain", *bTune = "b_tune", *bNorm = "b_norm", *bNormAmp = "b_norm_amp",
-                      *bNormRel = "b_norm_rel", *bNormSm = "b_norm_sm";
+    inline const char* bDirt = "b_dirt", *bGain = "b_gain", *bTune = "b_tune";
+    // NORM buttons: output normaliser of each section (A and B)
+    inline const char* aNorm = "a_norm", *bNorm = "b_norm";
     // FILTER
     inline const char* bFltCut = "b_flt_cut", *bFltTrk = "b_flt_trk", *bFltSm = "b_flt_sm", *bFltMod = "b_flt_mod";
     // EQ
     inline const char* bEqHi = "b_eq_hi", *bEqMid = "b_eq_mid", *bEqLo = "b_eq_lo", *bEqAmp = "b_eq_amp", *bEqSplit = "b_eq_split";
-    // MAGIC
-    inline const char* bMagPitch = "b_mag_pitch", *bMagGrain = "b_mag_gr", *bMagMod = "b_mag_mod", *bMagRmx = "b_mag_rmx",
-                      *bMagMix = "b_mag_mix", *bMagNotch = "b_mag_notch";
     // DELAY
     inline const char* bDlyOne = "b_dly_one", *bDlyTwo = "b_dly_two", *bDlyFb = "b_dly_fb", *bDlyGain = "b_dly_gain",
                       *bDlyLfo = "b_dly_lfo", *bDlyFM = "b_dly_fm", *bDlyDM = "b_dly_dm", *bDlyWide = "b_dly_wide",
@@ -205,6 +203,7 @@ namespace params
     inline const char* gMaster = "g_master";
     inline const char* gTempo  = "g_tempo";
     inline const char* gRun    = "g_run";
+    inline const char* gMidiTarget = "g_midi";    // which section the MIDI keyboard plays: 0 = A, 1 = B
 
     // ---------------- LFOs: 3 per section, each can modulate any parameter of its section ----------------
     constexpr int numLfos = 8;          // maximum per section; "LFO count" (1..8, default 3) sets how many are active

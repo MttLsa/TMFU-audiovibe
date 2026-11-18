@@ -15,7 +15,7 @@ namespace
         }
     }
     float getParam (AudioProcessorValueTreeState& s, const String& id) { return s.getRawParameterValue (id)->load(); }
-    const char* laneNames[] { "KICK", "SNARE", "C-HAT", "O-HAT", "TIE", "POD", "MOD" };
+    const char* laneNames[] { "KICK", "SNARE", "C-HAT", "O-HAT", "BELT", "CAPSULE", "MOD" };
     int targetOfModule (int m) { static const int t[] { LimeEngine::tKick, LimeEngine::tSnare, LimeEngine::tCHat, LimeEngine::tTie, LimeEngine::tPod }; return t[m]; }
 }
 
@@ -105,26 +105,16 @@ std::unique_ptr<ControlPanel> makeLimePanel (TwinboxProcessor& p, const String& 
         auto* shift = c.incDec (bShift);
         c.row ({ now, shift, c.knob (bRemix, "Remix"), c.combo (bRemixRate) });
         c.row ({ c.knob (bSwing, "Swing"), c.toggle (bHalf, "1/2"), c.knob (bStart, "Start"), nullptr });
-        c.row ({ c.knob (bLen, "Len"), c.knob (bTieLen, "Tie"), c.knob (bPodLen, "Pod"), c.knob (bModLen, "Mod") });
+        c.row ({ c.knob (bLen, "Len"), c.knob (bTieLen, "Belt"), c.knob (bPodLen, "Capsule"), c.knob (bModLen, "Mod") });
         c.row ({ nullptr, c.toggle (bTieStr, "Stretch"), c.toggle (bPodStr, "Stretch"), c.toggle (bModStr, "Stretch") });
     }
     else if (which == "out")
     {
-        c.row ({ c.knob (bDirt, "Dirt"), c.knob (bGain, "Gain"), c.knob (bTune, "Tune") });
-        c.row ({ c.toggle (bNorm, "Norm"), c.knob (bNormAmp, "Amp"), c.knob (bNormRel, "Rel"), c.knob (bNormSm, "Sm") });
+        c.row ({ c.knob (bDirt, "Trash"), c.knob (bGain, "Gain"), c.knob (bTune, "Tune") });
     }
     else if (which == "global")
     {
         c.row ({ c.toggle (gRun, "CLK"), c.knob (gTempo, "BPM") });
-    }
-    else if (which == "pulp")
-    {
-        c.setTitle ("PULP");
-        c.row ({ c.knob (b (pulp, lv::tune), "Tune"), c.knob (b (pulp, lv::port), "Port"), c.knob (b (pulp, lv::gain), "Gain"), c.knob (b (pulp, lv::pan), "Pan"), c.toggle (b (pulp, lv::on), "On") });
-        auto* src = c.combo (b (pulp, lv::src));
-        src->setTooltip ("Pulp input source: the module whose hits trigger Pulp and whose pitch / audio it follows (or All)");
-        c.row ({ src, c.knob (b (pulp, lv::inGain), "In Gain"), c.knob (b (pulp, lv::trkLo), "Lo"), c.knob (b (pulp, lv::trkHi), "Hi"), c.knob (b (pulp, lv::dcy), "D"), c.knob (b (pulp, lv::osc), "Osc") });
-        c.row ({ c.knob (b (pulp, lv::comb), "Comb"), c.knob (b (pulp, lv::fb), "FB"), c.knob (b (pulp, lv::freq), "Freq"), c.knob (b (pulp, lv::fm), "FM"), c.knob (b (pulp, lv::cut), "Cut") });
     }
     else if (which == "xfx")
     {
@@ -169,10 +159,6 @@ std::unique_ptr<ControlPanel> makeLimePanel (TwinboxProcessor& p, const String& 
     else if (which == "filter")
     {
         c.row ({ c.knob (bFltCut, "Cut"), c.knob (bFltTrk, "Trk"), c.knob (bFltSm, "Sm"), c.knob (bFltMod, "Mod") });
-    }
-    else if (which == "magic")
-    {
-        c.row ({ c.knob (bMagPitch, "Pitch"), c.knob (bMagGrain, "Gr"), c.knob (bMagMod, "Mod"), c.knob (bMagRmx, "Rmx"), c.knob (bMagMix, "Mix"), c.knob (bMagNotch, "Notch") });
     }
     return cp;
 }
@@ -795,17 +781,17 @@ LimeModulePanel::LimeModulePanel (TwinboxProcessor& p, int v, bool b2) : Control
     {
         case kick:
             row ({ K (lv::gain, "Gain"), K (lv::acc, "Acc"), K (lv::pan, "Pan"), W, K (lv::tune, "Tune"), K (lv::st, "St") });
-            row ({ K (lv::hold, "H"), K (lv::dcy, "D"), K (lv::sat, "Sat"), K (lv::shp, "Shp"), K (lv::sm, "Sm") });
+            row ({ K (lv::att, "A"), K (lv::hold, "H"), K (lv::dcy, "D"), K (lv::sat, "Sat"), K (lv::shp, "Shp"), K (lv::sm, "Sm") });
             row ({ combo (b (v, lv::mod)), T (lv::lo, "Lo"), K (lv::cut, "Cut"), K (lv::res, "Res"), nullptr });
             break;
         case snare:
             row ({ K (lv::gain, "Gain"), K (lv::acc, "Acc"), K (lv::pan, "Pan"), W, K (lv::tune, "Tune"), K (lv::st, "St") });
-            row ({ K (lv::hold, "H"), K (lv::dcy, "D"), K (lv::sat, "Sat"), K (lv::shp, "Shp"), K (lv::sm, "Sm") });
+            row ({ K (lv::att, "A"), K (lv::hold, "H"), K (lv::dcy, "D"), K (lv::sat, "Sat"), K (lv::shp, "Shp"), K (lv::sm, "Sm") });
             row ({ combo (b (v, lv::mod)), seg (b (v, lv::ft)), K (lv::cut, "Cut"), K (lv::res, "Res"), K (lv::flam, "Flam") });
             break;
         case hat:
             row ({ K (lv::gain, "Gain"), K (lv::acc, "Acc"), K (lv::pan, "Pan"), W, K (lv::tune, "Tune") });
-            row ({ K (lv::cd, "CD"), K (lv::od, "OD"), T (lv::link, "Link"), K (lv::sat, "Sat"), nullptr });
+            row ({ K (lv::att, "A"), K (lv::cd, "CD"), K (lv::od, "OD"), T (lv::link, "Link"), K (lv::sat, "Sat") });
             row ({ combo (b (v, lv::mod)), seg (b (v, lv::ft)), K (lv::cut, "Cut"), K (lv::res, "Res"), nullptr });
             break;
         case tie:
@@ -1053,7 +1039,7 @@ void XYPad::mouseUp (const MouseEvent&)
 //==============================================================================
 LimeFxWindowContent::LimeFxWindowContent (TwinboxProcessor& p)
 {
-    for (auto* w : { "remix", "out", "pulp", "xfx", "delay", "mix", "eq", "filter", "magic" })
+    for (auto* w : { "remix", "out", "xfx", "delay", "mix", "eq", "filter" })
         addAndMakeVisible (panels.add (makeLimePanel (p, w, true).release()));
 }
 
@@ -1066,7 +1052,11 @@ void LimeFxWindowContent::resized()
         auto rr = r.removeFromTop (h);
         const int w = rr.getWidth() / 3;
         for (int col = 0; col < 3; ++col)
-            panels[row * 3 + col]->setBounds ((col == 2 ? rr : rr.removeFromLeft (w)).reduced (4));
+        {
+            const int i = row * 3 + col;
+            auto cell = col == 2 ? rr : rr.removeFromLeft (w);
+            if (i < panels.size()) panels[i]->setBounds (cell.reduced (4));
+        }
     }
 }
 
@@ -1084,10 +1074,13 @@ LimeSection::LimeSection (TwinboxProcessor& p) : proc (p)
     for (auto& sc : scales()) scaleType.addItem (sc.name, scaleType.getNumItems() + 1);
     scaleRootAtt = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (p.apvts, bScaleRoot, scaleRoot);
     scaleTypeAtt = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (p.apvts, bScaleType, scaleType);
-    scaleRoot.setTooltip ("SCALE root (shared by Tie and Pod)");
-    scaleType.setTooltip ("SCALE type (shared by Tie and Pod) - same scales as Ableton Live");
+    scaleRoot.setTooltip ("SCALE root (shared by Belt and Capsule)");
+    scaleType.setTooltip ("SCALE type (shared by Belt and Capsule) - same scales as Ableton Live");
     addAndMakeVisible (scaleRoot); addAndMakeVisible (scaleType);
     for (auto* c : std::initializer_list<Component*> { &browserBtn, &legacyBtn, &levelB }) addAndMakeVisible (c);
+    normBtn = std::make_unique<NormButton> (p, 1, theme::accentB);
+    midiBtn = std::make_unique<MidiTargetButton> (p, 1, theme::accentB);
+    addAndMakeVisible (*normBtn); addAndMakeVisible (*midiBtn);
 
     seq = std::make_unique<LimeSeqPanel> (p, false);
     lfo = std::make_unique<LfoPanel> (p, 1);
@@ -1096,13 +1089,14 @@ LimeSection::LimeSection (TwinboxProcessor& p) : proc (p)
     addAndMakeVisible (*seq);
 
     auto fxWin = [this] { openWindow ("fx", "Section B - Remix, Output & FX", [this] { return new LimeFxWindowContent (proc); }, 1300, 860); };
-    for (auto* pp : { &remix, &out, &global, &pulp, &xfx, &delay, &mix, &eq, &filter, &magic })
+    const std::pair<std::unique_ptr<ControlPanel>*, const char*> fxPanels[] {
+        { &remix, "remix" }, { &out, "out" }, { &global, "global" }, { &xfx, "xfx" }, { &delay, "delay" },
+        { &mix, "mix" }, { &eq, "eq" }, { &filter, "filter" } };
+    for (auto& fp : fxPanels)
     {
-        const char* names[] { "remix", "out", "global", "pulp", "xfx", "delay", "mix", "eq", "filter", "magic" };
-        const auto idx = (size_t) (pp - &remix);
-        *pp = makeLimePanel (p, names[idx], false);
-        if (idx != 2) (*pp)->setExpandable (fxWin);
-        addAndMakeVisible (**pp);
+        *fp.first = makeLimePanel (p, fp.second, false);
+        if (String (fp.second) != "global") (*fp.first)->setExpandable (fxWin);
+        addAndMakeVisible (**fp.first);
     }
     for (int v = 0; v < 5; ++v)
     {
@@ -1168,7 +1162,7 @@ void LimeSection::paint (Graphics& g)
     g.drawText ("GROOVEBOX", 40, 10, 140, 22, Justification::centredLeft);
     g.setColour (theme::textDim);
     g.setFont (theme::font (11.0f));
-    g.drawText ("6 voices / sequencer / remix / FX", 40, 26, 220, 14, Justification::centredLeft);
+    g.drawText ("5 voices / sequencer / remix / FX / LFO", 40, 26, 220, 14, Justification::centredLeft);
     g.setColour (theme::textDim);
     g.setFont (theme::font (11.0f, true));
     g.drawText ("SCALE", scaleRoot.getX() - 46, scaleRoot.getY(), 42, scaleRoot.getHeight(), Justification::centredRight);
@@ -1189,6 +1183,9 @@ void LimeSection::resized()
     scaleType.setBounds (header.removeFromLeft (150).withSizeKeepingCentre (150, 24).translated (48, 0));
     header.removeFromRight (16);
     levelB.setBounds (header.removeFromRight (64).expanded (0, 4));
+    header.removeFromRight (10);
+    normBtn->setBounds (header.removeFromRight (58).withSizeKeepingCentre (54, 24));
+    midiBtn->setBounds (header.removeFromRight (58).withSizeKeepingCentre (54, 24));
     r.removeFromTop (4);
     const int W = r.getWidth();
 
@@ -1208,14 +1205,10 @@ void LimeSection::resized()
 
     r.removeFromTop (6);
     auto row3 = r;
-    pulp->setBounds (row3.removeFromLeft (W * 18 / 100).reduced (2, 0));
-    xfx->setBounds (row3.removeFromLeft (W * 18 / 100).reduced (2, 0));
-    delay->setBounds (row3.removeFromLeft (W * 15 / 100).reduced (2, 0));
-    lfo->setBounds (row3.removeFromLeft (W * 17 / 100).reduced (2, 0));
-    mix->setBounds (row3.removeFromLeft (W * 7 / 100).reduced (2, 0));
-    eq->setBounds (row3.removeFromLeft (W * 8 / 100).reduced (2, 0));
-    auto fm = row3.reduced (2, 0);
-    filter->setBounds (fm.removeFromTop (fm.getHeight() / 2 - 2));
-    fm.removeFromTop (4);
-    magic->setBounds (fm);
+    xfx->setBounds (row3.removeFromLeft (W * 22 / 100).reduced (2, 0));
+    delay->setBounds (row3.removeFromLeft (W * 19 / 100).reduced (2, 0));
+    lfo->setBounds (row3.removeFromLeft (W * 21 / 100).reduced (2, 0));
+    mix->setBounds (row3.removeFromLeft (W * 9 / 100).reduced (2, 0));
+    eq->setBounds (row3.removeFromLeft (W * 11 / 100).reduced (2, 0));
+    filter->setBounds (row3.reduced (2, 0));
 }
