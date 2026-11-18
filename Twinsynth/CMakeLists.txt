@@ -25,9 +25,10 @@ if(APPLE)
 endif()
 
 juce_add_plugin(Twinsynth
-  COMPANY_NAME "Twinbox Audio"
-  BUNDLE_ID "com.twinbox.twinsynth"
-  PLUGIN_MANUFACTURER_CODE Twnb
+  COMPANY_NAME "TMFU audiovibe"
+  COMPANY_WEBSITE ""
+  BUNDLE_ID "com.tmfuaudiovibe.twinsynth"
+  PLUGIN_MANUFACTURER_CODE Tmfu
   PLUGIN_CODE Twsy
   FORMATS ${TS_FORMATS}
   PRODUCT_NAME "Twinsynth"

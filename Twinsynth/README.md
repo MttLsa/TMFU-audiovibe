@@ -78,6 +78,14 @@ Attribuzioni verificate su: [MusicRadar – The 40 greatest synth sounds](https:
 [Attack Magazine – Jeff Mills, The Bells](https://www.attackmagazine.com/technique/synth-secrets/jeff-mills-the-bells-part-2/),
 [Gearspace – 90's Euro Dance synths used](https://gearspace.com/threads/90s-euro-dance-synths-used.444927/page-4).
 
+## Installazione (macOS)
+
+Installer **`Twinsynth-1.0.0-macOS.pkg`** (universale: Mac Intel e Apple Silicon), prodotto dalla CI (artifact
+*Twinsynth-1.0.0-macOS-Installer*) o in locale con `./packaging/macos/make_pkg.sh 1.0.0` dopo una build Release.
+Installa AU in `/Library/Audio/Plug-Ins/Components`, VST3 in `/Library/Audio/Plug-Ins/VST3` e l'app Standalone in
+`/Applications` (ogni parte si può deselezionare). Nel browser della DAW il plugin compare sotto il produttore
+**TMFU audiovibe** (AU: `aumu Twsy Tmfu`).
+
 ## Compilazione
 
 ```bash

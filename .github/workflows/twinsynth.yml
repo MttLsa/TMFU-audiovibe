@@ -11,18 +11,28 @@ on:
 jobs:
   build:
     runs-on: macos-15-intel    # AU + VST3 + Standalone, universal binary (Intel + Apple Silicon); arm64 runners unavailable
+    defaults:
+      run:
+        working-directory: Twinsynth
     steps:
       - uses: actions/checkout@v5
       - name: Configure
-        run: cmake -S Twinsynth -B Twinsynth/build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
       - name: Build
-        run: cmake --build Twinsynth/build --config Release --parallel
+        run: cmake --build build --config Release --parallel
       - name: Validate AU
         run: |
           mkdir -p ~/Library/Audio/Plug-Ins/Components
-          cp -R Twinsynth/build/Twinsynth_artefacts/Release/AU/Twinsynth.component ~/Library/Audio/Plug-Ins/Components/
+          cp -R build/Twinsynth_artefacts/Release/AU/Twinsynth.component ~/Library/Audio/Plug-Ins/Components/
           killall -9 AudioComponentRegistrar || true
-          auval -v aumu Twsy Twnb
+          auval -v aumu Twsy Tmfu
+      - name: Build installer (.pkg, Intel + Apple Silicon)
+        run: ./packaging/macos/make_pkg.sh 1.0.0
+      - name: Upload installer
+        uses: actions/upload-artifact@v5
+        with:
+          name: Twinsynth-1.0.0-macOS-Installer
+          path: Twinsynth/build/installer/Twinsynth-1.0.0-macOS.pkg
       - uses: actions/upload-artifact@v5
         with:
           name: Twinsynth-macOS
