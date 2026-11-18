@@ -166,11 +166,13 @@ bool FineSlider::keyPressed (const KeyPress& k)
     if (dir == 0) return Slider::keyPressed (k);
     const double interval = getInterval();
     double v;
-    if (interval > 0.0 && (getMaximum() - getMinimum()) / interval <= 200.0)       // discrete parameter: one step
+    if (interval > 0.0 && (getMaximum() - getMinimum()) / interval <= 400.0)       // stepped parameter: one step
         v = getValue() + dir * interval;
-    else
+    else if (unitStep > 0.0)                                                         // unit parameter (Pan): 1 unit
+        v = getValue() + dir * unitStep * (k.getModifiers().isShiftDown() ? 0.1 : 1.0);
+    else                                                                             // continuous parameter: fine step
     {
-        const double prop = valueToProportionOfLength (getValue()) + dir * (k.getModifiers().isShiftDown() ? 0.001 : 0.01);
+        const double prop = valueToProportionOfLength (getValue()) + dir * (k.getModifiers().isShiftDown() ? 0.0002 : 0.002);
         v = proportionOfLengthToValue (jlimit (0.0, 1.0, prop));
     }
     setValue (jlimit (getMinimum(), getMaximum(), v), sendNotificationSync);
@@ -184,7 +186,7 @@ Knob::Knob (const String& c, Colour a) : caption (c), accent (a)
     slider.setColour (Slider::rotarySliderFillColourId, accent);
     slider.setRotaryParameters (MathConstants<float>::pi * 1.2f, MathConstants<float>::pi * 2.8f, true);
     slider.setVelocityBasedMode (false);
-    slider.setMouseDragSensitivity (600);
+    slider.setMouseDragSensitivity (1000);
     slider.onValueChange = [this] { repaint(); };
     addAndMakeVisible (slider);
 }
@@ -206,6 +208,7 @@ void Knob::attach (AudioProcessorValueTreeState& s, const String& id)
     const bool centre = id.startsWith ("b_") && (id.endsWith ("_acc") || id.endsWith ("_vamt") || id.endsWith ("_pan") || id.endsWith ("_tune"))
                         && ! id.startsWith ("b_lfo");
     slider.setDoubleClickReturnValue (true, param->convertFrom0to1 (centre ? 0.5f : param->getDefaultValue()));
+    slider.unitStep = id.endsWith ("pan") ? 1.0 : 0.0;          // Pan: one step = 1 (L / R)
     slider.setTooltip (param->getName (64));
     if (caption.isEmpty()) caption = param->getName (32);
     repaint();

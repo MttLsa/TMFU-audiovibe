@@ -475,6 +475,28 @@ int main (int argc, char** argv)
                 + "; energy with Sat 80 %: hat x" + String (h1.first / jmax (1e-9, h0.first), 2) + ", pod x" + String (p1.first / jmax (1e-9, p0.first), 2));
     }
 
+    // ---------------------------------------------------------------- knobs: arrow keys (Pan 1 unit, continuous fine, sample select 1 sample)
+    {
+        TwinboxProcessor p; waitLibrary (p);
+        Knob pan, cut, gain;
+        pan.attach (p.apvts, params::b (params::kick, params::lv::pan));
+        cut.attach (p.apvts, params::b (params::kick, params::lv::cut));
+        gain.attach (p.apvts, params::b (params::kick, params::lv::gain));
+        auto press = [] (FineSlider& s, int key, bool shift = false) { s.keyPressed (KeyPress (key, shift ? ModifierKeys::shiftModifier : 0, 0)); };
+        const double p0 = pan.slider.getValue(); press (pan.slider, KeyPress::rightKey); const double p1 = pan.slider.getValue();
+        press (gain.slider, KeyPress::rightKey); const double g1 = gain.slider.getValue();      // default 0 dB
+        press (cut.slider, KeyPress::leftKey); const double c1 = cut.slider.getValue();        // default 20 kHz
+        const auto set = p.library.set (SampleLibrary::kick);
+        WavKnob wk (p, SampleLibrary::kick, theme::accentB);
+        auto* ws = dynamic_cast<FineSlider*> (wk.getChildComponent (0));
+        const float w0 = p.apvts.getRawParameterValue (params::b (params::kick, params::lv::wav))->load();
+        if (ws) { ws->keyPressed (KeyPress (KeyPress::rightKey)); ws->keyPressed (KeyPress (KeyPress::rightKey)); }
+        const float w2 = p.apvts.getRawParameterValue (params::b (params::kick, params::lv::wav))->load();
+        const bool ok = std::abs ((p1 - p0) - 1.0) < 1e-6 && g1 > 0.0 && g1 < 0.3 && c1 < 20000.0 && c1 > 19500.0 && ws != nullptr && std::abs (w2 - w0 - 2.0f) < 0.01f;
+        report ("knobs: arrow keys", ok, "Pan +" + String (p1 - p0, 2) + ", Gain 0 -> " + String (g1, 3) + " dB, Cutoff 20 kHz -> " + String (c1, 1)
+                + " Hz, sample select " + String ((int) w0) + " -> " + String ((int) w2));
+    }
+
     // ---------------------------------------------------------------- MIDI A / MIDI B buttons and NORM (normaliser + limiter)
     {
         auto play = [] (int target) -> std::pair<int, int>

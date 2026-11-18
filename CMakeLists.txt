@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum macOS version")
 set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "macOS architectures")
 
-project(TWINBOX VERSION 2.12.0 LANGUAGES C CXX)
+project(TWINBOX VERSION 2.13.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -25,7 +25,7 @@ if(APPLE)
 endif()
 
 juce_add_plugin(Twinbox
-  COMPANY_NAME "Twinbox Audio"
+  COMPANY_NAME "TMFU audiovibe"                       # manufacturer shown in the DAW plug-in browser (this and future plug-ins)
   COMPANY_WEBSITE ""
   BUNDLE_ID "com.twinbox.twinbox"
   PLUGIN_MANUFACTURER_CODE Twnb
