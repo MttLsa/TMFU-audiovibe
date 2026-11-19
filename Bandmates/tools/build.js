@@ -80,8 +80,9 @@ function buildPatcher(devId) {
   // status line
   const sx = d.buttonsX || 600;
   const statusRect = devId === 'chords' ? [6, 142, 628, 24] : [sx, 100, 152, 64];
-  const statusBox = add(box(Object.assign({ maxclass: 'comment', text: 'Bandmates ' + VERSION, linecount: 4, fontsize: 9.0,
-    textcolor: [0.85, 0.85, 0.85, 1.0], numinlets: 1, numoutlets: 0, patching_rect: [300, 200, 200, 50] }, pres(statusRect))));
+  // live.comment follows the Live theme colours (a plain comment can be invisible on light themes)
+  const statusBox = add(box(Object.assign({ maxclass: 'live.comment', varname: 'status', text: 'Bandmates ' + VERSION + ' (script non avviato)',
+    linecount: 4, fontsize: 9.5, numinlets: 1, numoutlets: 0, patching_rect: [300, 200, 200, 50] }, pres(statusRect))));
   link(js, 0, statusBox, 0);
   const router = add(newobj('route xy followmenu textedit', [100, 240, 200, 22], 1, ['', '', '', '']));
   link(js, 1, router, 0);

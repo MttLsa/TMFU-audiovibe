@@ -139,16 +139,11 @@
 			{
 				"box": {
 					"id": "obj-6",
-					"maxclass": "comment",
-					"text": "Bandmates 1.0.0",
+					"maxclass": "live.comment",
+					"varname": "status",
+					"text": "Bandmates 1.0.0 (script non avviato)",
 					"linecount": 4,
-					"fontsize": 9,
-					"textcolor": [
-						0.85,
-						0.85,
-						0.85,
-						1
-					],
+					"fontsize": 9.5,
 					"numinlets": 1,
 					"numoutlets": 0,
 					"patching_rect": [
