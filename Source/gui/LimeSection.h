@@ -111,7 +111,7 @@ private:
     juce::String wavParamId() const { return module == SampleLibrary::click ? juce::String (params::aClickWav) : params::b (module, params::lv::wav); }
     TwinboxProcessor& proc;
     int module; bool big;
-    juce::TextButton twb { "TWB" }, leg { "LEG" }, usr { juce::String::fromUTF8 ("\xf0\x9f\x93\x81") }, play { juce::String::fromUTF8 ("\xe2\x96\xb6") };
+    juce::TextButton twb { "DBX" }, leg { "LEG" }, usr { juce::String::fromUTF8 ("\xf0\x9f\x93\x81") }, play { juce::String::fromUTF8 ("\xe2\x96\xb6") };
     juce::ComboBox box;
     std::unique_ptr<juce::FileChooser> chooser;
     int shownIndex = -1;

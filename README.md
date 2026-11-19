@@ -1,9 +1,12 @@
-# TWINBOX — groovebox ibrida VST3 / AU (v2.14)
+# DUALBOX — groovebox ibrida VST3 / AU (v2.15)
+
+> Dalla v2.15 il plugin si chiama **DUALBOX** (prima *Twinbox*). L'installer rimuove le vecchie copie
+> `Twinbox.component` / `Twinbox.vst3`; i campioni stanno ora in `…/Dualbox/Samples`.
 
 > Nello stesso repository: **[SynthZilla](SynthZilla/README.md)**, fino a 5 moduli synth analogici / digitali con 151 suoni di synth famosi 1963–2023, ognuno legato al suo brano.
 > E **[MICROVIBE](Microvibe/README.md)**, plugin di glitch, texture, percussioni organiche ed effetti (tape, vinile, wobble, delay, reverb, Shepard) per minimal e microhouse, con matrice di modulazione, poliritmie e microtonalità.
 
-Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in un solo plugin:
+DUALBOX è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in un solo plugin:
 
 | Sezione | Architettura di riferimento | Contenuto |
 |---|---|---|
@@ -15,14 +18,14 @@ Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in 
 
 ![Interfaccia principale](docs/gui_main.png)
 
-> Microtonic è un marchio di Sonic Charge; Reaktor e Limelite sono marchi di Native Instruments. Twinbox è un progetto
+> Microtonic è un marchio di Sonic Charge; Reaktor e Limelite sono marchi di Native Instruments. DUALBOX è un progetto
 > indipendente che riprende l'*architettura* e l'organizzazione dei controlli di questi strumenti. Non contiene codice,
 > grafica o campioni originali. I campioni originali di Limelite si possono importare solo dal proprio file `.ens`
 > (vedi "Cartelle Legacy").
 
 ## Novità 2.14
 
-- Modulo **CLICK** nella Sezione A (sotto la lista dei canali): un campione di transiente suonato in layer con il **Kick** (canale 1). Cartella di fabbrica *Twinbox Click* con 12 click (beater, 909 attack, wood tick, felt thump, tape click...) oppure una tua cartella (📁). Controlli ON, scelta del campione, Gain, Tune, Decay, HP.
+- Modulo **CLICK** nella Sezione A (sotto la lista dei canali): un campione di transiente suonato in layer con il **Kick** (canale 1). Cartella di fabbrica *Dualbox Click* con 12 click (beater, 909 attack, wood tick, felt thump, tape click...) oppure una tua cartella (📁). Controlli ON, scelta del campione, Gain, Tune, Decay, HP.
 
 ## Novità 2.13
 
@@ -119,7 +122,7 @@ Ogni sezione ha **fino a 8 LFO** (3 di default): i pulsanti **+** / **−** del 
 
 ## SCALE e intonazione dei campioni (Belt e Capsule)
 
-- Al caricamento di una cartella Twinbox **rileva l'intonazione di ogni campione** in background (algoritmo YIN). Il risultato è nota + cent, oppure "no pitch". Il risultato viene memorizzato in un file nascosto `.twinbox_pitch.txt` nella cartella. L'audio non si interrompe: i nuovi campioni entrano in uso solo a analisi finita (128 campioni Legacy in circa 0,4 s, poi 0,04 s grazie al file).
+- Al caricamento di una cartella Dualbox **rileva l'intonazione di ogni campione** in background (algoritmo YIN). Il risultato è nota + cent, oppure "no pitch". Il risultato viene memorizzato in un file nascosto `.dualbox_pitch.txt` nella cartella. L'audio non si interrompe: i nuovi campioni entrano in uso solo a analisi finita (128 campioni Legacy in circa 0,4 s, poi 0,04 s grazie al file).
 - **SCALE** nell'intestazione della sezione B: Root e Scala, condivisi da Belt e Capsule. Le scale sono le stesse del dispositivo Scale di Ableton Live.
 - **Tastiera**: clicca una colonna BELT, CAPSULE o MOD e usa le frecce. ↑ e ↓ cambiano il valore (con VEL = wav un campione alla volta, con ascolto e nome del campione); ← e → passano allo step precedente o successivo; Canc spegne lo step; Shift fa passi più grandi.
 - **Selezione del campione con l'altezza della colonna** (Belt e Capsule con VEL = **wav**): ogni tacca della colonna BELT/CAPSULE corrisponde a un campione della lista, indipendentemente dal knob WAV. La prima tacca dal basso è l'ultimo campione della lista, quella più in alto è il primo. Con le altre impostazioni di VEL l'altezza resta la velocity (V>A). Ogni modulo usa al massimo 128 campioni per cartella.
@@ -133,20 +136,20 @@ Ogni sampler (Kick, Snare, Hat, Belt, Capsule) ha la manopola **WAV** e un menu 
 
 | Pulsante | Cartella |
 |---|---|
-| **TWB** | `Twinbox Kick`, `Twinbox Snare`, … (libreria di fabbrica v5: 48 kick puliti, 48 snare e clap morbidi, 32 coppie di hat, 46 Belt con **solo bassi e accordi, tutti in Do** (bassi accordati su Do, accordi della famiglia Do minore), 66 Capsule con **tom 808 e 909 Hi/Mid/Low, conga 808 Hi/Mid/Low**, conga, bongo, tom, darbuka, cajon, claves, log drum, snare morbide e dissonant hit; una parte dei campioni viene da librerie gratuite CC0 / Public Domain, vedi [`resources/SAMPLE_CREDITS.md`](resources/SAMPLE_CREDITS.md); installata al primo avvio e aggiornata automaticamente quando esce una nuova libreria, senza toccare i file tuoi) |
+| **DBX** | `Dualbox Kick`, `Dualbox Snare`, … (libreria di fabbrica v5: 48 kick puliti, 48 snare e clap morbidi, 32 coppie di hat, 46 Belt con **solo bassi e accordi, tutti in Do** (bassi accordati su Do, accordi della famiglia Do minore), 66 Capsule con **tom 808 e 909 Hi/Mid/Low, conga 808 Hi/Mid/Low**, conga, bongo, tom, darbuka, cajon, claves, log drum, snare morbide e dissonant hit; una parte dei campioni viene da librerie gratuite CC0 / Public Domain, vedi [`resources/SAMPLE_CREDITS.md`](resources/SAMPLE_CREDITS.md); installata al primo avvio e aggiornata automaticamente quando esce una nuova libreria, senza toccare i file tuoi) |
 | **LEG** | `Legacy Kick`, `Legacy Snare`, … (campioni originali di Limelite, vedi sotto) |
 | **📁** | una cartella a tua scelta, impostabile per ogni modulo e salvata col progetto |
 
 Posizione delle cartelle:
-- macOS: `/Users/Shared/Twinbox/Samples`
-- Windows: `C:\Users\Public\Documents\Twinbox\Samples`
-- Linux: `~/Documents/Twinbox/Samples`
+- macOS: `/Users/Shared/Dualbox/Samples`
+- Windows: `C:\Users\Public\Documents\Dualbox\Samples`
+- Linux: `~/Documents/Dualbox/Samples`
 
 Per l'Hat, se esiste `open/<stesso nome>.wav` dentro la cartella, viene usato per l'hat aperto.
 
 ### Cartelle Legacy (omaggio a Limelite)
 
-Premi **IMPORT LEGACY** nella sezione B e seleziona il **tuo** file `Limelite 1.3.ens`. Twinbox estrae le 6 mappe di campioni originali nelle cartelle `Legacy *`, con i nomi originali:
+Premi **IMPORT LEGACY** nella sezione B e seleziona il **tuo** file `Limelite 1.3.ens`. DUALBOX estrae le 6 mappe di campioni originali nelle cartelle `Legacy *`, con i nomi originali:
 - Kick 128 campioni;
 - Snare 128;
 - Hat 127 chiusi + 127 aperti, abbinati;
@@ -184,8 +187,8 @@ Il Rominimal segue i riferimenti indicati (Villalobos, Bauch, Barac, Ohm Hourani
 
 ## Se l'AU non compare
 
-- L'installer mette l'AU in `/Library/Audio/Plug-Ins/Components/Twinbox.component` e il VST3 in `/Library/Audio/Plug-Ins/VST3/Twinbox.vst3`. Nella finestra "Tipo di installazione" (Personalizza) entrambe le voci devono essere spuntate.
-- Se hai copie vecchie di `Twinbox.component` in altre cartelle (per esempio `~/Library/Audio/Plug-Ins/Components`), cancellale.
+- L'installer mette l'AU in `/Library/Audio/Plug-Ins/Components/DUALBOX.component` e il VST3 in `/Library/Audio/Plug-Ins/VST3/DUALBOX.vst3`. Nella finestra "Tipo di installazione" (Personalizza) entrambe le voci devono essere spuntate.
+- Se hai copie vecchie di `DUALBOX.component` o `Twinbox.component` in altre cartelle (per esempio `~/Library/Audio/Plug-Ins/Components`), cancellale.
 - Ableton Live (anche Live 9): Preferenze → File/Cartelle → **Usa Audio Units** attivo, poi **Rescan** (o riavvia Live). Logic: Plug-in Manager → *Reset & Rescan*.
 
 ## Compilazione
@@ -205,22 +208,22 @@ JUCE 8.0.4 viene scaricato in automatico.
 Il workflow `.github/workflows/build.yml`:
 - compila le tre piattaforme;
 - su macOS verifica l'AU con `auval`;
-- produce l'installer **`Twinbox-2.14.1-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
+- produce l'installer **`DUALBOX-2.15.0-macOS.pkg`** (artifact `DUALBOX-macOS-Installer`).
 
 Gli script che generano campioni e preset (`resources/`) sono `tools/gen_samples.py` e `tools/gen_presets.py`.
 
 ### Test
 
 ```bash
-cmake -B build -DTWINBOX_BUILD_TESTS=ON
+cmake -B build -DDUALBOX_BUILD_TESTS=ON
 ```
 
 ```bash
-cmake --build build --target TwinboxTest
+cmake --build build --target DualboxTest
 ```
 
 ```bash
-xvfb-run ./build/TwinboxTest_artefacts/Release/TwinboxTest ./out [percorso/Limelite 1.3.ens] [fuzz]
+xvfb-run ./build/DualboxTest_artefacts/Release/DualboxTest ./out [percorso/Limelite 1.3.ens] [fuzz]
 ```
 
 Cosa controlla il test:
@@ -237,4 +240,4 @@ L'opzione `fuzz` imposta parametri a caso, a frequenze di campionamento e dimens
 
 - **EXT / FX** di Limelite (ingresso audio esterno, modalità solo-effetto) non sono implementati: il plugin è uno strumento senza ingresso audio.
 - I 127 schemi di Remix e alcune curve dei parametri sono ricostruzioni: le tabelle numeriche originali non sono leggibili dal file.
-- Su **Linux**, pluginval va saltuariamente in crash nel proprio codice di hosting VST3 (run loop Linux dell'host, nessun frame nel codice di Twinbox). Il plugin compilato con AddressSanitizer passa sempre la validazione.
+- Su **Linux**, pluginval va saltuariamente in crash nel proprio codice di hosting VST3 (run loop Linux dell'host, nessun frame nel codice di DUALBOX). Il plugin compilato con AddressSanitizer passa sempre la validazione.

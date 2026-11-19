@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Twinbox genre preset generator: 8 genres x 16 presets for Section A (drum-synth kit + pattern)
+Dualbox genre preset generator: 8 genres x 16 presets for Section A (drum-synth kit + pattern)
 and Section B (sample kit + FX + patterns A-D), written to resources/presets_A.json / presets_B.json.
 
 Style notes per genre (what the rules below try to capture):

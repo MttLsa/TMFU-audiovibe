@@ -563,13 +563,13 @@ void LimeSeqPanel::resized()
 //==============================================================================
 SampleSelector::SampleSelector (TwinboxProcessor& p, int m, bool b2) : proc (p), module (m), big (b2)
 {
-    twb.setTooltip ("Factory folder: Twinbox " + SampleLibrary::moduleName (m));
+    twb.setTooltip ("Factory folder: Dualbox " + SampleLibrary::moduleName (m));
     leg.setTooltip ("Legacy folder: original Limelite samples (use IMPORT LEGACY first)");
     usr.setTooltip ("Choose your own folder for this module");
     play.setTooltip ("Audition");
     const bool isClick = m == SampleLibrary::click;                 // Section A kick CLICK layer: factory or user folder only
     for (auto* b3 : { &twb, &leg, &usr }) b3->setColour (TextButton::buttonOnColourId, isClick ? theme::accentA : theme::accentB);
-    twb.onClick = [this] { proc.library.setSource (module, SampleLibrary::twinbox); };
+    twb.onClick = [this] { proc.library.setSource (module, SampleLibrary::factory); };
     leg.onClick = [this] { proc.library.setSource (module, SampleLibrary::legacy); };
     usr.onClick = [this] { chooseFolder(); };
     play.onClick = [this]
@@ -611,7 +611,7 @@ void SampleSelector::refresh()
     shownIndex = -1;
     timerCallback();
     const auto src = proc.library.source (module);
-    twb.setToggleState (src == SampleLibrary::twinbox, dontSendNotification);
+    twb.setToggleState (src == SampleLibrary::factory, dontSendNotification);
     leg.setToggleState (src == SampleLibrary::legacy, dontSendNotification);
     usr.setToggleState (src == SampleLibrary::user, dontSendNotification);
     usr.setTooltip (src == SampleLibrary::user ? "User folder: " + proc.library.userFolder (module).getFullPathName() : "Choose your own folder for this module");

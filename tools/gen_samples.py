@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Twinbox factory sample generator.
+Dualbox factory sample generator.
 
-Renders the default sample folders for Section B ("Twinbox Kick", "Twinbox Snare", "Twinbox Hat",
-"Twinbox Tie", "Twinbox Pod") as 44.1 kHz / 16-bit mono WAV files, plus a manifest with genre tags
+Renders the default sample folders for Section B ("Dualbox Kick", "Dualbox Snare", "Dualbox Hat",
+"Dualbox Tie", "Dualbox Pod") as 44.1 kHz / 16-bit mono WAV files, plus a manifest with genre tags
 that the preset generator uses to build genre-coherent kits.
 
 Hats follow the Limelite convention: every closed hat "X.wav" may have an open partner in "open/X.wav".
@@ -94,7 +94,7 @@ def trim(x, thresh=1e-4):
 
 def write(module, name, x, tags, subdir=None):
     x = fade_tail(declick_head(normalize(trim(np.asarray(x, dtype=float)))))
-    folder = os.path.join(OUT, f"Twinbox {module}", *( [subdir] if subdir else [] ))
+    folder = os.path.join(OUT, f"Dualbox {module}", *( [subdir] if subdir else [] ))
     os.makedirs(folder, exist_ok=True)
     path = os.path.join(folder, name + ".wav")
     data = (np.clip(x, -1, 1) * 32767).astype("<i2").tobytes()
@@ -523,7 +523,7 @@ add("Tie", "Trance Bass C", ["techno", "techhouse"],                            
 add("Tie", "Voxy Bass C", ["microhouse", "minimal", "techhouse"],                       lambda s: bass_sample("sample-pi/bass/bass_voxy_c.ogg", 1.4))
 add("Tie", "Voxy Bass Hit C", ["microhouse", "rominimal", "minimal"],                   lambda s: bass_sample("sample-pi/bass/bass_voxy_hit_c.ogg", 0.5))
 add("Tie", "Drop Bass C", ["breakbeat", "techno"],                                      lambda s: bass_sample("sample-pi/bass/bass_drop_c.ogg", 1.6))
-# synth basses (Twinbox)
+# synth basses (DUALBOX)
 add("Tie", "Sub Bass C", ALL,                                    lambda s: tonal([C2], [1], 0.9, tau=0.45, drive=1.0))
 add("Tie", "Deep Sub C", ["deephouse", "house", "techno"],       lambda s: tonal([C2], [1], 1.2, tau=0.6, drive=1.0))
 add("Tie", "Rumble Bass C", ["techno"],                          lambda s: softbass(C2, 1.0, 0.5, cutoff=220, sub=0.8))
@@ -547,7 +547,7 @@ add("Tie", "Piano Cm9", ["house", "deephouse", "microhouse"], lambda s: piano_ch
 add("Tie", "Piano Cmadd9", ["house", "techhouse"],          lambda s: piano_chord("madd9"))
 add("Tie", "Piano Cm Short", ["minimal", "techhouse", "rominimal"], lambda s: piano_chord("min", 48, None, 0.45))
 add("Tie", "Piano Cm6 Low", ["deephouse", "minimal"],       lambda s: piano_chord("m6", 36, "open"))
-# synth chords (Twinbox)
+# synth chords (DUALBOX)
 add("Tie", "Dub Chord Cm7", ["techno", "deephouse", "minimal"], lambda s: delay_fx(tonal([FS.hz(m) for m in FS.cnotes("m7")], [1] * 4, 0.5, kind="saw", cutoff=800, cut_env=1.0, q=0.9, tau=0.15, detune=0.006, drive=1.0), 0.75, 125, 0.45, 0.4, 1600))
 add("Tie", "Garage Stab Cm9", ["house", "techhouse"],     lambda s: synth_chord("m9", 0.4, 1500, 0.12))
 add("Tie", "Minor Stab Cm", ["breakbeat", "techno", "techhouse"], lambda s: synth_chord("min", 0.5, 2000, 0.15))
@@ -646,7 +646,7 @@ for nm, fn, g in [("Pi Tom Hi", "tom/drum_tom_hi_soft", ["techno", "breakbeat", 
                   ("Pi Tom Low", "tom/drum_tom_lo_soft", ["techno", "breakbeat", "deephouse"]), ("Tabla Ghe", "tabla/tabla_ghe1", ["microhouse", "rominimal"]),
                   ("Tabla Te", "tabla/tabla_te1", ["microhouse", "minimal"]), ("Tabla Ke", "tabla/tabla_ke1", ["minimal", "rominimal"])]:
     add("Pod", nm, g, (lambda f: lambda s: D("sample-pi", "drums", "one-shots", *(f + ".ogg").split("/")))(fn))
-# soft dissonant hits (Twinbox)
+# soft dissonant hits (DUALBOX)
 add("Pod", "Dissonant Hit Low", ["techno", "minimal"],        lambda s: dissonant([36, 37, 42, 47], 0.8, 0.25, 600))
 add("Pod", "Dissonant Hit Mid", ["techno", "techhouse"],      lambda s: dissonant([48, 49, 54, 59], 0.6, 0.18, 1200))
 add("Pod", "Dissonant Stab", ["minimal", "microhouse"],       lambda s: dissonant([60, 61, 66, 70], 0.4, 0.1, 1800))
@@ -671,7 +671,7 @@ for genre in GENRES:
         write("Hat", fname, hat(tau, hp, metal, base, max(0.12, tau * 7), seed=seed, **extra), [genre])
         write("Hat", fname, hat(otau, hp, metal, base, max(0.3, otau * 6), seed=seed, **extra), [genre], subdir="open")
 
-# ===== CLICK: short transients layered on the Kick of Section A (Twinbox Click)
+# ===== CLICK: short transients layered on the Kick of Section A (Dualbox Click)
 def tr_noise(fc, tau, length=0.08, mode="bp", q=0.8, seed=1):
     t = t_axis(length); n = rng(seed).standard_normal(len(t))
     return svf(n, fc, q, mode) * env_exp(t, tau)

@@ -101,7 +101,7 @@ void PresetLibrary::applyB (TwinboxProcessor& p, const Item& it, bool kit, bool 
             for (auto& prop : obj->getProperties())
                 if (! keepOnPresetLoad (prop.name.toString()))
                     setNatural (s, prop.name.toString(), (float) prop.value);
-        // samples are referenced by name inside the factory "Twinbox <Module>" folders
+        // samples are referenced by name inside the factory "Dualbox <Module>" folders
         if (auto* smp = d.getProperty ("samples", var()).getDynamicObject())
         {
             static const char* mods[] { "Kick", "Snare", "Hat", "Belt", "Capsule", "Click" };
@@ -109,10 +109,10 @@ void PresetLibrary::applyB (TwinboxProcessor& p, const Item& it, bool kit, bool 
             {
                 const String name = smp->getProperty (mods[m]).toString();
                 if (name.isEmpty()) continue;
-                const auto names = SampleLibrary::namesIn (SampleLibrary::folderFor (m, SampleLibrary::twinbox));
+                const auto names = SampleLibrary::namesIn (SampleLibrary::folderFor (m, SampleLibrary::factory));
                 const int idx = names.indexOf (name);
                 if (idx < 0) continue;
-                if (p.library.source (m) != SampleLibrary::twinbox) p.library.setSource (m, SampleLibrary::twinbox);
+                if (p.library.source (m) != SampleLibrary::factory) p.library.setSource (m, SampleLibrary::factory);
                 setNatural (s, params::b (m, lv::wav), (float) idx);
             }
         }

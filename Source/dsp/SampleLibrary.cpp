@@ -6,7 +6,7 @@ using namespace juce;
 namespace
 {
     const char* moduleNames[] { "Kick", "Snare", "Hat", "Belt", "Capsule", "Click" };   // Belt / Capsule were called Tie / Pod before v2.12
-    const char* sourceKeys[]  { "twinbox", "legacy", "user" };
+    const char* sourceKeys[]  { "dualbox", "legacy", "user" };
 
     Array<File> audioFilesIn (const File& folder)
     {
@@ -24,7 +24,7 @@ namespace
 //==============================================================================
 SampleLibrary::SampleLibrary()
 {
-    sources.fill (twinbox);
+    sources.fill (factory);
     for (auto& s : sets) s = std::make_shared<SampleSet>();
 }
 
@@ -40,14 +40,14 @@ File SampleLibrary::rootFolder()
    #else
     auto base = File::getSpecialLocation (File::commonDocumentsDirectory);   // macOS: /Users/Shared
    #endif
-    return base.getChildFile ("Twinbox").getChildFile ("Samples");
+    return base.getChildFile ("Dualbox").getChildFile ("Samples");
 }
 
 String SampleLibrary::moduleName (int m) { return moduleNames[jlimit (0, numModules - 1, m)]; }
 
 File SampleLibrary::folderFor (int module, Source s)
 {
-    return rootFolder().getChildFile ((s == legacy ? "Legacy " : "Twinbox ") + moduleName (module));
+    return rootFolder().getChildFile ((s == legacy ? "Legacy " : "Dualbox ") + moduleName (module));
 }
 
 StringArray SampleLibrary::namesIn (const File& folder)
@@ -86,7 +86,7 @@ void SampleLibrary::installFactoryIfMissing()
 
     bool missing = false;
     for (int m = 0; m < numModules; ++m)
-        if (audioFilesIn (folderFor (m, twinbox)).isEmpty()) missing = true;
+        if (audioFilesIn (folderFor (m, factory)).isEmpty()) missing = true;
     const bool upgrade = installedManifest.isObject() && readVersion (installedManifest) < readVersion (embeddedManifest);
     if (! missing && ! upgrade) return;
 
@@ -99,30 +99,30 @@ void SampleLibrary::installFactoryIfMissing()
                     {
                         const String name = f.getProperty ("file", "").toString();
                         if (name.isEmpty() || name.containsAnyOf ("/\\")) continue;
-                        const auto folder = root.getChildFile ("Twinbox " + mod.name.toString());
+                        const auto folder = root.getChildFile ("Dualbox " + mod.name.toString());
                         folder.getChildFile (name).deleteFile();
                         folder.getChildFile ("open").getChildFile (name).deleteFile();
-                        folder.getChildFile (".twinbox_pitch.txt").deleteFile();
+                        folder.getChildFile (".dualbox_pitch.txt").deleteFile();
                     }
     if (upgrade)                                              // remove the old factory folders if they are now empty
-        for (auto* oldName : { "Twinbox Tie", "Twinbox Pod" })
+        for (auto* oldName : { "Dualbox Tie", "Dualbox Pod" })
         {
             const auto f = root.getChildFile (oldName);
             if (f.isDirectory())
             {
-                f.getChildFile (".twinbox_pitch.txt").deleteFile();
+                f.getChildFile (".dualbox_pitch.txt").deleteFile();
                 if (f.getNumberOfChildFiles (File::findFilesAndDirectories) == 0) f.deleteFile();
             }
         }
     const auto r = zip.uncompressTo (root, upgrade);   // overwrite only when upgrading the factory set
-    if (r.failed()) DBG ("Twinbox: factory sample install failed: " << r.getErrorMessage());
+    if (r.failed()) DBG ("DUALBOX: factory sample install failed: " << r.getErrorMessage());
 }
 
 File SampleLibrary::currentFolder (int m) const
 {
     const auto s = sources[(size_t) m];
     if (s == user && userFolders[(size_t) m].isDirectory()) return userFolders[(size_t) m];
-    return folderFor (m, s == user ? twinbox : s);
+    return folderFor (m, s == user ? factory : s);
 }
 
 void SampleLibrary::setSource (int m, Source s)
@@ -174,7 +174,7 @@ void SampleLibrary::reload (int m)
         auto set = std::make_shared<SampleSet>();
         set->folder = folder;
         // pitch cache: "<file>\t<size>\t<pitch>\t<conf>" lines in a hidden file inside the folder
-        const auto cacheFile = folder.getChildFile (".twinbox_pitch.txt");
+        const auto cacheFile = folder.getChildFile (".dualbox_pitch.txt");
         std::map<String, std::pair<String, std::pair<float, float>>> cache;
         {
             StringArray lines; lines.addLines (cacheFile.loadFileAsString());
@@ -453,8 +453,8 @@ void SampleLibrary::loadState (const ValueTree& vt)
     {
         auto c = vt.getChildWithName (moduleName (m));
         if (! c.isValid()) continue;
-        const String src = c.getProperty ("source", "twinbox");
-        sources[(size_t) m] = src == "legacy" ? legacy : (src == "user" ? user : twinbox);
+        const String src = c.getProperty ("source", "dualbox");
+        sources[(size_t) m] = src == "legacy" ? legacy : (src == "user" ? user : factory);
         const String up = c.getProperty ("user");
         userFolders[(size_t) m] = up.isNotEmpty() ? File (up) : File();
     }

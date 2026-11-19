@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum macOS version")
 set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "macOS architectures")
 
-project(TWINBOX VERSION 2.14.1 LANGUAGES C CXX)
+project(DUALBOX VERSION 2.15.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -19,19 +19,19 @@ else()
 endif()
 
 # AU is only buildable on macOS; VST3 everywhere; Standalone for quick testing.
-set(TWINBOX_FORMATS VST3 Standalone)
+set(DUALBOX_FORMATS VST3 Standalone)
 if(APPLE)
-  list(APPEND TWINBOX_FORMATS AU)
+  list(APPEND DUALBOX_FORMATS AU)
 endif()
 
-juce_add_plugin(Twinbox
+juce_add_plugin(Dualbox
   COMPANY_NAME "TMFU audiovibe"                       # manufacturer shown in the DAW plug-in browser (this and future plug-ins)
   COMPANY_WEBSITE ""
-  BUNDLE_ID "com.twinbox.twinbox"
-  PLUGIN_MANUFACTURER_CODE Twnb
-  PLUGIN_CODE Twbx
-  FORMATS ${TWINBOX_FORMATS}
-  PRODUCT_NAME "Twinbox"
+  BUNDLE_ID "com.tmfuaudiovibe.dualbox"
+  PLUGIN_MANUFACTURER_CODE Twnb                       # kept from Twinbox: saved DAW projects keep finding the plug-in
+  PLUGIN_CODE Twbx                                    # kept from Twinbox (same reason)
+  FORMATS ${DUALBOX_FORMATS}
+  PRODUCT_NAME "DUALBOX"
   IS_SYNTH TRUE
   NEEDS_MIDI_INPUT TRUE
   NEEDS_MIDI_OUTPUT FALSE
@@ -42,7 +42,7 @@ juce_add_plugin(Twinbox
   AU_MAIN_TYPE kAudioUnitType_MusicDevice
   DESCRIPTION "Dual drum groovebox: synth drums (A) + sample groovebox (B)")
 
-target_sources(Twinbox PRIVATE
+target_sources(Dualbox PRIVATE
   Source/PluginProcessor.cpp
   Source/PluginEditor.cpp
   Source/Params.cpp
@@ -59,43 +59,43 @@ target_sources(Twinbox PRIVATE
   Source/gui/LfoPanel.cpp
   Source/gui/GlobalPanel.cpp)
 
-target_include_directories(Twinbox PRIVATE Source)
+target_include_directories(Dualbox PRIVATE Source)
 
 # Embedded resources: factory sample archive + genre preset libraries
-juce_add_binary_data(TwinboxData SOURCES
+juce_add_binary_data(DualboxData SOURCES
   resources/factory_samples.zip
   resources/presets_A.json
   resources/presets_B.json
   resources/fonts/Urbanist-Light.ttf
   resources/fonts/Urbanist-SemiBold.ttf)
-set_target_properties(TwinboxData PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(DualboxData PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-target_compile_definitions(Twinbox PUBLIC
+target_compile_definitions(Dualbox PUBLIC
   JUCE_WEB_BROWSER=0
   JUCE_USE_CURL=0
   JUCE_VST3_CAN_REPLACE_VST2=0
   JUCE_DISPLAY_SPLASH_SCREEN=0)
 
-target_link_libraries(Twinbox
+target_link_libraries(Dualbox
   PRIVATE
     juce::juce_audio_utils
     juce::juce_dsp
-    TwinboxData
+    DualboxData
   PUBLIC
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags
     juce::juce_recommended_warning_flags)
 
 # ---------------------------------------------------------------- offline test harness (optional)
-option(TWINBOX_BUILD_TESTS "Build the offline render / GUI snapshot test" OFF)
-if(TWINBOX_BUILD_TESTS)
-  juce_add_console_app(TwinboxTest PRODUCT_NAME "TwinboxTest")
-  target_sources(TwinboxTest PRIVATE tests/TestMain.cpp
+option(DUALBOX_BUILD_TESTS "Build the offline render / GUI snapshot test" OFF)
+if(DUALBOX_BUILD_TESTS)
+  juce_add_console_app(DualboxTest PRODUCT_NAME "DualboxTest")
+  target_sources(DualboxTest PRIVATE tests/TestMain.cpp
     Source/PluginProcessor.cpp Source/PluginEditor.cpp Source/Params.cpp
     Source/dsp/SampleLibrary.cpp Source/dsp/MicroEngine.cpp Source/dsp/LimeEngine.cpp Source/dsp/LimeFX.cpp Source/dsp/ModMatrix.cpp
     Source/Presets.cpp Source/gui/PresetBrowser.cpp Source/gui/LookAndFeel.cpp Source/gui/MicroSection.cpp Source/gui/LimeSection.cpp Source/gui/LfoPanel.cpp Source/gui/GlobalPanel.cpp)
-  target_include_directories(TwinboxTest PRIVATE Source)
-  target_compile_definitions(TwinboxTest PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JucePlugin_Name="Twinbox"
+  target_include_directories(DualboxTest PRIVATE Source)
+  target_compile_definitions(DualboxTest PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JucePlugin_Name="DUALBOX"
     JUCE_STANDALONE_APPLICATION=0 JUCE_MODAL_LOOPS_PERMITTED=1)
-  target_link_libraries(TwinboxTest PRIVATE juce::juce_audio_utils juce::juce_dsp TwinboxData juce::juce_recommended_config_flags)
+  target_link_libraries(DualboxTest PRIVATE juce::juce_audio_utils juce::juce_dsp DualboxData juce::juce_recommended_config_flags)
 endif()

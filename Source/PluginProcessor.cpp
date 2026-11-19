@@ -13,7 +13,7 @@ namespace
 
 TwinboxProcessor::TwinboxProcessor()
     : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
-      apvts (*this, nullptr, "TWINBOX", params::createLayout())
+      apvts (*this, nullptr, "DUALBOX", params::createLayout())
 {
     mod.init (apvts);
     micro.bind (mod);
@@ -262,7 +262,7 @@ void TwinboxProcessor::importLegacy (const juce::File& ens, std::function<void (
 //==============================================================================
 void TwinboxProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    juce::ValueTree root ("TWINBOX_STATE");
+    juce::ValueTree root ("DUALBOX_STATE");
     root.appendChild (apvts.copyState(), nullptr);
     root.appendChild (micro.saveState(), nullptr);
     root.appendChild (lime.saveState(), nullptr);
@@ -287,7 +287,7 @@ void TwinboxProcessor::setStateInformation (const void* data, int sizeInBytes)
     auto xml = getXmlFromBinary (data, sizeInBytes);
     if (xml == nullptr) return;
     auto root = juce::ValueTree::fromXml (*xml);
-    if (! root.hasType ("TWINBOX_STATE")) return;
+    if (! root.hasType ("DUALBOX_STATE")) return;
 
     if (auto s = root.getChildWithName (apvts.state.getType()); s.isValid()) apvts.replaceState (s);
     micro.loadState (root.getChildWithName ("MICRO_PATTERNS"));

@@ -707,7 +707,7 @@ int main (int argc, char** argv)
             report ("key from file name: parser", fails.isEmpty(), fails.isEmpty() ? String ("16 names parsed correctly") : fails);
 
             // user folder with a 440 Hz tone deliberately named "Db": NAME off -> A4 stays A (C Major); NAME on -> Db -> D (+1)
-            auto dir = File::getSpecialLocation (File::tempDirectory).getChildFile ("twinbox_name_test");
+            auto dir = File::getSpecialLocation (File::tempDirectory).getChildFile ("dualbox_name_test");
             dir.deleteRecursively(); dir.createDirectory();
             {
                 AudioBuffer<float> tone (1, 44100);
@@ -726,7 +726,7 @@ int main (int argc, char** argv)
             const float onPitch = renderAudition (0, 0.6);
             setP (p, params::b (params::tie, params::lv::nameKey), 0);
             setP (p, params::b (params::tie, params::lv::scale), 0);
-            p.library.setSource (SampleLibrary::tie, SampleLibrary::twinbox);
+            p.library.setSource (SampleLibrary::tie, SampleLibrary::factory);
             Thread::sleep (30); while (p.library.isLoading()) Thread::sleep (5);
             report ("key from file name: measured", std::abs (offPitch - 69.0f) < 0.35f && std::abs (onPitch - 70.0f) < 0.35f,
                     "A4 tone named 'Db', C Major: NAME off " + SampleLibrary::noteName (offPitch) + ", NAME on " + SampleLibrary::noteName (onPitch));
@@ -735,7 +735,7 @@ int main (int argc, char** argv)
 
         // 3c) Tie lane: column height selects the sample (notch 1 = bottom of the list = last file)
         {
-            auto dir = File::getSpecialLocation (File::tempDirectory).getChildFile ("twinbox_height_test");
+            auto dir = File::getSpecialLocation (File::tempDirectory).getChildFile ("dualbox_height_test");
             dir.deleteRecursively(); dir.createDirectory();
             const double freqs[] { 440.0, 523.25, 659.26 };   // "1 tone" = top of the list ... "3 tone" = bottom
             for (int i = 0; i < 3; ++i)
@@ -769,7 +769,7 @@ int main (int argc, char** argv)
             const float bottom = playStep (1.0f / 3.0f), top = playStep (1.0f);
             setP (p, params::b (params::tie, params::lv::vel), 0);                    // VEL = -- : height is velocity, WAV knob plays
             const float velMode = playStep (1.0f / 3.0f);
-            p.library.setSource (SampleLibrary::tie, SampleLibrary::twinbox);
+            p.library.setSource (SampleLibrary::tie, SampleLibrary::factory);
             Thread::sleep (30); while (p.library.isLoading()) Thread::sleep (5);
             dir.deleteRecursively();
             report ("Tie column height selects sample", std::abs (bottom - 76.0f) < 0.4f && std::abs (top - 69.0f) < 0.4f && std::abs (velMode - 72.0f) < 0.4f,
@@ -810,13 +810,13 @@ int main (int argc, char** argv)
                 + "/" + String (open) + " T" + String (counts[3]) + " P" + String (counts[4]));
         TwinboxProcessor p;
         {   // analysis time of the 128 Legacy Tie samples (cache removed -> full analysis)
-            SampleLibrary::folderFor (SampleLibrary::tie, SampleLibrary::legacy).getChildFile (".twinbox_pitch.txt").deleteFile();
+            SampleLibrary::folderFor (SampleLibrary::tie, SampleLibrary::legacy).getChildFile (".dualbox_pitch.txt").deleteFile();
             const auto t0 = Time::getMillisecondCounterHiRes();
             p.library.setSource (SampleLibrary::tie, SampleLibrary::legacy);
             Thread::sleep (20);
             while (p.library.isLoading()) Thread::sleep (5);
             const auto t1 = Time::getMillisecondCounterHiRes();
-            p.library.setSource (SampleLibrary::tie, SampleLibrary::twinbox); while (p.library.isLoading()) Thread::sleep (5);
+            p.library.setSource (SampleLibrary::tie, SampleLibrary::factory); while (p.library.isLoading()) Thread::sleep (5);
             p.library.setSource (SampleLibrary::tie, SampleLibrary::legacy); Thread::sleep (20); while (p.library.isLoading()) Thread::sleep (5);
             const auto t2 = Time::getMillisecondCounterHiRes();
             auto set = p.library.set (SampleLibrary::tie); int pitched = 0; for (auto& sm : set->samples) if (sm->pitch >= 0) ++pitched;
@@ -892,7 +892,7 @@ int main (int argc, char** argv)
                     + String ((int) std::round (next * n)) + ", Delete -> " + String (deleted));
         }
         {   // factory library upgraded (old v2 files removed, new v3 files installed)
-            const auto k = SampleLibrary::folderFor (SampleLibrary::kick, SampleLibrary::twinbox);
+            const auto k = SampleLibrary::folderFor (SampleLibrary::kick, SampleLibrary::factory);
             const bool ok = ! k.getChildFile ("K01 Rumble Core.wav").existsAsFile() && k.getChildFile ("K01 Tek Rumble Deep.wav").existsAsFile()
                          && SampleLibrary::namesIn (k).size() == 48;
             report ("factory library upgrade", ok, String (SampleLibrary::namesIn (k).size()) + " kicks, old files removed: " + String (! k.getChildFile ("K01 Rumble Core.wav").existsAsFile() ? "yes" : "no"));

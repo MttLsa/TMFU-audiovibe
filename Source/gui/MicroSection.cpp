@@ -382,7 +382,7 @@ void MicroSection::ChannelRow::resized()
 
 void MicroSection::ChannelRow::mouseDown (const MouseEvent&) { owner.selectChannel (ch); }
 
-// CLICK: a transient sample layered on the Kick (channel 1). Factory folder "Twinbox Click" or your own folder.
+// CLICK: a transient sample layered on the Kick (channel 1). Factory folder "Dualbox Click" or your own folder.
 class ClickPanel : public Panel
 {
 public:

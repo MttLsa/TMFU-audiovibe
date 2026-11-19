@@ -37,17 +37,17 @@ using SampleSetPtr = std::shared_ptr<const SampleSet>;
 // -------------------------------------------------------------------------------------------------
 //  Folder based sample management for the Section B samplers.
 //
-//  <root>/Twinbox Kick, Twinbox Snare, Twinbox Hat, Twinbox Tie, Twinbox Pod   (factory, installed on first run)
+//  <root>/Dualbox Kick, Dualbox Snare, Dualbox Hat, Dualbox Belt, Dualbox Capsule, Dualbox Click   (factory, installed on first run)
 //  <root>/Legacy Kick,  Legacy Snare,  Legacy Hat,  Legacy Tie,  Legacy Pod     (filled by the Limelite importer)
 //  or any user folder per module.
-//  <root> = macOS /Users/Shared/Twinbox/Samples, Windows C:\Users\Public\Documents\Twinbox\Samples,
-//           Linux ~/Documents/Twinbox/Samples
+//  <root> = macOS /Users/Shared/Dualbox/Samples, Windows C:\Users\Public\Documents\Dualbox\Samples,
+//           Linux ~/Documents/Dualbox/Samples
 // -------------------------------------------------------------------------------------------------
 class SampleLibrary : public juce::ChangeBroadcaster
 {
 public:
     enum Module { kick = 0, snare, hat, tie, pod, click, numModules };   // click = Section A kick transient layer
-    enum Source { twinbox = 0, legacy, user, numSources };
+    enum Source { factory = 0, legacy, user, numSources };
 
     SampleLibrary();
     ~SampleLibrary() override;
@@ -103,7 +103,7 @@ private:
 
 // -------------------------------------------------------------------------------------------------
 //  Imports the original sample maps from a user's own "Limelite 1.3.ens" into the Legacy folders.
-//  Nothing from the original ensemble is shipped with Twinbox.
+//  Nothing from the original ensemble is shipped with DUALBOX.
 // -------------------------------------------------------------------------------------------------
 struct LegacyImporter
 {
