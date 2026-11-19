@@ -9,6 +9,7 @@ struct Preset
     juce::NamedValueSet values;          // parameter id -> number or choice name
     juce::var lanes;                     // optional: [[gate string, value list], ...] for pattern A
     juce::var lfoShapes;                 // optional: { "1": [16 values], ... }
+    juce::var snaps;                     // optional: [[scale degrees], ...] drone chords 1-4
 };
 
 class PresetLibrary

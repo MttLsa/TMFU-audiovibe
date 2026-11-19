@@ -18,6 +18,7 @@ PresetLibrary::PresetLibrary()
             if (auto* obj = p["p"].getDynamicObject()) pr.values = obj->getProperties();
             pr.lanes = p["lanes"];
             pr.lfoShapes = p["lfo"];
+            pr.snaps = p["snap"];
             presets.push_back (std::move (pr));
         }
 }

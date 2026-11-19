@@ -56,6 +56,7 @@ void MicrovibeProcessor::resetSharedData()
     { sh.gate[p][l][s] = (uint8_t) ((s % 4) == 0); sh.value[p][l][s] = (s % 4) == 0 ? 0.8f : 0.5f; }
     for (int k = 0; k < NLFO; ++k) for (int i = 0; i < 16; ++i)
         sh.lfoShape[k][i] = 0.5f + 0.5f * std::sin (mv::kTwoPi * (float) i / 16.0f + (float) k);
+    for (auto& m : sh.snapMask) m = 0;
 }
 
 void MicrovibeProcessor::loadPreset (int index)
@@ -100,6 +101,14 @@ void MicrovibeProcessor::loadPreset (int index)
         for (int k = 0; k < NLFO; ++k)
             if (auto* a = obj->getProperty (juce::String (k + 1)).getArray())
                 for (int i = 0; i < juce::jmin (16, a->size()); ++i) sh.lfoShape[k][i] = (float) (double) (*a)[i];
+    if (auto* snaps = pr.snaps.getArray())
+        for (int k = 0; k < juce::jmin (NSNAP, snaps->size()); ++k)
+        {
+            uint64_t m = 0;
+            if (auto* degs = (*snaps)[k].getArray())
+                for (auto& d : *degs) { const int x = (int) d; if (x >= 0 && x < 64) m |= (uint64_t) 1 << x; }
+            sh.snapMask[k] = m;
+        }
     currentPreset.store (index);
     engine.resetState();
     if (onPresetChanged) onPresetChanged();
@@ -204,6 +213,23 @@ void MicrovibeProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
     midi.clear();
 }
 
+tuning::Scale MicrovibeProcessor::guiScale() const
+{
+    const int idx = (int) raw[(size_t) ids().tuScale]->load();
+    if (idx == tuning::builtinNames().size() - 1 && userSclText.isNotEmpty())
+    {
+        tuning::Scale s; juce::String err;
+        if (tuning::parseScl (userSclText, s, err)) return s;
+    }
+    return tuning::builtin (idx);
+}
+
+void MicrovibeProcessor::toggleDroneDegree (int snap, int degree)
+{
+    if (! juce::isPositiveAndBelow (snap, NSNAP) || ! juce::isPositiveAndBelow (degree, 64)) return;
+    engine.shared.snapMask[snap] = engine.shared.snapMask[snap].load() ^ ((uint64_t) 1 << degree);
+}
+
 juce::AudioProcessorEditor* MicrovibeProcessor::createEditor() { return new MicrovibeEditor (*this); }
 
 // ------------------------------------------------------------------------------------------- state
@@ -232,6 +258,7 @@ juce::ValueTree MicrovibeProcessor::sharedToTree() const
         juce::ValueTree s ("LFOSHAPE"); s.setProperty ("k", k, nullptr); s.setProperty ("v", v, nullptr);
         t.appendChild (s, nullptr);
     }
+    for (int k = 0; k < NSNAP; ++k) t.setProperty ("snap" + juce::String (k + 1), juce::String::toHexString ((juce::int64) sh.snapMask[k].load()), nullptr);
     t.setProperty ("scl", userSclText, nullptr);
     t.setProperty ("kbm", userKbmText, nullptr);
     return t;
@@ -262,6 +289,8 @@ void MicrovibeProcessor::sharedFromTree (const juce::ValueTree& t)
             for (int i = 0; i < juce::jmin (16, v.size()); ++i) sh.lfoShape[k][i] = v[i].getFloatValue();
         }
     }
+    for (int k = 0; k < NSNAP; ++k)
+        sh.snapMask[k] = (uint64_t) t.getProperty ("snap" + juce::String (k + 1), "0").toString().getHexValue64();
     userSclText = t["scl"].toString(); userKbmText = t["kbm"].toString();
     if (userSclText.isNotEmpty()) { juce::String err; engine.tuning.loadUser (userSclText, userKbmText, err); }
 }

@@ -40,6 +40,7 @@ namespace mv
             dropOn = false; dropCount = 0;
         }
         void startHeld (int t, const GlitchParams& p) { start (t, 1.0e9f, p); held = true; }
+        void release() { if (active && ! held) len = std::min (len, t0 + xfade); }
         void stopHeld (int t) { if (active && held && type == t) { len = t0 + xfade; held = false; } }
 
         void process (float& l, float& r, const GlitchParams& p)

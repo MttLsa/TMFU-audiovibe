@@ -51,6 +51,9 @@ public:
     void clearLane (int pattern, int lane);
     void copyPattern (int from, int to);
 
+    tuning::Scale guiScale() const;                       // scale shown by the editor (message thread)
+    void toggleDroneDegree (int snapshot, int degree);
+
     juce::AudioProcessorValueTreeState apvts;
     mv::Engine engine;
     bool isStandalone() const { return wrapperType == wrapperType_Standalone; }

@@ -27,12 +27,14 @@ namespace mv
         std::atomic<uint8_t> gate[prm::NPAT][prm::NLANE][kMaxSteps];
         std::atomic<float>   value[prm::NPAT][prm::NLANE][kMaxSteps];
         std::atomic<float>   lfoShape[prm::NLFO][16];
+        std::atomic<uint64_t> snapMask[prm::NSNAP];      // texture drone chords: bit k = scale degree k (0 = automatic)
         SharedData()
         {
             for (int p = 0; p < prm::NPAT; ++p) for (int l = 0; l < prm::NLANE; ++l) for (int s = 0; s < kMaxSteps; ++s)
             { gate[p][l][s] = (uint8_t) ((s % 4) == 0); value[p][l][s] = (s % 4) == 0 ? 0.8f : 0.5f; }
             for (int k = 0; k < prm::NLFO; ++k) for (int i = 0; i < 16; ++i)
                 lfoShape[k][i] = 0.5f + 0.5f * std::sin (kTwoPi * (float) i / 16.0f + (float) k);
+            for (auto& m : snapMask) m = 0;
         }
     };
 
@@ -42,7 +44,8 @@ namespace mv
         std::vector<std::atomic<float>> modNorm;          // per parameter: modulation offset (normalised)
         std::atomic<float> src[prm::NUM_SOURCES] {};
         std::atomic<int> laneStep[prm::NLANE] {};
-        std::atomic<int> pattern { 0 }, glitchType { -1 };
+        std::atomic<int> pattern { 0 }, glitchType { -1 }, snapshot { 0 };
+        std::atomic<bool> running { true };
         std::atomic<float> peakL { 0 }, peakR { 0 }, inPeak { 0 };
         std::atomic<bool> limiting { false }, transient { false }, mts { false };
         std::atomic<double> beat { 0 };
@@ -72,6 +75,8 @@ namespace mv
         void chord (int chordIdx, float rootSemis, float* out, int& n) const;
         float stepSeconds (int lane, double bpm) const;
         void processSample (float& l, float& r, float scl, float scr);
+        void droneNotes (double bpm);
+        void transportStopped();
         void setupBlockParams (double bpm);
 
         float sr = 48000;
@@ -122,6 +127,11 @@ namespace mv
         int order[prm::NFX] {}; int nOrder = 0;
         bool fxWasOn[prm::NUM_FXTYPES] {};
         int sfMode = 0, sfBands = 7; float sfSpeed = 0, sfRes = 0.5f, sfMix = 0;
+
+        // drone progression
+        float droneCur[8] {}, droneTarget[8] {}; int droneN = 0, curSnap = 0;
+        // transport stop
+        bool wasRunning = true; float stopGain = 1.0f, stopCoef = 0.001f;
 
         // shepard gen block params
         float shSpeed = 0, shInterval = 12; int shDirSign = 1; double shPendulumBeat = 0;
