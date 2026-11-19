@@ -26,5 +26,5 @@ jobs:
       - name: Upload devices
         uses: actions/upload-artifact@v5
         with:
-          name: Bandmates-1.0.0-MaxForLive
+          name: Bandmates-MaxForLive
           path: Bandmates/devices/

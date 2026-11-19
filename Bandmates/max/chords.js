@@ -1,6 +1,7 @@
 // Bandmates Chords - the chord track: type or pick a progression, write it as a MIDI clip, or detect chords (Chord ID).
 // The players read the chords from this track's clips (same scene / same arrangement position).
-var DEV = { id: 'chords', personas: [], needs: {} };
+var DEV = { id: 'chords', personas: [], needs: {},
+  owns: function (name) { return name.indexOf('Accordi') === 0; } };
 var progText = 'C G/B | Am7 - | Fmaj7 | G7sus4 G7', pendingWrite = false;
 
 function keyRoot(info) {
@@ -45,13 +46,15 @@ function doWrite() {
       var cs = L(target.path);
       if (!getv(cs, 'has_clip')) cs.call('create_clip', length);
       clip = L(target.path + ' clip');
+      if (!writable(clip)) throw protectedError(clip);
       clip.set('loop_start', 0);
       clip.set('loop_end', length);
       clip.set('end_marker', length);
-    } else clip = L(target.path);
+    } else { clip = L(target.path); if (!writable(clip)) throw protectedError(clip); }
     writeNotes(clip, BM.chords.toNotes(parsed.prog, { ext: uiValue('ext') / 100 }), target.kind === 'session' ? 0 : getv(clip, 'start_marker'));
     var label = BM.chords.toText(parsed.prog, info.beatsPerBar, flats());
-    clip.set('name', label.length > 60 ? label.substr(0, 57) + '...' : label);
+    label = 'Accordi: ' + label;
+    clip.set('name', label.length > 70 ? label.substr(0, 67) + '...' : label);
     status(parsed.errors.length ? 'Non riconosciuti: ' + parsed.errors.join(' ') : 'Scritti ' + parsed.prog.length + ' accordi in ' + (length / info.beatsPerBar) + ' battute');
   } catch (e) { fail(e); }
 }

@@ -120,7 +120,7 @@ test('chords -> drums -> bass -> keys -> beats in a simulated Live set', () => {
 
   // 10) Arrangement view, nothing selected: Genera writes at the playhead, inside the chord region
   set.view.focused = 'Arranger';
-  set.view.highlighted = null;
+  set.view.highlighted = 'live_set tracks 1 clip_slots 0'; // a Session selection must be ignored in Arrangement
   set.song_time = 37;
   drums.generate();
   const arr = set.tracks[1].arrangement;
@@ -136,4 +136,29 @@ test('buttons work even when the load-time init message was missed', () => {
   set.view.highlighted = 'live_set tracks 1 clip_slots 0';
   drums.generate();
   assert.ok(set.tracks[1].slots[0].clip.notes.length > 30);
+});
+
+test("the user's own clips are never overwritten", () => {
+  const set = makeSet();
+  const mine = [{ pitch: 36, start_time: 0, duration: 0.25, velocity: 100, mute: 0 }];
+  set.tracks[1].slots[0].clip = set.clip(8, mine.slice(), 'My kick');
+  const drums = loadDevice(set, 'bm_drums.js', 1);
+  drums.init();
+  set.view.highlighted = 'live_set tracks 1 clip_slots 0';
+  drums.generate();
+  assert.equal(set.tracks[1].slots[0].clip.notes.length, 1);
+  assert.match(drums.__out.filter((o) => o[0] === 0).pop()[2], /non e di Bandmates/);
+  // same in Arrangement
+  set.tracks[1].arrangement.push(Object.assign(set.clip(16, mine.slice(), 'Take 1'), { start_time: 0 }));
+  set.view.focused = 'Arranger';
+  set.song_time = 4;
+  drums.generate();
+  assert.equal(set.tracks[1].arrangement.length, 1);
+  assert.equal(set.tracks[1].arrangement[0].notes.length, 1);
+  // an empty clip is fine to fill
+  set.tracks[1].slots[1].clip = set.clip(4, [], 'empty');
+  set.view.focused = 'Session';
+  set.view.highlighted = 'live_set tracks 1 clip_slots 1';
+  drums.generate();
+  assert.ok(set.tracks[1].slots[1].clip.notes.length > 10);
 });
