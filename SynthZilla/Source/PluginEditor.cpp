@@ -1232,7 +1232,7 @@ void SynthZillaEditor::paint (juce::Graphics& g)
         g.fillPath (p);
         g.strokePath (p, juce::PathStrokeType (0.7f));
     }
-    g.setColour (ui::dim); g.setFont (ui::font (11.0f));
+    g.setColour (ui::text); g.setFont (ui::font (11.0f));   // brighter than the other secondary text: it belongs to the logo
     g.drawText ("TMFU audiovibe  v" + juce::String (JucePlugin_VersionString), 102, 40, 160, 16, juce::Justification::left);
     // output meter
     const float m = juce::jlimit (0.0f, 1.0f, proc.meter());
