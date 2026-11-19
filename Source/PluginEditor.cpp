@@ -57,7 +57,7 @@ void MainView::paint (Graphics& g)
     // maker line under the wordmark
     GlyphArrangement gm;
     gm.addLineOfText (theme::font (9.5f).withExtraKerningFactor (0.12f), "TMFU audiovibe", bar.getX() + 5.0f, logoBase + 12.0f);
-    g.setColour (theme::textDim);
+    g.setColour (theme::text.withAlpha (0.85f));
     gm.draw (g);
     // two small accent bars = the two sections (A orange / B lime)
     const float x = bar.getX() + 4.0f + twinW + 4.0f + boxW + 14.0f;
