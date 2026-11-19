@@ -46,15 +46,14 @@ Saw Up/Down, Square, S&H, Random; rate libero o **SYNC** al tempo (8 battute …
 fase. Il **+** apre la vista con tutti gli 8 LFO. LFO, EQ e filtri d'uscita non cambiano quando carichi un preset.
 
 ## Grafica
-- Stile Twinbox (piatto, scuro, in stile Ableton) con un leggero **rilievo**; font **Inter** (il più vicino, con licenza libera,
-  al font dell'interfaccia di Ableton Live, che è proprietario).
+- Stile Twinbox (piatto, scuro, in stile Ableton) con un leggero **rilievo**; font **Comfortaa** (SIL OFL) per tutto
+  il testo dell'interfaccia, logo e display compresi. Tutte le scritte di moduli, parametri e preset sono in inglese.
 - Ogni modulo prende l'aspetto dello strumento scelto (34 skin: legno Moog/Prophet, fader Juno/CS-80/Alpha Juno, TB-303
   argento, LCD e membrane DX7/M1, PPG blu, Virus/Nord rossi, CRT Fairlight…), senza loghi o grafiche originali.
 - **Fader più lunghi** sugli strumenti che hanno fader. Risoluzione fine: le manopole si muovono a passi di **0,01**, i fader di
   **0,001**; dopo un clic le frecce muovono di 1 % (fader 0,1 %), Shift = 10× più fine; doppio clic = valore di default.
 - Finestra **ridimensionabile** (dal 50 % al 200 %, la dimensione viene ricordata), con EQ e LFO espandibili.
-- Logo: **SynthZilla** in TeX Gyre Adventor (equivalente libero dell'ITC Avant Garde Gothic, che è commerciale e non si
-  può incorporare) e un piccolo kaiju viola animato, con due occhi rossi, che suona una tastiera.
+- Logo: **SynthZilla** in Comfortaa Bold e un piccolo kaiju viola animato, con due occhi rossi, che suona una tastiera.
 
 ## Preset
 151 preset dal 1963 al 2023, **ordinati per anno**. Nel browser ogni riga è:

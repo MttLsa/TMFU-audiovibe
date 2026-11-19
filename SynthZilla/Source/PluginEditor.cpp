@@ -6,22 +6,18 @@ using namespace params;
 using skins::Skin;
 
 // =====================================================================================================
-//  Fonts (Inter, SIL OFL: the closest freely licensed match for Ableton Live's interface font) + relief
+//  Fonts: Comfortaa (SIL OFL) for all text, logo included + relief
 // =====================================================================================================
 juce::Typeface::Ptr ui::typeface (bool bold)
 {
-    static juce::Typeface::Ptr reg = juce::Typeface::createSystemTypefaceFor (BinaryData::InterRegular_ttf, BinaryData::InterRegular_ttfSize);
-    static juce::Typeface::Ptr semi = juce::Typeface::createSystemTypefaceFor (BinaryData::InterSemiBold_ttf, BinaryData::InterSemiBold_ttfSize);
-    return bold ? semi : reg;
+    static juce::Typeface::Ptr reg = juce::Typeface::createSystemTypefaceFor (BinaryData::ComfortaaRegular_ttf, BinaryData::ComfortaaRegular_ttfSize);
+    static juce::Typeface::Ptr bld = juce::Typeface::createSystemTypefaceFor (BinaryData::ComfortaaBold_ttf, BinaryData::ComfortaaBold_ttfSize);
+    return bold ? bld : reg;
 }
-juce::Font ui::font (float h, bool bold) { return juce::Font (juce::FontOptions (typeface (bold)).withHeight (h)); }
+// Comfortaa is wider than the previous UI font: slightly tighter tracking keeps the short captions apart
+juce::Font ui::font (float h, bool bold) { return juce::Font (juce::FontOptions (typeface (bold)).withHeight (h).withKerningFactor (-0.03f)); }
 
-// Logo font: TeX Gyre Adventor (GUST Font License), a free equivalent of ITC Avant Garde Gothic
-juce::Font ui::logoFont (float h)
-{
-    static juce::Typeface::Ptr tf = juce::Typeface::createSystemTypefaceFor (BinaryData::TeXGyreAdventorBold_otf, BinaryData::TeXGyreAdventorBold_otfSize);
-    return juce::Font (juce::FontOptions (tf).withHeight (h));
-}
+juce::Font ui::logoFont (float h) { return ui::font (h, true); }
 
 void ui::relief (juce::Graphics& g, juce::Rectangle<float> r, juce::Colour base, float corner, bool raised)
 {
@@ -580,7 +576,7 @@ void ModulePanel::paint (juce::Graphics& g)
         g.setColour (s.lcdBg); g.fillRoundedRectangle (lcd, 2.0f);
         if (s.pattern == skins::Crt) for (float yy = lcd.getY(); yy < lcd.getBottom(); yy += 2.0f) { g.setColour (juce::Colours::black.withAlpha (0.25f)); g.drawHorizontalLine ((int) yy, lcd.getX(), lcd.getRight()); }
         g.setColour (s.lcdText);
-        g.setFont (juce::Font (juce::FontOptions (juce::Font::getDefaultMonospacedFontName(), 14.0f, juce::Font::bold)));
+        g.setFont (ui::font (14.0f, true));
         g.drawFittedText (txt.toUpperCase(), lcd.reduced (6, 2).toNearestInt(), juce::Justification::centredLeft, 1, 0.7f);
     }
     for (size_t gi = 0; gi < groups.size(); ++gi)
@@ -921,7 +917,8 @@ void PresetBrowser::paint (juce::Graphics& g)
 {
     g.fillAll (ui::bg);
     g.setColour (ui::dim); g.setFont (ui::font (11.0f));
-    g.drawText (juce::String ((int) rows.size()) + " presets, ordered by year", getLocalBounds().reduced (12, 8).removeFromTop (16), juce::Justification::topRight);
+    g.drawText (juce::String ((int) rows.size()) + " presets, ordered by year", getLocalBounds().reduced (10).removeFromTop (28).withTrimmedRight (90),
+                juce::Justification::centredRight);
 }
 
 void PresetBrowser::resized()

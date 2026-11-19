@@ -179,13 +179,13 @@ def S(name, year, genre, song, artist, cat, modules, original="", notes=""):
     if isinstance(modules, tuple): modules = [modules]
     P.append(dict(name=name, year=year, genre=genre, song=song, artist=artist, cat=cat, modules=modules, original=original, notes=notes))
 
-UNC = "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente."
-DEB = "Attribuzione discussa: il suono è ricreato nello stile del brano."
+UNC = "Instrument attributed by industry / community sources, not officially documented."
+DEB = "Disputed attribution: the sound is recreated in the style of the track."
 
 # ---------------------------------------------------------------------------------------- 1960s
 S("Radiophonic Bassline", 1963, "Film / TV", "Doctor Who (theme)", "Ron Grainer / Delia Derbyshire", "Bass",
   ("BBC Radiophonic oscillators", an(oct=-1, o1wave="Triangle", o2wave="Sine", o2lvl=0.4, flt="LP12", cut=900, res=0.3, env=0.3, fd=200, fs=0.3,
-     aa=1, ad=300, **{"as": 0.6}, ar=80, g_mode="Mono", dlymix=0.15)), notes="Oscillatori a valvole e nastro, non un synth commerciale.")
+     aa=1, ad=300, **{"as": 0.6}, ar=80, g_mode="Mono", dlymix=0.15)), notes="Tube oscillators and tape, not a commercial synth.")
 S("Tannerin Glide", 1966, "Pop", "Good Vibrations", "The Beach Boys", "Lead",
   ("Electro-Theremin", lead(wave="Sine", o2lvl=0.0, cut=6000, res=0.0, env=0.0, glide=260, vib=0.35, lforate=6.0, fdrive=0.0, g_revmix=0.2)))
 S("Brandenburg Moog", 1968, "Electronic", "Brandenburg Concerto No. 3 (Switched-On Bach)", "Wendy Carlos", "Lead",
@@ -221,14 +221,14 @@ S("Welcome Machine Drone", 1975, "Prog Rock", "Welcome to the Machine", "Pink Fl
   ("EMS VCS3 / Synthi AKS", an(o1wave="Saw", o2wave="Saw", o2lvl=1, o2fine=-20, flt="LP24 Ladder", cut=500, res=0.55, lfocut=0.5, lforate=0.12,
      aa=1500, ad=2000, **{"as": 1}, ar=3000, g_revmix=0.4, g_revsize=0.85)))
 S("Oxygene Strings", 1976, "Electronic", "Oxygène (Part IV)", "Jean-Michel Jarre", "Strings",
-  ("ARP Solina String Ensemble", strings(cut=2600, att=700, rel=2500, g_revmix=0.4, dlymix=0.15)), notes="String machine Eminent 310, stessa famiglia della Solina.")
+  ("ARP Solina String Ensemble", strings(cut=2600, att=700, rel=2500, g_revmix=0.4, dlymix=0.15)), notes="Eminent 310 string machine, same family as the Solina.")
 S("Oxygene IV Lead", 1976, "Electronic", "Oxygène (Part IV)", "Jean-Michel Jarre", "Lead",
   ("ARP Odyssey", lead(wave="Pulse", o1pw=0.25, o2lvl=0.4, cut=2200, res=0.3, vib=0.3, glide=90, dlymix=0.3, g_revmix=0.3, g_chomode="I")), notes=UNC)
 S("I Feel Love Bass", 1977, "Disco", "I Feel Love", "Donna Summer", "Bass",
   ("Moog modular", moog_bass(cut=420, res=0.3, env=0.6, dec=160, o2=0, fine=0, sus=0.0, ad=220, **{"as": 0.0}, ar=60, mono=False,
-                             dlymix=0.22, dlydiv="1/16", dlyfb=0.2, dlyping=0)), notes="Giorgio Moroder: Moog modular sincronizzato a 1/16.")
+                             dlymix=0.22, dlydiv="1/16", dlyfb=0.2, dlyping=0)), notes="Giorgio Moroder: Moog modular synced to 1/16.")
 S("Flash Light Bass", 1977, "Funk / Soul", "Flash Light", "Parliament", "Bass",
-  ("Moog Minimoog Model D", moog_bass(cut=280, res=0.35, env=0.7, dec=420, o2=-1, fine=4, glide=35, o2wave="Pulse")), notes="Bernie Worrell, Minimoog multi-traccia.")
+  ("Moog Minimoog Model D", moog_bass(cut=280, res=0.35, env=0.7, dec=420, o2=-1, fine=4, glide=35, o2wave="Pulse")), notes="Bernie Worrell, multitracked Minimoog.")
 S("Trans-Europe Lead", 1977, "Electronic", "Trans-Europe Express", "Kraftwerk", "Lead",
   ("Polymoog", lead(wave="Pulse", o1pw=0.4, o2lvl=0.0, cut=1500, res=0.2, glide=0, g_mode="Poly", g_revmix=0.25)), notes=UNC)
 S("Close Encounters Tones", 1977, "Film / TV", "Close Encounters of the Third Kind", "John Williams", "Lead",
@@ -247,7 +247,7 @@ S("Behind the Mask Bass", 1979, "Synth-Pop", "Behind the Mask", "Yellow Magic Or
 S("Synclavier Strings", 1979, "Electronic", "Phaedra-style FM strings (Synclavier I)", "New England Digital demo", "Strings",
   ("Synclavier", fm6(32, [(1, 0, 0.8, 300, 3000, 0.9, 900), (2, 0.003, 0.5, 300, 3000, 0.9, 900), (3, 0, 0.35, 300, 3000, 0.9, 900),
                           (4, 0.004, 0.25, 300, 3000, 0.9, 900), (5, 0, 0.15, 300, 3000, 0.9, 900), (6, 0, 0.1, 300, 3000, 0.9, 900)], aa=300, ar=900, g_revmix=0.3)),
-  notes="Sintesi additiva/FM del primo Synclavier.")
+  notes="Additive/FM synthesis of the first Synclavier.")
 
 # ---------------------------------------------------------------------------------------- 1980s
 S("Rydeen Bass", 1980, "Synth-Pop", "Rydeen", "Yellow Magic Orchestra", "Bass", ("ARP Odyssey", sh_bass(cut=800, res=0.35, env=0.45, dec=160, sub=0.0, wave="Saw", g_mode="Poly")))
@@ -278,10 +278,10 @@ S("Hungry Like the Wolf Arp", 1982, "New Wave", "Hungry Like the Wolf", "Duran D
   ("Roland Jupiter-8", pluck_a(cut=1500, res=0.3, dec=150, o1wave="Pulse", o2lvl=0.4, dlymix=0.15, dlydiv="1/16")))
 S("Thriller Opening Pad", 1982, "Pop", "Thriller", "Michael Jackson", "Pad",
   ("Roland Jupiter-8", poly_pad(wave="Saw", pwm=0.0, cut=1400, res=0.2, att=1200, rel=2500, chorus="II", o2wave="Saw", o2lvl=0.8, o2fine=-9, g_revmix=0.35)),
-  notes="Anthony Marinelli, Jupiter-8 per i pad d'apertura (fonte: blog di settore).")
+  notes="Anthony Marinelli, Jupiter-8 for the opening pads (source: industry blog).")
 S("Planet Rock ORCH5", 1982, "Hip-Hop", "Planet Rock", "Afrika Bambaataa & The Soulsonic Force", "Stab",
   ("Fairlight CMI", add("Brass", bright=0.8, att=1, dec=420, sus=0.0, rel=200, bits=0.55, srr=0.35, oct=-1, g_revmix=0.2)), original="ORCH5",
-  notes="Fairlight = campionatore digitale a 8 bit: il colpo d'orchestra è sintetizzato (additivo + riduzione bit/frequenza).")
+  notes="Fairlight = 8-bit digital sampler: the orchestra hit is synthesized (additive + bit/rate reduction).")
 S("Don't Go Bass", 1982, "Synth-Pop", "Don't Go", "Yazoo", "Bass", ("Roland SH-101", sh_bass(cut=700, res=0.3, env=0.5, dec=200, sub=0.6, wave="Saw")))
 S("I Ran Bass", 1982, "New Wave", "I Ran (So Far Away)", "A Flock of Seagulls", "Bass",
   ("Korg MS-20", sh_bass(cut=650, res=0.5, env=0.4, dec=250, sub=0.2, wave="Saw", flt="LP12", fdrive=0.6)))
@@ -294,19 +294,19 @@ S("Relax Bass", 1983, "Synth-Pop", "Relax", "Frankie Goes to Hollywood", "Bass",
   ("Roland Jupiter-8", moog_bass(cut=550, res=0.3, env=0.5, dec=200, o2=0, fine=10, sus=0.1, mono=False, dlymix=0.12, dlydiv="1/16")))
 S("Time After Time Pad", 1983, "Pop", "Time After Time", "Cyndi Lauper", "Pad",
   ("Roland Juno-60", poly_pad(wave="Pulse", pw=0.45, pwm=0.3, cut=1900, res=0.1, att=200, rel=1400, chorus="II", sub=0.2)), original="61",
-  notes="Il produttore racconta di essere partito dal preset 61 del Juno-60.")
+  notes="The producer says he started from Juno-60 preset 61.")
 S("Beat It Gong", 1983, "Pop", "Beat It", "Michael Jackson", "FX",
-  ("Synclavier", fm_bell(r2=1.41, oct=-2, ad=9000, ar=4000, g_revmix=0.4)), notes="Intro di gong del Synclavier.")
+  ("Synclavier", fm_bell(r2=1.41, oct=-2, ad=9000, ar=4000, g_revmix=0.4)), notes="Synclavier gong intro.")
 S("E.PIANO 1", 1985, "R&B", "Saving All My Love for You", "Whitney Houston", "Keys", ("Yamaha DX7", fm_epiano()), original="E.PIANO 1",
-  notes="Il preset 11 del DX7 è il suono delle ballate anni '80; per alcuni brani di Whitney Houston si discute se sia DX7, Rhodes o entrambi.")
+  notes="DX7 preset 11 is the sound of '80s ballads; for some Whitney Houston songs it is debated whether it is DX7, Rhodes or both.")
 S("BASS 1", 1985, "Synth-Pop", "Take On Me", "a-ha", "Bass",
   ("Yamaha DX7", fm_bass(alg=16, ratios=(0, 0, 1, 1, 1, 1), lv=(1.0, 0.78, 0.5, 0.35, 0.3, 0.0), dec=(1600, 500, 250, 120, 300, 200), fb=0.5,
-                         g_chomode="I", g_chomix=0.4)), original="BASS 1", notes="Il basso slap di Take On Me: preset 15 BASS 1 con chorus.")
+                         g_chomode="I", g_chomix=0.4)), original="BASS 1", notes="The slap bass of Take On Me: preset 15 BASS 1 with chorus.")
 S("Take On Me Riff", 1985, "Synth-Pop", "Take On Me", "a-ha", "Lead",
   [("Roland Juno-60", an(o1wave="Pulse", o1pw=0.45, o2lvl=0.0, sub=0.3, flt="LP24 Ladder", cut=3200, res=0.1, env=0.2, fd=300, fs=0.6, aa=1, ad=400,
                          **{"as": 0.8}, ar=180, g_chomode="I", g_chomix=0.6)),
    ("Yamaha DX7", fm6(5, [(2, 0, 0.6, 1, 600, 0.3, 200), (3, 0, 0.35, 1, 300, 0.1, 150)], vel=0.5, level=0.35))],
-  notes="Riff principale sul Juno-60 con DX7 nella produzione: layer analogico + digitale.")
+  notes="Main riff on the Juno-60 with DX7 in the production: analog + digital layer.")
 S("Fresh Bass", 1984, "Funk / Soul", "Fresh", "Kool & the Gang", "Bass",
   ("Yamaha DX7", fm_bass(alg=16, lv=(1.0, 0.7, 0.45, 0.3, 0.2, 0.0), fb=0.4)), original="BASS 1")
 S("Radio Ga Ga Arp", 1984, "Rock", "Radio Ga Ga", "Queen", "Sequence",
@@ -318,7 +318,7 @@ S("Axel F Lead", 1984, "Film / TV", "Axel F", "Harold Faltermeyer", "Lead",
                           aa=1, ad=300, **{"as": 0.75}, ar=120, dlymix=0.18, dlydiv="1/8D", g_revmix=0.15)), notes=UNC)
 S("Final Countdown Brass", 1986, "Rock", "The Final Countdown", "Europe", "Brass",
   [("Roland JX-8P", brass(cut=1400, env=0.4, att=30, dec=900, sus=0.7, level=0.6)), ("Yamaha TX-816", fm_brass(level=0.7))],
-  notes="Fanfara: Yamaha TX-816 (FM) + Roland JX-8P (analogico) in layer.")
+  notes="Fanfare: Yamaha TX-816 (FM) + Roland JX-8P (analog) layered.")
 S("Take My Breath Bass", 1986, "Pop", "Take My Breath Away", "Berlin", "Bass",
   ("Yamaha DX7", fm_bass(alg=16, lv=(1.0, 0.55, 0.25, 0.0, 0.0, 0.0), dec=(3000, 900, 300, 200, 200, 200), sus=(0.7, 0.3, 0, 0, 0, 0), fb=0.15,
                          **{"as": 0.8}, ar=250, g_mode="Poly", g_chomode="I", g_chomix=0.3)))
@@ -330,7 +330,7 @@ S("Can You Feel It Pad", 1986, "Deep House", "Can You Feel It", "Mr. Fingers", "
   ("Roland Juno-106", poly_pad(wave="Pulse", pw=0.45, pwm=0.35, cut=1700, res=0.12, env=0.15, att=350, rel=1500, chorus="II", sub=0.3)))
 S("Trapped Bass", 1986, "House", "Trapped", "Colonel Abrams", "Bass", ("Roland Juno-106", sh_bass(cut=700, res=0.3, env=0.45, dec=260, sub=0.8)), notes=UNC)
 S("What The", 1991, "Techno", "Mentasm", "Second Phase (Joey Beltram & Mundo Muzique)", "Lead", ("Roland Alpha Juno-2", hoover()), original="What The",
-  notes="Il riff è costruito interamente sul preset 'What the...' di Eric Persing: nasce l'hoover.")
+  notes="The riff is built entirely on Eric Persing's 'What the...' preset: the birth of the hoover.")
 S("Fantasia", 1987, "Pop", "Hazy Shade of Winter", "The Bangles", "Pad",
   ("Roland D-50", fm6(29, [(1, 0, 0.8, 30, 8000, 1.0, 1800), (2, 0, 0.6, 30, 8000, 1.0, 1800), (1, 0, 0.7, 1, 900, 0.0, 900), (3, 0.5, 0.55, 1, 400, 0.0, 400),
                            (2, 0, 0.5, 1, 1500, 0.0, 1200), (7, 0, 0.4, 1, 300, 0, 300)], vel=0.5, aa=30, ad=3000, **{"as": 0.9}, ar=1800, uni=2, detune=0.06,
@@ -343,13 +343,13 @@ S("Your Love Arp", 1987, "House", "Your Love", "Frankie Knuckles & Jamie Princip
   ("Roland Juno-60", pluck_a(cut=1600, res=0.2, dec=380, o1wave="Pulse", o2lvl=0.0, sub=0.3, g_chomode="I", g_chomix=0.5, dlymix=0.15, g_revmix=0.25)), notes=UNC)
 S("Strings of Life Stab", 1987, "Techno", "Strings of Life", "Rhythim Is Rhythim (Derrick May)", "Stab",
   ("Korg M1", add("Strings", bright=0.6, att=5, dec=420, sus=0.0, rel=300, bits=0.3, g_revmix=0.25)),
-  notes="Archi campionati da un'esecuzione di Michael James: strumento esatto non documentato. Ricreato su modulo digitale.")
+  notes="Strings sampled from a Michael James performance: exact instrument not documented. Recreated on a digital module.")
 S("Just Want Another Chance", 1988, "Techno", "Just Want Another Chance", "Reese (Kevin Saunderson)", "Bass",
   ("Casio CZ-5000", pd(wave="Saw", amt=0.55, uni=2, det=0.12, flt="LP24 Clean", cut=900, res=0.15, dec=2000, sus=1.0, rel=150, oct=-1, g_mode="Mono", env=0.15,
-                       lfoshape="Sine", lforate=0.3, lfotim=0.2)), notes="Il 'Reese bass': due saw desintonizzate a distorsione di fase.")
+                       lfoshape="Sine", lforate=0.3, lfotim=0.2)), notes="The 'Reese bass': two detuned saws with phase distortion.")
 S("Big Fun Lately Bass", 1988, "House", "Big Fun", "Inner City", "Bass",
   ("Yamaha TX81Z", fm_bass(alg=5, ratios=(0, 0, 1, 1, 1, 1), lv=(1.0, 0.68, 0.0, 0.0, 0, 0), dec=(2500, 600, 300, 180, 200, 200), sus=(0.55, 0.18, 0, 0, 0, 0), fb=0.55)),
-  original="Lately Bass", notes="Lately Bass del TX81Z, citato dalla comunità per Big Fun e Good Life.")
+  original="Lately Bass", notes="TX81Z Lately Bass, cited by the community for Big Fun and Good Life.")
 S("Voodoo Ray", 1988, "Acid House", "Voodoo Ray", "A Guy Called Gerald", "Bass", ("Roland SH-101", sh_bass(cut=420, res=0.7, env=0.45, dec=200, sub=0.2, wave="Saw")))
 S("Land of Confusion 303", 1988, "Acid House", "Land of Confusion", "Armando", "Bass", ("Roland TB-303", acid303(cut=330, res=0.8, env=0.55, dec=180)))
 S("Pizzagogo", 1988, "Pop", "Orinoco Flow", "Enya", "Pluck",
@@ -380,13 +380,13 @@ S("We Close Our Eyes Bass", 1987, "Pop", "We Close Our Eyes", "Go West", "Bass",
 S("PPG Wave Pad", 1984, "Synth-Pop", "Wave pad (Tangerine Dream, Thomas Dolby)", "Thomas Dolby", "Pad",
   [("PPG Wave 2.3", wt("PPG Digital", pos=0.15, wenv=0.4, cut=4000, att=300, dec=2500, sus=0.9, rel=1600, uni=2, det=0.1, bits=0.3)),
    ("Roland Juno-60", poly_pad(wave="Saw", pwm=0.0, cut=900, res=0.35, att=400, rel=1600, chorus="Off", sub=0.0, level=0.45))],
-  notes="PPG = wavetable digitale + filtro analogico SSM: layer di un modulo digitale e di uno analogico.")
+  notes="PPG = digital wavetable + analog SSM filter: layer of a digital and an analog module.")
 S("Lately Bass", 1991, "Eurodance", "What Is Love", "Haddaway", "Bass",
   ("Yamaha TX81Z", fm_bass(alg=5, lv=(1.0, 0.68, 0.0, 0.0, 0, 0), dec=(2500, 600, 300, 180, 200, 200), sus=(0.55, 0.18, 0, 0, 0, 0), fb=0.55)),
-  original="Lately Bass", notes="Citato in liste di appassionati insieme a Whigfield e Ace of Base.")
+  original="Lately Bass", notes="Cited in enthusiasts' lists along with Whigfield and Ace of Base.")
 S("Solid Bass", 1990, "Techno", "Chime", "Orbital", "Bass",
   ("Yamaha DX21", fm_bass(alg=5, ratios=(0, 1, 1, 1, 1, 1), lv=(1.0, 0.62, 0, 0, 0, 0), dec=(1800, 380, 260, 150, 200, 200), sus=(0.5, 0.12, 0, 0, 0, 0), fb=0.3)),
-  original="Solid Bass", notes="Solid Bass (DX21/DX100) è la versione originale del Lately Bass; Gearnews cita Chime di Orbital.")
+  original="Solid Bass", notes="Solid Bass (DX21/DX100) is the original version of Lately Bass; Gearnews cites Orbital's Chime.")
 
 # ---------------------------------------------------------------------------------------- 1990s
 S("Vogue Piano", 1990, "House", "Vogue", "Madonna", "Piano",
@@ -413,23 +413,23 @@ S("G-Funk Whistle", 1992, "Hip-Hop", "Nuthin' but a 'G' Thang", "Dr. Dre feat. S
   ("Moog Minimoog Model D", lead(wave="Sine", o2lvl=0.0, cut=6000, res=0.0, env=0.0, glide=140, vib=0.3, lforate=5.5, fdrive=0.0, g_revmix=0.2)))
 S("Organ 2", 1993, "House", "Show Me Love", "Robin S", "Organ",
   ("Korg M1", add("House Organ", bright=0.55, tilt=0.55, att=1, dec=900, sus=0.55, rel=120, oct=-1)), original="Organ 2",
-  notes="Stonebridge trovò il basso scorrendo i preset dell'M1: Organ 2 (I17).")
+  notes="Stonebridge found the bass scrolling through the M1 presets: Organ 2 (I17).")
 S("Please Don't Go Organ", 1992, "Eurodance", "Please Don't Go", "Double You", "Organ",
   ("Korg M1", add("House Organ", bright=0.6, tilt=0.5, att=1, dec=600, sus=0.4, rel=110)), original="Organ 2")
 S("Children Dream Organ", 1995, "Trance", "Children (Dream Version)", "Robert Miles", "Organ",
   ("Korg M1", add("House Organ", bright=0.5, tilt=0.6, att=1, dec=700, sus=0.4, rel=200, g_revmix=0.35, dlymix=0.2, dlydiv="1/8D")), original="Organ 2")
 S("Higher State 303", 1995, "Acid House", "Higher State of Consciousness", "Josh Wink", "Bass",
-  ("Roland TB-303", acid303(cut=200, res=0.93, env=0.8, dec=150, lfocut=0.7, lforate=0.03, drive=0.6)), notes="Due 303 non modificate, senza pedali.")
+  ("Roland TB-303", acid303(cut=200, res=0.93, env=0.8, dec=150, lfocut=0.7, lforate=0.03, drive=0.6)), notes="Two unmodified 303s, no pedals.")
 S("Da Funk Lead", 1995, "House", "Da Funk", "Daft Punk", "Lead",
   ("Korg MS-20", an(o1wave="Saw", o2wave="Saw", o2lvl=0.9, o2semi=7, flt="LP12", cut=900, res=0.45, env=0.35, fd=500, fs=0.3, aa=1, ad=600, **{"as": 0.9}, ar=120,
                     fdrive=0.7, dist="Tube", dgain=0.5, g_mode="Mono", g_glide=40, g_drive=0.3)),
-  notes="Saw in quinta e leggero inviluppo sul filtro dell'MS-20 (Splice); altre fonti parlano di 303 distorta.")
+  notes="Saws in fifths and a light filter envelope on the MS-20 (Splice); other sources mention a distorted 303.")
 S("Born Slippy Chords", 1996, "Techno", "Born Slippy .NUXX", "Underworld", "Chord",
   ("Roland Juno-106", poly_stab(cut=2200, res=0.1, env=0.3, dec=1500, chorus="I", dlymix=0.25, g_revmix=0.3)))
 S("The Bells", 1996, "Techno", "The Bells", "Jeff Mills", "Bell",
   ("Korg Wavestation", fm6(5, [(1, 0, 1.0, 0.5, 900, 0, 400), (3, 0.5, 0.55, 0.5, 600, 0, 300), (1, 0, 0.6, 0.5, 700, 0, 400), (2, 0, 0.5, 0.5, 400, 0, 300)],
                            vel=0.4, ad=1200, **{"as": 0.0}, ar=400, g_revmix=0.15)),
-  notes="Strumento originale non documentato (citati DX100, K2000, campionatore): ricreato in FM.")
+  notes="Original instrument not documented (DX100, K2000, sampler cited): recreated in FM.")
 S("Coco Jamboo Calliope", 1996, "Eurodance", "Coco Jamboo", "Mr. President", "Lead",
   ("Roland D-50", add("Glass", bright=0.65, att=5, dec=800, sus=0.5, rel=250, lfopitch=0.1, lforate=5.5, g_revmix=0.2)), original="Living Calliope")
 S("Everybody Needs a 303", 1997, "Rave", "Everybody Needs a 303", "Fatboy Slim", "Bass",
@@ -437,26 +437,26 @@ S("Everybody Needs a 303", 1997, "Rave", "Everybody Needs a 303", "Fatboy Slim",
 S("For an Angel Supersaw", 1998, "Trance", "For an Angel (1998 remix)", "Paul van Dyk", "Pluck",
   ("Roland JP-8000", supersaw(det=0.35, mix=0.55, cut=1500, att=1, dec=280, sus=0.0, rel=250, env=0.45, fd=250, fs=0.0, dlymix=0.3, dlydiv="1/8D")))
 S("Out of the Blue Supersaw", 1999, "Trance", "Out of the Blue", "System F (Ferry Corsten)", "Lead",
-  ("Roland JP-8000", supersaw(det=0.5, mix=0.7, cut=10000, dec=800)), notes="Supersaw del JP-8000 'nella sua forma più pura' (ClassicTrance).")
+  ("Roland JP-8000", supersaw(det=0.5, mix=0.7, cut=10000, dec=800)), notes="JP-8000 supersaw 'in its purest form' (ClassicTrance).")
 S("Sandstorm", 1999, "Trance", "Sandstorm", "Darude", "Pad",
   ("Roland JP-8080", supersaw(det=0.4, mix=0.6, cut=4000, att=40, dec=1500, sus=0.9, rel=600, g_revmix=0.3)), original="Sandstorm",
-  notes="Il primo suono che il JP-8080 carica all'accensione si chiama Sandstorm: gli accordi del brano, che ne prese il nome.")
+  notes="The first sound the JP-8080 loads at power-up is called Sandstorm: the chords of the track, which took its name from it.")
 S("Sandstorm Lead", 1999, "Trance", "Sandstorm", "Darude", "Lead",
   [("Roland JP-8080", supersaw(det=0.28, mix=0.45, cut=5500, att=1, dec=150, sus=0.85, rel=80, env=0.25, g_drive=0.2, dlymix=0.15)),
    ("Access Virus", wt("Analog Morph", pos=0.66, cut=4000, att=1, dec=150, sus=0.8, rel=80, uni=3, det=0.15, level=0.4))],
-  notes="Sandstorm: Access Virus C, Korg MS2000R e Roland JP-8080 (Sound On Sound).")
+  notes="Sandstorm: Access Virus C, Korg MS2000R and Roland JP-8080 (Sound On Sound).")
 S("Knights of the Jaguar Strings", 1999, "Techno", "Knights of the Jaguar", "DJ Rolando (UR)", "Strings",
   ("Korg Triton", add("Strings", bright=0.55, att=120, dec=2000, sus=1.0, rel=900, g_chomode="Ensemble", g_chomix=0.45, g_revmix=0.3)), notes=UNC)
 S("Blue Lead", 1999, "Eurodance", "Blue (Da Ba Dee)", "Eiffel 65", "Lead",
   ("Clavia Nord Lead", wt("Pulse Width", pos=0.3, cut=5000, att=1, dec=300, sus=0.6, rel=150, uni=2, det=0.1, dlymix=0.15)),
-  notes="Lo strumento del lead non è documentato: ricreato su VA digitale.")
+  notes="The lead instrument is not documented: recreated on a digital VA.")
 S("Insomnia Pluck", 1995, "Trance", "Insomnia", "Faithless", "Pluck",
   ("Roland JP-8000", wt("Analog Morph", pos=0.66, wenv=-0.3, cut=1800, res=0.3, env=0.55, att=1, dec=260, sus=0.0, rel=200, uni=2, det=0.1, fs=0.0, fd=220,
-                        dlymix=0.25, dlydiv="1/8D", g_revmix=0.25)), notes="Molti synth successivi hanno un preset chiamato 'Insomnia'. " + UNC)
+                        dlymix=0.25, dlydiv="1/8D", g_revmix=0.25)), notes="Many later synths have a preset called 'Insomnia'. " + UNC)
 
 # ---------------------------------------------------------------------------------------- 2000s
 S("Try Again 303", 2000, "R&B", "Try Again", "Aaliyah", "Bass",
-  ("Roland TB-303", acid303(cut=380, res=0.65, env=0.45, dec=250, glide=50)), notes="Forse l'unico 303 in un singolo n.1 della Billboard Hot 100.")
+  ("Roland TB-303", acid303(cut=380, res=0.65, env=0.45, dec=250, glide=50)), notes="Perhaps the only 303 on a Billboard Hot 100 number-one single.")
 S("Everything In Its Right Place", 2000, "Indie", "Everything In Its Right Place", "Radiohead", "Keys",
   ("Sequential Prophet-5", an(o1wave="Pulse", o1pw=0.35, o2wave="Saw", o2lvl=0.4, o2fine=6, flt="LP24 Ladder", cut=1400, res=0.15, env=0.3, aa=3, ad=1200, **{"as": 0.7}, ar=400,
                               g_chomode="I", g_revmix=0.25)))
@@ -464,25 +464,25 @@ S("Real Slim Shady Keys", 2000, "Hip-Hop", "The Real Slim Shady", "Eminem", "Key
   ("Korg Triton", fm6(1, [(1, 0, 1.0, 0.5, 600, 0.2, 100), (3, 0, 0.55, 0.5, 200, 0.05, 100)], vel=0.6, ad=900, **{"as": 0.3}, ar=100)), notes=UNC)
 S("Grindin' Triton Bass", 2002, "Hip-Hop", "Grindin'", "Clipse (The Neptunes)", "Bass",
   ("Korg Triton", add("Soft Pad", bright=0.2, att=1, dec=1500, sus=0.0, rel=200, oct=-1, penv=-3, pdec=40, g_mode="Mono", g_drive=0.3)),
-  notes="I Neptunes e il Korg Triton: " + UNC)
+  notes="The Neptunes and the Korg Triton: " + UNC)
 S("Satisfaction Bass", 2002, "Electro", "Satisfaction", "Benny Benassi", "Bass",
   ("Access Virus", wt("Pulse Width", pos=0.35, cut=900, res=0.45, env=0.45, fd=400, fs=0.3, att=1, dec=400, sus=0.7, rel=80, oct=-1, g_drive=0.7, g_mode="Mono")),
   notes=DEB)
 S("Strobe Pluck", 2009, "EDM", "Strobe", "deadmau5", "Pluck",
   ("LennarDigital Sylenth1", wt("Pulse Width", pos=0.1, cut=1100, res=0.3, env=0.5, att=1, dec=400, sus=0.0, rel=400, uni=3, det=0.15, fs=0.0, fd=350,
-                                dlymix=0.35, dlydiv="1/8D", g_revmix=0.4)), notes="Onda quadra 'larga' nel mix; synth originale incerto (Sylenth1 citato).")
+                                dlymix=0.35, dlydiv="1/8D", g_revmix=0.4)), notes="'Wide' square wave in the mix; original synth uncertain (Sylenth1 cited).")
 S("Scary Monsters Screamer", 2010, "Dubstep", "Scary Monsters and Nice Sprites", "Skrillex", "Bass",
   ("LennarDigital Sylenth1", wt("Growl", pos=0.7, wenv=0.3, cut=3500, res=0.45, env=0.35, att=1, dec=300, sus=0.8, rel=60, uni=3, det=0.15, oct=-1, lforate=8,
                                 lfoshape="S&H", lfotim=0.7, lfocut=0.4, g_drive=0.7, g_mode="Mono")), original="LD Screamer",
-  notes="Un thread KVR attribuisce il suono a Sylenth1, preset LD Screamer (fonte forum).")
+  notes="A KVR thread attributes the sound to Sylenth1, preset LD Screamer (forum source).")
 S("Doomsday Wobble", 2011, "Dubstep", "Doomsday", "Nero", "Bass",
   ("NI Massive", wt("Growl", pos=0.3, cut=500, res=0.4, env=0.0, att=1, dec=1000, sus=1.0, rel=80, uni=2, det=0.1, oct=-1, lfoshape="Sine",
-                    lforate=3.0, lfocut=0.8, wlfo=0.6, g_drive=0.5, g_mode="Mono")), notes="Secondo la comunità i wobble di Nero nascono in Massive.")
+                    lforate=3.0, lfocut=0.8, wlfo=0.6, g_drive=0.5, g_mode="Mono")), notes="According to the community, Nero's wobbles were made in Massive.")
 S("Veldt Synth", 2012, "EDM", "The Veldt", "deadmau5", "Chord",
   ("NI Massive", supersaw(det=0.3, mix=0.5, cut=3000, att=5, dec=600, sus=0.5, rel=300, env=0.3, g_revmix=0.3)), notes=UNC)
 S("Levels Lead", 2011, "EDM", "Levels", "Avicii", "Lead",
   ("LennarDigital Sylenth1", supersaw(det=0.45, mix=0.6, cut=6000, dec=250, sus=0.7, rel=200, env=0.25, fd=250, g_revmix=0.3, dlymix=0.15)),
-  notes="Avicii usava Sylenth1; il synth del brano non è documentato con certezza.")
+  notes="Avicii used Sylenth1; the synth on the track is not documented with certainty.")
 S("Secrets Lead", 2015, "EDM", "Secrets", "Tiësto & KSHMR", "Lead",
   ("LennarDigital Sylenth1", supersaw(det=0.5, mix=0.7, cut=7000, dec=200, sus=0.8, rel=120, penv=-12, pdec=25, g_revmix=0.35, g_drive=0.25)))
 S("Immunity MS-20", 2013, "Ambient", "Open Eye Signal (Immunity)", "Jon Hopkins", "Bass",
@@ -497,26 +497,26 @@ S("Eventually Pad", 2015, "Indie", "Eventually", "Tame Impala", "Pad",
   ("Roland Juno-106", poly_pad(wave="Saw", pwm=0.0, cut=1300, res=0.2, att=500, rel=2000, chorus="II", g_revmix=0.4)), notes=UNC)
 S("Blinding Lights Lead", 2019, "Synthwave", "Blinding Lights", "The Weeknd", "Lead",
   ("Roland Juno-60", an(o1wave="Pulse", o1pw=0.35, pwm=0.2, o2wave="Saw", o2lvl=0.4, o2fine=8, flt="LP24 Ladder", cut=3200, res=0.1, env=0.2, aa=2, ad=500, **{"as": 0.8},
-                        ar=300, g_chomode="I", dlymix=0.25, dlydiv="1/8D", g_revmix=0.35)), notes="La maggior parte degli esperti indica il Roland Juno-60 (MusicRadar).")
+                        ar=300, g_chomode="I", dlymix=0.25, dlydiv="1/8D", g_revmix=0.35)), notes="Most experts point to the Roland Juno-60 (MusicRadar).")
 S("Break My Soul Organ", 2022, "House", "Break My Soul", "Beyoncé", "Organ",
   [("Korg M1", add("House Organ", bright=0.55, tilt=0.55, att=1, dec=800, sus=0.5, rel=120, oct=-1)),
    ("Korg M1", add("Piano", bright=0.75, tilt=0.45, att=1, dec=3000, sus=0.0, rel=300, level=0.5))], original="Organ 2",
-  notes="M1 Organ e M1 Piano insieme (Sonicstate): due moduli digitali in layer.")
+  notes="M1 Organ and M1 Piano together (Sonicstate): two digital modules layered.")
 
 S("Stranger Things Arp", 2016, "Synthwave", "Stranger Things (main theme)", "Kyle Dixon & Michael Stein", "Sequence",
   ("Sequential Prophet-5", pluck_a(cut=900, res=0.4, env=0.5, dec=260, o2wave="Saw", g_revmix=0.35, dlymix=0.25)), notes=UNC)
 S("Cola Bass", 2017, "Tech House", "Cola", "CamelPhat & Elderbrook", "Bass",
   ("Xfer Serum", wt("Analog Morph", pos=0.66, cut=450, res=0.3, env=0.35, att=1, dec=300, sus=0.5, rel=80, oct=-1, uni=2, det=0.08, g_mode="Mono",
-                    lfocut=0.2, lforate=0.2)), notes="Synth originale non documentato: basso ricreato nello stile del brano.")
+                    lfocut=0.2, lforate=0.2)), notes="Original synth not documented: bass recreated in the style of the track.")
 S("Losing It Bass", 2018, "Tech House", "Losing It", "FISHER", "Bass",
   ("Xfer Serum", wt("Growl", pos=0.25, wenv=0.25, cut=700, res=0.15, env=0.4, att=1, dec=160, sus=0.35, rel=60, oct=-1, g_drive=0.45, g_mode="Mono")),
-  notes="Synth originale non documentato: basso ricreato nello stile del brano.")
+  notes="Original synth not documented: bass recreated in the style of the track.")
 S("Nanana Piano", 2023, "House", "(It Goes Like) Nanana", "Peggy Gou", "Piano",
   ("Korg M1", add("Piano", bright=0.78, tilt=0.45, inh=0.18, att=1, dec=3200, sus=0.0, rel=350, g_chomode="I", g_chomix=0.15, g_revmix=0.12)),
-  notes="Revival del piano house anni '90 in stile M1: " + UNC)
+  notes="Revival of '90s M1-style house piano: " + UNC)
 S("Doppler Acid", 2021, "Techno", "Doppler", "Charlotte de Witte", "Bass",
   ("Roland TB-303", acid303(cut=300, res=0.86, env=0.65, dec=200, drive=0.6, dist="RAT", dgain=0.55, dtone=0.45, g_drive=0.2, dlymix=0.15)),
-  notes="Linea acid in stile 303 con distorsione RAT, tipica dell'acid techno; " + UNC)
+  notes="303-style acid line with RAT distortion, typical of acid techno; " + UNC)
 S("Kids Lead", 2008, "Indie", "Kids", "MGMT", "Lead",
   ("Roland Juno-60", lead(wave="Pulse", o1pw=0.4, o2lvl=0.0, cut=3500, res=0.1, glide=0, g_mode="Poly", g_chomode="II", g_revmix=0.2)), notes=UNC)
 S("Bulletproof Synth", 2009, "Synth-Pop", "Bulletproof", "La Roux", "Lead",

@@ -1,8 +1,3 @@
-Inter (Inter-Regular.ttf, Inter-SemiBold.ttf) - SIL Open Font License 1.1, see Inter-LICENSE.txt.
-  Used for all interface text: the closest freely licensed match for Ableton Live's interface font (Ableton Sans is proprietary).
-
-TeX Gyre Adventor Bold (TeXGyreAdventor-Bold.otf) - GUST Font License (an instance of the LaTeX Project Public License),
-  (c) GUST e-foundry, based on URW Gothic L released by URW++ under GFL. Used for the "SynthZilla" logo.
-  It is a free re-design with the metrics and shapes of ITC Avant Garde Gothic, which is a commercial Monotype/ITC
-  font that cannot be embedded in a distributed plug-in. The font is distributed unmodified.
-  License text: https://www.gust.org.pl/projects/e-foundry/licenses
+Comfortaa (Comfortaa-Regular.ttf, Comfortaa-Bold.ttf) - SIL Open Font License 1.1, see Comfortaa-LICENSE.txt.
+  Copyright 2011 The Comfortaa Project Authors (https://github.com/alexeiva/comfortaa), by Johan Aakerlund.
+  Used for all interface text and for the "SynthZilla" logo. The fonts are distributed unmodified.
