@@ -220,6 +220,25 @@ int main (int argc, char** argv)
                 for (auto* ch : c->getChildren()) if (auto* r = find (ch, id)) return r;
                 return nullptr; };
             auto click = [&] (const String& id) { if (auto* b = dynamic_cast<Button*> (find (ed.get(), id))) b->triggerClick(); else std::printf ("no %s\n", id.toRawUTF8()); };
+            // every point of the < > preset buttons must reach the button (no label on top of them)
+            ed->setVisible (true);
+            for (auto* id : { "prev", "next", "browse" })
+                if (auto* b = find (ed.get(), id))
+                {
+                    const auto r = ed->getLocalArea (b, b->getLocalBounds()).reduced (2);
+                    for (int y = r.getY(); y < r.getBottom(); y += 2)
+                        for (int x = r.getX(); x < r.getRight(); x += 2)
+                        {
+                            auto* hit = ed->getComponentAt (x, y);
+                            if (hit != b && ! b->isParentOf (hit))
+                            {
+                                ok = false;
+                                std::printf ("FAIL click on '%s' at %d,%d goes to %s\n", id, x, y, hit != nullptr ? typeid (*hit).name() : "nothing");
+                                y = r.getBottom(); break;
+                            }
+                        }
+                }
+                else { ok = false; std::printf ("no %s\n", id); }
             click ("browse");
             snap (*ed, "gui_browser.png");
             click ("browse");

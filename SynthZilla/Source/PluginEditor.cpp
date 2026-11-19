@@ -1044,6 +1044,8 @@ SynthZillaEditor::SynthZillaEditor (SynthZillaProcessor& p)
     eqExpand.onClick = [this] { showOverlay (&eqBig); };
     eqExpand.setComponentID ("eqExpand");
     browse.setComponentID ("browse");
+    prev.setComponentID ("prev");
+    next.setComponentID ("next");
     overlayClose.setComponentID ("overlayClose");
     content.addAndMakeVisible (eqExpand);
     lfoSmall.onExpand = [this] { showOverlay (&lfoBig); };
@@ -1077,6 +1079,7 @@ SynthZillaEditor::SynthZillaEditor (SynthZillaProcessor& p)
     presetInfo.setFont (ui::font (12.5f));
     presetInfo.setColour (juce::Label::textColourId, ui::dim);
     presetName.setInterceptsMouseClicks (false, false);
+    presetInfo.setInterceptsMouseClicks (false, false);   // it must never swallow clicks meant for the < > buttons
     content.addAndMakeVisible (presetName);
     content.addAndMakeVisible (presetInfo);
     keys.setKeyWidth (17.0f);
@@ -1150,8 +1153,9 @@ void SynthZillaEditor::resized()
     proc.uiState.setProperty ("scale", (double) s, nullptr);
     // header
     logoArea = { 0, -4, 100, 72 };
-    presetName.setBounds (272, 6, 640, 28);
-    presetInfo.setBounds (272, 34, 790, 22);
+    // preset name / info stop before the < > buttons (the info label used to cover their lower half)
+    presetName.setBounds (272, 6, W - 420 - 12 - 272, 28);
+    presetInfo.setBounds (272, 34, W - 420 - 12 - 272, 22);
     prev.setBounds (W - 420, 16, 34, 34); next.setBounds (W - 382, 16, 34, 34); browse.setBounds (W - 344, 16, 110, 34);
     layoutSlots();
     moduleView.setBounds (8, 132, W - 16, 486);
