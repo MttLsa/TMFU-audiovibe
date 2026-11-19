@@ -101,7 +101,7 @@ cmake --build SynthZilla/build --config Release --parallel
 ```
 
 Su macOS la CI (`.github/workflows/synthzilla.yml`, runner Intel) produce l'installer universale
-**SynthZilla-2.0.1-macOS.pkg** (Intel + Apple Silicon: AU, VST3, app Standalone). Nella DAW compare sotto **TMFU audiovibe**
+**SynthZilla-2.0.2-macOS.pkg** (Intel + Apple Silicon: AU, VST3, app Standalone). Nella DAW compare sotto **TMFU audiovibe**
 (AU `aumu Szla Tmfu`).
 
 Strumenti: `tools/gen_presets.py` (libreria + `docs/PRESETS.md`); test con `-DSYNTHZILLA_BUILD_TESTS=ON`:
