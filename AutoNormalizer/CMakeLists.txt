@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum macOS version")
 set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "macOS architectures")
 
-project(AutoNormalizer VERSION 1.1.1 LANGUAGES C CXX)
+project(AutoNormalizer VERSION 1.1.2 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -72,9 +72,15 @@ target_compile_definitions(AutoNormalizer PUBLIC
   JUCE_VST3_CAN_REPLACE_VST2=0
   JUCE_DISPLAY_SPLASH_SCREEN=0)
 
+juce_add_binary_data(AutoNormalizerFonts SOURCES
+  resources/Comfortaa-Regular.ttf
+  resources/Comfortaa-Bold.ttf)
+set_target_properties(AutoNormalizerFonts PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 target_link_libraries(AutoNormalizer
   PRIVATE
     juce::juce_audio_utils
+    AutoNormalizerFonts
   PUBLIC
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags
@@ -97,5 +103,5 @@ if(AN_BUILD_PLUGIN_TEST)
   target_include_directories(AutoNormalizerPluginTest PRIVATE Source)
   target_compile_definitions(AutoNormalizerPluginTest PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0
     JucePlugin_Name="AutoNormalizer" JUCE_MODAL_LOOPS_PERMITTED=1)
-  target_link_libraries(AutoNormalizerPluginTest PRIVATE juce::juce_audio_utils juce::juce_recommended_config_flags)
+  target_link_libraries(AutoNormalizerPluginTest PRIVATE juce::juce_audio_utils AutoNormalizerFonts juce::juce_recommended_config_flags)
 endif()

@@ -4,6 +4,32 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "PluginProcessor.h"
+#include "BinaryData.h"
+
+// Comfortaa (SIL Open Font License) for every text in the plugin. It is installed as the
+// default look-and-feel while an editor is open, so every Font without an explicit
+// typeface (labels, sliders, buttons, menus, painted text) resolves to Comfortaa.
+struct ComfortaaLookAndFeel : public juce::LookAndFeel_V4
+{
+    ComfortaaLookAndFeel()
+    {
+        juce::LookAndFeel::setDefaultLookAndFeel (this);
+    }
+    ~ComfortaaLookAndFeel() override
+    {
+        if (&juce::LookAndFeel::getDefaultLookAndFeel() == this)
+            juce::LookAndFeel::setDefaultLookAndFeel (nullptr);
+    }
+    juce::Typeface::Ptr getTypefaceForFont (const juce::Font& f) override
+    {
+        return f.isBold() ? bold : regular;
+    }
+
+    juce::Typeface::Ptr regular = juce::Typeface::createSystemTypefaceFor (BinaryData::ComfortaaRegular_ttf,
+                                                                          (size_t) BinaryData::ComfortaaRegular_ttfSize);
+    juce::Typeface::Ptr bold = juce::Typeface::createSystemTypefaceFor (BinaryData::ComfortaaBold_ttf,
+                                                                       (size_t) BinaryData::ComfortaaBold_ttfSize);
+};
 
 class AutoNormalizerEditor : public juce::AudioProcessorEditor, private juce::Timer
 {
@@ -28,7 +54,8 @@ private:
                       const juce::String& paramId, const juce::String& text);
 
     AutoNormalizerProcessor& proc;
-    juce::LookAndFeel_V4 lnf;
+    juce::SharedResourcePointer<ComfortaaLookAndFeel> lnfShared;
+    ComfortaaLookAndFeel& lnf = *lnfShared;
 
     Knob target, measure, gate, sens, maxBoost;
     juce::Label ceilingLabel;
