@@ -20,7 +20,7 @@ jobs:
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
       - name: Build
         run: cmake --build build --config Release --parallel
-      - name: Offline tests (units, every preset: NaN / silence / clipping)
+      - name: "Offline tests (units, every preset: NaN / silence / clipping)"
         run: |
           cmake -S . -B build-test -DCMAKE_BUILD_TYPE=Release -DMICROVIBE_BUILD_TESTS=ON
           cmake --build build-test --target MicrovibeTest --parallel
