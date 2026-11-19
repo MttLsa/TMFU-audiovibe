@@ -6,22 +6,22 @@ sono stati eseguiti in Live reale e il report allegato al repository.**
 
 ## 0. Preparazione (una volta)
 
-### Creare `GLOBAL_CONTROL_BRIDGE.amxd`
-1. In Live: trascinare **Max MIDI Effect** (Browser → Max for Live) su una nuova traccia MIDI chiamata `GLOBAL CONTROL`.
-2. Cliccare l'icona *Edit* del device: si apre l'editor di Max.
-3. In Max: *File → Open…* `GLOBAL_CONTROL/AbletonBridge/MaxPatch/GLOBAL_CONTROL_BRIDGE.maxpat`; selezionare tutto
-   (Cmd-A), copiare (Cmd-C), tornare alla finestra del device, selezionare tutto ed eliminare il contenuto del
-   template, incollare (Cmd-V).
-4. Copiare `AbletonBridge/LiveAPI/gc_bridge.js` nella stessa cartella dove si salverà il device.
-5. *File → Save As…* `GLOBAL_CONTROL_BRIDGE.amxd` nella User Library
-   (`~/Music/Ableton/User Library/Presets/MIDI Effects/Max MIDI Effect/`), poi **Freeze Device** (icona fiocco di
-   neve nella barra dell'editor) e salvare di nuovo: il JS viene incorporato nel `.amxd`.
-6. Chiudere l'editor. Il device deve mostrare "Waiting for GLOBAL CONTROL...". La Max Console (finestra Max)
-   deve riportare `[GLOBAL CONTROL] bridge 0.1.0 ready`.
+### Installare `GLOBAL_CONTROL_BRIDGE.amxd`
+Via installer o app: `GLOBAL_CONTROL-<ver>-macOS.pkg`, oppure GLOBAL CONTROL › **SETUP › Install bridge in User Library**.
+Il device è generato da `tools/make_amxd.py` (in `AbletonBridge/Build/`, non congelato: `gc_bridge.js` deve stare
+nella stessa cartella). **[VERIFICA]** che Live apra il `.amxd` generato e trovi `gc_bridge.js`: la Max Console deve
+riportare `[GLOBAL CONTROL] bridge 1.0 ready` e il device "Waiting for GLOBAL CONTROL...".
 
-**[VERIFICA]** che l'oggetto `[pattr gc_project_id]` risulti come parametro "Stored Only" di tipo blob
-(Inspector del pattr). Se Max non accetta il tipo blob dal file, impostarlo a mano nell'Inspector:
-*Parameter Mode Enable* ✔, *Type* = Blob, *Parameter Visibility* = Stored Only.
+Se Live rifiuta il file generato, crearlo a mano e sostituirlo in `AbletonBridge/Build/`:
+1. In Live: trascinare **Max MIDI Effect** su una nuova traccia MIDI `GLOBAL CONTROL`, cliccare *Edit*.
+2. In Max: *File → Open…* `AbletonBridge/MaxPatch/GLOBAL_CONTROL_BRIDGE.maxpat`, Cmd-A, Cmd-C; nella finestra del
+   device eliminare il contenuto del template e incollare (Cmd-V).
+3. Copiare `AbletonBridge/LiveAPI/gc_bridge.js` nella cartella di destinazione, *Save As…*
+   `GLOBAL_CONTROL_BRIDGE.amxd` nella User Library (`~/Music/Ableton/User Library/Presets/MIDI Effects/Max MIDI Effect/`).
+   Facoltativo: **Freeze Device** per incorporare il JS.
+
+**[VERIFICA]** che `[pattr gc_project_id]` risulti parametro "Stored Only" di tipo blob (Inspector). Se no, impostarlo
+a mano: *Parameter Mode Enable* ✔, *Type* = Blob, *Parameter Visibility* = Stored Only.
 
 ### Client di prova
 Python 3.8+ già presente in macOS (o `brew install python`). Nessuna dipendenza.
@@ -67,9 +67,11 @@ Esegue e verifica, rileggendo i valori effettivi da Live:
 
 In Live: osservare che i knob Threshold delle GUI aperte si muovono insieme.
 
-## FASE 4 — Associazione a Macro 1
-In questa fase PoC l'associazione è simulata dal comando `set`/`relative`, che usa lo stesso MacroEngine logico
-(scala misurata + absolute/relative). L'associazione reale al knob avviene nell'app (Milestone 7–8).
+## FASE 4 — Associazione a Macro 1 (nell'app)
+In GLOBAL CONTROL: Device browser → Pro-C 2; Parameters → Threshold; "to Macro 1" → **ASSIGN**.
+Il knob 1 deve mostrare "Pro-C 2 / Threshold / 10 instances" e la scala `linear (dB)` nel Log.
+Ripetere le Fasi 5–7 muovendo il knob: Absolute (valore uguale ovunque), Relative (differenze preservate), con
+le GUI di alcune istanze aperte in Live. Provare anche Exclude su un'istanza e un gruppo.
 
 ## FASE 8 — Feedback dalla GUI del plug-in
 ```bash
@@ -80,7 +82,14 @@ Disegnare automazione su Threshold, avviare il play → righe `[automation]`.
 Muovere con un controller MIDI mappato → `[external]` (limite documentato: non distinguibile dalla GUI).
 **[VERIFICA]** e annotare: latenza percepita, se il plug-in notifica durante il trascinamento o solo al rilascio.
 
-## FASI 9–10 — Persistenza
+## FASI 9–10 — Persistenza (nell'app)
+1. Con le macro assegnate, salvare un **Project preset**; salvare il Set, chiudere Live, riaprire il Set.
+2. GLOBAL CONTROL (lasciata aperta o riavviata) deve ricollegarsi da sola, riconoscere il progetto (stesso id nel
+   pannello Project), rifare la scansione e **ripristinare le mappature** (10 istanze per Macro 1), senza istanze rosse.
+3. Spostare una traccia, rinominarne un'altra, eliminare un'istanza, riaprire: le istanze spostate vengono ritrovate,
+   quella eliminata compare come *not found*, nessuna viene associata in modo errato.
+
+### Verifica con il client di prova
 1. `python3 gc_poc.py hello` → annotare `projectId`.
 2. Salvare il Set, chiudere Live, riaprire il Set.
 3. `python3 gc_poc.py hello` → il `projectId` deve essere **identico** (persistenza del pattr blob).
@@ -93,7 +102,10 @@ Muovere con un controller MIDI mappato → `[external]` (limite documentato: non
 cmake -S GLOBAL_CONTROL -B build-gc && cmake --build build-gc && ctest --test-dir build-gc --output-on-failure
 ```
 - `core`: scale, absolute/relative, riconciliazione, protocollo (C++);
-- `bridge`: `gc_bridge.js` su un LOM simulato (Node).
+- `bridge`: `gc_bridge.js` su un LOM simulato (Node);
+
+`app_integration`: logica dell'app (controller + connessione OSC) contro il bridge vero via UDP, compresa la
+riapertura del Set con id diversi e il cambio di Set.
 
 End-to-end OSC reale su UDP con il LOM simulato (fixture ipotetica, non dati di Pro-C 2):
 ```bash

@@ -42,6 +42,78 @@ double MacroEngine::knobForDisplay (const MacroSettings& m, double display)
     return m.invert ? 1.0 - k : k;
 }
 
+double MacroEngine::knobForRaw (const MacroSettings& m, const ParameterScale& s, double raw)
+{
+    double k = 0.5;
+    if (s.kind() == ScaleKind::Enumerated || s.kind() == ScaleKind::Unknown) {
+        const double span = m.rangeMax - m.rangeMin;
+        k = span != 0 ? (raw - m.rangeMin) / span : 0.5;
+    } else {
+        const auto d = s.toDisplay (raw);
+        if (! d) return 0.5;
+        if (multiplicative (s) && m.rangeMin > 0 && m.rangeMax > 0 && *d > 0)
+            k = (std::log (*d) - std::log (m.rangeMin)) / std::max (1e-12, std::log (m.rangeMax) - std::log (m.rangeMin));
+        else {
+            const double span = m.rangeMax - m.rangeMin;
+            k = span != 0 ? (*d - m.rangeMin) / span : 0.5;
+        }
+    }
+    k = std::clamp (k, 0.0, 1.0);
+    return m.invert ? 1.0 - k : k;
+}
+
+double MacroEngine::rebaseStart (const MacroSettings& m, const ParameterScale& s, double currentRaw, double knob)
+{
+    const double amount = relativeAmount (m, knob);
+    const double lo = s.minRaw(), hi = s.maxRaw();
+    switch (s.kind()) {
+        case ScaleKind::Discrete:
+        case ScaleKind::Enumerated:
+            return std::clamp (std::round (currentRaw - std::round (amount)), lo, hi);
+        case ScaleKind::Unknown: {
+            const double frac = amount / std::max (1e-12, 2.0 * m.relativeSpan);
+            return std::clamp (currentRaw - frac * (hi - lo), lo, hi);
+        }
+        default: {
+            const auto cur = s.toDisplay (currentRaw);
+            if (! cur) return currentRaw;
+            const double start = multiplicative (s) ? *cur / std::pow (2.0, amount) : *cur - amount;
+            return s.toRaw (start).value_or (currentRaw);
+        }
+    }
+}
+
+void MacroEngine::applyDefaults (MacroSettings& m, const ParameterScale& s)
+{
+    const auto r = s.displayRange();
+    switch (s.kind()) {
+        case ScaleKind::Enumerated:
+        case ScaleKind::Discrete: {
+            const double steps = std::max (1.0, std::round (s.maxRaw() - s.minRaw()));
+            m.rangeMin = s.kind() == ScaleKind::Discrete && r ? r->first : s.minRaw();
+            m.rangeMax = s.kind() == ScaleKind::Discrete && r ? r->second : s.maxRaw();
+            m.relativeSpan = std::max (1.0, std::round (steps / 2.0));
+            m.precision = 0;
+            break;
+        }
+        case ScaleKind::Unknown:
+            m.rangeMin = s.minRaw(); m.rangeMax = s.maxRaw(); m.relativeSpan = 1; m.precision = -1;
+            break;
+        default:
+            if (r) { m.rangeMin = r->first; m.rangeMax = r->second; }
+            if (multiplicative (s)) m.relativeSpan = 2;                           // +/- 2 octaves
+            else if (r) {
+                const double span = (r->second - r->first) / 4.0;
+                const double mag = std::pow (10.0, std::floor (std::log10 (std::max (1e-9, span))));
+                m.relativeSpan = std::max (mag, std::round (span / mag) * mag);    // e.g. 60 dB -> +/-15 dB
+            }
+            if (r) {
+                const double span = r->second - r->first;
+                m.precision = span >= 1000 ? 0 : span >= 100 ? 1 : 2;
+            }
+    }
+}
+
 std::vector<MacroOutput> MacroEngine::compute (const MacroSettings& m, const ParameterScale& s,
                                                const std::vector<InstanceTarget>& inst, double knob)
 {

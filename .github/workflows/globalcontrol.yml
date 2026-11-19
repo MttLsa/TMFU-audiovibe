@@ -9,13 +9,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  tests:
-    # Core (C++) + bridge (gc_bridge.js on a simulated Live Object Model) + OSC end-to-end over UDP.
-    # The real tests in Ableton Live run on a Mac by hand: GLOBAL_CONTROL/Documentation/TEST_PLAN.md
-    strategy:
-      matrix:
-        os: [ ubuntu-latest, macos-15-intel ]
-    runs-on: ${{ matrix.os }}
+  linux-tests:
+    # core (C++), bridge (gc_bridge.js on a simulated Live Object Model), app logic <-> bridge over UDP,
+    # PoC client end-to-end. The real tests in Ableton Live are manual: GLOBAL_CONTROL/Documentation/TEST_PLAN.md
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: GLOBAL_CONTROL
@@ -24,15 +21,43 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: JUCE dependencies
+        run: sudo apt-get update && sudo apt-get install -y libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxext-dev libxcomposite-dev libfreetype-dev libfontconfig1-dev
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
       - name: Build
-        run: cmake --build build --config Release --parallel
-      - name: Unit tests
+        run: cmake --build build --parallel
+      - name: Tests
         run: ctest --test-dir build --output-on-failure
-      - name: OSC end-to-end (mock LOM)
+      - name: PoC client end-to-end (mock LOM)
         run: |
           node Tests/OSCtests/mock_bridge_server.js &
           sleep 1
           python3 Tests/AbletonIntegrationTests/gc_poc.py phase-test --device "Pro-C 2" --param Threshold --expect 10 --absolute -12 --delta -2
           kill %1
+
+  macos:
+    runs-on: macos-15-intel    # universal binary (Intel + Apple Silicon); arm64 runners unavailable
+    defaults:
+      run:
+        working-directory: GLOBAL_CONTROL
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Bridge device
+        run: python3 tools/make_amxd.py
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release --parallel
+      - name: Tests
+        run: ctest --test-dir build --output-on-failure
+      - name: Build installer (.pkg, Intel + Apple Silicon)
+        run: ./packaging/macos/make_pkg.sh 1.0.0
+      - name: Upload installer
+        uses: actions/upload-artifact@v5
+        with:
+          name: GLOBAL_CONTROL-1.0.0-macOS-Installer
+          path: GLOBAL_CONTROL/build/installer/GLOBAL_CONTROL-1.0.0-macOS.pkg

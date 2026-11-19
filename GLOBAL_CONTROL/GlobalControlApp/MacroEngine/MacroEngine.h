@@ -64,6 +64,18 @@ public:
     /** Absolute mode: knob position that corresponds to a display value (for feedback / initial state). */
     static double knobForDisplay (const MacroSettings&, double display);
 
+    /** Absolute mode: knob position that reproduces a raw parameter value, consistent with compute()
+        (log knob for multiplicative scales, raw range for enumerated / unknown scales). */
+    static double knobForRaw (const MacroSettings&, const ParameterScale&, double raw);
+
+    /** Relative mode: the start value that, with the current knob position, yields currentRaw.
+        Used when an instance is changed outside GLOBAL CONTROL (plug-in GUI, automation...) so that the
+        next knob movement continues from the new value instead of jumping back. */
+    static double rebaseStart (const MacroSettings&, const ParameterScale&, double currentRaw, double knob01);
+
+    /** Default absolute range / relative span for a freshly assigned parameter. */
+    static void applyDefaults (MacroSettings&, const ParameterScale&);
+
     static bool multiplicative (const ParameterScale&);
 };
 

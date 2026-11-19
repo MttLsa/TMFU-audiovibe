@@ -94,6 +94,8 @@ static void testAbsolute()
     MacroSettings a; a.rangeMin = 1; a.rangeMax = 100; a.precision = 3;
     out = MacroEngine::compute (a, ms, inst, 0.5);
     NEAR (*ms.toDisplay (out[0].raw), 10.0, 0.05);
+    NEAR (MacroEngine::knobForRaw (a, ms, out[0].raw), 0.5, 0.01);              // knob <-> value round trip (log knob)
+    NEAR (MacroEngine::knobForRaw (m, db, *db.toRaw (-30)), 0.625, 1e-6);       // range -80..0 dB
 }
 
 static void testRelative()
@@ -142,6 +144,24 @@ static void testRelative()
     out = MacroEngine::compute (r, u, { { 1, 0.5 } }, 1.0);
     CHECK (out[0].approximate); NEAR (out[0].raw, 1.0, 1e-12);
 
+    // rebase after an external change: the next knob move continues from the new value
+    {
+        MacroSettings rm; rm.mode = MacroMode::Relative; rm.relativeSpan = 6;
+        const double k = 0.5 + (-2.0 / 6.0) / 2.0;                               // knob at -2 dB
+        const double start = MacroEngine::rebaseStart (rm, db, *db.toRaw (-20), k); // user set -20 dB in the GUI
+        NEAR (*db.toDisplay (start), -18, 1e-6);
+        auto o = MacroEngine::compute (rm, db, { { 1, start } }, k);
+        NEAR (*db.toDisplay (o[0].raw), -20, 1e-6);                                // no jump
+        MacroSettings lm; lm.mode = MacroMode::Relative; lm.relativeSpan = 2;
+        const double s2 = MacroEngine::rebaseStart (lm, ms, *ms.toRaw (40), 0.75); // +1 octave
+        NEAR (*ms.toDisplay (s2), 20, 0.1);
+        NEAR (MacroEngine::rebaseStart (s, e, 3, 0.5 + 1.0 / 6.0), 2, 0);
+        MacroSettings d; MacroEngine::applyDefaults (d, db);
+        CHECK (d.rangeMin == -60 && d.rangeMax == 0 && d.relativeSpan == 20 && d.precision == 2);
+        MacroSettings dl; MacroEngine::applyDefaults (dl, ms);
+        CHECK (dl.relativeSpan == 2);
+    }
+
     MacroSettings f; f.fineFactor = 0.1;
     NEAR (MacroEngine::drag (f, 0.5, 0.2, true), 0.52, 1e-12);
     NEAR (MacroEngine::drag (f, 0.5, 0.8, false), 1.0, 0);
@@ -172,10 +192,14 @@ static void testReconcile()
     CHECK (r[2].status == MatchStatus::Relocated && r[2].candidateIndex == 2);
     CHECK (r[3].status == MatchStatus::Relocated && r[3].candidateIndex == 3);
 
-    // a different plug-in (or a different Configure set -> other param hash) is never matched
-    auto other = scanned; other[2].paramNamesHash = "ffff0000"; other[2].classDisplayName = "Pro-Q 3";
+    // a different plug-in is never matched
+    auto other = scanned; other[2].classDisplayName = "Pro-Q 3";
     r = InstanceReconciler::reconcile (saved, other);
     CHECK (r[2].status == MatchStatus::Missing && r[2].candidateIndex == -1);
+    // the same plug-in with a different Configure set (other param hash) is still recognized
+    auto conf = saved; conf[1].paramNamesHash = "ffff0000";
+    r = InstanceReconciler::reconcile (saved, conf);
+    CHECK (r[1].status == MatchStatus::Exact && r[1].candidateIndex == 1);
 
     // two identical candidates on a renamed track: ambiguous, not silently mapped
     std::vector<DeviceFingerprint> s1 { fp ("t5/d0", "Synth", 5) };

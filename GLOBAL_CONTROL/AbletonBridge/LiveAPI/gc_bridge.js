@@ -20,7 +20,7 @@ inlets = 1;
 outlets = 3;
 
 var PROTO = 1;
-var BRIDGE_VERSION = "0.1.0";
+var BRIDGE_VERSION = "1.0";
 var CHUNK_CHARS = 1000;          // raw JSON chars per OSC packet (URI-encoded afterwards, stays well < 8 KB)
 var HEARTBEAT_MS = 1000;
 var APP_TIMEOUT_MS = 4000;

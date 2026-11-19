@@ -4,9 +4,10 @@
 // fingerprint. Hard constraints (must match, otherwise the candidate is rejected):
 //   - className (PluginDevice / AuPluginDevice / native class)
 //   - classDisplayName (the plug-in, e.g. "Pro-C 2")
-//   - paramNamesHash  (the exact list of exposed parameter names: same plug-in, same Configure set)
-// Soft evidence (scored): bridge project id, location key (t3/d1/c0/d0), track name, device name,
-// ordinal among same-plug-in devices on the same track, track index.
+// Soft evidence (scored): location key (t3/d1/c0/d0) +4, track name +3, custom device name +2,
+// ordinal among same-plug-in devices on the same track +2, track index +1, same list of exposed
+// parameter names (paramNamesHash, i.e. same Configure set) +1. The mapped parameter itself is then
+// resolved by name on the matched device: if it is no longer exposed the instance is reported, not guessed.
 // Rules: one-to-one; a saved instance whose best score is tied with another candidate is AMBIGUOUS and
 // is NOT mapped; below the minimum evidence it is MISSING. Nothing is ever mapped silently on a guess.
 #include <cstdint>

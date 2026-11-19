@@ -16,8 +16,8 @@ const BRIDGE_JS = path.join(__dirname, '..', '..', 'AbletonBridge', 'LiveAPI', '
 
 // ------------------------------------------------------------------------------------------ fake LOM
 class FakeLive {
-  constructor() {
-    this.nextId = 1;
+  constructor(idOffset = 0) {
+    this.nextId = 1 + idOffset;    // a reopened Live Set gets different runtime ids
     this.objs = new Map();     // id -> {id, type, props, lists, fns, parent, path}
     this.observers = [];       // {api, id, prop}
     this.song = this.make('Song', { is_playing: 0 }, 'live_set');
@@ -210,8 +210,8 @@ function proC2Params(thresholdNorm) {
 // threshold in dB -> normalized for the fixture above
 const thrNorm = (db) => (db + 60) / 60;
 
-function buildProject() {
-  const live = new FakeLive();
+function buildProject(opt = {}) {
+  const live = new FakeLive(opt.idOffset || 0);
   const proC2 = (thrDb) => ({ type: 'PluginDevice', name: 'Pro-C 2', className: 'PluginDevice', classDisplayName: 'Pro-C 2', params: proC2Params(thrNorm(thrDb)) });
   const eq = { type: 'Device', name: 'EQ Eight', className: 'Eq8', params: [{ name: 'Device On', value: 1, items: ['Off', 'On'], max: 1, display: v => (v ? 'On' : 'Off') }] };
   const tKick = live.addTrack('Kick'); const tSnare = live.addTrack('Snare'); const tBass = live.addTrack('Bass');

@@ -28,9 +28,10 @@ void InstanceReconciler::assignOrdinals (std::vector<DeviceFingerprint>& v)
 
 int InstanceReconciler::score (const DeviceFingerprint& s, const DeviceFingerprint& c)
 {
-    if (s.className != c.className || s.classDisplayName != c.classDisplayName || s.paramNamesHash != c.paramNamesHash)
+    if (s.className != c.className || s.classDisplayName != c.classDisplayName)
         return -1;
     int sc = 0;
+    if (! s.paramNamesHash.empty() && s.paramNamesHash == c.paramNamesHash) sc += 1;   // same Configure set
     if (! s.locationKey.empty() && s.locationKey == c.locationKey) sc += 4;
     if (! s.trackName.empty() && s.trackName == c.trackName) sc += 3;
     if (s.deviceName == c.deviceName && s.deviceName != s.classDisplayName) sc += 2;   // a custom name is strong evidence

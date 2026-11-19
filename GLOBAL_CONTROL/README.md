@@ -4,67 +4,82 @@ Controllo centralizzato dei parametri dei plug-in **originali** in Ableton Live 
 lo stesso parametro su più istanze contemporaneamente (es. Threshold di 10 × FabFilter Pro-C 2), in modalità
 **Absolute** o **Relative**, senza spostare, sostituire o incapsulare i device.
 
-Due componenti:
+![GLOBAL CONTROL](Documentation/images/main_window.png)
 
 | Componente | Cosa fa | Dove |
 |---|---|---|
-| **GLOBAL CONTROL.app** | GUI, macro, mapping, istanze, preset (C++17 / JUCE, nessun audio) | `GlobalControlApp/` |
+| **GLOBAL CONTROL.app** | GUI, 8 macro, mapping, istanze e gruppi, preset, riconnessione (C++17 / JUCE 8, nessun audio) | `GlobalControlApp/` |
 | **GLOBAL_CONTROL_BRIDGE.amxd** | Max MIDI Effect, **uno per Set** su una traccia MIDI dedicata; parla con il Live Object Model | `AbletonBridge/` |
 
-Comunicazione: OSC su UDP, solo `127.0.0.1` (app :47120 ⇄ bridge :47121) — [specifica del protocollo](Protocol/OSCSpecification/GC_OSC_PROTOCOL.md).
+Comunicazione: OSC su UDP, solo `127.0.0.1` (app :47120 ⇄ bridge :47121) — [protocollo](Protocol/OSCSpecification/GC_OSC_PROTOCOL.md).
+📖 [Manuale d'uso](Documentation/USER_GUIDE.md) · 🔬 [Analisi tecnica e limiti](Documentation/TECHNICAL_ANALYSIS.md) · ✅ [Piano di test in Live](Documentation/TEST_PLAN.md)
 
-## Stato: proof of concept (Prima attività, Milestone 1–6)
-
-Come richiesto dal capitolato, l'applicazione completa **non** è stata sviluppata prima di validare la prova.
+## Stato (v1.0)
 
 | Milestone | Stato |
 |---|---|
-| 1 · Analisi API Live / parametri VST3-AU | ✅ [TECHNICAL_ANALYSIS.md](Documentation/TECHNICAL_ANALYSIS.md) — con le voci **[VERIFICA]** da confermare in Live |
-| 2 · Bridge Max for Live | ✅ codice (`gc_bridge.js` + patch) e 12 test su LOM simulato · ⏳ da caricare in Live |
-| 3 · Scansione reale del progetto | ✅ implementata (tracce, return, master, rack annidati) · ⏳ da eseguire in Live |
-| 4–5 · Controllo di 1 e di 10 istanze | ✅ comando batch + client `gc_poc.py` · ⏳ da eseguire su 10 × Pro-C 2 reali |
-| 6 · OSC bidirezionale | ✅ hello/nonce, heartbeat, timeout, anti-duplicati, rate limiting, feedback con origine · verificato su UDP reale con LOM simulato |
-| 7–8 · GUI JUCE, 8 macro | ⏳ dopo la validazione in Live. Il motore di calcolo è già pronto e testato (`MacroEngine`, `ParameterScale`) |
-| 9 · Absolute / Relative | ✅ motore (lineare, log, curva, discreta, enumerata, clamping per istanza) |
-| 10 · Preset e riconnessione | 🟡 riconciliazione identità pronta (`InstanceReconciler`), `projectId` salvato nel Set · preset JSON da fare |
-| 11–12 · Stabilità, installer | ⏳ |
+| 1 · Analisi API Live / parametri VST3-AU | ✅ con le voci **[VERIFICA]** da confermare in Live |
+| 2–6 · Bridge, scansione, controllo di 1 e 10 istanze, OSC bidirezionale | ✅ implementati e testati su LOM simulato |
+| 7 · GUI standalone | ✅ dark/grafite, ridimensionabile: stato, device browser, instance manager, parametri, macro, preset, setup |
+| 8 · 8 macro knob | ✅ nome, colore, plug-in, parametro, gruppo, valore, min/max, reset, inversione, precisione, fine |
+| 9 · Absolute / Relative | ✅ scale lineari, logaritmiche, curve, discrete, enumerate; limiti per istanza; ribasamento dopo modifiche esterne |
+| 10 · Preset e ripristino | ✅ Project/Global, Save/Load/Rename/Duplicate/Delete, JSON versionato, sessione automatica per Set, riconciliazione |
+| 11 · Stabilità | 🟡 test automatici di riconnessione, cambio Set, cancellazione device; sessioni lunghe in Live da eseguire |
+| 12 · Installer macOS | ✅ `.pkg` universale (app + bridge nella User Library senza sovrascritture), predisposto per firma e notarizzazione |
 
-**Nessun test è ancora stato eseguito con Ableton Live reale**: questo codice è stato scritto in un ambiente Linux.
-I risultati "PASS" in [`Documentation/results/phase_test_MOCK.md`](Documentation/results/phase_test_MOCK.md) vengono da un
-LOM simulato (fixture ipotetica) e validano solo protocollo, bridge e calcoli. La procedura reale è in
-[TEST_PLAN.md](Documentation/TEST_PLAN.md).
+> **Importante:** il software è stato sviluppato e testato senza Ableton Live (ambiente Linux): i test automatici
+> usano il bridge vero ma un Live Object Model **simulato** (`Tests/OSCtests/mock_live.js`, dati ipotetici).
+> Prima del rilascio vanno eseguite le Fasi 1–10 di [TEST_PLAN.md](Documentation/TEST_PLAN.md) su un Mac con Live e
+> Pro-C 2 reali, e confermate le voci **[VERIFICA]** (in particolare il formato `.amxd` generato da `tools/make_amxd.py`
+> e la persistenza dell'id di progetto nel Set).
 
 ## Struttura
 
 ```
 GLOBAL_CONTROL/
   GlobalControlApp/
-    Core/            ParameterScale  - scala reale di un parametro misurata da str_for_value
-    MacroEngine/     MacroEngine     - absolute / relative, inversione, precisione, fine
-    MappingEngine/   InstanceReconciler - re-identificazione delle istanze tra sessioni
-    OSC/             ProtocolCore    - anti-duplicati, coalescing, blocchi JSON, stato connessione
+    Core/            ParameterScale (scala misurata), AppController (logica app), BridgeInstaller
+    Models/          ProjectModel (tracce, device, parametri dal LOM)
+    MacroEngine/     MacroEngine (absolute / relative, ribasamento, default)
+    MappingEngine/   InstanceReconciler (identità delle istanze tra sessioni)
+    PresetEngine/    PresetStore (JSON versionato, sessioni per Set)
+    OSC/             ProtocolCore (anti-duplicati, coalescing, blocchi, connessione), BridgeConnection (juce_osc)
+    GUI/             LookAndFeel, MacroKnob, MacroInspector, Panels, MainComponent, Main
   AbletonBridge/
-    LiveAPI/         gc_bridge.js    - OSC, Device Discovery, Parameter Discovery/Engine (sezioni)
-    MaxPatch/        GLOBAL_CONTROL_BRIDGE.maxpat
-  Protocol/OSCSpecification/  GC_OSC_PROTOCOL.md
+    LiveAPI/gc_bridge.js     OSC, Device Discovery, Parameter Discovery/Engine
+    MaxPatch/                GLOBAL_CONTROL_BRIDGE.maxpat
+    Build/                   GLOBAL_CONTROL_BRIDGE.amxd + gc_bridge.js (generati da tools/make_amxd.py)
+  Protocol/OSCSpecification/ GC_OSC_PROTOCOL.md
   Tests/
-    CoreTests/                 test C++ (ctest "core")
-    OSCtests/                  test del bridge su LOM simulato (ctest "bridge"), server UDP di prova
-    AbletonIntegrationTests/   gc_poc.py - client per i test reali in Live
-  Documentation/  TECHNICAL_ANALYSIS.md, TEST_PLAN.md, results/
+    CoreTests/               C++ (ctest "core")
+    OSCtests/                bridge su LOM simulato ("bridge"), app ⇄ bridge su UDP ("app_integration")
+    AbletonIntegrationTests/ gc_poc.py - client per i test in Live reale
+  Documentation/  USER_GUIDE.md, TECHNICAL_ANALYSIS.md, TEST_PLAN.md, images/, results/
+  packaging/macos/  make_pkg.sh (installer .pkg), testi dell'installer, icona
+                    (corrisponde a "Build/macOS" del capitolato: rinominato perché su macOS "Build" e la cartella
+                    di compilazione "build" coinciderebbero)
+  tools/          make_amxd.py, make_icon.py
 ```
 
-## Comandi rapidi
+## Compilare
 
 ```bash
-cmake -S GLOBAL_CONTROL -B build-gc && cmake --build build-gc && ctest --test-dir build-gc --output-on-failure
+python3 GLOBAL_CONTROL/tools/make_amxd.py
 ```
 
 ```bash
-python3 GLOBAL_CONTROL/Tests/AbletonIntegrationTests/gc_poc.py phase-test --device "Pro-C 2" --param Threshold --expect 10 --absolute -12 --delta -2
+cmake -S GLOBAL_CONTROL -B GLOBAL_CONTROL/build -DCMAKE_BUILD_TYPE=Release && cmake --build GLOBAL_CONTROL/build --config Release --parallel
 ```
 
-## Limiti noti (dettagli in TECHNICAL_ANALYSIS.md)
+```bash
+ctest --test-dir GLOBAL_CONTROL/build --output-on-failure
+```
+
+Installer (macOS, dalla cartella `GLOBAL_CONTROL`, dopo la build Release): `./packaging/macos/make_pkg.sh 1.0.0`.
+La CI (`.github/workflows/globalcontrol.yml`) esegue i test su Linux e costruisce il `.pkg` universale su `macos-15-intel`.
+JUCE 8.0.4 viene scaricato automaticamente (oppure `-DJUCE_DIR=...`).
+
+## Limiti noti
 - Il LOM non espone produttore del plug-in, formato VST2/VST3, nome/percorso del Set.
 - Sono controllabili solo i parametri che Live espone (per plug-in con molti parametri: *Configure*).
 - GUI del plug-in e controller esterno non sono distinguibili come origine di una modifica (entrambi `external`).
