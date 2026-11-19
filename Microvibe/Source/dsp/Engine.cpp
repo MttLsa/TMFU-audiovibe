@@ -32,6 +32,7 @@ namespace mv
         tape.prepare (sr); vinyl.prepare (sr); wobble.prepare (sr); delay.prepare (sr); reverb.prepare (sr); filter.prepare (sr);
         reso.prepare (sr); ring.prepare (sr); chorus.prepare (sr); phaser.prepare (sr); comp.prepare (sr); stereo.prepare (sr);
         limiter.prepare (sr, -0.3f);
+        stopCoef = 1.0f - std::exp (-1.0f / (0.03f * sr * 0.33f));
         trFast.set (0.3f, 25, sr); trSlow.set (40, 120, sr);
         for (auto& l : lanes) l.reset();
         for (auto& p : perc) p.active = false;
@@ -174,8 +175,22 @@ namespace mv
         const auto& I = ids();
         const float hum = eff[(size_t) I.pcHum[v]];
         const float vv = clampv (vel * (1.0f - hum * 0.45f * rng.uni()), 0.05f, 1.0f);
-        const float semis = (float) tuning.snap ((float) eff[(size_t) I.tuRoot] + eff[(size_t) I.pcTune[v]], eff[(size_t) I.tuSnap]);
-        const float hz = (float) tuning::Tuning::toHz (semis);
+        const int model = (int) eff[(size_t) I.pcModel[v]];
+        const float tune = eff[(size_t) I.pcTune[v]], root = eff[(size_t) I.tuRoot], snapAmt = eff[(size_t) I.tuSnap];
+        float hz;
+        if (model == FIRST_808 || model == FIRST_808 + 1)
+        {
+            // Kick 808: G1 (49 Hz) at Tune 0, Tom 808: G2 (98 Hz); both follow the scale
+            const float base808 = model == FIRST_808 ? -29.0f : -17.0f;
+            hz = (float) tuning::Tuning::toHz (tuning.snap (base808 + tune, snapAmt));
+        }
+        else if (model == FIRST_808 + 2) hz = 180.0f * semiToRatio (tune);       // Snare: 180 / 330 Hz
+        else if (model == FIRST_808 + 3) hz = 1100.0f * semiToRatio (tune);      // Clap: band centre
+        else if (model >= FIRST_808 + 4) hz = semiToRatio (tune);                // Hats: oscillator ratio
+        else hz = (float) tuning::Tuning::toHz (tuning.snap (root + tune, snapAmt));
+        // the closed hat chokes ringing open hats, like on the 808
+        if (model == FIRST_808 + 4)
+            for (int k = 0; k < NPERC; ++k) if (k != v && perc[k].modelType() == FIRST_808 + 5) perc[k].startChoke (6.0f, sr);
         // input history for the "Input" exciter (oldest first)
         float hist[2048];
         for (int i = 0; i < 2048; ++i) hist[i] = inHist[(inHistPos + i) & 2047];
@@ -224,7 +239,7 @@ namespace mv
     {
         pendTransient = true;
         for (int l = 0; l < NLANE; ++l)
-            if (cfg[l].src == 1) { LaneTrigger t; if (lanes[l].external (cfg[l], t)) laneFired (l, t, spb > 0 ? 60.0 * sr / spb : 124.0); }
+            if (cfg[l].src == 1 && running) { LaneTrigger t; if (lanes[l].external (cfg[l], t)) laneFired (l, t, spb > 0 ? 60.0 * sr / spb : 124.0); }
     }
 
     void Engine::handleMidi (const juce::MidiMessage& m)
@@ -237,7 +252,7 @@ namespace mv
             if (n >= 36 && n < 36 + NUM_GLITCH) { heldGlitch = n - 36; glitch.startHeld (heldGlitch, glp); pendGlitch = true; }
             else if (n >= 48 && n < 48 + NPERC) triggerPerc (n - 48, midiVel);
             for (int l = 0; l < NLANE; ++l)
-                if (cfg[l].src == 2) { LaneTrigger t; if (lanes[l].external (cfg[l], t)) laneFired (l, t, spb > 0 ? 60.0 * sr / spb : 124.0); }
+                if (cfg[l].src == 2 && running) { LaneTrigger t; if (lanes[l].external (cfg[l], t)) laneFired (l, t, spb > 0 ? 60.0 * sr / spb : 124.0); }
         }
         else if (m.isNoteOff())
         {
@@ -273,13 +288,16 @@ namespace mv
             c.density = density; c.gates = gates[l]; c.values = values[l];
         }
 
+        // per-voice percussion filters
+        for (int v = 0; v < NPERC; ++v) perc[v].setFilter (ei (I.pcFType[v]), e (I.pcCut[v]), e (I.pcRes[v]), sr);
+
         // texture
         txp.bed = e (I.txBed); txp.resq = e (I.txResQ); txp.drone = e (I.txDrone); txp.drift = e (I.txDrift); txp.grain = e (I.txGrain);
         txp.dens = e (I.txDens); txp.sizeMs = e (I.txSize); txp.spray = e (I.txSpray); txp.pitch = e (I.txPitch); txp.prand = e (I.txPRand);
         txp.spread = e (I.txSpread); txp.tilt = e (I.txTilt); txp.rev = e (I.txRev); txp.snap = e (I.tuSnap);
         txp.noise = ei (I.txNoise); txp.gsrc = ei (I.txGSrc); txp.win = ei (I.txWin); txp.freeze = on (I.txFreeze);
         txp.tuning = &tuning;
-        chord (ei (I.txChord) == 7 ? 7 : ei (I.txChord), root + 12.0f * ei (I.txOct) - 12.0f, txp.noteSemis, txp.nNotes);
+        droneNotes (bpm);
 
         // shepard generator
         {
@@ -331,6 +349,14 @@ namespace mv
         cpp = { e (I.cpThr), e (I.cpRatio), e (I.cpAtt), e (I.cpRel), e (I.cpGain), e (I.cpTAtk), e (I.cpTSus), e (I.cpMix) };
         stp = { e (I.stWidth), e (I.stHaas), e (I.stPanRate), e (I.stPanDepth), e (I.stMonoHz) };
 
+        // transport stopped: surface noise / hiss fade with the generators, delay and reverb tails die out naturally
+        if (! running)
+        {
+            vnp.noise *= stopGain; tpp.hiss *= stopGain;
+            dlp.freeze = false; dlp.fb = std::min (dlp.fb, 0.9f);
+            rvp.freeze = false;
+        }
+
         // chain order (each module once; switched-on modules only)
         const int onIds[NUM_FXTYPES] = { -1, I.tpOn, I.vnOn, I.wbOn, I.dlOn, I.rvOn, I.ftOn, I.rsOn, I.rfOn, I.crOn, I.chOn, I.phOn, I.cpOn, I.stOn, I.sfOn };
         bool used[NUM_FXTYPES] {};
@@ -354,6 +380,80 @@ namespace mv
             if (isOn) order[nOrder++] = t;
         }
         for (int t = 1; t < NUM_FXTYPES; ++t) fxWasOn[t] = used[t] && on (onIds[t]);
+    }
+
+    // ------------------------------------------------------------------------------------------- drone chords
+    void Engine::droneNotes (double bpm)
+    {
+        const auto& I = ids();
+        auto e = [this] (int i) { return eff[(size_t) i]; };
+        auto ei = [this] (int i) { return (int) std::lround (eff[(size_t) i]); };
+        const float root = e (I.tuRoot);
+        const float octOff = 12.0f * (float) ei (I.txOct) - 12.0f;
+        const int chordSel = ei (I.txChord);
+        float tgt[8] {}; int n = 0;
+        if (chordSel == 7)
+        {
+            // "Scale": notes chosen in TUNING; with the progression on, up to 4 snapshots follow each other in time
+            int snapIdx = 0;
+            if (e (I.prOn) > 0.5f)
+            {
+                const int cnt = juce::jlimit (1, NSNAP, ei (I.prCount));
+                const int mode = ei (I.prMode);
+                int seq[2 * NSNAP]; int ns = 0;
+                if (mode == 1) for (int k = cnt - 1; k >= 0; --k) seq[ns++] = k;
+                else { for (int k = 0; k < cnt; ++k) seq[ns++] = k; if (mode == 2) for (int k = cnt - 2; k >= 1; --k) seq[ns++] = k; }
+                int total = 0;
+                for (int j = 0; j < ns; ++j) total += juce::jmax (1, ei (I.prLen[seq[j]]));
+                const double unit = e (I.prSync) > 0.5f ? (double) syncDivBeats (ei (I.prDiv)) : (double) e (I.prSecs) * bpm / 60.0;
+                if (running)
+                {
+                    const int64_t u = (int64_t) std::floor (std::max (0.0, curBeat) / std::max (1.0e-3, unit));
+                    const int64_t cycle = u / total;
+                    int w = (int) (u - cycle * total), j = 0;
+                    while (j < ns - 1 && w >= juce::jmax (1, ei (I.prLen[seq[j]]))) { w -= juce::jmax (1, ei (I.prLen[seq[j]])); ++j; }
+                    snapIdx = seq[j];
+                    if (mode == 3)
+                    {
+                        uint32_t x = (uint32_t) (cycle * 16 + j) * 2654435761u; x ^= x >> 15; x *= 2246822519u; x ^= x >> 13;
+                        snapIdx = (int) (x % (uint32_t) cnt);
+                    }
+                    curSnap = snapIdx;
+                }
+                else snapIdx = juce::jlimit (0, cnt - 1, curSnap);
+            }
+            else curSnap = 0;
+            const uint64_t m = shared.snapMask[snapIdx].load (std::memory_order_relaxed);
+            const int size = std::min (64, std::max (1, tuning.currentSize()));
+            for (int d = 0; d < size && n < 8; ++d)
+                if ((m >> d) & 1u) tgt[n++] = (float) tuning.degreeSemis (d) + octOff;
+            if (n == 0) chord (3, root + octOff, tgt, n);       // nothing selected: minor triad in the scale
+            display.snapshot = snapIdx;
+        }
+        else chord (chordSel, root + octOff, tgt, n);
+        // voicing
+        const int voicing = ei (I.prVoicing);
+        for (int k = 0; k < n; ++k)
+        {
+            if (voicing == 1 && (k & 1)) tgt[k] += 12.0f;
+            if (voicing == 2) tgt[k] += 12.0f * (float) (k % 3);
+        }
+        // glide between chords
+        if (n != droneN) { for (int k = 0; k < n; ++k) droneCur[k] = tgt[k]; droneN = n; }
+        else
+        {
+            const float g = e (I.prGlide);
+            const float a = g < 1.0f ? 1.0f : 1.0f - std::exp (-(float) kBlock / (g * 0.001f * sr));
+            for (int k = 0; k < n; ++k) droneCur[k] += a * (tgt[k] - droneCur[k]);
+        }
+        for (int k = 0; k < n; ++k) txp.noteSemis[k] = droneCur[k];
+        txp.nNotes = juce::jmax (1, n);
+    }
+
+    void Engine::transportStopped()
+    {
+        glitch.release();
+        for (auto& p : perc) p.startChoke (30.0f, sr);
     }
 
     // ------------------------------------------------------------------------------------------- per sample
@@ -392,16 +492,22 @@ namespace mv
             const float g = eff[(size_t) I.pcLevel];
             gL += pl * g; gR += pr * g;
         }
-        if (eff[(size_t) I.txOn] > 0.5f)
+        stopGain += ((running ? 1.0f : 0.0f) - stopGain) * stopCoef;
+        const bool gensAudible = running || stopGain > 1.0e-4f;
+        if (eff[(size_t) I.txOn] > 0.5f && gensAudible)
         {
             float tl, tr;
             texture.process (inL, inR, tl, tr, txp);
-            const float g = eff[(size_t) I.txLevel];
+            const float g = eff[(size_t) I.txLevel] * stopGain;
             gL += tl * g; gR += tr * g;
         }
-        if (eff[(size_t) I.shOn] > 0.5f)
-            shepard.process (gL, gR, (int) eff[(size_t) I.shPartials], shInterval, shSpeed, eff[(size_t) I.shBase], eff[(size_t) I.shWidth],
+        if (eff[(size_t) I.shOn] > 0.5f && gensAudible)
+        {
+            float sl = 0, sr2 = 0;
+            shepard.process (sl, sr2, (int) eff[(size_t) I.shPartials], shInterval, shSpeed, eff[(size_t) I.shBase], eff[(size_t) I.shWidth],
                              (int) eff[(size_t) I.shWave], eff[(size_t) I.shLevel]);
+            gL += sl * stopGain; gR += sr2 * stopGain;
+        }
 
         // followers
         for (int k = 0; k < NFOL; ++k)
@@ -479,6 +585,9 @@ namespace mv
         int pat = (int) base[I.pattern];
         const bool hostRun = tr.hasHost && tr.hostRunning;
         running = hostRun || tr.forceRun || ! tr.hasHost;
+        display.running = running;
+        if (wasRunning && ! running) transportStopped();
+        wasRunning = running;
         double beat0 = hostRun ? tr.ppq : freeBeat;
         if (base[I.chain] > 0.5f)
         {

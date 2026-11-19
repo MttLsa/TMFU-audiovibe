@@ -7,6 +7,7 @@
 #include "../Source/PluginEditor.h"
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <chrono>
+#include <set>
 
 using namespace juce;
 
@@ -130,6 +131,61 @@ static bool units()
         check (p2.engine.shared.gate[2][1][5].load() == 1 && std::abs (p2.engine.shared.value[2][1][5].load() - 0.123f) < 1e-3f, "state: lane grid");
         check ((int) p2.getParam (prm::ids().mxSrc[slot]) == prm::srcLfo1, "state: matrix");
     }
+    // ---------------------------------------------------------------- 1.1: transport stop
+    {
+        MicrovibeProcessor p;
+        const auto& I = prm::ids();
+        for (int i = 0; i < prm::NFX; ++i) p.setParam (I.fxSlot[i], 0);
+        p.setParam (I.txOn, 1); p.setParam (I.shOn, 1); p.setParam (I.pcOn, 1); p.setParam (I.pcLane[0], 1);
+        FakeHead head; p.setPlayHead (&head);
+        p.setPlayConfigDetails (2, 2, 48000, 256); p.prepareToPlay (48000, 256);
+        AudioBuffer<float> b (2, 256); MidiBuffer m;
+        float playingPk = 0, stoppedPk = 0;
+        for (int blk = 0; blk < 400; ++blk)
+        {
+            head.playing = blk < 200; if (head.playing) head.ppq = blk * 256 / 23225.8;
+            b.clear(); p.processBlock (b, m);
+            const float pk = b.getMagnitude (0, 256);
+            if (blk > 100 && blk < 200) playingPk = jmax (playingPk, pk);
+            if (blk > 215) stoppedPk = jmax (stoppedPk, pk);
+        }
+        p.setPlayHead (nullptr);
+        std::printf ("     stop: peak while playing %.3f, after stop %.6f\n", playingPk, stoppedPk);
+        check (playingPk > 0.01f && stoppedPk < 1.0e-4f, "transport stop silences texture, shepard and perc");
+    }
+    // ---------------------------------------------------------------- 1.1: drone progression
+    {
+        MicrovibeProcessor p;
+        const auto& I = prm::ids();
+        p.setParam (I.txOn, 1); p.setParam (I.txChord, 7); p.setParam (I.prOn, 1); p.setParam (I.prCount, 4); p.setParam (I.prDiv, 5); // 1/4
+        for (int k = 0; k < 4; ++k) p.engine.shared.snapMask[k] = (uint64_t) 7 << k;
+        FakeHead head; p.setPlayHead (&head);
+        p.setPlayConfigDetails (2, 2, 48000, 256); p.prepareToPlay (48000, 256);
+        AudioBuffer<float> b (2, 256); MidiBuffer m;
+        std::set<int> seen;
+        for (int blk = 0; blk < 800; ++blk) { head.ppq = blk * 256 / 23225.8; b.clear(); p.processBlock (b, m); seen.insert (p.engine.display.snapshot.load()); }
+        p.setPlayHead (nullptr);
+        check (seen.size() == 4, "progression plays the 4 chords");
+    }
+    // ---------------------------------------------------------------- 1.1: 808 voices
+    {
+        const char* names[] = { "Kick 808", "Tom 808", "Snare 808", "Clap 808", "Closed Hat 808", "Open Hat 808" };
+        for (int k = 0; k < 6; ++k)
+        {
+            mv::ModalVoice v; float pk = 0; double e = 0;
+            v.setFilter (0, 1000, 0, 48000);
+            v.trigger (k == 0 ? 49.0f : k == 1 ? 98.0f : k == 2 ? 180.0f : k == 3 ? 1100.0f : 1.0f, prm::FIRST_808 + k, 0, k == 4 ? 60.0f : 300.0f,
+                       0.5f, 0.4f, 0.3f, 1.0f, 0.8f, 0.0f, 48000, nullptr, 0);
+            for (int i = 0; i < 48000; ++i) { float l = 0, r = 0; v.process (l, r); pk = jmax (pk, std::abs (l)); e += l * l; }
+            std::printf ("     %-15s peak %.2f  active after 1 s: %d\n", names[k], pk, (int) v.active);
+            check (pk > 0.05f && pk < 1.5f && ! v.active, names[k]);
+        }
+        // choke: closed hat stops the open hat
+        mv::ModalVoice oh; oh.trigger (1.0f, prm::FIRST_808 + 5, 0, 800, 0.5f, 0, 0, 1, 1, 0, 48000, nullptr, 0);
+        float l = 0, r = 0; for (int i = 0; i < 2000; ++i) oh.process (l, r);
+        oh.startChoke (6.0f, 48000); for (int i = 0; i < 600; ++i) { l = r = 0; oh.process (l, r); }
+        check (! oh.active, "closed hat chokes open hat");
+    }
     return ok;
 }
 
@@ -225,7 +281,10 @@ int main (int argc, char** argv)
         const StringArray tabs { "", "src:1", "src:2", "src:3", "mod:1", "mod:2", "mod:3", "mod:4", "mod:5", "fx:1", "fx:4", "fx:5" };
         for (auto& t : tabs)
         {
-            MicrovibeProcessor proc; proc.loadPreset (jmin (3, (int) all.size() - 1));
+            MicrovibeProcessor proc;
+            int pi = jmin (3, (int) all.size() - 1);
+            if (argc > 3) for (int i = 0; i < (int) all.size(); ++i) if (all[(size_t) i].name == String (argv[3])) pi = i;
+            proc.loadPreset (pi);
             render (proc, 2.0);
             std::unique_ptr<AudioProcessorEditor> ed (proc.createEditor());
             if (auto* me = dynamic_cast<MicrovibeEditor*> (ed.get())) me->showTab (t);

@@ -51,12 +51,11 @@ namespace mv
         // one sample; beat = host/internal beat position; returns true if a trigger fires now
         bool tick (const LaneConfig& c, double beat, bool running, float sr, LaneTrigger& out)
         {
-            if (! c.on) { npend = 0; return false; }
+            if (! c.on || ! running) { npend = 0; return false; }
             double s;
             if (c.src != 0) return firePending (freePos, out);     // event clocked: only pending ratchets
             if (c.sync)
             {
-                if (! running) { npend = 0; return false; }
                 s = beat / std::max (1.0e-4f, c.stepBeats);
             }
             else { freePos += c.hz / sr; s = freePos; }

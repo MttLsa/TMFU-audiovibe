@@ -77,10 +77,10 @@ namespace mv
                     for (int k = 0; k < 8; ++k) { drift[k] += rng.bi() * 0.08f; drift[k] *= 0.995f; drift[k] = clampv (drift[k], -1.0f, 1.0f); }
                 }
                 float dl = 0, dr = 0;
-                const int nd = std::min (4, p.nNotes);
+                const int nd = std::min (8, p.nNotes);
                 for (int k = 0; k < nd; ++k)
                 {
-                    const float semis = p.noteSemis[k] - 12.0f + drift[k + 4] * p.drift * 0.5f;
+                    const float semis = p.noteSemis[k] - 12.0f + drift[(k + 4) & 7] * p.drift * 0.5f;
                     const float hz = (float) tuning::Tuning::toHz (semis);
                     dph[k] += hz / sr; dph[k] -= std::floor (dph[k]);
                     const float s = std::sin (kTwoPi * dph[k]) + 0.15f * std::sin (kTwoPi * 2.0f * dph[k]);
@@ -172,7 +172,7 @@ namespace mv
         int nb = 0, coefCounter = 0, driftCounter = 0;
         float bandNorm = 1;
         float drift[8] {};
-        float dph[4] {};
+        float dph[8] {};
         Ring bufL, bufR;
         std::array<Grain, 48> grains;
         float spawnAcc = 0;
