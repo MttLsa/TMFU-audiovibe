@@ -7,3 +7,4 @@ docs_screenshot.png
 resources/samples/
 build-asan/
 __pycache__/
+Microvibe/build-test/
