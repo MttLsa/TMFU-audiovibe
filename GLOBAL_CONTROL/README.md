@@ -12,7 +12,7 @@ lo stesso parametro su più istanze contemporaneamente (es. Threshold di 10 × F
 | **GLOBAL_CONTROL_BRIDGE.amxd** | Max MIDI Effect, **uno per Set** su una traccia MIDI dedicata; parla con il Live Object Model | `AbletonBridge/` |
 
 Comunicazione: OSC su UDP, solo `127.0.0.1` (app :47120 ⇄ bridge :47121) — [protocollo](Protocol/OSCSpecification/GC_OSC_PROTOCOL.md).
-📖 [Manuale d'uso](Documentation/USER_GUIDE.md) · 🔬 [Analisi tecnica e limiti](Documentation/TECHNICAL_ANALYSIS.md) · ✅ [Piano di test in Live](Documentation/TEST_PLAN.md)
+📖 [Manuale d'uso](Documentation/USER_GUIDE.md) ([PDF](Documentation/GLOBAL_CONTROL_Manuale_v1.0.pdf)) · 🔬 [Analisi tecnica e limiti](Documentation/TECHNICAL_ANALYSIS.md) · ✅ [Piano di test in Live](Documentation/TEST_PLAN.md)
 
 ## Stato (v1.0)
 
