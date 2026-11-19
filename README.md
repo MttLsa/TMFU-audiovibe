@@ -14,7 +14,7 @@ DUALBOX è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in 
 | **B — Groovebox** (in basso) | NI Reaktor **Limelite 1.3** | 5 voci a campioni (Kick, Snare, Hat, **Belt**, **Capsule**), sequencer A–D fino a **64 step** con catena di pattern e motore **Remix**, effetti Filter / EQ / Delay / xFx (23 modi) / Mix / Out, **fino a 8 LFO**, pulsanti **NORM** e **MIDI** |
 | **GLOBAL CONTROL** (a destra, comprimibile) | — | Crossfader A↔B, filtro master **Cutoff** (manopola grande) HP/BP/LP + **Resonance**, Master, Tempo / Run |
 
-📖 **Manuale d'uso completo (PDF):** [docs/Twinbox_Manuale_v2.14.1.pdf](docs/Twinbox_Manuale_v2.14.1.pdf)
+📖 **Manuale d'uso completo (PDF):** [docs/DUALBOX_Manuale_v2.15.0.pdf](docs/DUALBOX_Manuale_v2.15.0.pdf)
 
 ![Interfaccia principale](docs/gui_main.png)
 
