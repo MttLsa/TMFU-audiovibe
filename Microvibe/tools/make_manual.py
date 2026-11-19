@@ -17,7 +17,20 @@ version = sys.argv[2] if len(sys.argv) > 2 else "1.0.0"
 presets = json.load(open(os.path.join(ROOT, "resources", "presets.json")))
 OUT = os.path.join(ROOT, "docs", "Microvibe_Manuale_v%s.pdf" % version)
 
+# house font: Urbanist (Light + SemiBold) (resources/fonts, SIL OFL 1.1) for every text in the manual
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.fonts import addMapping
+FONTS = os.path.join(ROOT, "resources", "fonts")
+pdfmetrics.registerFont(TTFont("Urbanist", os.path.join(FONTS, "Urbanist-Light.ttf")))
+pdfmetrics.registerFont(TTFont("Urbanist-SemiBold", os.path.join(FONTS, "Urbanist-SemiBold.ttf")))
+for bold, italic, face in ((0, 0, "Urbanist"), (1, 0, "Urbanist-SemiBold"), (0, 1, "Urbanist"), (1, 1, "Urbanist-SemiBold")):
+    addMapping("Urbanist", bold, italic, face)
+
 ss = getSampleStyleSheet()
+for st in ss.byName.values():
+    if hasattr(st, "fontName"):
+        st.fontName = "Urbanist-SemiBold" if "Bold" in st.fontName else "Urbanist"
 ACC = colors.HexColor("#c0392b")
 H1 = ParagraphStyle("h1", parent=ss["Heading1"], fontSize=18, textColor=ACC, spaceAfter=8)
 H2 = ParagraphStyle("h2", parent=ss["Heading2"], fontSize=13, textColor=colors.HexColor("#1f4e79"), spaceBefore=8, spaceAfter=4)
@@ -62,7 +75,7 @@ p("Apri <i>Microvibe-%s-macOS.pkg</i>: installa l'AU in /Library/Audio/Plug-Ins/
   "<b>TMFU audiovibe</b>. In Logic Pro si carica come <i>Audio FX → Effetti MIDI-controllati</i> (AU music effect); "
   "in Ableton Live, Bitwig, Reaper come effetto audio VST3." % version)
 h2("Flusso del segnale")
-story.append(Paragraph("IN → [TEXTURE + PERC + SHEPARD] → GLITCH → FX 1 … FX 8 → DRY/WET → WIDTH → OUTPUT → NORM / limiter", ParagraphStyle("code", parent=P, fontName="Courier", fontSize=8.5)))
+story.append(Paragraph("IN → [TEXTURE + PERC + SHEPARD] → GLITCH → FX 1 … FX 8 → DRY/WET → WIDTH → OUTPUT → NORM / limiter", ParagraphStyle("code", parent=P, fontSize=8.5)))
 h2("Testata")
 bullets([
     "<b>Preset</b>: menu per categorie, frecce &lt; &gt; per scorrere. Il volume di uscita non cambia con i preset.",
@@ -85,12 +98,16 @@ p("Due strati per gli sfondi. Il <b>letto</b>: rumore (White, Pink, Brown, Crack
   "accordati sull'accordo scelto (<i>Texture Chord</i>, nella scala corrente) + <b>Drone</b> sinusoidale con <b>Drift</b>. "
   "La <b>nuvola granulare</b> legge un buffer di 4 s dell'ingresso, del letto o di entrambi: Density (grani al secondo), "
   "Size, Spray (quanto indietro nel buffer), Pitch e Pitch Random (quantizzati in scala), Spread stereo, Reverse, "
-  "finestra Hann/Tukey/Rect e <b>Freeze</b> (smette di registrare: granuli sempre sullo stesso istante). <b>Tilt</b> inclina lo spettro.")
+  "finestra Hann/Tukey/Rect e <b>Freeze</b> (smette di registrare: granuli sempre sullo stesso istante). <b>Tilt</b> inclina lo spettro. "
+  "Con <b>Texture Chord = Scale</b> le note del drone e del letto risonante si scelgono nella pagina TUNING, con una progressione "
+  "di fino a 4 accordi (vedi capitolo 6).")
 h2("PERC — percussioni organiche")
 p("Sei voci a <b>sintesi modale</b>: un eccitatore colpisce un banco di risonatori con i rapporti di frequenza di un "
-  "materiale reale. Nessun campione.")
+  "materiale reale; oppure suoni <b>808</b> sintetizzati. Nessun campione.")
 bullets([
     "<b>Model</b>: Wood (barra libera), Glass (calice), Metal (piastra/campana), Skin (membrana), Tube (canna), Stone, Plastic.",
+    "<b>Modelli 808</b>: Kick 808, Tom 808, Snare 808, Clap 808, Closed Hat 808, Open Hat 808. Kick e tom sono sinusoidi con sweep di pitch e click (a Tune 0 il kick è in G1 e il tom in G2, e seguono la scala); lo snare unisce due sinusoidi 180/330 Hz e rumore; il clap è rumore filtrato con quattro colpi ravvicinati; gli hat sono sei onde quadre metalliche. Il <b>closed hat interrompe l'open hat</b> (choke). Per gli 808 <i>Tune</i> sposta l'accordatura originale, <i>Material</i> è il tono (snappy per lo snare, brillantezza per gli hat), <i>Inharmonic</i> la profondità dello sweep; l'eccitatore non si usa.",
+    "<b>Filtro di voce</b>: Off, HP, BP, LP con <b>Cutoff</b> e <b>Resonance</b>, insieme a <b>Voice Level</b> (gain), <b>Tune</b> e <b>Decay</b>: ogni suono si regola da solo.",
     "<b>Exciter</b>: Click, Noise (sabbia, shaker), Mallet (battente morbido), <b>Input</b>: 30 ms dell'ingresso usati come eccitatore (microsampling).",
     "<b>Tune</b> (semitoni dal Root, quantizzati dalla scala), <b>Decay</b>, <b>Material</b> (smorza le parziali alte), <b>Inharmonic</b>, <b>Position</b> (punto di percussione).",
     "<b>Lane</b>: la corsia che la suona. <b>Every / Offset</b>: suona solo un colpo ogni N della corsia (sottodivisioni e poliritmie dentro la stessa corsia). <b>Probability</b>, <b>Humanize</b> (velocity e pan).",
@@ -112,6 +129,11 @@ bullets([
     "<b>Condition</b>: Always, 1:2, 2:2, 1:3, 1:4 (in quale giro della corsia suonare), Fill / Not Fill (Density sopra / sotto 0,75), First.",
     "<b>Clock Source</b>: Clock (tempo), Transient (ogni transiente dell'ingresso = uno step), MIDI (ogni nota = uno step).",
 ])
+h2("Stop della DAW")
+p("Quando premi stop si fermano, con una dissolvenza di circa 30 ms, texture (letto, drone, grani), Shepard, percussioni, glitch "
+  "e tutte le corsie, insieme al rumore del vinile e al fruscio del nastro. Solo le <b>code di delay e riverbero</b> si spengono "
+  "da sole in modo naturale (a trasporto fermo il feedback del delay è limitato e i freeze vengono rilasciati, così finiscono). "
+  "Le note MIDI suonate a mano continuano a funzionare. Nella versione Standalone il plugin suona sempre.")
 h2("Glitch engine")
 p("Un buffer di 8 secondi registra continuamente le sorgenti. A ogni colpo della corsia scelta (<b>Glitch Lane</b>) "
   "e con probabilità <b>Glitch Probability</b> parte un evento lungo <b>Event Length</b> step, di un tipo scelto a caso "
@@ -173,12 +195,21 @@ bullets([
     "<b>CARICA .SCL</b> (e facoltativamente <b>+ .KBM</b>): file della libreria Scala; vengono salvati nel progetto.",
     "<b>Follow MTS-ESP</b>: se nella sessione c'è un master MTS-ESP (ODDSound MTS-ESP Mini/Suite) Microvibe segue l'accordatura globale.",
 ])
+h2("Note del drone e progressione di accordi")
+p("Quando nella TEXTURE <i>Chord</i> è su <b>Scale</b>, nella pagina TUNING compare la sezione <b>NOTE DEL DRONE / PROGRESSIONE ACCORDI</b>.")
+bullets([
+    "<b>ACCORDO 1–4</b>: scegli quale accordo modificare, poi clicca sulle note della scala (nomi delle note per le scale a 12 semitoni, numero del grado e cent per le altre). Le note accordano il drone e il letto risonante. Senza note suona una triade minore automatica.",
+    "<b>Progression On</b>: fa suonare gli accordi uno dopo l'altro (spenta: suona l'accordo 1). Il segno &gt; indica l'accordo in riproduzione.",
+    "<b>Chords</b> (quanti accordi usare), <b>Progression Order</b> (Forward, Reverse, Ping-Pong, Random).",
+    "<b>Chord Unit</b>: unità di tempo sincronizzata (da 8 battute a 1/32, terzine, puntati, quintine, settimine) oppure, con <i>Progression Sync</i> spento, in secondi. <b>Durata 1–4</b>: quante unità dura ogni accordo.",
+    "<b>Chord Glide</b>: glissando tra un accordo e il successivo (0–4 s). <b>Drone Voicing</b>: Close, Open (note alterne un'ottava sopra), Wide.",
+])
 img("gui_tuning.png", 120)
 
 # ------------------------------------------------------------------------------------------- presets
 story.append(PageBreak())
 h1("7. Preset")
-p("150 preset in 10 categorie. In tutti le macro sono collegate: <b>1</b> densità e glitch, <b>2</b> spazio (delay/reverb), "
+p("180 preset in 12 categorie. In tutti le macro sono collegate: <b>1</b> densità e glitch, <b>2</b> spazio (delay/reverb), "
   "<b>3</b> sporcizia (wobble, polvere), <b>4</b> tono (filtro). I volumi sono calibrati per suonare tutti a un livello simile.")
 for cat in presets["categories"]:
     names = [x["name"] for x in presets["presets"] if x["cat"] == cat]
@@ -211,6 +242,7 @@ for prm in params:
     rows.append([Paragraph(name, SMALL), Paragraph(prm["group"], SMALL), Paragraph(vals, SMALL), Paragraph(dflt, SMALL), "mod" if prm["dest"] else ""])
 t = Table(rows, colWidths=[50 * mm, 24 * mm, 70 * mm, 22 * mm, 9 * mm], repeatRows=1)
 t.setStyle(TableStyle([
+    ("FONTNAME", (0, 0), (-1, -1), "Urbanist"), ("FONTNAME", (0, 0), (-1, 0), "Urbanist-SemiBold"),
     ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1f4e79")), ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
     ("FONTSIZE", (0, 0), (-1, 0), 8), ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f1f4f8")]),
     ("VALIGN", (0, 0), (-1, -1), "TOP"), ("FONTSIZE", (4, 1), (4, -1), 7),
@@ -223,7 +255,7 @@ p("<font size=7.5>Microtuning: client MTS-ESP di ODDSound (licenza 0BSD). RC-20 
   "campioni di altri prodotti.</font>")
 
 def footer(c, d):
-    c.saveState(); c.setFont("Helvetica", 7.5); c.setFillColor(colors.grey)
+    c.saveState(); c.setFont("Urbanist", 7.5); c.setFillColor(colors.grey)
     c.drawString(15 * mm, 10 * mm, "Microvibe %s — TMFU audiovibe" % version)
     c.drawRightString(195 * mm, 10 * mm, str(d.page)); c.restoreState()
 

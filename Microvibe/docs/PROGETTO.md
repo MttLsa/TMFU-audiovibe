@@ -47,7 +47,9 @@ Ingresso stereo con trim, gate e **sidechain trigger** (envelope follower → pu
 Pensato per i "letti" e i rumori ambientali tipici della microhouse.
 - **Granulare** su buffer: sorgente = ingresso registrato in continuo (freeze) oppure noise colorato/campione interno. Densità 1–200 grani/s, durata 5–500 ms, spray di posizione, pitch ±24 st con **quantizzazione microtonale** (vedi §6), finestra Hann/Tukey/rettangolare.
 - **Noise layer**: white/pink/brown/crackle → banco di **risonatori** (8 bande accordate sulla scala corrente) → texture "tonale" dal rumore.
-- **Drone**: 4 oscillatori sinusoidali/wavetable leggeri con detune microtonale e drift lento.
+- **Drone**: fino a 8 oscillatori sinusoidali leggeri con detune microtonale e drift lento.
+- **Chord = Scale** *(1.1)*: le note del drone **e** del letto risonante si scelgono nella pagina TUNING (§6.1),
+  con una progressione di fino a 4 accordi.
 - Freeze, Spread stereo, Tilt EQ, livello.
 
 ### 2.3 PERC — percussioni organiche minimal
@@ -55,6 +57,12 @@ Sintesi **modale** (banco di risonatori, approccio Chromaphone/Elements/RipplerX
 - 6 voci indipendenti (ognuna con propria corsia ritmica, §5).
 - **Eccitatore**: click, burst di noise, impulso filtrato, "mallet" (impulso arrotondato), oppure **un frammento dell'ingresso** (microsampling alla Akufen).
 - **Corpo**: modelli Wood, Glass, Metal, Skin (membrana), Tube, Stone, Plastic — fino a 16 modi per voce, con Material (smorzamento HF), Inharmonicity, Decay, Position, Tune (in scala).
+- **808** *(1.1)*: Kick 808, Tom 808, Snare 808, Clap 808, Closed Hat 808, Open Hat 808, sintetizzati (nessun campione):
+  kick e tom = sinusoide con sweep di pitch e click (Kick in G1 e Tom in G2 a Tune 0, seguono la scala);
+  snare = due sinusoidi 180/330 Hz + rumore filtrato (*snappy*); clap = rumore passa-banda con 4 colpi ravvicinati e coda;
+  hat = sei oscillatori a onda quadra 205–800 Hz in passa-banda + passa-alto. Il **closed hat interrompe l'open hat** (choke) come sull'808.
+  Per gli 808 Material = tono / snappy / brillantezza, Inharmonic = profondità dello sweep; l'eccitatore non si usa.
+- **Per ogni voce** *(1.1)*: Level (gain), Tune, Decay e **filtro HP / BP / LP** con Cutoff e Resonance.
 - Velocity → brillantezza/decay, pan per voce, humanize (timing + velocity).
 - Preset di voce: rimshot di legno, click di vetro, "blip" metallico, tock di bottiglia, shaker di sabbia, conga tappata.
 
@@ -130,6 +138,11 @@ FDN a 8 linee (stile Dattorro/Feedback Delay Network): Size, Decay, Pre-delay (s
 - Per corsia: lunghezza 1–64 step (**polimetro**: 16 contro 13 contro 7…), divisione libera (**poliritmia**: 3:2, 5:4, 7:8, tuplet arbitrari), **Euclideo** (passi, pulsazioni, rotazione), swing indipendente, probabilità per step, ratchet 1–8, condizioni (1:2, 3:4, "solo al primo giro", "se l'altra corsia ha suonato").
 - Modalità **Free** (Hz, non sincronizzata) per derive e phasing alla Steve Reich.
 - **Pattern** A–H con catena (avanza di un pattern a ogni battuta, da quello scelto fino a *Chain End*).
+- **Stop della DAW** *(1.1)*: quando il trasporto si ferma, in circa 30 ms si zittiscono texture (letto, drone, grani), Shepard,
+  percussioni, glitch e corsie (anche quelle in modalità libera o comandate da transienti/MIDI), insieme al rumore di superficie
+  del vinile e al fruscio del nastro. **Solo le code di delay e riverbero si spengono da sole, in modo naturale**: a trasporto fermo
+  il feedback del delay è limitato a 0,9 e i freeze di delay e riverbero vengono rilasciati, così anche le code finiscono.
+  Le note MIDI suonate a mano (glitch C1–G#1, percussioni C2–F2) restano attive. Nella versione Standalone (senza trasporto) il plugin suona sempre.
 
 ---
 
@@ -138,6 +151,16 @@ FDN a 8 linee (stile Dattorro/Feedback Delay Network): Size, Decay, Pre-delay (s
 - Scale **Scala `.scl` + `.kbm`** caricabili; libreria interna: 12-TET, 19/24/31/53-EDO, giusta intonazione 5-limit e 7-limit, Bohlen-Pierce, pelog/slendro, maqam (quarti di tono), scala armonica, Partch 43.
 - Client **MTS-ESP** (libreria ODDSound, licenza permissiva) → il plugin segue l'accordatura globale della DAW se c'è un master.
 - La scala corrente quantizza: pitch di PERC, risonatori, drone, grani, stutter-pitch, shimmer, pitch del delay e intervallo del Shepard. Knob **Snap** (0 = continuo, 100 % = quantizzato).
+
+### 6.1 Note del drone e progressione di accordi *(1.1)*
+Visibile nella pagina TUNING solo quando TEXTURE → Chord = **Scale**.
+- **4 accordi** (snapshot): per ognuno si accendono/spengono i gradi della scala corrente (nomi delle note per le scale a 12 semitoni,
+  numero del grado e cent per le altre; fino a 64 gradi). Le note accordano drone e letto risonante. Nessuna nota = triade minore automatica.
+- **Progression On**, **Chords** (1–4 accordi usati), **Order** (Forward, Reverse, Ping-Pong, Random).
+- **Tempo**: *Chord Unit* sincronizzata (da 8 battute a 1/32, terzine, puntati, quintine, settimine) oppure libera in secondi;
+  **Durata 1–4** = quante unità dura ogni accordo (1–16).
+- **Chord Glide** (0–4 s, glissando tra un accordo e l'altro) e **Drone Voicing** (Close, Open, Wide).
+- La progressione segue la posizione della DAW; a trasporto fermo resta sull'ultimo accordo. Gli accordi sono salvati con il progetto e nei preset.
 
 ---
 
@@ -181,8 +204,8 @@ Stile coerente con Twinbox/Twinsynth (knob con frecce e Shift per la regolazione
 
 ---
 
-## 9. Preset (circa 150, generati da script come in Twinbox)
-Categorie: Microhouse Glitch · Minimal Perc · Textures & Beds · Tape & Vinyl · Wobble/Lo-fi · Dub Delays · Shepard Risers · Microtonal · Polyrhythm · Performance (macro pronte).
+## 9. Preset (180, generati da script come in Twinbox)
+Categorie: Microhouse Glitch · Minimal Perc · Textures & Beds · Tape & Vinyl · Wobble/Lo-fi · Dub Delays · Shepard Risers · Microtonal · Polyrhythm · Performance (macro pronte) · **808 Minimal** *(1.1)* · **Chord Drones** *(1.1, progressioni di accordi sul drone)*.
 
 ---
 
@@ -226,3 +249,12 @@ Implementato tutto quanto sopra, con queste differenze rispetto alla bozza:
 - **Oversampling 2×** solo nel modello a isteresi del Tape.
 - I cicli di modulazione hanno un ritardo di un blocco di controllo (32 campioni), non di un campione.
 - Interfaccia 1280 × 790 invece di 1200 × 760.
+
+## 13. Versione 1.1.0
+
+- Percussioni **808** sintetizzate (kick, tom, snare, clap, closed hat, open hat con choke) e filtro HP / BP / LP per ogni voce (§2.3).
+- **Note del drone** scelte nella scala e **progressione di 4 accordi** con tempi e suddivisioni regolabili (§2.2, §6.1).
+- **Stop della DAW**: il plugin smette di suonare; solo le code di delay e riverbero si spengono da sole (§5).
+- 30 preset nuovi (808 Minimal, Chord Drones).
+- Valutata e **non realizzata** (su richiesta) una versione separata "Microvibe Fx" come effetto AU puro: Microvibe è un music effect
+  (AU `aumf`) e su Logic Pro si inserisce già sulle tracce audio; il VST3 è un effetto audio in tutte le DAW.

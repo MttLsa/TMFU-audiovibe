@@ -25,7 +25,7 @@ LEVELS = os.path.join(ROOT, "tools", "levels.json")
 levels = json.load(open(LEVELS)) if os.path.exists(LEVELS) else {}
 
 CATS = ["Microhouse Glitch", "Minimal Perc", "Textures & Beds", "Tape & Vinyl", "Wobble / Lo-fi",
-        "Dub Delays", "Shepard Risers", "Microtonal", "Polyrhythm", "Performance"]
+        "Dub Delays", "Shepard Risers", "Microtonal", "Polyrhythm", "Performance", "808 Minimal", "Chord Drones"]
 
 FX_ON = {"Tape": "tp_on", "Vinyl": "vn_on", "Wobble": "wb_on", "Delay": "dl_on", "Reverb": "rv_on", "Filter": "ft_on",
          "Resonator": "rs_on", "Ring/Shift": "rf_on", "Crusher": "cr_on", "Chorus": "ch_on", "Phaser": "ph_on",
@@ -39,6 +39,7 @@ class P:
         self.slot = 0
         self.lanes = None
         self.lfo = None
+        self.snap = None
         self.chain([])
 
     def set(self, **kw):
@@ -101,6 +102,9 @@ class P:
         d["p"]["g_trim"] = levels.get(self.name, 0.0)
         if self.lanes: d["lanes"] = self.lanes
         if self.lfo: d["lfo"] = self.lfo
+        if self.snap is None and self.p.get("tx_chord") == "Scale":
+            self.snap = [[0, 1, 2, 3, 4, 5]]          # 1.0 behaviour: first six scale degrees
+        if self.snap: d["snap"] = self.snap
         return d
 
 
@@ -424,9 +428,104 @@ for i, n in enumerate(pf):
     if "MIDI" in n: p.set(gl_lane="MIDI only")
     p.lfo_(4, "S&H", div="1/16").mod("LFO 4", "gl_rptpitch", 0.1, via="Macro 1")
 
+# =============================================================================================== 11 808 Minimal
+# voice: (model, lane, tune, decay, level, pan, filter, cutoff, res, every, offs)
+k808 = [
+    ("808 Minimal Kit", 0, dict()),
+    ("Rimless 808", 1, dict(clap=False)),
+    ("Hat Shuffle 808", 2, dict(swing=0.25)),
+    ("Tom Talk", 3, dict(toms=True)),
+    ("Filtered 808 Groove", 4, dict(lp=True)),
+    ("808 Clap Dub", 5, dict(dub=True)),
+    ("Off-Grid 808", 6, dict(ratio=True)),
+    ("808 Into Tape", 7, dict(tape=True)),
+    ("Ghost Snares", 8, dict(ghost=True)),
+    ("808 Glitch Kit", 9, dict(glitch=True)),
+    ("Open Hat Chokes", 10, dict(choke=True)),
+    ("Low Kick Rumble", 11, dict(rumble=True)),
+    ("808 Polymeter", 12, dict(poly=True)),
+    ("Vinyl 808", 13, dict(vinyl=True)),
+    ("Microtonal 808", 14, dict(micro=True)),
+]
+for n, i, o in k808:
+    p = add(P(n, CATS[10], "808 kick / tom / snare / clap / hats synthesised (no samples), each with its own gain, tune, decay and HP/BP/LP filter"))
+    p.lane(1, 16, 4, swing=o.get("swing", 0.1))
+    p.lane(2, 16, 7 if not o.get("poly") else 5, rot=1, swing=o.get("swing", 0.12), hum=0.15)
+    p.lane(3, 16 if not o.get("poly") else 13, 4, rot=2, ratio="3:2" if o.get("ratio") else "1:1")
+    p.lane(4, 16 if not o.get("poly") else 7, 2, rot=4, ratio="5:4" if o.get("ratio") else "1:1")
+    kick_tune = -5 if o.get("rumble") else (2.5 if o.get("micro") else 0)
+    p.perc(1, 1, "Kick 808", "Click", kick_tune, 900 if o.get("rumble") else 420, inh=0.45, mat=0.4, level=0.9, pan=0.0,
+           ftype="LP" if o.get("lp") else "Off", cut=2500 if o.get("lp") else 1000)
+    p.perc(2, 2, "Closed Hat 808", "Click", 0.5 if o.get("micro") else 0, 60, mat=0.5, level=0.5, pan=0.25, hum=0.3,
+           ftype="HP", cut=6000, res=0.15, prob=0.85)
+    p.perc(3, 3, "Open Hat 808", "Click", 0, 450 if o.get("choke") else 320, mat=0.5, level=0.4, pan=-0.2, ftype="BP" if o.get("lp") else "HP",
+           cut=8000, res=0.2, every=1 if o.get("choke") else 2, offs=1)
+    if o.get("clap", True):
+        p.perc(4, 4, "Clap 808", "Click", 0, 260, mat=0.4, level=0.6, pan=0.05, ftype="BP", cut=1400, res=0.15)
+    if o.get("toms") or o.get("poly"):
+        p.perc(5, 3, "Tom 808", "Click", 5, 300, inh=0.3, level=0.55, pan=-0.35, every=3)
+        p.perc(6, 2, "Tom 808", "Click", 12, 220, inh=0.3, level=0.45, pan=0.35, every=5, offs=2)
+    if o.get("ghost") or o.get("dub"):
+        p.perc(5, 4, "Snare 808", "Click", 0, 220, mat=0.6, level=0.5, pan=0.1, ftype="HP", cut=250, prob=0.7)
+        p.perc(6, 2, "Snare 808", "Click", 3, 120, mat=0.8, level=0.25, pan=-0.15, prob=0.25, ftype="LP", cut=5000)
+    if not o.get("clap", True):
+        p.perc(4, 4, "Wood", "Click", 19, 80, level=0.6, pan=0.1)
+    p.set(pc_level=0.8, in_level=0.8)
+    if o.get("glitch"): p.glitch(2, 0.4, repeat=1, slice=0.6, reverse=0.4)
+    else: p.glitch(4, 0.15, repeat=1, reverse=0.3)
+    mods = ["Comp", "Delay", "Reverb"]
+    if o.get("tape"): mods = ["Tape"] + mods
+    if o.get("vinyl"): mods = ["Vinyl"] + mods
+    if o.get("lp"): mods = ["Filter"] + mods
+    p.chain(mods)
+    p.set(cp_thr=-16, cp_ratio=3, cp_mix=0.7, dl_mode="Ping-Pong", dl_div="1/8D", dl_mix=0.35 if o.get("dub") else 0.12, dl_fb=0.45,
+          dl_lp=3500, rv_mix=0.12, rv_decay=1.4, rv_size=0.4, tp_drive=0.5, vn_dust=0.3, vn_crackle=0.25, vn_wear=0.2,
+          ft_type="LP", ft_cut=6000, ft_res=0.25)
+    if o.get("micro"): p.set(tu_scale="24-EDO (quarter tones)", tu_root="D")
+    p.lfo_(1, "Smooth Random", div="1 bar").mod("LFO 1", "pc2_cut", 0.25).mod("LFO 1", "pc3_decay", 0.2)
+    p.lfo_(2, "Triangle", div="4 bar").mod("LFO 2", "pc4_cut", 0.2)
+    macros(p)
+
+# =============================================================================================== 12 Chord Drones
+# (name, scale, root, chords as scale degrees, unit, lengths, order, voicing, glide ms)
+cd = [
+    ("Minor Drift", "Minor", "A", [[0, 2, 4], [0, 2, 5], [2, 4, 6], [1, 3, 6]], "1 bar", [2, 2, 2, 2], "Forward", "Open", 600),
+    ("Deep House Sevenths", "Chromatic 12-TET", "C", [[0, 3, 7, 10], [0, 3, 7, 8], [0, 3, 5, 8], [2, 5, 7, 10]], "1 bar", [2, 2, 2, 2], "Forward", "Open", 250),
+    ("Dorian Dub", "Dorian", "D", [[0, 2, 4, 6], [3, 5, 0], [1, 3, 5], [4, 6, 1]], "1 bar", [2, 1, 2, 1], "Forward", "Wide", 400),
+    ("Two Chord Hypnosis", "Minor", "F", [[0, 2, 4, 6], [5, 0, 2, 4]], "2 bar", [1, 1, 1, 1], "Forward", "Open", 900),
+    ("Suspended Sun", "Major", "G", [[0, 3, 4], [0, 1, 4], [3, 5, 0], [4, 6, 1]], "1 bar", [1, 1, 1, 1], "Ping-Pong", "Open", 300),
+    ("Phrygian Night", "Phrygian", "E", [[0, 2, 4], [1, 3, 5], [0, 3, 5], [1, 4, 6]], "1/2", [2, 2, 2, 2], "Forward", "Close", 120),
+    ("Random Cloud Chords", "Minor Pentatonic", "C", [[0, 1, 3], [1, 2, 4], [0, 2, 3], [0, 1, 2, 3, 4]], "1/2", [1, 1, 1, 1], "Random", "Wide", 800),
+    ("Quarter Tone Chorale", "24-EDO (quarter tones)", "D", [[0, 7, 14], [0, 6, 14], [3, 10, 17], [1, 8, 15]], "1 bar", [2, 2, 2, 2], "Forward", "Open", 700),
+    ("Just Intonation Pad", "Just 5-limit Major", "C", [[0, 2, 4], [3, 5, 0], [4, 6, 1], [5, 0, 2]], "2 bar", [1, 1, 1, 1], "Forward", "Open", 1200),
+    ("Septimal Blues Bed", "Just 7-limit", "A", [[0, 3, 6, 8], [4, 6, 9], [0, 2, 6], [3, 5, 8]], "1 bar", [2, 2, 2, 2], "Forward", "Open", 500),
+    ("Pelog Gamelan Drone", "Pelog", "E", [[0, 2, 4], [1, 3, 5], [2, 4, 6], [0, 3, 6]], "1/2", [1, 2, 1, 2], "Ping-Pong", "Wide", 200),
+    ("Slendro Haze", "Slendro", "G", [[0, 2, 4], [1, 3], [0, 2], [2, 4, 1]], "1 bar", [2, 1, 1, 2], "Forward", "Wide", 900),
+    ("Harmonic Choir", "Harmonic 8-16", "A", [[0, 2, 4, 6], [1, 3, 5, 7], [0, 4, 7], [2, 5, 6]], "2 bar", [1, 1, 1, 1], "Forward", "Open", 1500),
+    ("Rast Evening", "Maqam Rast", "D", [[0, 2, 4], [2, 4, 6], [1, 3, 5], [0, 3, 5]], "1 bar", [2, 2, 2, 2], "Reverse", "Open", 600),
+    ("Free Time Drone", "Minor", "C", [[0, 2, 4, 6], [5, 0, 2], [3, 5, 0], [4, 6, 1]], None, [1, 1, 1, 1], "Forward", "Wide", 2500),
+]
+for i, (n, scale, root, chords, unit, lens, order, voicing, glide) in enumerate(cd):
+    p = add(P(n, CATS[11], "TEXTURE chord = Scale: drone and resonant bed play a progression of up to 4 chords (TUNING page)"))
+    p.set(tx_on=1, tx_level=0.7, tx_chord="Scale", tx_bed=0.45, tx_resq=0.75, tx_drone=0.55, tx_drift=0.35, tx_grain=0.25,
+          tx_gsrc="Input+Bed", tx_dens=14, tx_size=180, tx_spray=0.5, tx_noise=["Pink", "Brown", "White"][i % 3], tx_oct=0,
+          tu_scale=scale, tu_root=root, tu_snap=1,
+          pr_on=1, pr_count=len(chords), pr_mode=order, pr_voicing=voicing, pr_glide=glide)
+    for k, L in enumerate(lens): p.set(**{"pr_len%d" % (k + 1): L})
+    if unit is None: p.set(pr_sync=0, pr_secs=6)
+    else: p.set(pr_sync=1, pr_div=unit)
+    p.snap = chords
+    p.no_glitch()
+    p.chain(["Chorus", "Tape", "Delay", "Reverb", "Stereo"])
+    p.set(ch_mix=0.35, tp_drive=0.3, tp_hiss=0.05, dl_mode="Tape", dl_div="1/4D", dl_mix=0.2, dl_fb=0.5, dl_lp=2800,
+          rv_mix=0.4, rv_decay=6, rv_size=0.85, rv_shim=0.15, st_width=1.3, in_level=0.9)
+    p.lfo_(1, "Sine", div="8 bar").mod("LFO 1", "tx_resq", 0.15).mod("LFO 1", "tx_tilt", 0.3)
+    p.set(rn1_mode="Drift", rn1_sync=0, rn1_rate=0.15).mod("Random 1", "tx_drone", 0.15)
+    macros(p)
+
 # ----------------------------------------------------------------------------------------------- write
 out = {"categories": CATS, "presets": [p.out() for p in presets]}
-assert len(presets) == 150, len(presets)
+assert len(presets) == 180, len(presets)
 path = os.path.join(ROOT, "resources", "presets.json")
 json.dump(out, open(path, "w"), indent=0)
 print("%d presets -> %s" % (len(presets), path))

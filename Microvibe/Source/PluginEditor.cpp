@@ -1,4 +1,5 @@
 #include "PluginEditor.h"
+#include "BinaryData.h"
 #include <map>
 
 using namespace prm;
@@ -27,9 +28,17 @@ static juce::String shortSource (int s)
     return "-";
 }
 
+juce::Typeface::Ptr ui::typeface (bool bold)
+{
+    static const juce::Typeface::Ptr regular = juce::Typeface::createSystemTypefaceFor (BinaryData::UrbanistLight_ttf, BinaryData::UrbanistLight_ttfSize);
+    static const juce::Typeface::Ptr heavy   = juce::Typeface::createSystemTypefaceFor (BinaryData::UrbanistSemiBold_ttf, BinaryData::UrbanistSemiBold_ttfSize);
+    return bold ? heavy : regular;
+}
+
 // =============================================================================================== look
 MvLook::MvLook()
 {
+    setDefaultSansSerifTypeface (ui::typeface (false));
     setColour (juce::ComboBox::backgroundColourId, ui::panel2);
     setColour (juce::ComboBox::textColourId, ui::text);
     setColour (juce::ComboBox::outlineColourId, ui::line);
@@ -633,7 +642,7 @@ void DestButton::paint (juce::Graphics& g)
     g.setColour (ui::line); g.drawRoundedRectangle (r, 4, 1);
     const int d = (int) proc.getParam (pid);
     g.setColour (d > 0 ? ui::text : ui::dim); g.setFont (ui::font (10.5f));
-    g.drawFittedText (d > 0 ? def (dests()[(size_t) d - 1]).name : juce::String ("destinazione..."), getLocalBounds().reduced (4, 0), juce::Justification::centredLeft, 1, 0.7f);
+    g.drawFittedText (d > 0 ? def (dests()[(size_t) d - 1]).name : juce::String ("destination..."), getLocalBounds().reduced (4, 0), juce::Justification::centredLeft, 1, 0.7f);
 }
 
 void DestButton::mouseDown (const juce::MouseEvent&)
@@ -705,8 +714,30 @@ void MatrixRow::paint (juce::Graphics& g)
 }
 
 ModPanel::ModPanel (MicrovibeProcessor& p)
-    : tabs ({ "LFO", "ENV", "RND", "FOL/MIDI", "MATRIX", "TUNING" }, ui::mod), proc (p), grid (p, ui::mod), shape (p)
+    : tabs ({ "LFO", "ENV", "RND", "FOL/MIDI", "MATRIX", "TUNING" }, ui::mod), proc (p), grid (p, ui::mod), shape (p),
+      degrees (p), prGrid (p, ui::tune)
 {
+    {
+        const auto& I = ids();
+        droneTitle.setText ("DRONE NOTES  /  CHORD PROGRESSION", juce::dontSendNotification);
+        droneTitle.setFont (ui::font (12.0f, true)); droneTitle.setColour (juce::Label::textColourId, ui::tune);
+        droneHint.setFont (ui::font (10.5f)); droneHint.setColour (juce::Label::textColourId, ui::dim);
+        droneHint.setJustificationType (juce::Justification::topLeft);
+        for (int k = 0; k < NSNAP; ++k)
+        {
+            auto b = std::make_unique<juce::TextButton> ("CHORD " + juce::String (k + 1));
+            b->setColour (juce::TextButton::buttonOnColourId, ui::tune);
+            b->setTooltip ("Modifica le note dell'accordo " + juce::String (k + 1));
+            b->onClick = [this, k] { degrees.snap = k; updateDrone (false); };
+            addChildComponent (*b); snapButtons.push_back (std::move (b));
+        }
+        addChildComponent (droneTitle); addChildComponent (droneHint); addChildComponent (degrees); addChildComponent (prGrid);
+        prGrid.columns = 4; prGrid.rowH = 58;
+        prGrid.setParams ({ I.prOn, I.prCount, I.prMode, I.prVoicing,
+                            I.prSync, I.prDiv, I.prSecs, I.prGlide,
+                            I.prLen[0], I.prLen[1], I.prLen[2], I.prLen[3] }, 4,
+                          { "", "", "", "", "", "", "", "", "Length 1", "Length 2", "Length 3", "Length 4" });
+    }
     addAndMakeVisible (tabs);
     tabs.onChange = [this] (int i) { page = i; sub = 0; buildPage(); };
     addAndMakeVisible (grid);
@@ -788,7 +819,7 @@ void ModPanel::buildPage()
             break;
         case 5:
             pids = { I.tuScale, I.tuRoot, I.tuSnap, I.tuMts };
-            grid.columns = 2;
+            grid.columns = 4;
             break;
         default: break;
     }
@@ -805,13 +836,93 @@ void ModPanel::refresh()
     {
         const auto& I = ids();
         juce::String s;
-        s << "Scala: " << tuning::builtinNames()[(int) proc.getParam (I.tuScale)];
-        if ((int) proc.getParam (I.tuScale) == tuning::builtinNames().size() - 1) s << "  (" << (proc.scaleName().isEmpty() ? juce::String ("nessun file") : proc.scaleName()) << ")";
-        s << "\nGradi: " << proc.engine.tuning.currentSize();
-        s << "\nMTS-ESP: " << (proc.engine.display.mts.load() ? "master attivo, accordatura globale" : "nessun master");
-        s << "\n\nLa scala quantizza percussioni, risonatori, drone, grani,\npitch del glitch, del delay e dello shimmer (Snap).";
+        s << "Scale: " << tuning::builtinNames()[(int) proc.getParam (I.tuScale)];
+        if ((int) proc.getParam (I.tuScale) == tuning::builtinNames().size() - 1) s << "  (" << (proc.scaleName().isEmpty() ? juce::String ("no file") : proc.scaleName()) << ")";
+        s << "\nSteps: " << proc.engine.tuning.currentSize();
+        s << "\nMTS-ESP: " << (proc.engine.display.mts.load() ? "master active, global tuning" : "no master");
+        if (! droneShown) s << "\n\nLa scala quantizza percussioni, risonatori, drone, grani,\npitch del glitch, del delay e dello shimmer (Snap).\n\nCon TEXTURE > Chord = Scale qui compaiono le note del drone\ne la progressione di 4 accordi.";
         if (! scaleInfo.getText().startsWith ("Errore") && ! scaleInfo.getText().startsWith ("Carica")) scaleInfo.setText (s, juce::dontSendNotification);
     }
+    updateDrone (false);
+}
+
+void ModPanel::updateDrone (bool force)
+{
+    const auto& I = ids();
+    const bool show = page == 5 && (int) proc.getParam (I.txChord) == 7;
+    const int sc = (int) proc.getParam (I.tuScale), rt = (int) proc.getParam (I.tuRoot);
+    const auto scale = show ? proc.guiScale() : tuning::Scale();
+    if (show != droneShown || force || (show && (sc != shownScale || rt != shownRoot || scale.size != shownSize)))
+    {
+        droneShown = show; shownScale = sc; shownRoot = rt; shownSize = scale.size;
+        for (auto* c : { (juce::Component*) &droneTitle, (juce::Component*) &droneHint, (juce::Component*) &degrees, (juce::Component*) &prGrid })
+            c->setVisible (show);
+        for (auto& b : snapButtons) b->setVisible (show);
+        if (show) degrees.setScale (scale, rt);
+        resized();
+    }
+    if (! show) return;
+    const int playing = proc.engine.display.snapshot.load();
+    const bool progOn = proc.getParam (I.prOn) > 0.5f;
+    for (int k = 0; k < NSNAP; ++k)
+    {
+        auto& b = *snapButtons[(size_t) k];
+        b.setToggleState (k == degrees.snap, juce::dontSendNotification);
+        b.setButtonText ((progOn && k == playing ? "> " : "") + juce::String ("CHORD ") + juce::String (k + 1));
+        b.setEnabled (! progOn || k < (int) proc.getParam (I.prCount) || k == degrees.snap);
+    }
+    droneHint.setText ("Clic sulle note per comporre l'accordo " + juce::String (degrees.snap + 1)
+                       + " (vale per drone e letto risonante).  " + (progOn ? "> = accordo che sta suonando." : "Progressione spenta: suona l'accordo 1."),
+                       juce::dontSendNotification);
+    degrees.repaint();
+}
+
+int DegreeGrid::preferredHeight (int) const
+{
+    const int rows = (count() + columns() - 1) / columns();
+    return rows * 26;
+}
+
+juce::Rectangle<float> DegreeGrid::cell (int d) const
+{
+    const int c = columns();
+    const float w = (float) getWidth() / (float) c;
+    return { (float) (d % c) * w, (float) (d / c) * 26.0f, w, 24.0f };
+}
+
+juce::String DegreeGrid::label (int d) const
+{
+    static const char* names[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+    const double c = scale.cents[(size_t) d];
+    const double semis = c / 100.0;
+    if (std::abs (scale.period - 1200.0) < 0.01 && std::abs (semis - std::round (semis)) < 0.01)
+        return names[(root + (int) std::round (semis)) % 12];
+    return juce::String (d + 1) + ":" + juce::String ((int) std::round (c));
+}
+
+void DegreeGrid::paint (juce::Graphics& g)
+{
+    const uint64_t m = proc.engine.shared.snapMask[snap].load();
+    for (int d = 0; d < count(); ++d)
+    {
+        auto r = cell (d).reduced (1.5f);
+        const bool on = (m >> d) & 1u;
+        g.setColour (on ? ui::tune : ui::panel2); g.fillRoundedRectangle (r, 4);
+        g.setColour (ui::line); g.drawRoundedRectangle (r, 4, 1);
+        g.setColour (on ? ui::bg : ui::text); g.setFont (ui::font (count() > 24 ? 9.0f : 10.5f, true));
+        g.drawFittedText (label (d), r.toNearestInt(), juce::Justification::centred, 1, 0.7f);
+    }
+    if (m == 0)
+    {
+        g.setColour (ui::dim); g.setFont (ui::font (10.0f));
+        g.drawText ("nessuna nota: triade minore automatica", getLocalBounds().removeFromBottom (12), juce::Justification::centredRight);
+    }
+}
+
+void DegreeGrid::mouseDown (const juce::MouseEvent& e)
+{
+    for (int d = 0; d < count(); ++d)
+        if (cell (d).contains (e.position)) { proc.toggleDroneDegree (snap, d); repaint(); return; }
 }
 
 void ModPanel::resized()
@@ -849,11 +960,25 @@ void ModPanel::resized()
     if (page == 5)
     {
         grid.rowH = 60;
-        grid.setBounds (r.removeFromTop (124));
+        grid.setBounds (r.removeFromTop (62));
         auto b = r.removeFromTop (28);
         loadScl.setBounds (b.removeFromLeft (150).reduced (2)); loadKbm.setBounds (b.removeFromLeft (90).reduced (2));
-        r.removeFromTop (8);
-        scaleInfo.setBounds (r.removeFromTop (160));
+        r.removeFromTop (6);
+        scaleInfo.setBounds (r.removeFromTop (droneShown ? 58 : 160));
+        if (droneShown)
+        {
+            r.removeFromTop (4);
+            droneTitle.setBounds (r.removeFromTop (18));
+            auto sb = r.removeFromTop (24);
+            const int w = sb.getWidth() / NSNAP;
+            for (auto& bt : snapButtons) bt->setBounds (sb.removeFromLeft (w).reduced (2, 0));
+            r.removeFromTop (4);
+            droneHint.setBounds (r.removeFromTop (28));
+            degrees.setBounds (r.removeFromTop (degrees.preferredHeight (r.getWidth())).withWidth (r.getWidth()));
+            degrees.setBounds (r.getX(), degrees.getY(), r.getWidth(), degrees.preferredHeight (r.getWidth()));
+            r.removeFromTop (6);
+            prGrid.setBounds (r.removeFromTop (3 * 58));
+        }
         return;
     }
     grid.rowH = 64;
@@ -864,7 +989,7 @@ void ModPanel::paint (juce::Graphics& g)
 {
     g.setColour (ui::panel); g.fillRoundedRectangle (getLocalBounds().toFloat().reduced (3), 6);
     g.setColour (ui::mod); g.setFont (ui::font (13.0f, true));
-    g.drawText ("MODULAZIONE", getLocalBounds().reduced (12, 6).removeFromTop (18), juce::Justification::left);
+    g.drawText ("MODULATION", getLocalBounds().reduced (12, 6).removeFromTop (18), juce::Justification::left);
     g.setColour (ui::dim); g.setFont (ui::font (10.0f));
     g.drawText ("trascina una sorgente su qualsiasi manopola", getLocalBounds().reduced (12, 6).removeFromTop (18), juce::Justification::right);
     if (page == 4)
@@ -872,7 +997,7 @@ void ModPanel::paint (juce::Graphics& g)
         g.setColour (ui::dim); g.setFont (ui::font (9.5f));
         auto r = getLocalBounds().reduced (8).withTrimmedTop (52).removeFromTop (14);
         r.removeFromLeft (20);
-        for (auto [t, w] : { std::pair<const char*, int> { "SORGENTE", 68 }, { "VIA (x)", 50 }, { "DESTINAZIONE", 98 }, { "CURVA", 38 }, { "AMOUNT", 60 } })
+        for (auto [t, w] : { std::pair<const char*, int> { "SOURCE", 68 }, { "VIA (x)", 50 }, { "DESTINATION", 98 }, { "CURVE", 38 }, { "AMOUNT", 60 } })
             g.drawText (t, r.removeFromLeft (w), juce::Justification::centred);
     }
 }
@@ -991,14 +1116,19 @@ void MicrovibeEditor::showSource (int i)
         case 2:
         {
             const int v = voice;
-            pids = { I.pcOn, I.pcLevel, -1, -1, I.pcLane[v], I.pcModel[v], I.pcExc[v], I.pcTune[v], I.pcDecay[v], I.pcMat[v], I.pcInh[v], I.pcPos[v],
-                     I.pcLvl[v], I.pcPan[v], I.pcHum[v], I.pcProb[v], I.pcEvery[v], I.pcOffs[v] };
+            pids = { I.pcOn, I.pcLevel, I.pcLane[v], I.pcModel[v],
+                     I.pcExc[v], I.pcTune[v], I.pcDecay[v], I.pcLvl[v],
+                     I.pcFType[v], I.pcCut[v], I.pcRes[v], I.pcPan[v],
+                     I.pcMat[v], I.pcInh[v], I.pcPos[v], I.pcHum[v],
+                     I.pcProb[v], I.pcEvery[v], I.pcOffs[v] };
             break;
         }
         default: pids = { I.shOn, I.shLevel, I.shPartials, I.shInterval, I.shCents, I.shSync, I.shBars, I.shRate, I.shDir, I.shBase, I.shWidth, I.shWave }; break;
     }
     srcGrid.rowH = 62;
-    srcGrid.setParams (pids, 4);
+    juce::StringArray caps;
+    if (i == 2) caps = { "", "Perc Level", "", "", "", "", "", "Voice Level" };
+    srcGrid.setParams (pids, 4, caps);
     resized();
 }
 
@@ -1077,7 +1207,7 @@ void MicrovibeEditor::paint (juce::Graphics& g)
     g.setColour (ui::panel); g.fillRect (rHeader);
     g.setColour (ui::text); g.setFont (ui::font (24.0f, true));
     g.drawText ("MICROVIBE", 16, 10, 200, 30, juce::Justification::left);
-    g.setColour (ui::dim); g.setFont (ui::font (11.0f));
+    g.setColour (ui::text); g.setFont (ui::font (11.0f));
     g.drawText ("TMFU audiovibe  -  glitch / texture / fx", 16, 40, 260, 16, juce::Justification::left);
     if (proc.presetIndex() >= 0 && proc.presetIndex() < (int) PresetLibrary::get().all().size())
     {
@@ -1095,9 +1225,9 @@ void MicrovibeEditor::paint (juce::Graphics& g)
     }
     if (proc.engine.display.limiting.load()) { g.setColour (juce::Colour (0xffff5a5a)); g.fillEllipse (m.getX() + 3, m.getY() - 7, 6, 6); }
 
-    panel (rSrc, ui::src, "SORGENTI");
-    panel (rCtr, ui::glitch, "CORSIE  /  GLITCH");
-    panel (rFx, ui::fx, "CATENA FX");
+    panel (rSrc, ui::src, "SOURCES");
+    panel (rCtr, ui::glitch, "LANES  /  GLITCH");
+    panel (rFx, ui::fx, "FX CHAIN");
     // centre extras
     g.setColour (ui::dim); g.setFont (ui::font (10.0f));
     const juce::String pat = juce::String::charToString ((juce::juce_wchar) ('A' + proc.engine.display.pattern.load()));

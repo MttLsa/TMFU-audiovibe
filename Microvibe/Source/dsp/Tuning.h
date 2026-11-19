@@ -44,6 +44,14 @@ namespace tuning
         static double toHz (double semis) { return 261.6255653 * std::exp2 (semis / 12.0); }
         bool mtsActive() const { return mtsOn; }
         int currentSize() const { return cur.size; }
+        // semitones (from middle C) of scale degree d (d may exceed the scale size: next periods)
+        double degreeSemis (int d) const
+        {
+            const int n = std::max (1, cur.size);
+            const int per = d >= 0 ? d / n : -((-d + n - 1) / n);
+            const int idx = d - per * n;
+            return cur.tonicSemis + (per * cur.period + cur.cents[(size_t) idx]) / 100.0;
+        }
 
     private:
         double nearest (double semis) const;

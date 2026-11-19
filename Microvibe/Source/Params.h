@@ -25,6 +25,7 @@ namespace prm
         juce::String group;            // UI / browser group
     };
 
+    constexpr int NSNAP = 4, NPERC_MODELS = 13, FIRST_808 = 7;
     constexpr int NLFO = 8, NENV = 4, NRND = 4, NFOL = 2, NLANE = 4, NMAC = 4, NPERC = 6, NSLOT = 32, NFX = 8, NPAT = 8;
 
     // FX module types (order of the slot choice list)
@@ -88,6 +89,10 @@ namespace prm
         int foSrc[NFOL], foAtt[NFOL], foRel[NFOL], foGain[NFOL];
         int mxSrc[NSLOT], mxVia[NSLOT], mxDst[NSLOT], mxAmt[NSLOT], mxCurve[NSLOT];
         int trim;     // appended in 1.0
+        // 1.1: chord progression of the texture drone (TEXTURE chord = Scale)
+        int prOn, prCount, prSync, prDiv, prSecs, prLen[4], prMode, prGlide, prVoicing;
+        // 1.1: per-voice percussion filter
+        int pcFType[NPERC], pcCut[NPERC], pcRes[NPERC];
     };
 
     const Ids& ids();

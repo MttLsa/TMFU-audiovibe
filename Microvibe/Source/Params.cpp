@@ -179,7 +179,8 @@ namespace prm
             group = "Perc";
             I_.pcOn    = b ("pc_on", "Perc On", false);
             I_.pcLevel = f ("pc_level", "Perc Level", 0, 1, 0.7f);
-            const juce::StringArray models { "Wood", "Glass", "Metal", "Skin", "Tube", "Stone", "Plastic" };
+            const juce::StringArray models { "Wood", "Glass", "Metal", "Skin", "Tube", "Stone", "Plastic",
+                                            "Kick 808", "Tom 808", "Snare 808", "Clap 808", "Closed Hat 808", "Open Hat 808" };
             const juce::StringArray excs { "Click", "Noise", "Mallet", "Input" };
             const int defModel[NPERC] = { 0, 1, 2, 3, 4, 5 };
             const float defTune[NPERC] = { 0, 12, 19, -12, 7, 24 };
@@ -494,6 +495,26 @@ namespace prm
 
             group = "Global";
             I_.trim = f ("g_trim", "Preset Trim", -24, 24, 0, 0, "dB");
+
+            group = "Progression";
+            I_.prOn      = b ("pr_on", "Progression On", false);
+            I_.prCount   = i ("pr_count", "Chords", 1, NSNAP, 4);
+            I_.prSync    = b ("pr_sync", "Progression Sync", true);
+            I_.prDiv     = c ("pr_div", "Chord Unit", syncDivNames(), 3);
+            I_.prSecs    = f ("pr_secs", "Chord Unit (free)", 0.1f, 30, 2, 2, "s");
+            for (int k = 0; k < NSNAP; ++k) I_.prLen[k] = i ("pr_len" + juce::String (k + 1), "Chord " + juce::String (k + 1) + " Length", 1, 16, 1);
+            I_.prMode    = c ("pr_mode", "Progression Order", { "Forward", "Reverse", "Ping-Pong", "Random" }, 0);
+            I_.prGlide   = f ("pr_glide", "Chord Glide", 0, 4000, 150, 400, "ms");
+            I_.prVoicing = c ("pr_voicing", "Drone Voicing", { "Close", "Open", "Wide" }, 0);
+
+            group = "Perc";
+            for (int v = 0; v < NPERC; ++v)
+            {
+                const juce::String p = "pc" + juce::String (v + 1) + "_", n = "Perc " + juce::String (v + 1) + " ";
+                I_.pcFType[v] = c (p + "ftype", n + "Filter", { "Off", "HP", "BP", "LP" }, 0);
+                I_.pcCut[v]   = f (p + "cut", n + "Cutoff", 20, 20000, 1000, 1000, "Hz");
+                I_.pcRes[v]   = f (p + "res", n + "Resonance", 0, 1, 0.1f);
+            }
 
             // ---------------------------------------------------------------- destinations
             dstOf.assign (d.size(), 0);
