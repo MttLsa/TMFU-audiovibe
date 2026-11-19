@@ -1,0 +1,8025 @@
+{
+ "version": 2,
+ "genres": [
+  "Electronic",
+  "Pop",
+  "Rock",
+  "Prog Rock",
+  "Funk / Soul",
+  "R&B",
+  "Disco",
+  "Synth-Pop",
+  "New Wave",
+  "Film / TV",
+  "Hip-Hop",
+  "House",
+  "Deep House",
+  "Acid House",
+  "Techno",
+  "Tech House",
+  "Trance",
+  "Eurodance",
+  "Rave",
+  "Drum & Bass",
+  "Dubstep",
+  "EDM",
+  "Electro",
+  "Ambient",
+  "Synthwave",
+  "Indie"
+ ],
+ "decades": [
+  "1960s",
+  "1970s",
+  "1980s",
+  "1990s",
+  "2000s",
+  "2010s",
+  "2020s"
+ ],
+ "models": [
+  {
+   "name": "Moog modular",
+   "kind": "A",
+   "skin": "moog-modular",
+   "maker": "Moog",
+   "year": 1964
+  },
+  {
+   "name": "Electro-Theremin",
+   "kind": "A",
+   "skin": "ems",
+   "maker": "Tannerin",
+   "year": 1958
+  },
+  {
+   "name": "BBC Radiophonic oscillators",
+   "kind": "A",
+   "skin": "ems",
+   "maker": "BBC",
+   "year": 1958
+  },
+  {
+   "name": "EMS VCS3 / Synthi AKS",
+   "kind": "A",
+   "skin": "ems",
+   "maker": "EMS",
+   "year": 1969
+  },
+  {
+   "name": "ARP 2500",
+   "kind": "A",
+   "skin": "arp",
+   "maker": "ARP",
+   "year": 1970
+  },
+  {
+   "name": "ARP 2600",
+   "kind": "A",
+   "skin": "arp",
+   "maker": "ARP",
+   "year": 1971
+  },
+  {
+   "name": "Moog Minimoog Model D",
+   "kind": "A",
+   "skin": "minimoog",
+   "maker": "Moog",
+   "year": 1970
+  },
+  {
+   "name": "ARP Odyssey",
+   "kind": "A",
+   "skin": "arp",
+   "maker": "ARP",
+   "year": 1972
+  },
+  {
+   "name": "ARP Solina String Ensemble",
+   "kind": "A",
+   "skin": "solina",
+   "maker": "ARP / Eminent",
+   "year": 1974
+  },
+  {
+   "name": "Polymoog",
+   "kind": "A",
+   "skin": "minimoog",
+   "maker": "Moog",
+   "year": 1975
+  },
+  {
+   "name": "Yamaha CS-80",
+   "kind": "A",
+   "skin": "cs80",
+   "maker": "Yamaha",
+   "year": 1977
+  },
+  {
+   "name": "Sequential Prophet-5",
+   "kind": "A",
+   "skin": "prophet",
+   "maker": "Sequential",
+   "year": 1978
+  },
+  {
+   "name": "Oberheim OB-X",
+   "kind": "A",
+   "skin": "oberheim",
+   "maker": "Oberheim",
+   "year": 1979
+  },
+  {
+   "name": "Korg MS-20",
+   "kind": "A",
+   "skin": "ms20",
+   "maker": "Korg",
+   "year": 1978
+  },
+  {
+   "name": "Roland Jupiter-8",
+   "kind": "A",
+   "skin": "jupiter",
+   "maker": "Roland",
+   "year": 1981
+  },
+  {
+   "name": "Oberheim OB-Xa",
+   "kind": "A",
+   "skin": "oberheim",
+   "maker": "Oberheim",
+   "year": 1981
+  },
+  {
+   "name": "Roland TB-303",
+   "kind": "A",
+   "skin": "tb303",
+   "maker": "Roland",
+   "year": 1981
+  },
+  {
+   "name": "Moog Source",
+   "kind": "A",
+   "skin": "modern-analog",
+   "maker": "Moog",
+   "year": 1981
+  },
+  {
+   "name": "Roland Juno-60",
+   "kind": "A",
+   "skin": "juno",
+   "maker": "Roland",
+   "year": 1982
+  },
+  {
+   "name": "Roland SH-101",
+   "kind": "A",
+   "skin": "sh101",
+   "maker": "Roland",
+   "year": 1982
+  },
+  {
+   "name": "Roland Juno-106",
+   "kind": "A",
+   "skin": "juno",
+   "maker": "Roland",
+   "year": 1984
+  },
+  {
+   "name": "Roland JX-8P",
+   "kind": "A",
+   "skin": "alpha-juno",
+   "maker": "Roland",
+   "year": 1985
+  },
+  {
+   "name": "Roland Alpha Juno-2",
+   "kind": "A",
+   "skin": "alpha-juno",
+   "maker": "Roland",
+   "year": 1986
+  },
+  {
+   "name": "Moog Sub 37",
+   "kind": "A",
+   "skin": "modern-analog",
+   "maker": "Moog",
+   "year": 2014
+  },
+  {
+   "name": "Yamaha DX7",
+   "kind": "D",
+   "skin": "dx7",
+   "maker": "Yamaha",
+   "year": 1983
+  },
+  {
+   "name": "Yamaha TX-816",
+   "kind": "D",
+   "skin": "tx81z",
+   "maker": "Yamaha",
+   "year": 1984
+  },
+  {
+   "name": "Synclavier",
+   "kind": "D",
+   "skin": "synclavier",
+   "maker": "New England Digital",
+   "year": 1977
+  },
+  {
+   "name": "Fairlight CMI",
+   "kind": "D",
+   "skin": "fairlight",
+   "maker": "Fairlight",
+   "year": 1979
+  },
+  {
+   "name": "PPG Wave 2.3",
+   "kind": "D",
+   "skin": "ppg",
+   "maker": "PPG",
+   "year": 1984
+  },
+  {
+   "name": "Casio CZ-5000",
+   "kind": "D",
+   "skin": "cz",
+   "maker": "Casio",
+   "year": 1985
+  },
+  {
+   "name": "Yamaha DX21",
+   "kind": "D",
+   "skin": "dx7",
+   "maker": "Yamaha",
+   "year": 1985
+  },
+  {
+   "name": "Yamaha TX81Z",
+   "kind": "D",
+   "skin": "tx81z",
+   "maker": "Yamaha",
+   "year": 1987
+  },
+  {
+   "name": "Roland D-50",
+   "kind": "D",
+   "skin": "d50",
+   "maker": "Roland",
+   "year": 1987
+  },
+  {
+   "name": "Korg M1",
+   "kind": "D",
+   "skin": "m1",
+   "maker": "Korg",
+   "year": 1988
+  },
+  {
+   "name": "Korg Wavestation",
+   "kind": "D",
+   "skin": "wavestation",
+   "maker": "Korg",
+   "year": 1990
+  },
+  {
+   "name": "Roland JP-8000",
+   "kind": "D",
+   "skin": "jp8000",
+   "maker": "Roland",
+   "year": 1996
+  },
+  {
+   "name": "Roland JP-8080",
+   "kind": "D",
+   "skin": "jp8000",
+   "maker": "Roland",
+   "year": 1998
+  },
+  {
+   "name": "Access Virus",
+   "kind": "D",
+   "skin": "virus",
+   "maker": "Access",
+   "year": 1997
+  },
+  {
+   "name": "Clavia Nord Lead",
+   "kind": "D",
+   "skin": "nord",
+   "maker": "Clavia",
+   "year": 1995
+  },
+  {
+   "name": "Korg Triton",
+   "kind": "D",
+   "skin": "rompler",
+   "maker": "Korg",
+   "year": 1999
+  },
+  {
+   "name": "NI Massive",
+   "kind": "D",
+   "skin": "software",
+   "maker": "Native Instruments",
+   "year": 2007
+  },
+  {
+   "name": "LennarDigital Sylenth1",
+   "kind": "D",
+   "skin": "software",
+   "maker": "LennarDigital",
+   "year": 2006
+  },
+  {
+   "name": "Xfer Serum",
+   "kind": "D",
+   "skin": "software",
+   "maker": "Xfer Records",
+   "year": 2014
+  }
+ ],
+ "presets": [
+  {
+   "name": "Radiophonic Bassline",
+   "original": "",
+   "year": 1963,
+   "decade": "1960s",
+   "genre": "Film / TV",
+   "song": "Doctor Who (theme)",
+   "artist": "Ron Grainer / Delia Derbyshire",
+   "synth": "BBC Radiophonic oscillators",
+   "cat": "Bass",
+   "notes": "Oscillatori a valvole e nastro, non un synth commerciale.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "BBC Radiophonic oscillators",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Triangle",
+      "o2wave": "Sine",
+      "o2lvl": 0.4,
+      "flt": "LP12",
+      "cut": 900,
+      "res": 0.3,
+      "env": 0.3,
+      "fd": 200,
+      "fs": 0.3,
+      "aa": 1,
+      "ad": 300,
+      "as": 0.6,
+      "ar": 80,
+      "dlymix": 0.15
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_trim": 5.8
+   }
+  },
+  {
+   "name": "Tannerin Glide",
+   "original": "",
+   "year": 1966,
+   "decade": "1960s",
+   "genre": "Pop",
+   "song": "Good Vibrations",
+   "artist": "The Beach Boys",
+   "synth": "Electro-Theremin",
+   "cat": "Lead",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Electro-Theremin",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Sine",
+      "o2wave": "Saw",
+      "o2lvl": 0.0,
+      "o2fine": 8,
+      "flt": "LP24 Ladder",
+      "cut": 6000,
+      "res": 0.0,
+      "env": 0.0,
+      "fa": 2,
+      "fd": 600,
+      "fs": 0.5,
+      "fr": 200,
+      "aa": 3,
+      "ad": 600,
+      "as": 0.9,
+      "ar": 180,
+      "lforate": 6.0,
+      "lfoshape": "Sine",
+      "lfopitch": 0.35,
+      "lfodelay": 350,
+      "drift": 0.2,
+      "fdrive": 0.0,
+      "dlymix": 0.12
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 260,
+    "g_revmix": 0.2,
+    "g_trim": 6.42
+   }
+  },
+  {
+   "name": "Brandenburg Moog",
+   "original": "",
+   "year": 1968,
+   "decade": "1960s",
+   "genre": "Electronic",
+   "song": "Brandenburg Concerto No. 3 (Switched-On Bach)",
+   "artist": "Wendy Carlos",
+   "synth": "Moog modular",
+   "cat": "Lead",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Moog modular",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Pulse",
+      "o2wave": "Saw",
+      "o2lvl": 0.0,
+      "o2fine": 8,
+      "flt": "LP24 Ladder",
+      "cut": 2600,
+      "res": 0.2,
+      "env": 0.35,
+      "fa": 2,
+      "fd": 600,
+      "fs": 0.5,
+      "fr": 200,
+      "aa": 3,
+      "ad": 600,
+      "as": 0.9,
+      "ar": 180,
+      "lforate": 5.5,
+      "lfoshape": "Sine",
+      "lfopitch": 0.15,
+      "lfodelay": 350,
+      "drift": 0.2,
+      "fdrive": 0.3,
+      "dlymix": 0.12,
+      "o1pw": 0.3
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Poly",
+    "g_glide": 0,
+    "g_revmix": 0.15,
+    "g_trim": 6.43
+   }
+  },
+  {
+   "name": "Save the Life Bass",
+   "original": "",
+   "year": 1968,
+   "decade": "1960s",
+   "genre": "Pop",
+   "song": "Save the Life of My Child",
+   "artist": "Simon & Garfunkel",
+   "synth": "Moog modular",
+   "cat": "Bass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Moog modular",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2oct": 0,
+      "o2fine": 6,
+      "o2lvl": 0.85,
+      "flt": "LP24 Ladder",
+      "cut": 500,
+      "res": 0.35,
+      "env": 0.6,
+      "fa": 1,
+      "fd": 500,
+      "fs": 0.15,
+      "fr": 120,
+      "aa": 1,
+      "ad": 900,
+      "as": 0.85,
+      "ar": 90,
+      "fdrive": 0.35,
+      "key": 0.35,
+      "velf": 0.25,
+      "drift": 0.25,
+      "dist": "Tube",
+      "dgain": 0.3
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 0,
+    "g_trim": 1.84
+   }
+  },
+  {
+   "name": "Because Moog Pad",
+   "original": "",
+   "year": 1969,
+   "decade": "1960s",
+   "genre": "Rock",
+   "song": "Because",
+   "artist": "The Beatles",
+   "synth": "Moog modular",
+   "cat": "Pad",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Moog modular",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2lvl": 0.6,
+      "o2fine": 8,
+      "flt": "LP24 Ladder",
+      "cut": 1200,
+      "res": 0.1,
+      "env": 0.35,
+      "fa": 2,
+      "fd": 600,
+      "fs": 0.5,
+      "fr": 200,
+      "aa": 250,
+      "ad": 600,
+      "as": 0.9,
+      "ar": 900,
+      "lforate": 5.5,
+      "lfoshape": "Sine",
+      "lfopitch": 0.2,
+      "lfodelay": 350,
+      "drift": 0.2,
+      "fdrive": 0.3,
+      "dlymix": 0.12
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Poly",
+    "g_glide": 0,
+    "g_revmix": 0.3,
+    "g_trim": -3.8
+   }
+  },
+  {
+   "name": "Here Comes the Moog",
+   "original": "",
+   "year": 1969,
+   "decade": "1960s",
+   "genre": "Rock",
+   "song": "Here Comes the Sun",
+   "artist": "The Beatles",
+   "synth": "Moog modular",
+   "cat": "Lead",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Moog modular",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2lvl": 0.0,
+      "o2fine": 8,
+      "flt": "LP24 Ladder",
+      "cut": 1800,
+      "res": 0.15,
+      "env": 0.35,
+      "fa": 2,
+      "fd": 600,
+      "fs": 0.5,
+      "fr": 200,
+      "aa": 60,
+      "ad": 600,
+      "as": 0.9,
+      "ar": 180,
+      "lforate": 5.5,
+      "lfoshape": "Sine",
+      "lfopitch": 0.25,
+      "lfodelay": 350,
+      "drift": 0.2,
+      "fdrive": 0.3,
+      "dlymix": 0.12
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 40,
+    "g_revmix": 0.25,
+    "g_trim": 4.54
+   }
+  },
+  {
+   "name": "Lucky Man Solo",
+   "original": "",
+   "year": 1970,
+   "decade": "1970s",
+   "genre": "Prog Rock",
+   "song": "Lucky Man",
+   "artist": "Emerson, Lake & Palmer",
+   "synth": "Moog modular",
+   "cat": "Lead",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Moog modular",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Pulse",
+      "o2lvl": 0.7,
+      "o2fine": 8,
+      "flt": "LP24 Ladder",
+      "cut": 2000,
+      "res": 0.35,
+      "env": 0.45,
+      "fa": 2,
+      "fd": 600,
+      "fs": 0.5,
+      "fr": 200,
+      "aa": 3,
+      "ad": 600,
+      "as": 0.9,
+      "ar": 180,
+      "lforate": 5.2,
+      "lfoshape": "Sine",
+      "lfopitch": 0.3,
+      "lfodelay": 350,
+      "drift": 0.2,
+      "fdrive": 0.3,
+      "dlymix": 0.18
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 180,
+    "g_trim": 4.38
+   }
+  },
+  {
+   "name": "Frankenstein Lead",
+   "original": "",
+   "year": 1972,
+   "decade": "1970s",
+   "genre": "Rock",
+   "song": "Frankenstein",
+   "artist": "The Edgar Winter Group",
+   "synth": "ARP 2600",
+   "cat": "Lead",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "ARP 2600",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2lvl": 0.7,
+      "o2fine": 8,
+      "flt": "LP24 Ladder",
+      "cut": 1300,
+      "res": 0.5,
+      "env": 0.55,
+      "fa": 2,
+      "fd": 600,
+      "fs": 0.5,
+      "fr": 200,
+      "aa": 3,
+      "ad": 600,
+      "as": 0.9,
+      "ar": 180,
+      "lforate": 5.5,
+      "lfoshape": "Sine",
+      "lfopitch": 0.2,
+      "lfodelay": 350,
+      "drift": 0.2,
+      "fdrive": 0.6,
+      "dlymix": 0.12,
+      "dist": "Tube",
+      "dgain": 0.4
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 80,
+    "g_trim": 3.83
+   }
+  },
+  {
+   "name": "Popcorn Pluck",
+   "original": "",
+   "year": 1972,
+   "decade": "1970s",
+   "genre": "Pop",
+   "song": "Popcorn",
+   "artist": "Hot Butter",
+   "synth": "Moog modular",
+   "cat": "Pluck",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Moog modular",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Pulse",
+      "o2wave": "Pulse",
+      "o2lvl": 0.0,
+      "o2fine": 6,
+      "flt": "LP24 Ladder",
+      "cut": 1800,
+      "res": 0.25,
+      "env": 0.7,
+      "fa": 0.5,
+      "fd": 160,
+      "fs": 0.0,
+      "fr": 160,
+      "aa": 0.5,
+      "ad": 400.0,
+      "as": 0.0,
+      "ar": 160,
+      "drift": 0.1,
+      "velf": 0.4,
+      "key": 0.6,
+      "dlymix": 0.0,
+      "dlydiv": "1/8D",
+      "o1pw": 0.35
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.1,
+    "g_trim": 12.57
+   }
+  },
+  {
+   "name": "Rollin' Stone Bass",
+   "original": "",
+   "year": 1972,
+   "decade": "1970s",
+   "genre": "Funk / Soul",
+   "song": "Papa Was a Rollin' Stone",
+   "artist": "The Temptations",
+   "synth": "ARP 2600",
+   "cat": "Bass",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "ARP 2600",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2oct": 0,
+      "o2fine": 6,
+      "o2lvl": 0.85,
+      "flt": "LP24 Ladder",
+      "cut": 420,
+      "res": 0.3,
+      "env": 0.4,
+      "fa": 1,
+      "fd": 600,
+      "fs": 0.3,
+      "fr": 120,
+      "aa": 1,
+      "ad": 900,
+      "as": 0.85,
+      "ar": 90,
+      "fdrive": 0.35,
+      "key": 0.35,
+      "velf": 0.25,
+      "drift": 0.25
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 0,
+    "g_trim": 5.68
+   }
+  },
+  {
+   "name": "Chameleon Bass",
+   "original": "",
+   "year": 1973,
+   "decade": "1970s",
+   "genre": "Funk / Soul",
+   "song": "Chameleon",
+   "artist": "Herbie Hancock",
+   "synth": "ARP Odyssey",
+   "cat": "Bass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "ARP Odyssey",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o2wave": "Pulse",
+      "o2oct": 0,
+      "o2fine": 0,
+      "o2lvl": 0.85,
+      "flt": "LP24 Ladder",
+      "cut": 450,
+      "res": 0.45,
+      "env": 0.6,
+      "fa": 1,
+      "fd": 260,
+      "fs": 0.15,
+      "fr": 120,
+      "aa": 1,
+      "ad": 900,
+      "as": 0.85,
+      "ar": 90,
+      "fdrive": 0.35,
+      "key": 0.35,
+      "velf": 0.25,
+      "drift": 0.25
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 20,
+    "g_trim": 4.96
+   }
+  },
+  {
+   "name": "Living for the City Bass",
+   "original": "",
+   "year": 1973,
+   "decade": "1970s",
+   "genre": "Funk / Soul",
+   "song": "Living for the City",
+   "artist": "Stevie Wonder",
+   "synth": "Moog modular",
+   "cat": "Bass",
+   "notes": "Moog III / TONTO.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Moog modular",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2oct": 0,
+      "o2fine": 6,
+      "o2lvl": 0.85,
+      "flt": "LP24 Ladder",
+      "cut": 500,
+      "res": 0.25,
+      "env": 0.5,
+      "fa": 1,
+      "fd": 500,
+      "fs": 0.15,
+      "fr": 120,
+      "aa": 1,
+      "ad": 900,
+      "as": 0.85,
+      "ar": 90,
+      "fdrive": 0.35,
+      "key": 0.35,
+      "velf": 0.25,
+      "drift": 0.25
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 0,
+    "g_trim": 5.56
+   }
+  },
+  {
+   "name": "On the Run",
+   "original": "",
+   "year": 1973,
+   "decade": "1970s",
+   "genre": "Prog Rock",
+   "song": "On the Run",
+   "artist": "Pink Floyd",
+   "synth": "EMS VCS3 / Synthi AKS",
+   "cat": "Sequence",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "EMS VCS3 / Synthi AKS",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Pulse",
+      "o2lvl": 0.5,
+      "o2fine": 10,
+      "flt": "LP12",
+      "cut": 900,
+      "res": 0.55,
+      "env": 0.4,
+      "fd": 130,
+      "fs": 0.1,
+      "aa": 0.5,
+      "ad": 160,
+      "as": 0.2,
+      "ar": 60,
+      "lfocut": 0.35,
+      "lforate": 0.25,
+      "dlymix": 0.3,
+      "dlydiv": "1/16",
+      "dlyfb": 0.55
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_trim": 4.02
+   }
+  },
+  {
+   "name": "Autobahn Bass",
+   "original": "",
+   "year": 1974,
+   "decade": "1970s",
+   "genre": "Electronic",
+   "song": "Autobahn",
+   "artist": "Kraftwerk",
+   "synth": "Moog Minimoog Model D",
+   "cat": "Bass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Moog Minimoog Model D",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2oct": 0,
+      "o2fine": 0,
+      "o2lvl": 0.85,
+      "flt": "LP24 Ladder",
+      "cut": 320,
+      "res": 0.2,
+      "env": 0.45,
+      "fa": 1,
+      "fd": 300,
+      "fs": 0.15,
+      "fr": 120,
+      "aa": 1,
+      "ad": 900,
+      "as": 0.85,
+      "ar": 90,
+      "fdrive": 0.35,
+      "key": 0.35,
+      "velf": 0.25,
+      "drift": 0.25
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 0,
+    "g_trim": 5.7
+   }
+  },
+  {
+   "name": "Autobahn Lead",
+   "original": "",
+   "year": 1974,
+   "decade": "1970s",
+   "genre": "Electronic",
+   "song": "Autobahn",
+   "artist": "Kraftwerk",
+   "synth": "Moog Minimoog Model D",
+   "cat": "Lead",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Moog Minimoog Model D",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Triangle",
+      "o2wave": "Triangle",
+      "o2lvl": 0.7,
+      "o2fine": 8,
+      "flt": "LP24 Ladder",
+      "cut": 3000,
+      "res": 0.1,
+      "env": 0.35,
+      "fa": 2,
+      "fd": 600,
+      "fs": 0.5,
+      "fr": 200,
+      "aa": 3,
+      "ad": 600,
+      "as": 0.9,
+      "ar": 180,
+      "lforate": 5.5,
+      "lfoshape": "Sine",
+      "lfopitch": 0.2,
+      "lfodelay": 350,
+      "drift": 0.2,
+      "fdrive": 0.3,
+      "dlymix": 0.12
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 90,
+    "g_trim": 4.81
+   }
+  },
+  {
+   "name": "Shine On Minimoog",
+   "original": "",
+   "year": 1975,
+   "decade": "1970s",
+   "genre": "Prog Rock",
+   "song": "Shine On You Crazy Diamond",
+   "artist": "Pink Floyd",
+   "synth": "Moog Minimoog Model D",
+   "cat": "Lead",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Moog Minimoog Model D",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2lvl": 0.7,
+      "o2fine": 8,
+      "flt": "LP24 Ladder",
+      "cut": 1700,
+      "res": 0.35,
+      "env": 0.4,
+      "fa": 2,
+      "fd": 600,
+      "fs": 0.5,
+      "fr": 200,
+      "aa": 3,
+      "ad": 600,
+      "as": 0.9,
+      "ar": 180,
+      "lforate": 5.5,
+      "lfoshape": "Sine",
+      "lfopitch": 0.25,
+      "lfodelay": 350,
+      "drift": 0.2,
+      "fdrive": 0.3,
+      "dlymix": 0.2
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 120,
+    "g_revmix": 0.3,
+    "g_trim": 2.86
+   }
+  },
+  {
+   "name": "Welcome Machine Drone",
+   "original": "",
+   "year": 1975,
+   "decade": "1970s",
+   "genre": "Prog Rock",
+   "song": "Welcome to the Machine",
+   "artist": "Pink Floyd",
+   "synth": "EMS VCS3 / Synthi AKS",
+   "cat": "Pad",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "EMS VCS3 / Synthi AKS",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2lvl": 1,
+      "o2fine": -20,
+      "flt": "LP24 Ladder",
+      "cut": 500,
+      "res": 0.55,
+      "lfocut": 0.5,
+      "lforate": 0.12,
+      "aa": 1500,
+      "ad": 2000,
+      "as": 1,
+      "ar": 3000
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.4,
+    "g_revsize": 0.85,
+    "g_trim": -3.19
+   }
+  },
+  {
+   "name": "Oxygene IV Lead",
+   "original": "",
+   "year": 1976,
+   "decade": "1970s",
+   "genre": "Electronic",
+   "song": "Oxygène (Part IV)",
+   "artist": "Jean-Michel Jarre",
+   "synth": "ARP Odyssey",
+   "cat": "Lead",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "ARP Odyssey",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Pulse",
+      "o2wave": "Saw",
+      "o2lvl": 0.4,
+      "o2fine": 8,
+      "flt": "LP24 Ladder",
+      "cut": 2200,
+      "res": 0.3,
+      "env": 0.35,
+      "fa": 2,
+      "fd": 600,
+      "fs": 0.5,
+      "fr": 200,
+      "aa": 3,
+      "ad": 600,
+      "as": 0.9,
+      "ar": 180,
+      "lforate": 5.5,
+      "lfoshape": "Sine",
+      "lfopitch": 0.3,
+      "lfodelay": 350,
+      "drift": 0.2,
+      "fdrive": 0.3,
+      "dlymix": 0.3,
+      "o1pw": 0.25
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 90,
+    "g_revmix": 0.3,
+    "g_chomode": "I",
+    "g_trim": 4.3
+   }
+  },
+  {
+   "name": "Oxygene Strings",
+   "original": "",
+   "year": 1976,
+   "decade": "1970s",
+   "genre": "Electronic",
+   "song": "Oxygène (Part IV)",
+   "artist": "Jean-Michel Jarre",
+   "synth": "ARP Solina String Ensemble",
+   "cat": "Strings",
+   "notes": "String machine Eminent 310, stessa famiglia della Solina.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "ARP Solina String Ensemble",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2oct": 1,
+      "o2lvl": 0.5,
+      "o2fine": 4,
+      "flt": "LP12",
+      "cut": 2600,
+      "res": 0.05,
+      "env": 0.1,
+      "fa": 700,
+      "fd": 1000,
+      "fs": 0.8,
+      "fr": 2500,
+      "aa": 700,
+      "ad": 1000,
+      "as": 1.0,
+      "ar": 2500,
+      "drift": 0.25,
+      "dlymix": 0.15
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "Ensemble",
+    "g_chomix": 0.85,
+    "g_revmix": 0.4,
+    "g_trim": -3.48
+   }
+  },
+  {
+   "name": "Close Encounters Tones",
+   "original": "",
+   "year": 1977,
+   "decade": "1970s",
+   "genre": "Film / TV",
+   "song": "Close Encounters of the Third Kind",
+   "artist": "John Williams",
+   "synth": "ARP 2500",
+   "cat": "Lead",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "ARP 2500",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2lvl": 0.5,
+      "o2fine": 8,
+      "flt": "LP24 Ladder",
+      "cut": 1600,
+      "res": 0.2,
+      "env": 0.35,
+      "fa": 2,
+      "fd": 600,
+      "fs": 0.5,
+      "fr": 200,
+      "aa": 40,
+      "ad": 600,
+      "as": 0.9,
+      "ar": 180,
+      "lforate": 5.5,
+      "lfoshape": "Sine",
+      "lfopitch": 0.0,
+      "lfodelay": 0,
+      "drift": 0.2,
+      "fdrive": 0.3,
+      "dlymix": 0.12
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Poly",
+    "g_glide": 0,
+    "g_revmix": 0.35,
+    "g_trim": 3.06
+   }
+  },
+  {
+   "name": "Flash Light Bass",
+   "original": "",
+   "year": 1977,
+   "decade": "1970s",
+   "genre": "Funk / Soul",
+   "song": "Flash Light",
+   "artist": "Parliament",
+   "synth": "Moog Minimoog Model D",
+   "cat": "Bass",
+   "notes": "Bernie Worrell, Minimoog multi-traccia.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Moog Minimoog Model D",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o2wave": "Pulse",
+      "o2oct": 0,
+      "o2fine": 4,
+      "o2lvl": 0.85,
+      "flt": "LP24 Ladder",
+      "cut": 280,
+      "res": 0.35,
+      "env": 0.7,
+      "fa": 1,
+      "fd": 420,
+      "fs": 0.15,
+      "fr": 120,
+      "aa": 1,
+      "ad": 900,
+      "as": 0.85,
+      "ar": 90,
+      "fdrive": 0.35,
+      "key": 0.35,
+      "velf": 0.25,
+      "drift": 0.25
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 35,
+    "g_trim": 4.9
+   }
+  },
+  {
+   "name": "I Feel Love Bass",
+   "original": "",
+   "year": 1977,
+   "decade": "1970s",
+   "genre": "Disco",
+   "song": "I Feel Love",
+   "artist": "Donna Summer",
+   "synth": "Moog modular",
+   "cat": "Bass",
+   "notes": "Giorgio Moroder: Moog modular sincronizzato a 1/16.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Moog modular",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2oct": 1,
+      "o2fine": 0,
+      "o2lvl": 0.85,
+      "flt": "LP24 Ladder",
+      "cut": 420,
+      "res": 0.3,
+      "env": 0.6,
+      "fa": 1,
+      "fd": 160,
+      "fs": 0.0,
+      "fr": 120,
+      "aa": 1,
+      "ad": 220,
+      "as": 0.0,
+      "ar": 60,
+      "fdrive": 0.35,
+      "key": 0.35,
+      "velf": 0.25,
+      "drift": 0.25,
+      "dlymix": 0.22,
+      "dlydiv": "1/16",
+      "dlyfb": 0.2,
+      "dlyping": 0
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Poly",
+    "g_glide": 0,
+    "g_trim": 5.17
+   }
+  },
+  {
+   "name": "Trans-Europe Lead",
+   "original": "",
+   "year": 1977,
+   "decade": "1970s",
+   "genre": "Electronic",
+   "song": "Trans-Europe Express",
+   "artist": "Kraftwerk",
+   "synth": "Polymoog",
+   "cat": "Lead",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Polymoog",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Pulse",
+      "o2wave": "Saw",
+      "o2lvl": 0.0,
+      "o2fine": 8,
+      "flt": "LP24 Ladder",
+      "cut": 1500,
+      "res": 0.2,
+      "env": 0.35,
+      "fa": 2,
+      "fd": 600,
+      "fs": 0.5,
+      "fr": 200,
+      "aa": 3,
+      "ad": 600,
+      "as": 0.9,
+      "ar": 180,
+      "lforate": 5.5,
+      "lfoshape": "Sine",
+      "lfopitch": 0.0,
+      "lfodelay": 0,
+      "drift": 0.2,
+      "fdrive": 0.3,
+      "dlymix": 0.12,
+      "o1pw": 0.4
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Poly",
+    "g_glide": 0,
+    "g_revmix": 0.25,
+    "g_trim": 5.82
+   }
+  },
+  {
+   "name": "Chase Sequence",
+   "original": "",
+   "year": 1978,
+   "decade": "1970s",
+   "genre": "Disco",
+   "song": "Chase (Midnight Express)",
+   "artist": "Giorgio Moroder",
+   "synth": "Moog modular",
+   "cat": "Sequence",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Moog modular",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2oct": 1,
+      "o2fine": 6,
+      "o2lvl": 0.85,
+      "flt": "LP24 Ladder",
+      "cut": 650,
+      "res": 0.45,
+      "env": 0.55,
+      "fa": 1,
+      "fd": 140,
+      "fs": 0.0,
+      "fr": 120,
+      "aa": 1,
+      "ad": 180,
+      "as": 0.0,
+      "ar": 90,
+      "fdrive": 0.35,
+      "key": 0.35,
+      "velf": 0.25,
+      "drift": 0.25,
+      "dlymix": 0.15,
+      "dlydiv": "1/16"
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Poly",
+    "g_glide": 0,
+    "g_trim": 5.6
+   }
+  },
+  {
+   "name": "The Model Riff",
+   "original": "",
+   "year": 1978,
+   "decade": "1970s",
+   "genre": "Electronic",
+   "song": "The Model",
+   "artist": "Kraftwerk",
+   "synth": "Moog Minimoog Model D",
+   "cat": "Sequence",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Moog Minimoog Model D",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Pulse",
+      "o2lvl": 0.0,
+      "o2fine": 6,
+      "flt": "LP24 Ladder",
+      "cut": 1200,
+      "res": 0.25,
+      "env": 0.7,
+      "fa": 0.5,
+      "fd": 200,
+      "fs": 0.0,
+      "fr": 200,
+      "aa": 0.5,
+      "ad": 500.0,
+      "as": 0.0,
+      "ar": 200,
+      "drift": 0.1,
+      "velf": 0.4,
+      "key": 0.6,
+      "dlymix": 0.18,
+      "dlydiv": "1/8D"
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.12,
+    "g_trim": 8.7
+   }
+  },
+  {
+   "name": "Behind the Mask Bass",
+   "original": "",
+   "year": 1979,
+   "decade": "1970s",
+   "genre": "Synth-Pop",
+   "song": "Behind the Mask",
+   "artist": "Yellow Magic Orchestra",
+   "synth": "ARP Odyssey",
+   "cat": "Bass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "ARP Odyssey",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o1pw": 0.5,
+      "sub": 0.0,
+      "flt": "LP24 Ladder",
+      "cut": 900,
+      "res": 0.3,
+      "env": 0.4,
+      "fa": 0.5,
+      "fd": 200,
+      "fs": 0.1,
+      "fr": 80,
+      "aa": 0.5,
+      "ad": 600,
+      "as": 0.7,
+      "ar": 60,
+      "fdrive": 0.3,
+      "key": 0.3,
+      "velf": 0.3,
+      "drift": 0.08
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Poly",
+    "g_trim": 5.81
+   }
+  },
+  {
+   "name": "Cars Lead",
+   "original": "",
+   "year": 1979,
+   "decade": "1970s",
+   "genre": "New Wave",
+   "song": "Cars",
+   "artist": "Gary Numan",
+   "synth": "Moog Minimoog Model D",
+   "cat": "Lead",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Moog Minimoog Model D",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2lvl": 0.9,
+      "o2fine": 0,
+      "flt": "LP24 Ladder",
+      "cut": 900,
+      "res": 0.35,
+      "env": 0.45,
+      "fa": 2,
+      "fd": 900,
+      "fs": 0.5,
+      "fr": 200,
+      "aa": 3,
+      "ad": 600,
+      "as": 0.9,
+      "ar": 180,
+      "lforate": 5.5,
+      "lfoshape": "Sine",
+      "lfopitch": 0.0,
+      "lfodelay": 0,
+      "drift": 0.2,
+      "fdrive": 0.3,
+      "dlymix": 0.12,
+      "o2oct": -1
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 0,
+    "g_trim": 4.26
+   }
+  },
+  {
+   "name": "Let's Go Sync",
+   "original": "",
+   "year": 1979,
+   "decade": "1970s",
+   "genre": "New Wave",
+   "song": "Let's Go",
+   "artist": "The Cars",
+   "synth": "Sequential Prophet-5",
+   "cat": "Lead",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Sequential Prophet-5",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2lvl": 1.0,
+      "o1lvl": 0.0,
+      "o2semi": 12,
+      "sync": 1,
+      "flt": "LP24 Ladder",
+      "cut": 5000,
+      "res": 0.15,
+      "env": 0.25,
+      "fa": 1,
+      "fd": 500,
+      "fs": 0.6,
+      "fr": 200,
+      "aa": 2,
+      "ad": 500,
+      "as": 0.9,
+      "ar": 200,
+      "drift": 0.15,
+      "penv": 0,
+      "pdec": 500,
+      "xmod": 0.15
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 30,
+    "g_trim": 7.79
+   }
+  },
+  {
+   "name": "Synclavier Strings",
+   "original": "",
+   "year": 1979,
+   "decade": "1970s",
+   "genre": "Electronic",
+   "song": "Phaedra-style FM strings (Synclavier I)",
+   "artist": "New England Digital demo",
+   "synth": "Synclavier",
+   "cat": "Strings",
+   "notes": "Sintesi additiva/FM del primo Synclavier.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Synclavier",
+     "p": {
+      "engine": "FM 6-op",
+      "alg": "32",
+      "fb": 0.0,
+      "fmvel": 0.6,
+      "flt": "Off",
+      "aa": 300,
+      "ad": 3000,
+      "as": 1.0,
+      "ar": 900,
+      "op1crs": 1,
+      "op1fin": 0,
+      "op1lvl": 0.8,
+      "op1atk": 300,
+      "op1dec": 3000,
+      "op1sus": 0.9,
+      "op1rel": 900,
+      "op2crs": 2,
+      "op2fin": 0.003,
+      "op2lvl": 0.5,
+      "op2atk": 300,
+      "op2dec": 3000,
+      "op2sus": 0.9,
+      "op2rel": 900,
+      "op3crs": 3,
+      "op3fin": 0,
+      "op3lvl": 0.35,
+      "op3atk": 300,
+      "op3dec": 3000,
+      "op3sus": 0.9,
+      "op3rel": 900,
+      "op4crs": 4,
+      "op4fin": 0.004,
+      "op4lvl": 0.25,
+      "op4atk": 300,
+      "op4dec": 3000,
+      "op4sus": 0.9,
+      "op4rel": 900,
+      "op5crs": 5,
+      "op5fin": 0,
+      "op5lvl": 0.15,
+      "op5atk": 300,
+      "op5dec": 3000,
+      "op5sus": 0.9,
+      "op5rel": 900,
+      "op6crs": 6,
+      "op6fin": 0,
+      "op6lvl": 0.1,
+      "op6atk": 300,
+      "op6dec": 3000,
+      "op6sus": 0.9,
+      "op6rel": 900
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.3,
+    "g_trim": 0.37
+   }
+  },
+  {
+   "name": "Vox Humana",
+   "original": "Vox Humana",
+   "year": 1979,
+   "decade": "1970s",
+   "genre": "New Wave",
+   "song": "Cars",
+   "artist": "Gary Numan",
+   "synth": "Polymoog",
+   "cat": "Pad",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Polymoog",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o1pw": 0.42,
+      "pwm": 0.0,
+      "sub": 0.0,
+      "o2wave": "Saw",
+      "o2lvl": 0.8,
+      "flt": "LP24 Ladder",
+      "cut": 1800,
+      "res": 0.1,
+      "env": 0.15,
+      "fa": 72.0,
+      "fd": 2500,
+      "fs": 0.6,
+      "fr": 600,
+      "aa": 60,
+      "ad": 1500,
+      "as": 1.0,
+      "ar": 600,
+      "lforate": 0.6,
+      "lfoshape": "Triangle",
+      "lfotim": 0.0,
+      "drift": 0.3,
+      "o2fine": -14
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "Ensemble",
+    "g_chomix": 0.7,
+    "g_revmix": 0.18,
+    "g_revsize": 0.7,
+    "g_trim": -1.49
+   }
+  },
+  {
+   "name": "Doctor Who 1980 Bass",
+   "original": "",
+   "year": 1980,
+   "decade": "1980s",
+   "genre": "Film / TV",
+   "song": "Doctor Who (1980 theme)",
+   "artist": "Peter Howell",
+   "synth": "Yamaha CS-80",
+   "cat": "Bass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Yamaha CS-80",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2oct": 0,
+      "o2fine": 6,
+      "o2lvl": 0.85,
+      "flt": "LP24 Ladder",
+      "cut": 600,
+      "res": 0.3,
+      "env": 0.4,
+      "fa": 1,
+      "fd": 200,
+      "fs": 0.15,
+      "fr": 120,
+      "aa": 1,
+      "ad": 900,
+      "as": 0.85,
+      "ar": 90,
+      "fdrive": 0.35,
+      "key": 0.35,
+      "velf": 0.25,
+      "drift": 0.25,
+      "dlymix": 0.2,
+      "dlydiv": "1/8D"
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 0,
+    "g_trim": 4.99
+   }
+  },
+  {
+   "name": "Rydeen Bass",
+   "original": "",
+   "year": 1980,
+   "decade": "1980s",
+   "genre": "Synth-Pop",
+   "song": "Rydeen",
+   "artist": "Yellow Magic Orchestra",
+   "synth": "ARP Odyssey",
+   "cat": "Bass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "ARP Odyssey",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o1pw": 0.5,
+      "sub": 0.0,
+      "flt": "LP24 Ladder",
+      "cut": 800,
+      "res": 0.35,
+      "env": 0.45,
+      "fa": 0.5,
+      "fd": 160,
+      "fs": 0.1,
+      "fr": 80,
+      "aa": 0.5,
+      "ad": 600,
+      "as": 0.7,
+      "ar": 60,
+      "fdrive": 0.3,
+      "key": 0.3,
+      "velf": 0.3,
+      "drift": 0.08
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Poly",
+    "g_trim": 5.82
+   }
+  },
+  {
+   "name": "Chariots Brass",
+   "original": "",
+   "year": 1981,
+   "decade": "1980s",
+   "genre": "Film / TV",
+   "song": "Chariots of Fire",
+   "artist": "Vangelis",
+   "synth": "Yamaha CS-80",
+   "cat": "Brass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Yamaha CS-80",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2lvl": 0.9,
+      "o2fine": 9,
+      "flt": "LP24 Ladder",
+      "cut": 1200,
+      "res": 0.15,
+      "env": 0.45,
+      "fa": 140,
+      "fd": 1600,
+      "fs": 0.7,
+      "fr": 300,
+      "aa": 8,
+      "ad": 900,
+      "as": 0.9,
+      "ar": 280,
+      "drift": 0.3,
+      "velf": 0.4,
+      "key": 0.5,
+      "uni": 2,
+      "detune": 0.12,
+      "lforate": 5.0,
+      "lfopitch": 0.15,
+      "lfodelay": 600
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "Off",
+    "g_chomix": 0.5,
+    "g_revmix": 0.45,
+    "g_revsize": 0.9,
+    "g_trim": -5.31
+   }
+  },
+  {
+   "name": "Ghosts Pad",
+   "original": "",
+   "year": 1981,
+   "decade": "1980s",
+   "genre": "New Wave",
+   "song": "Ghosts",
+   "artist": "Japan",
+   "synth": "Sequential Prophet-5",
+   "cat": "Pad",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Sequential Prophet-5",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o1pw": 0.42,
+      "pwm": 0.0,
+      "sub": 0.25,
+      "o2wave": "Saw",
+      "o2lvl": 0.0,
+      "flt": "LP24 Ladder",
+      "cut": 700,
+      "res": 0.35,
+      "env": 0.25,
+      "fa": 720.0,
+      "fd": 2500,
+      "fs": 0.6,
+      "fr": 2500,
+      "aa": 600,
+      "ad": 1500,
+      "as": 1.0,
+      "ar": 2500,
+      "lforate": 0.6,
+      "lfoshape": "Triangle",
+      "lfotim": 0.0,
+      "drift": 0.3
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "Off",
+    "g_chomix": 0.7,
+    "g_revmix": 0.4,
+    "g_revsize": 0.7,
+    "g_trim": -1.98
+   }
+  },
+  {
+   "name": "I Can't Go for That Riff",
+   "original": "",
+   "year": 1981,
+   "decade": "1980s",
+   "genre": "R&B",
+   "song": "I Can't Go for That (No Can Do)",
+   "artist": "Hall & Oates",
+   "synth": "Sequential Prophet-5",
+   "cat": "Keys",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Sequential Prophet-5",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Pulse",
+      "o2lvl": 0.6,
+      "o2fine": 7,
+      "o2pw": 0.35,
+      "flt": "LP24 Ladder",
+      "cut": 1400,
+      "res": 0.2,
+      "env": 0.4,
+      "fa": 1,
+      "fd": 380,
+      "fs": 0.0,
+      "fr": 380,
+      "aa": 1,
+      "ad": 608.0,
+      "as": 0.0,
+      "ar": 304.0,
+      "drift": 0.2,
+      "key": 0.5,
+      "velf": 0.35
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "Off",
+    "g_chomix": 0.55,
+    "g_trim": 1.06
+   }
+  },
+  {
+   "name": "In the Air Tonight Pad",
+   "original": "",
+   "year": 1981,
+   "decade": "1980s",
+   "genre": "Rock",
+   "song": "In the Air Tonight",
+   "artist": "Phil Collins",
+   "synth": "Sequential Prophet-5",
+   "cat": "Pad",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Sequential Prophet-5",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o1pw": 0.42,
+      "pwm": 0.0,
+      "sub": 0.25,
+      "o2wave": "Pulse",
+      "o2lvl": 0.6,
+      "flt": "LP24 Ladder",
+      "cut": 900,
+      "res": 0.3,
+      "env": 0.2,
+      "fa": 360.0,
+      "fd": 2500,
+      "fs": 0.6,
+      "fr": 2000,
+      "aa": 300,
+      "ad": 1500,
+      "as": 1.0,
+      "ar": 2000,
+      "lforate": 0.6,
+      "lfoshape": "Triangle",
+      "lfotim": 0.0,
+      "drift": 0.3,
+      "o2fine": 8
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "I",
+    "g_chomix": 0.7,
+    "g_revmix": 0.35,
+    "g_revsize": 0.7,
+    "g_trim": -2.2
+   }
+  },
+  {
+   "name": "Tainted Love Bink",
+   "original": "",
+   "year": 1981,
+   "decade": "1980s",
+   "genre": "Synth-Pop",
+   "song": "Tainted Love",
+   "artist": "Soft Cell",
+   "synth": "Synclavier",
+   "cat": "FX",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Synclavier",
+     "p": {
+      "engine": "FM 6-op",
+      "alg": "1",
+      "fb": 0.0,
+      "fmvel": 0.3,
+      "flt": "Off",
+      "aa": 1,
+      "ad": 250,
+      "as": 0.0,
+      "ar": 120,
+      "op1crs": 1,
+      "op1fin": 0,
+      "op1lvl": 1.0,
+      "op1atk": 0.5,
+      "op1dec": 180,
+      "op1sus": 0,
+      "op1rel": 120,
+      "op2crs": 1,
+      "op2fin": 0.41,
+      "op2lvl": 0.65,
+      "op2atk": 0.5,
+      "op2dec": 90,
+      "op2sus": 0,
+      "op2rel": 90,
+      "op3crs": 1,
+      "op3fin": 0,
+      "op3lvl": 0,
+      "op3atk": 1,
+      "op3dec": 1000,
+      "op3sus": 1,
+      "op3rel": 300,
+      "op4crs": 1,
+      "op4fin": 0,
+      "op4lvl": 0,
+      "op4atk": 1,
+      "op4dec": 1000,
+      "op4sus": 1,
+      "op4rel": 300,
+      "op5crs": 1,
+      "op5fin": 0,
+      "op5lvl": 0,
+      "op5atk": 1,
+      "op5dec": 1000,
+      "op5sus": 1,
+      "op5rel": 300,
+      "op6crs": 1,
+      "op6fin": 0,
+      "op6lvl": 0,
+      "op6atk": 1,
+      "op6dec": 1000,
+      "op6sus": 1,
+      "op6rel": 300,
+      "oct": 1
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.15,
+    "g_trim": 7.37
+   }
+  },
+  {
+   "name": "Tom Sawyer Growl",
+   "original": "",
+   "year": 1981,
+   "decade": "1980s",
+   "genre": "Prog Rock",
+   "song": "Tom Sawyer",
+   "artist": "Rush",
+   "synth": "Oberheim OB-X",
+   "cat": "Lead",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Oberheim OB-X",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2lvl": 1,
+      "o2fine": -15,
+      "oct": -1,
+      "flt": "LP24 Ladder",
+      "cut": 250,
+      "res": 0.55,
+      "env": 0.75,
+      "fa": 600,
+      "fd": 1200,
+      "fs": 0.3,
+      "aa": 5,
+      "ad": 900,
+      "as": 1.0,
+      "ar": 400,
+      "fdrive": 0.4
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 150,
+    "g_trim": 4.34
+   }
+  },
+  {
+   "name": "1999 Stabs",
+   "original": "",
+   "year": 1982,
+   "decade": "1980s",
+   "genre": "Funk / Soul",
+   "song": "1999",
+   "artist": "Prince",
+   "synth": "Oberheim OB-Xa",
+   "cat": "Stab",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Oberheim OB-Xa",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Pulse",
+      "o2lvl": 0.6,
+      "o2fine": 7,
+      "o2pw": 0.35,
+      "flt": "LP24 Ladder",
+      "cut": 1400,
+      "res": 0.15,
+      "env": 0.5,
+      "fa": 1,
+      "fd": 320,
+      "fs": 0.0,
+      "fr": 320,
+      "aa": 1,
+      "ad": 512.0,
+      "as": 0.0,
+      "ar": 256.0,
+      "drift": 0.2,
+      "key": 0.5,
+      "velf": 0.35,
+      "uni": 2,
+      "detune": 0.15
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "Off",
+    "g_chomix": 0.55,
+    "g_trim": -1.01
+   }
+  },
+  {
+   "name": "Blade Runner Blues",
+   "original": "",
+   "year": 1982,
+   "decade": "1980s",
+   "genre": "Film / TV",
+   "song": "Blade Runner Blues",
+   "artist": "Vangelis",
+   "synth": "Yamaha CS-80",
+   "cat": "Pad",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Yamaha CS-80",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o1pw": 0.42,
+      "pwm": 0.0,
+      "sub": 0.25,
+      "o2wave": "Saw",
+      "o2lvl": 0.0,
+      "flt": "LP24 Ladder",
+      "cut": 1100,
+      "res": 0.2,
+      "env": 0.3,
+      "fa": 480.0,
+      "fd": 2500,
+      "fs": 0.6,
+      "fr": 2500,
+      "aa": 400,
+      "ad": 1500,
+      "as": 1.0,
+      "ar": 2500,
+      "lforate": 5,
+      "lfoshape": "Triangle",
+      "lfotim": 0.0,
+      "drift": 0.3,
+      "lfopitch": 0.12
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "Ensemble",
+    "g_chomix": 0.7,
+    "g_revmix": 0.5,
+    "g_revsize": 0.95,
+    "g_trim": -1.68
+   }
+  },
+  {
+   "name": "Blade Runner Brass",
+   "original": "",
+   "year": 1982,
+   "decade": "1980s",
+   "genre": "Film / TV",
+   "song": "Blade Runner (End Titles)",
+   "artist": "Vangelis",
+   "synth": "Yamaha CS-80",
+   "cat": "Brass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Yamaha CS-80",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2lvl": 0.9,
+      "o2fine": 9,
+      "flt": "LP24 Ladder",
+      "cut": 900,
+      "res": 0.25,
+      "env": 0.55,
+      "fa": 350,
+      "fd": 2500,
+      "fs": 0.6,
+      "fr": 300,
+      "aa": 200,
+      "ad": 900,
+      "as": 0.9,
+      "ar": 1500,
+      "drift": 0.3,
+      "velf": 0.4,
+      "key": 0.5,
+      "uni": 2,
+      "detune": 0.12,
+      "lforate": 5.5,
+      "lfopitch": 0.2,
+      "lfodelay": 800,
+      "dlymix": 0.15
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "Off",
+    "g_chomix": 0.5,
+    "g_revmix": 0.55,
+    "g_revsize": 0.95,
+    "g_trim": -6.07
+   }
+  },
+  {
+   "name": "Don't Go Bass",
+   "original": "",
+   "year": 1982,
+   "decade": "1980s",
+   "genre": "Synth-Pop",
+   "song": "Don't Go",
+   "artist": "Yazoo",
+   "synth": "Roland SH-101",
+   "cat": "Bass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland SH-101",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o1pw": 0.5,
+      "sub": 0.6,
+      "flt": "LP24 Ladder",
+      "cut": 700,
+      "res": 0.3,
+      "env": 0.5,
+      "fa": 0.5,
+      "fd": 200,
+      "fs": 0.1,
+      "fr": 80,
+      "aa": 0.5,
+      "ad": 600,
+      "as": 0.7,
+      "ar": 60,
+      "fdrive": 0.3,
+      "key": 0.3,
+      "velf": 0.3,
+      "drift": 0.08
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_trim": 5.65
+   }
+  },
+  {
+   "name": "Hungry Like the Wolf Arp",
+   "original": "",
+   "year": 1982,
+   "decade": "1980s",
+   "genre": "New Wave",
+   "song": "Hungry Like the Wolf",
+   "artist": "Duran Duran",
+   "synth": "Roland Jupiter-8",
+   "cat": "Sequence",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Jupiter-8",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Pulse",
+      "o2wave": "Pulse",
+      "o2lvl": 0.4,
+      "o2fine": 6,
+      "flt": "LP24 Ladder",
+      "cut": 1500,
+      "res": 0.3,
+      "env": 0.7,
+      "fa": 0.5,
+      "fd": 150,
+      "fs": 0.0,
+      "fr": 150,
+      "aa": 0.5,
+      "ad": 375.0,
+      "as": 0.0,
+      "ar": 150,
+      "drift": 0.1,
+      "velf": 0.4,
+      "key": 0.6,
+      "dlymix": 0.15,
+      "dlydiv": "1/16"
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.12,
+    "g_trim": 11.49
+   }
+  },
+  {
+   "name": "I Ran Bass",
+   "original": "",
+   "year": 1982,
+   "decade": "1980s",
+   "genre": "New Wave",
+   "song": "I Ran (So Far Away)",
+   "artist": "A Flock of Seagulls",
+   "synth": "Korg MS-20",
+   "cat": "Bass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Korg MS-20",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o1pw": 0.5,
+      "sub": 0.2,
+      "flt": "LP12",
+      "cut": 650,
+      "res": 0.5,
+      "env": 0.4,
+      "fa": 0.5,
+      "fd": 250,
+      "fs": 0.1,
+      "fr": 80,
+      "aa": 0.5,
+      "ad": 600,
+      "as": 0.7,
+      "ar": 60,
+      "fdrive": 0.6,
+      "key": 0.3,
+      "velf": 0.3,
+      "drift": 0.08
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_trim": 3.49
+   }
+  },
+  {
+   "name": "Planet Rock ORCH5",
+   "original": "ORCH5",
+   "year": 1982,
+   "decade": "1980s",
+   "genre": "Hip-Hop",
+   "song": "Planet Rock",
+   "artist": "Afrika Bambaataa & The Soulsonic Force",
+   "synth": "Fairlight CMI",
+   "cat": "Stab",
+   "notes": "Fairlight = campionatore digitale a 8 bit: il colpo d'orchestra è sintetizzato (additivo + riduzione bit/frequenza).",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Fairlight CMI",
+     "p": {
+      "engine": "Additive",
+      "addm": "Brass",
+      "bright": 0.8,
+      "tilt": 0.5,
+      "inh": 0.0,
+      "even": 1.0,
+      "aa": 1,
+      "ad": 420,
+      "as": 0.0,
+      "ar": 200,
+      "flt": "Off",
+      "cut": 20000,
+      "bits": 0.55,
+      "srr": 0.35,
+      "oct": -1
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.2,
+    "g_trim": -0.54
+   }
+  },
+  {
+   "name": "Raga Bhairav 303",
+   "original": "",
+   "year": 1982,
+   "decade": "1980s",
+   "genre": "Acid House",
+   "song": "Raga Bhairav (Ten Ragas to a Disco Beat)",
+   "artist": "Charanjit Singh",
+   "synth": "Roland TB-303",
+   "cat": "Bass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland TB-303",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o1pw": 0.5,
+      "flt": "LP 303 Diode",
+      "cut": 500,
+      "res": 0.7,
+      "env": 0.5,
+      "fa": 0.5,
+      "fd": 300,
+      "fs": 0.0,
+      "fr": 60,
+      "aa": 0.5,
+      "ad": 1300,
+      "as": 0.55,
+      "ar": 25,
+      "accent": 0.85,
+      "fdrive": 0.35,
+      "key": 0.2,
+      "velf": 0.15,
+      "drift": 0.05,
+      "dist": "Off",
+      "dgain": 0.5,
+      "dtone": 0.5
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Legato",
+    "g_glide": 60,
+    "g_vel": 0.35,
+    "g_trim": -0.15
+   }
+  },
+  {
+   "name": "Thriller Opening Pad",
+   "original": "",
+   "year": 1982,
+   "decade": "1980s",
+   "genre": "Pop",
+   "song": "Thriller",
+   "artist": "Michael Jackson",
+   "synth": "Roland Jupiter-8",
+   "cat": "Pad",
+   "notes": "Anthony Marinelli, Jupiter-8 per i pad d'apertura (fonte: blog di settore).",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Jupiter-8",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o1pw": 0.42,
+      "pwm": 0.0,
+      "sub": 0.25,
+      "o2wave": "Saw",
+      "o2lvl": 0.8,
+      "flt": "LP24 Ladder",
+      "cut": 1400,
+      "res": 0.2,
+      "env": 0.25,
+      "fa": 1440.0,
+      "fd": 2500,
+      "fs": 0.6,
+      "fr": 2500,
+      "aa": 1200,
+      "ad": 1500,
+      "as": 1.0,
+      "ar": 2500,
+      "lforate": 0.6,
+      "lfoshape": "Triangle",
+      "lfotim": 0.0,
+      "drift": 0.3,
+      "o2fine": -9
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "II",
+    "g_chomix": 0.7,
+    "g_revmix": 0.35,
+    "g_revsize": 0.7,
+    "g_trim": -0.88
+   }
+  },
+  {
+   "name": "Valerie Synth",
+   "original": "",
+   "year": 1982,
+   "decade": "1980s",
+   "genre": "Pop",
+   "song": "Valerie",
+   "artist": "Steve Winwood",
+   "synth": "Sequential Prophet-5",
+   "cat": "Chord",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Sequential Prophet-5",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2lvl": 0.6,
+      "o2fine": 7,
+      "o2pw": 0.35,
+      "flt": "LP24 Ladder",
+      "cut": 1800,
+      "res": 0.15,
+      "env": 0.35,
+      "fa": 1,
+      "fd": 600,
+      "fs": 0.0,
+      "fr": 600,
+      "aa": 1,
+      "ad": 960.0,
+      "as": 0.0,
+      "ar": 480.0,
+      "drift": 0.2,
+      "key": 0.5,
+      "velf": 0.35
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "I",
+    "g_chomix": 0.55,
+    "g_trim": 0.58
+   }
+  },
+  {
+   "name": "Beat It Gong",
+   "original": "",
+   "year": 1983,
+   "decade": "1980s",
+   "genre": "Pop",
+   "song": "Beat It",
+   "artist": "Michael Jackson",
+   "synth": "Synclavier",
+   "cat": "FX",
+   "notes": "Intro di gong del Synclavier.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Synclavier",
+     "p": {
+      "engine": "FM 6-op",
+      "alg": "5",
+      "fb": 0.0,
+      "fmvel": 0.6,
+      "flt": "Off",
+      "aa": 1,
+      "ad": 9000,
+      "as": 0.0,
+      "ar": 4000,
+      "op1crs": 1,
+      "op1fin": 0,
+      "op1lvl": 1.0,
+      "op1atk": 1,
+      "op1dec": 6000,
+      "op1sus": 0,
+      "op1rel": 2500,
+      "op2crs": 3,
+      "op2fin": 0.5,
+      "op2lvl": 0.62,
+      "op2atk": 1,
+      "op2dec": 3500,
+      "op2sus": 0,
+      "op2rel": 2000,
+      "op3crs": 1,
+      "op3fin": 0,
+      "op3lvl": 0.55,
+      "op3atk": 1,
+      "op3dec": 2500,
+      "op3sus": 0,
+      "op3rel": 2000,
+      "op4crs": 7,
+      "op4fin": 0,
+      "op4lvl": 0.4,
+      "op4atk": 1,
+      "op4dec": 900,
+      "op4sus": 0,
+      "op4rel": 800,
+      "op5crs": 2,
+      "op5fin": 0,
+      "op5lvl": 0.35,
+      "op5atk": 1,
+      "op5dec": 4000,
+      "op5sus": 0,
+      "op5rel": 2000,
+      "op6crs": 1.41,
+      "op6fin": 0,
+      "op6lvl": 0.3,
+      "op6atk": 1,
+      "op6dec": 1500,
+      "op6sus": 0,
+      "op6rel": 900,
+      "oct": -2
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.4,
+    "g_trim": -0.04
+   }
+  },
+  {
+   "name": "Blue Monday Bass",
+   "original": "",
+   "year": 1983,
+   "decade": "1980s",
+   "genre": "New Wave",
+   "song": "Blue Monday",
+   "artist": "New Order",
+   "synth": "Moog Source",
+   "cat": "Bass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Moog Source",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o1pw": 0.5,
+      "sub": 0.0,
+      "flt": "LP24 Ladder",
+      "cut": 700,
+      "res": 0.2,
+      "env": 0.45,
+      "fa": 0.5,
+      "fd": 180,
+      "fs": 0.1,
+      "fr": 80,
+      "aa": 0.5,
+      "ad": 600,
+      "as": 0.7,
+      "ar": 60,
+      "fdrive": 0.3,
+      "key": 0.3,
+      "velf": 0.3,
+      "drift": 0.08
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Poly",
+    "g_trim": 5.83
+   }
+  },
+  {
+   "name": "Jump Brass",
+   "original": "",
+   "year": 1983,
+   "decade": "1980s",
+   "genre": "Rock",
+   "song": "Jump",
+   "artist": "Van Halen",
+   "synth": "Oberheim OB-Xa",
+   "cat": "Brass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Oberheim OB-Xa",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2lvl": 0.9,
+      "o2fine": 12,
+      "flt": "LP24 Ladder",
+      "cut": 1600,
+      "res": 0.08,
+      "env": 0.35,
+      "fa": 5,
+      "fd": 1200,
+      "fs": 0.75,
+      "fr": 300,
+      "aa": 2,
+      "ad": 900,
+      "as": 0.9,
+      "ar": 280,
+      "drift": 0.3,
+      "velf": 0.4,
+      "key": 0.5,
+      "uni": 3,
+      "detune": 0.2
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "I",
+    "g_chomix": 0.3,
+    "g_trim": -3.83
+   }
+  },
+  {
+   "name": "Relax Bass",
+   "original": "",
+   "year": 1983,
+   "decade": "1980s",
+   "genre": "Synth-Pop",
+   "song": "Relax",
+   "artist": "Frankie Goes to Hollywood",
+   "synth": "Roland Jupiter-8",
+   "cat": "Bass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Jupiter-8",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2oct": 1,
+      "o2fine": 10,
+      "o2lvl": 0.85,
+      "flt": "LP24 Ladder",
+      "cut": 550,
+      "res": 0.3,
+      "env": 0.5,
+      "fa": 1,
+      "fd": 200,
+      "fs": 0.1,
+      "fr": 120,
+      "aa": 1,
+      "ad": 900,
+      "as": 0.85,
+      "ar": 90,
+      "fdrive": 0.35,
+      "key": 0.35,
+      "velf": 0.25,
+      "drift": 0.25,
+      "dlymix": 0.12,
+      "dlydiv": "1/16"
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Poly",
+    "g_glide": 0,
+    "g_trim": 3.91
+   }
+  },
+  {
+   "name": "Sweet Dreams Riff",
+   "original": "",
+   "year": 1983,
+   "decade": "1980s",
+   "genre": "Synth-Pop",
+   "song": "Sweet Dreams (Are Made of This)",
+   "artist": "Eurythmics",
+   "synth": "Oberheim OB-X",
+   "cat": "Sequence",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Oberheim OB-X",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2lvl": 0.5,
+      "o2fine": 10,
+      "flt": "LP24 Ladder",
+      "cut": 1300,
+      "res": 0.2,
+      "env": 0.7,
+      "fa": 0.5,
+      "fd": 260,
+      "fs": 0.0,
+      "fr": 260,
+      "aa": 0.5,
+      "ad": 650.0,
+      "as": 0.0,
+      "ar": 260,
+      "drift": 0.1,
+      "velf": 0.4,
+      "key": 0.6,
+      "dlymix": 0.1,
+      "dlydiv": "1/8D"
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.12,
+    "g_trim": 6.29
+   }
+  },
+  {
+   "name": "Time After Time Pad",
+   "original": "61",
+   "year": 1983,
+   "decade": "1980s",
+   "genre": "Pop",
+   "song": "Time After Time",
+   "artist": "Cyndi Lauper",
+   "synth": "Roland Juno-60",
+   "cat": "Pad",
+   "notes": "Il produttore racconta di essere partito dal preset 61 del Juno-60.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Juno-60",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Pulse",
+      "o1pw": 0.45,
+      "pwm": 0.3,
+      "sub": 0.2,
+      "o2wave": "Saw",
+      "o2lvl": 0.0,
+      "flt": "LP24 Ladder",
+      "cut": 1900,
+      "res": 0.1,
+      "env": 0.25,
+      "fa": 240.0,
+      "fd": 2500,
+      "fs": 0.6,
+      "fr": 1400,
+      "aa": 200,
+      "ad": 1500,
+      "as": 1.0,
+      "ar": 1400,
+      "lforate": 0.6,
+      "lfoshape": "Triangle",
+      "lfotim": 0.0,
+      "drift": 0.3
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "II",
+    "g_chomix": 0.7,
+    "g_revmix": 0.18,
+    "g_revsize": 0.7,
+    "g_trim": 0.32
+   }
+  },
+  {
+   "name": "Axel F Lead",
+   "original": "",
+   "year": 1984,
+   "decade": "1980s",
+   "genre": "Film / TV",
+   "song": "Axel F",
+   "artist": "Harold Faltermeyer",
+   "synth": "Roland Jupiter-8",
+   "cat": "Lead",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Jupiter-8",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Pulse",
+      "o1pw": 0.5,
+      "o2wave": "Saw",
+      "o2lvl": 0.35,
+      "o2oct": 1,
+      "flt": "LP24 Ladder",
+      "cut": 2600,
+      "res": 0.15,
+      "env": 0.3,
+      "fa": 1,
+      "fd": 220,
+      "fs": 0.5,
+      "aa": 1,
+      "ad": 300,
+      "as": 0.75,
+      "ar": 120,
+      "dlymix": 0.18,
+      "dlydiv": "1/8D"
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.15,
+    "g_trim": 9.32
+   }
+  },
+  {
+   "name": "Break Free Solo",
+   "original": "",
+   "year": 1984,
+   "decade": "1980s",
+   "genre": "Rock",
+   "song": "I Want to Break Free",
+   "artist": "Queen",
+   "synth": "Roland Jupiter-8",
+   "cat": "Lead",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Jupiter-8",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2lvl": 0.7,
+      "o2fine": 8,
+      "flt": "LP24 Ladder",
+      "cut": 2800,
+      "res": 0.2,
+      "env": 0.35,
+      "fa": 2,
+      "fd": 600,
+      "fs": 0.5,
+      "fr": 200,
+      "aa": 3,
+      "ad": 600,
+      "as": 0.9,
+      "ar": 180,
+      "lforate": 5.5,
+      "lfoshape": "Sine",
+      "lfopitch": 0.3,
+      "lfodelay": 350,
+      "drift": 0.2,
+      "fdrive": 0.3,
+      "dlymix": 0.12,
+      "uni": 2,
+      "detune": 0.15
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 60,
+    "g_chomode": "I",
+    "g_trim": 2.67
+   }
+  },
+  {
+   "name": "Fresh Bass",
+   "original": "BASS 1",
+   "year": 1984,
+   "decade": "1980s",
+   "genre": "Funk / Soul",
+   "song": "Fresh",
+   "artist": "Kool & the Gang",
+   "synth": "Yamaha DX7",
+   "cat": "Bass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Yamaha DX7",
+     "p": {
+      "engine": "FM 6-op",
+      "alg": "16",
+      "fb": 0.4,
+      "fmvel": 0.5,
+      "flt": "Off",
+      "aa": 0.5,
+      "ad": 900,
+      "as": 0.45,
+      "ar": 90,
+      "op1crs": 0,
+      "op1fin": 0,
+      "op1lvl": 1.0,
+      "op1atk": 0.5,
+      "op1dec": 1200,
+      "op1sus": 0.6,
+      "op1rel": 90,
+      "op2crs": 0,
+      "op2fin": 0,
+      "op2lvl": 0.7,
+      "op2atk": 0.5,
+      "op2dec": 420,
+      "op2sus": 0.15,
+      "op2rel": 90,
+      "op3crs": 1,
+      "op3fin": 0,
+      "op3lvl": 0.45,
+      "op3atk": 0.5,
+      "op3dec": 300,
+      "op3sus": 0.0,
+      "op3rel": 90,
+      "op4crs": 1,
+      "op4fin": 0,
+      "op4lvl": 0.3,
+      "op4atk": 0.5,
+      "op4dec": 160,
+      "op4sus": 0.0,
+      "op4rel": 90,
+      "op5crs": 1,
+      "op5fin": 0,
+      "op5lvl": 0.2,
+      "op5atk": 0.5,
+      "op5dec": 200,
+      "op5sus": 0,
+      "op5rel": 90,
+      "op6crs": 1,
+      "op6fin": 0,
+      "op6lvl": 0.0,
+      "op6atk": 0.5,
+      "op6dec": 200,
+      "op6sus": 0,
+      "op6rel": 90
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_trim": 3.37
+   }
+  },
+  {
+   "name": "It's My Life Synth",
+   "original": "",
+   "year": 1984,
+   "decade": "1980s",
+   "genre": "New Wave",
+   "song": "It's My Life",
+   "artist": "Talk Talk",
+   "synth": "Roland Juno-106",
+   "cat": "Lead",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Juno-106",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Pulse",
+      "o1pw": 0.3,
+      "pwm": 0.25,
+      "o2lvl": 0.0,
+      "sub": 0.2,
+      "flt": "LP24 Ladder",
+      "cut": 2500,
+      "res": 0.15,
+      "env": 0.3,
+      "aa": 5,
+      "ad": 600,
+      "as": 0.8,
+      "ar": 300,
+      "lforate": 0.6
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "II",
+    "g_trim": 8.62
+   }
+  },
+  {
+   "name": "PPG Wave Pad",
+   "original": "",
+   "year": 1984,
+   "decade": "1980s",
+   "genre": "Synth-Pop",
+   "song": "Wave pad (Tangerine Dream, Thomas Dolby)",
+   "artist": "Thomas Dolby",
+   "synth": "PPG Wave 2.3 + Roland Juno-60",
+   "cat": "Pad",
+   "notes": "PPG = wavetable digitale + filtro analogico SSM: layer di un modulo digitale e di uno analogico.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "PPG Wave 2.3",
+     "p": {
+      "engine": "Wavetable",
+      "wt": "PPG Digital",
+      "wpos": 0.15,
+      "wenv": 0.4,
+      "flt": "LP24 Clean",
+      "cut": 4000,
+      "res": 0.1,
+      "env": 0.2,
+      "fa": 300,
+      "fd": 2500,
+      "fs": 0.4,
+      "fr": 1600,
+      "aa": 300,
+      "ad": 2500,
+      "as": 0.9,
+      "ar": 1600,
+      "uni": 2,
+      "detune": 0.1,
+      "bits": 0.3
+     }
+    },
+    {
+     "slot": 1,
+     "model": "Roland Juno-60",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o1pw": 0.42,
+      "pwm": 0.0,
+      "sub": 0.0,
+      "o2wave": "Saw",
+      "o2lvl": 0.0,
+      "flt": "LP24 Ladder",
+      "cut": 900,
+      "res": 0.35,
+      "env": 0.25,
+      "fa": 480.0,
+      "fd": 2500,
+      "fs": 0.6,
+      "fr": 1600,
+      "aa": 400,
+      "ad": 1500,
+      "as": 1.0,
+      "ar": 1600,
+      "lforate": 0.6,
+      "lfoshape": "Triangle",
+      "lfotim": 0.0,
+      "drift": 0.3,
+      "level": 0.45
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "Off",
+    "g_chomix": 0.7,
+    "g_revmix": 0.18,
+    "g_revsize": 0.7,
+    "g_trim": -0.73
+   }
+  },
+  {
+   "name": "Radio Ga Ga Arp",
+   "original": "",
+   "year": 1984,
+   "decade": "1980s",
+   "genre": "Rock",
+   "song": "Radio Ga Ga",
+   "artist": "Queen",
+   "synth": "Roland Jupiter-8",
+   "cat": "Sequence",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Jupiter-8",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2oct": 1,
+      "o2fine": 0,
+      "o2lvl": 0.85,
+      "flt": "LP24 Ladder",
+      "cut": 800,
+      "res": 0.25,
+      "env": 0.4,
+      "fa": 1,
+      "fd": 150,
+      "fs": 0.0,
+      "fr": 120,
+      "aa": 1,
+      "ad": 180,
+      "as": 0.0,
+      "ar": 90,
+      "fdrive": 0.35,
+      "key": 0.35,
+      "velf": 0.25,
+      "drift": 0.25,
+      "dlymix": 0.15,
+      "dlydiv": "1/16"
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Poly",
+    "g_glide": 0,
+    "g_trim": 5.77
+   }
+  },
+  {
+   "name": "Wake Me Up Bass",
+   "original": "",
+   "year": 1984,
+   "decade": "1980s",
+   "genre": "Pop",
+   "song": "Wake Me Up Before You Go-Go",
+   "artist": "Wham!",
+   "synth": "Roland Juno-106",
+   "cat": "Bass",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Juno-106",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Pulse",
+      "o1pw": 0.5,
+      "sub": 0.5,
+      "flt": "LP24 Ladder",
+      "cut": 900,
+      "res": 0.2,
+      "env": 0.4,
+      "fa": 0.5,
+      "fd": 200,
+      "fs": 0.1,
+      "fr": 80,
+      "aa": 0.5,
+      "ad": 600,
+      "as": 0.7,
+      "ar": 60,
+      "fdrive": 0.3,
+      "key": 0.3,
+      "velf": 0.3,
+      "drift": 0.08
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_trim": 8.71
+   }
+  },
+  {
+   "name": "BASS 1",
+   "original": "BASS 1",
+   "year": 1985,
+   "decade": "1980s",
+   "genre": "Synth-Pop",
+   "song": "Take On Me",
+   "artist": "a-ha",
+   "synth": "Yamaha DX7",
+   "cat": "Bass",
+   "notes": "Il basso slap di Take On Me: preset 15 BASS 1 con chorus.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Yamaha DX7",
+     "p": {
+      "engine": "FM 6-op",
+      "alg": "16",
+      "fb": 0.5,
+      "fmvel": 0.5,
+      "flt": "Off",
+      "aa": 0.5,
+      "ad": 900,
+      "as": 0.45,
+      "ar": 90,
+      "op1crs": 0,
+      "op1fin": 0,
+      "op1lvl": 1.0,
+      "op1atk": 0.5,
+      "op1dec": 1600,
+      "op1sus": 0.6,
+      "op1rel": 90,
+      "op2crs": 0,
+      "op2fin": 0,
+      "op2lvl": 0.78,
+      "op2atk": 0.5,
+      "op2dec": 500,
+      "op2sus": 0.15,
+      "op2rel": 90,
+      "op3crs": 1,
+      "op3fin": 0,
+      "op3lvl": 0.5,
+      "op3atk": 0.5,
+      "op3dec": 250,
+      "op3sus": 0.0,
+      "op3rel": 90,
+      "op4crs": 1,
+      "op4fin": 0,
+      "op4lvl": 0.35,
+      "op4atk": 0.5,
+      "op4dec": 120,
+      "op4sus": 0.0,
+      "op4rel": 90,
+      "op5crs": 1,
+      "op5fin": 0,
+      "op5lvl": 0.3,
+      "op5atk": 0.5,
+      "op5dec": 300,
+      "op5sus": 0,
+      "op5rel": 90,
+      "op6crs": 1,
+      "op6fin": 0,
+      "op6lvl": 0.0,
+      "op6atk": 0.5,
+      "op6dec": 200,
+      "op6sus": 0,
+      "op6rel": 90
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_chomode": "I",
+    "g_chomix": 0.4,
+    "g_trim": 1.56
+   }
+  },
+  {
+   "name": "E.PIANO 1",
+   "original": "E.PIANO 1",
+   "year": 1985,
+   "decade": "1980s",
+   "genre": "R&B",
+   "song": "Saving All My Love for You",
+   "artist": "Whitney Houston",
+   "synth": "Yamaha DX7",
+   "cat": "Keys",
+   "notes": "Il preset 11 del DX7 è il suono delle ballate anni '80; per alcuni brani di Whitney Houston si discute se sia DX7, Rhodes o entrambi.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Yamaha DX7",
+     "p": {
+      "engine": "FM 6-op",
+      "alg": "5",
+      "fb": 0.2,
+      "fmvel": 0.85,
+      "flt": "Off",
+      "aa": 1,
+      "ad": 3000,
+      "as": 1.0,
+      "ar": 450,
+      "op1crs": 1,
+      "op1fin": 0,
+      "op1lvl": 1.0,
+      "op1atk": 1,
+      "op1dec": 4200,
+      "op1sus": 0.0,
+      "op1rel": 450,
+      "op2crs": 1,
+      "op2fin": 0,
+      "op2lvl": 0.65,
+      "op2atk": 1,
+      "op2dec": 1400,
+      "op2sus": 0.12,
+      "op2rel": 400,
+      "op3crs": 1,
+      "op3fin": 0.01,
+      "op3lvl": 0.75,
+      "op3atk": 1,
+      "op3dec": 2600,
+      "op3sus": 0.0,
+      "op3rel": 450,
+      "op4crs": 14,
+      "op4fin": 0,
+      "op4lvl": 0.5,
+      "op4atk": 1,
+      "op4dec": 260,
+      "op4sus": 0.0,
+      "op4rel": 200,
+      "op5crs": 1,
+      "op5fin": 0,
+      "op5lvl": 0.35,
+      "op5atk": 1,
+      "op5dec": 3000,
+      "op5sus": 0.0,
+      "op5rel": 450,
+      "op6crs": 1,
+      "op6fin": 0,
+      "op6lvl": 0.3,
+      "op6atk": 1,
+      "op6dec": 2000,
+      "op6sus": 0.0,
+      "op6rel": 300,
+      "uni": 2,
+      "detune": 0.03
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "I",
+    "g_chomix": 0.35,
+    "g_vel": 0.7,
+    "g_trim": -7.31
+   }
+  },
+  {
+   "name": "Running Up That Hill Cello",
+   "original": "",
+   "year": 1985,
+   "decade": "1980s",
+   "genre": "Pop",
+   "song": "Running Up That Hill",
+   "artist": "Kate Bush",
+   "synth": "Fairlight CMI",
+   "cat": "Strings",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Fairlight CMI",
+     "p": {
+      "engine": "Additive",
+      "addm": "Strings",
+      "bright": 0.35,
+      "tilt": 0.5,
+      "inh": 0.0,
+      "even": 1.0,
+      "aa": 40,
+      "ad": 2000,
+      "as": 1.0,
+      "ar": 500,
+      "flt": "LP12",
+      "cut": 2500,
+      "bits": 0.4,
+      "srr": 0.2,
+      "oct": -1,
+      "lfopitch": 0.12,
+      "lforate": 5.5
+     }
+    }
+   ],
+   "g": {
+    "g_trim": -5.8
+   }
+  },
+  {
+   "name": "Shout ARR1",
+   "original": "ARR1",
+   "year": 1985,
+   "decade": "1980s",
+   "genre": "New Wave",
+   "song": "Shout",
+   "artist": "Tears for Fears",
+   "synth": "Fairlight CMI",
+   "cat": "Vox",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Fairlight CMI",
+     "p": {
+      "engine": "Additive",
+      "addm": "Choir",
+      "bright": 0.4,
+      "tilt": 0.5,
+      "inh": 0.0,
+      "even": 1.0,
+      "aa": 150,
+      "ad": 3000,
+      "as": 1.0,
+      "ar": 900,
+      "flt": "Off",
+      "cut": 20000,
+      "bits": 0.45,
+      "srr": 0.25
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.3,
+    "g_trim": -6.01
+   }
+  },
+  {
+   "name": "Take On Me Riff",
+   "original": "",
+   "year": 1985,
+   "decade": "1980s",
+   "genre": "Synth-Pop",
+   "song": "Take On Me",
+   "artist": "a-ha",
+   "synth": "Roland Juno-60 + Yamaha DX7",
+   "cat": "Lead",
+   "notes": "Riff principale sul Juno-60 con DX7 nella produzione: layer analogico + digitale.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Juno-60",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Pulse",
+      "o1pw": 0.45,
+      "o2lvl": 0.0,
+      "sub": 0.3,
+      "flt": "LP24 Ladder",
+      "cut": 3200,
+      "res": 0.1,
+      "env": 0.2,
+      "fd": 300,
+      "fs": 0.6,
+      "aa": 1,
+      "ad": 400,
+      "as": 0.8,
+      "ar": 180
+     }
+    },
+    {
+     "slot": 1,
+     "model": "Yamaha DX7",
+     "p": {
+      "engine": "FM 6-op",
+      "alg": "5",
+      "fb": 0.0,
+      "fmvel": 0.5,
+      "flt": "Off",
+      "aa": 1,
+      "ad": 3000,
+      "as": 1.0,
+      "ar": 350,
+      "op1crs": 2,
+      "op1fin": 0,
+      "op1lvl": 0.6,
+      "op1atk": 1,
+      "op1dec": 600,
+      "op1sus": 0.3,
+      "op1rel": 200,
+      "op2crs": 3,
+      "op2fin": 0,
+      "op2lvl": 0.35,
+      "op2atk": 1,
+      "op2dec": 300,
+      "op2sus": 0.1,
+      "op2rel": 150,
+      "op3crs": 1,
+      "op3fin": 0,
+      "op3lvl": 0,
+      "op3atk": 1,
+      "op3dec": 1000,
+      "op3sus": 1,
+      "op3rel": 300,
+      "op4crs": 1,
+      "op4fin": 0,
+      "op4lvl": 0,
+      "op4atk": 1,
+      "op4dec": 1000,
+      "op4sus": 1,
+      "op4rel": 300,
+      "op5crs": 1,
+      "op5fin": 0,
+      "op5lvl": 0,
+      "op5atk": 1,
+      "op5dec": 1000,
+      "op5sus": 1,
+      "op5rel": 300,
+      "op6crs": 1,
+      "op6fin": 0,
+      "op6lvl": 0,
+      "op6atk": 1,
+      "op6dec": 1000,
+      "op6sus": 1,
+      "op6rel": 300,
+      "level": 0.35
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "I",
+    "g_chomix": 0.6,
+    "g_trim": 6.8
+   }
+  },
+  {
+   "name": "Can You Feel It Pad",
+   "original": "",
+   "year": 1986,
+   "decade": "1980s",
+   "genre": "Deep House",
+   "song": "Can You Feel It",
+   "artist": "Mr. Fingers",
+   "synth": "Roland Juno-106",
+   "cat": "Pad",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Juno-106",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Pulse",
+      "o1pw": 0.45,
+      "pwm": 0.35,
+      "sub": 0.3,
+      "o2wave": "Saw",
+      "o2lvl": 0.0,
+      "flt": "LP24 Ladder",
+      "cut": 1700,
+      "res": 0.12,
+      "env": 0.15,
+      "fa": 420.0,
+      "fd": 2500,
+      "fs": 0.6,
+      "fr": 1500,
+      "aa": 350,
+      "ad": 1500,
+      "as": 1.0,
+      "ar": 1500,
+      "lforate": 0.6,
+      "lfoshape": "Triangle",
+      "lfotim": 0.0,
+      "drift": 0.3
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "II",
+    "g_chomix": 0.7,
+    "g_revmix": 0.18,
+    "g_revsize": 0.7,
+    "g_trim": 0.61
+   }
+  },
+  {
+   "name": "Final Countdown Brass",
+   "original": "",
+   "year": 1986,
+   "decade": "1980s",
+   "genre": "Rock",
+   "song": "The Final Countdown",
+   "artist": "Europe",
+   "synth": "Roland JX-8P + Yamaha TX-816",
+   "cat": "Brass",
+   "notes": "Fanfara: Yamaha TX-816 (FM) + Roland JX-8P (analogico) in layer.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland JX-8P",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2lvl": 0.9,
+      "o2fine": 9,
+      "flt": "LP24 Ladder",
+      "cut": 1400,
+      "res": 0.18,
+      "env": 0.4,
+      "fa": 30,
+      "fd": 900,
+      "fs": 0.7,
+      "fr": 300,
+      "aa": 8,
+      "ad": 900,
+      "as": 0.9,
+      "ar": 280,
+      "drift": 0.3,
+      "velf": 0.4,
+      "key": 0.5,
+      "uni": 2,
+      "detune": 0.12,
+      "level": 0.6
+     }
+    },
+    {
+     "slot": 1,
+     "model": "Yamaha TX-816",
+     "p": {
+      "engine": "FM 6-op",
+      "alg": "22",
+      "fb": 0.45,
+      "fmvel": 0.5,
+      "flt": "Off",
+      "aa": 25,
+      "ad": 3000,
+      "as": 1.0,
+      "ar": 250,
+      "op1crs": 1,
+      "op1fin": 0,
+      "op1lvl": 1.0,
+      "op1atk": 30,
+      "op1dec": 2000,
+      "op1sus": 0.9,
+      "op1rel": 250,
+      "op2crs": 1,
+      "op2fin": 0,
+      "op2lvl": 0.6,
+      "op2atk": 60,
+      "op2dec": 1500,
+      "op2sus": 0.55,
+      "op2rel": 250,
+      "op3crs": 1,
+      "op3fin": 0.005,
+      "op3lvl": 0.8,
+      "op3atk": 30,
+      "op3dec": 2000,
+      "op3sus": 0.9,
+      "op3rel": 250,
+      "op4crs": 1,
+      "op4fin": 0,
+      "op4lvl": 0.7,
+      "op4atk": 30,
+      "op4dec": 2000,
+      "op4sus": 0.9,
+      "op4rel": 250,
+      "op5crs": 1,
+      "op5fin": 0,
+      "op5lvl": 0.6,
+      "op5atk": 30,
+      "op5dec": 2000,
+      "op5sus": 0.9,
+      "op5rel": 250,
+      "op6crs": 1,
+      "op6fin": 0,
+      "op6lvl": 0.55,
+      "op6atk": 80,
+      "op6dec": 1200,
+      "op6sus": 0.4,
+      "op6rel": 250,
+      "uni": 2,
+      "detune": 0.06,
+      "level": 0.7
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "Off",
+    "g_chomix": 0.5,
+    "g_trim": -9.63
+   }
+  },
+  {
+   "name": "Take My Breath Bass",
+   "original": "",
+   "year": 1986,
+   "decade": "1980s",
+   "genre": "Pop",
+   "song": "Take My Breath Away",
+   "artist": "Berlin",
+   "synth": "Yamaha DX7",
+   "cat": "Bass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Yamaha DX7",
+     "p": {
+      "engine": "FM 6-op",
+      "alg": "16",
+      "fb": 0.15,
+      "fmvel": 0.5,
+      "flt": "Off",
+      "aa": 0.5,
+      "ad": 900,
+      "as": 0.8,
+      "ar": 250,
+      "op1crs": 0,
+      "op1fin": 0,
+      "op1lvl": 1.0,
+      "op1atk": 0.5,
+      "op1dec": 3000,
+      "op1sus": 0.7,
+      "op1rel": 90,
+      "op2crs": 0,
+      "op2fin": 0,
+      "op2lvl": 0.55,
+      "op2atk": 0.5,
+      "op2dec": 900,
+      "op2sus": 0.3,
+      "op2rel": 90,
+      "op3crs": 1,
+      "op3fin": 0,
+      "op3lvl": 0.25,
+      "op3atk": 0.5,
+      "op3dec": 300,
+      "op3sus": 0,
+      "op3rel": 90,
+      "op4crs": 1,
+      "op4fin": 0,
+      "op4lvl": 0.0,
+      "op4atk": 0.5,
+      "op4dec": 200,
+      "op4sus": 0,
+      "op4rel": 90,
+      "op5crs": 1,
+      "op5fin": 0,
+      "op5lvl": 0.0,
+      "op5atk": 0.5,
+      "op5dec": 200,
+      "op5sus": 0,
+      "op5rel": 90,
+      "op6crs": 1,
+      "op6fin": 0,
+      "op6lvl": 0.0,
+      "op6atk": 0.5,
+      "op6dec": 200,
+      "op6sus": 0,
+      "op6rel": 90
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Poly",
+    "g_chomode": "I",
+    "g_chomix": 0.3,
+    "g_trim": 3.05
+   }
+  },
+  {
+   "name": "Trapped Bass",
+   "original": "",
+   "year": 1986,
+   "decade": "1980s",
+   "genre": "House",
+   "song": "Trapped",
+   "artist": "Colonel Abrams",
+   "synth": "Roland Juno-106",
+   "cat": "Bass",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Juno-106",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Pulse",
+      "o1pw": 0.5,
+      "sub": 0.8,
+      "flt": "LP24 Ladder",
+      "cut": 700,
+      "res": 0.3,
+      "env": 0.45,
+      "fa": 0.5,
+      "fd": 260,
+      "fs": 0.1,
+      "fr": 80,
+      "aa": 0.5,
+      "ad": 600,
+      "as": 0.7,
+      "ar": 60,
+      "fdrive": 0.3,
+      "key": 0.3,
+      "velf": 0.3,
+      "drift": 0.08
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_trim": 7.81
+   }
+  },
+  {
+   "name": "Acid Tracks",
+   "original": "",
+   "year": 1987,
+   "decade": "1980s",
+   "genre": "Acid House",
+   "song": "Acid Tracks",
+   "artist": "Phuture",
+   "synth": "Roland TB-303",
+   "cat": "Bass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland TB-303",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o1pw": 0.5,
+      "flt": "LP 303 Diode",
+      "cut": 260,
+      "res": 0.88,
+      "env": 0.7,
+      "fa": 0.5,
+      "fd": 260,
+      "fs": 0.0,
+      "fr": 60,
+      "aa": 0.5,
+      "ad": 1300,
+      "as": 0.55,
+      "ar": 25,
+      "accent": 0.85,
+      "fdrive": 0.35,
+      "key": 0.2,
+      "velf": 0.15,
+      "drift": 0.05,
+      "dist": "Off",
+      "dgain": 0.5,
+      "dtone": 0.5,
+      "dlymix": 0.08
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Legato",
+    "g_glide": 70,
+    "g_vel": 0.35,
+    "g_trim": -1.78
+   }
+  },
+  {
+   "name": "Fantasia",
+   "original": "Fantasia",
+   "year": 1987,
+   "decade": "1980s",
+   "genre": "Pop",
+   "song": "Hazy Shade of Winter",
+   "artist": "The Bangles",
+   "synth": "Roland D-50",
+   "cat": "Pad",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland D-50",
+     "p": {
+      "engine": "FM 6-op",
+      "alg": "29",
+      "fb": 0.0,
+      "fmvel": 0.5,
+      "flt": "Off",
+      "aa": 30,
+      "ad": 3000,
+      "as": 0.9,
+      "ar": 1800,
+      "op1crs": 1,
+      "op1fin": 0,
+      "op1lvl": 0.8,
+      "op1atk": 30,
+      "op1dec": 8000,
+      "op1sus": 1.0,
+      "op1rel": 1800,
+      "op2crs": 2,
+      "op2fin": 0,
+      "op2lvl": 0.6,
+      "op2atk": 30,
+      "op2dec": 8000,
+      "op2sus": 1.0,
+      "op2rel": 1800,
+      "op3crs": 1,
+      "op3fin": 0,
+      "op3lvl": 0.7,
+      "op3atk": 1,
+      "op3dec": 900,
+      "op3sus": 0.0,
+      "op3rel": 900,
+      "op4crs": 3,
+      "op4fin": 0.5,
+      "op4lvl": 0.55,
+      "op4atk": 1,
+      "op4dec": 400,
+      "op4sus": 0.0,
+      "op4rel": 400,
+      "op5crs": 2,
+      "op5fin": 0,
+      "op5lvl": 0.5,
+      "op5atk": 1,
+      "op5dec": 1500,
+      "op5sus": 0.0,
+      "op5rel": 1200,
+      "op6crs": 7,
+      "op6fin": 0,
+      "op6lvl": 0.4,
+      "op6atk": 1,
+      "op6dec": 300,
+      "op6sus": 0,
+      "op6rel": 300,
+      "uni": 2,
+      "detune": 0.06
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "Ensemble",
+    "g_chomix": 0.5,
+    "g_revmix": 0.4,
+    "g_trim": -4.96
+   }
+  },
+  {
+   "name": "Horn Section",
+   "original": "Horn Section",
+   "year": 1987,
+   "decade": "1980s",
+   "genre": "Pop",
+   "song": "Tell It to My Heart",
+   "artist": "Taylor Dayne",
+   "synth": "Roland D-50",
+   "cat": "Brass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland D-50",
+     "p": {
+      "engine": "Additive",
+      "addm": "Brass",
+      "bright": 0.7,
+      "tilt": 0.5,
+      "inh": 0.0,
+      "even": 1.0,
+      "aa": 15,
+      "ad": 800,
+      "as": 0.7,
+      "ar": 150,
+      "flt": "Off",
+      "cut": 20000,
+      "uni": 1
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.15,
+    "g_trim": -4.41
+   }
+  },
+  {
+   "name": "Staccato Heaven",
+   "original": "Staccato Heaven",
+   "year": 1987,
+   "decade": "1980s",
+   "genre": "Rock",
+   "song": "Say You Will",
+   "artist": "Foreigner",
+   "synth": "Roland D-50",
+   "cat": "Pluck",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland D-50",
+     "p": {
+      "engine": "FM 6-op",
+      "alg": "1",
+      "fb": 0.2,
+      "fmvel": 0.7,
+      "flt": "Off",
+      "aa": 1,
+      "ad": 500,
+      "as": 0.0,
+      "ar": 150,
+      "op1crs": 1,
+      "op1fin": 0,
+      "op1lvl": 1.0,
+      "op1atk": 0.5,
+      "op1dec": 400,
+      "op1sus": 0,
+      "op1rel": 150,
+      "op2crs": 2,
+      "op2fin": 0,
+      "op2lvl": 0.6,
+      "op2atk": 0.5,
+      "op2dec": 140,
+      "op2sus": 0,
+      "op2rel": 100,
+      "op3crs": 1,
+      "op3fin": 0,
+      "op3lvl": 0.6,
+      "op3atk": 0.5,
+      "op3dec": 300,
+      "op3sus": 0,
+      "op3rel": 150,
+      "op4crs": 1,
+      "op4fin": 0,
+      "op4lvl": 0.3,
+      "op4atk": 0.5,
+      "op4dec": 90,
+      "op4sus": 0,
+      "op4rel": 80,
+      "op5crs": 1,
+      "op5fin": 0,
+      "op5lvl": 0,
+      "op5atk": 1,
+      "op5dec": 1000,
+      "op5sus": 1,
+      "op5rel": 300,
+      "op6crs": 1,
+      "op6fin": 0,
+      "op6lvl": 0,
+      "op6atk": 1,
+      "op6dec": 1000,
+      "op6sus": 1,
+      "op6rel": 300,
+      "dlymix": 0.25,
+      "dlydiv": "1/8D",
+      "level": 0.9
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.35,
+    "g_trim": 3.56
+   }
+  },
+  {
+   "name": "Strings of Life Stab",
+   "original": "",
+   "year": 1987,
+   "decade": "1980s",
+   "genre": "Techno",
+   "song": "Strings of Life",
+   "artist": "Rhythim Is Rhythim (Derrick May)",
+   "synth": "Korg M1",
+   "cat": "Stab",
+   "notes": "Archi campionati da un'esecuzione di Michael James: strumento esatto non documentato. Ricreato su modulo digitale.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Korg M1",
+     "p": {
+      "engine": "Additive",
+      "addm": "Strings",
+      "bright": 0.6,
+      "tilt": 0.5,
+      "inh": 0.0,
+      "even": 1.0,
+      "aa": 5,
+      "ad": 420,
+      "as": 0.0,
+      "ar": 300,
+      "flt": "Off",
+      "cut": 20000,
+      "bits": 0.3
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.25,
+    "g_trim": -1.18
+   }
+  },
+  {
+   "name": "We Close Our Eyes Bass",
+   "original": "",
+   "year": 1987,
+   "decade": "1980s",
+   "genre": "Pop",
+   "song": "We Close Our Eyes",
+   "artist": "Go West",
+   "synth": "Roland SH-101",
+   "cat": "Bass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland SH-101",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o1pw": 0.5,
+      "sub": 0.9,
+      "flt": "LP24 Ladder",
+      "cut": 550,
+      "res": 0.35,
+      "env": 0.55,
+      "fa": 0.5,
+      "fd": 220,
+      "fs": 0.1,
+      "fr": 80,
+      "aa": 0.5,
+      "ad": 600,
+      "as": 0.7,
+      "ar": 60,
+      "fdrive": 0.3,
+      "key": 0.3,
+      "velf": 0.3,
+      "drift": 0.08
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_trim": 5.28
+   }
+  },
+  {
+   "name": "Your Love Arp",
+   "original": "",
+   "year": 1987,
+   "decade": "1980s",
+   "genre": "House",
+   "song": "Your Love",
+   "artist": "Frankie Knuckles & Jamie Principle",
+   "synth": "Roland Juno-60",
+   "cat": "Sequence",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Juno-60",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Pulse",
+      "o2wave": "Pulse",
+      "o2lvl": 0.0,
+      "o2fine": 6,
+      "flt": "LP24 Ladder",
+      "cut": 1600,
+      "res": 0.2,
+      "env": 0.7,
+      "fa": 0.5,
+      "fd": 380,
+      "fs": 0.0,
+      "fr": 380,
+      "aa": 0.5,
+      "ad": 950.0,
+      "as": 0.0,
+      "ar": 380,
+      "drift": 0.1,
+      "velf": 0.4,
+      "key": 0.6,
+      "dlymix": 0.15,
+      "dlydiv": "1/8D",
+      "sub": 0.3
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.25,
+    "g_chomode": "I",
+    "g_chomix": 0.5,
+    "g_trim": 10.39
+   }
+  },
+  {
+   "name": "Big Fun Lately Bass",
+   "original": "Lately Bass",
+   "year": 1988,
+   "decade": "1980s",
+   "genre": "House",
+   "song": "Big Fun",
+   "artist": "Inner City",
+   "synth": "Yamaha TX81Z",
+   "cat": "Bass",
+   "notes": "Lately Bass del TX81Z, citato dalla comunità per Big Fun e Good Life.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Yamaha TX81Z",
+     "p": {
+      "engine": "FM 6-op",
+      "alg": "5",
+      "fb": 0.55,
+      "fmvel": 0.5,
+      "flt": "Off",
+      "aa": 0.5,
+      "ad": 900,
+      "as": 0.45,
+      "ar": 90,
+      "op1crs": 0,
+      "op1fin": 0,
+      "op1lvl": 1.0,
+      "op1atk": 0.5,
+      "op1dec": 2500,
+      "op1sus": 0.55,
+      "op1rel": 90,
+      "op2crs": 0,
+      "op2fin": 0,
+      "op2lvl": 0.68,
+      "op2atk": 0.5,
+      "op2dec": 600,
+      "op2sus": 0.18,
+      "op2rel": 90,
+      "op3crs": 1,
+      "op3fin": 0,
+      "op3lvl": 0.0,
+      "op3atk": 0.5,
+      "op3dec": 300,
+      "op3sus": 0,
+      "op3rel": 90,
+      "op4crs": 1,
+      "op4fin": 0,
+      "op4lvl": 0.0,
+      "op4atk": 0.5,
+      "op4dec": 180,
+      "op4sus": 0,
+      "op4rel": 90,
+      "op5crs": 1,
+      "op5fin": 0,
+      "op5lvl": 0,
+      "op5atk": 0.5,
+      "op5dec": 200,
+      "op5sus": 0,
+      "op5rel": 90,
+      "op6crs": 1,
+      "op6fin": 0,
+      "op6lvl": 0,
+      "op6atk": 0.5,
+      "op6dec": 200,
+      "op6sus": 0,
+      "op6rel": 90
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_trim": 8.32
+   }
+  },
+  {
+   "name": "Digital Native Dance",
+   "original": "Digital Native Dance",
+   "year": 1988,
+   "decade": "1980s",
+   "genre": "Pop",
+   "song": "Waiting for a Star to Fall",
+   "artist": "Boy Meets Girl",
+   "synth": "Roland D-50",
+   "cat": "Sequence",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland D-50",
+     "p": {
+      "engine": "Wavetable",
+      "wt": "Bit Steps",
+      "wpos": 0.4,
+      "wenv": 0.0,
+      "flt": "LP24 Clean",
+      "cut": 5000,
+      "res": 0.1,
+      "env": 0.2,
+      "fa": 1,
+      "fd": 1200,
+      "fs": 0.4,
+      "fr": 600,
+      "aa": 1,
+      "ad": 1200,
+      "as": 0.6,
+      "ar": 600,
+      "uni": 1,
+      "detune": 0.2,
+      "lfoshape": "S&H",
+      "lforate": 8,
+      "wlfo": 0.8,
+      "lfocut": 0.35,
+      "dlymix": 0.3,
+      "dlydiv": "1/8"
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.3,
+    "g_trim": -0.77
+   }
+  },
+  {
+   "name": "Just Want Another Chance",
+   "original": "",
+   "year": 1988,
+   "decade": "1980s",
+   "genre": "Techno",
+   "song": "Just Want Another Chance",
+   "artist": "Reese (Kevin Saunderson)",
+   "synth": "Casio CZ-5000",
+   "cat": "Bass",
+   "notes": "Il 'Reese bass': due saw desintonizzate a distorsione di fase.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Casio CZ-5000",
+     "p": {
+      "engine": "Phase Dist",
+      "pdw": "Saw",
+      "pdamt": 0.55,
+      "pdenv": 0.0,
+      "flt": "LP24 Clean",
+      "cut": 900,
+      "res": 0.15,
+      "uni": 2,
+      "detune": 0.12,
+      "fa": 1,
+      "fd": 2000,
+      "fs": 0.2,
+      "fr": 150,
+      "aa": 1,
+      "ad": 2000,
+      "as": 1.0,
+      "ar": 150,
+      "oct": -1,
+      "env": 0.15,
+      "lfoshape": "Sine",
+      "lforate": 0.3,
+      "lfotim": 0.2
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_trim": 0.43
+   }
+  },
+  {
+   "name": "Land of Confusion 303",
+   "original": "",
+   "year": 1988,
+   "decade": "1980s",
+   "genre": "Acid House",
+   "song": "Land of Confusion",
+   "artist": "Armando",
+   "synth": "Roland TB-303",
+   "cat": "Bass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland TB-303",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o1pw": 0.5,
+      "flt": "LP 303 Diode",
+      "cut": 330,
+      "res": 0.8,
+      "env": 0.55,
+      "fa": 0.5,
+      "fd": 180,
+      "fs": 0.0,
+      "fr": 60,
+      "aa": 0.5,
+      "ad": 1300,
+      "as": 0.55,
+      "ar": 25,
+      "accent": 0.85,
+      "fdrive": 0.35,
+      "key": 0.2,
+      "velf": 0.15,
+      "drift": 0.05,
+      "dist": "Off",
+      "dgain": 0.5,
+      "dtone": 0.5
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Legato",
+    "g_glide": 70,
+    "g_vel": 0.35,
+    "g_trim": -1.0
+   }
+  },
+  {
+   "name": "Pizzagogo",
+   "original": "Pizzagogo",
+   "year": 1988,
+   "decade": "1980s",
+   "genre": "Pop",
+   "song": "Orinoco Flow",
+   "artist": "Enya",
+   "synth": "Roland D-50",
+   "cat": "Pluck",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland D-50",
+     "p": {
+      "engine": "FM 6-op",
+      "alg": "5",
+      "fb": 0.0,
+      "fmvel": 0.6,
+      "flt": "Off",
+      "aa": 1,
+      "ad": 700,
+      "as": 0.0,
+      "ar": 400,
+      "op1crs": 1,
+      "op1fin": 0,
+      "op1lvl": 1.0,
+      "op1atk": 0.5,
+      "op1dec": 500,
+      "op1sus": 0,
+      "op1rel": 400,
+      "op2crs": 2,
+      "op2fin": 0,
+      "op2lvl": 0.5,
+      "op2atk": 0.5,
+      "op2dec": 200,
+      "op2sus": 0,
+      "op2rel": 200,
+      "op3crs": 2,
+      "op3fin": 0,
+      "op3lvl": 0.6,
+      "op3atk": 0.5,
+      "op3dec": 300,
+      "op3sus": 0,
+      "op3rel": 400,
+      "op4crs": 5,
+      "op4fin": 0,
+      "op4lvl": 0.45,
+      "op4atk": 0.5,
+      "op4dec": 90,
+      "op4sus": 0,
+      "op4rel": 90,
+      "op5crs": 1,
+      "op5fin": 0,
+      "op5lvl": 0,
+      "op5atk": 1,
+      "op5dec": 1000,
+      "op5sus": 1,
+      "op5rel": 300,
+      "op6crs": 1,
+      "op6fin": 0,
+      "op6lvl": 0,
+      "op6atk": 1,
+      "op6dec": 1000,
+      "op6sus": 1,
+      "op6rel": 300,
+      "dlymix": 0.15
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.4,
+    "g_trim": 4.86
+   }
+  },
+  {
+   "name": "Voodoo Ray",
+   "original": "",
+   "year": 1988,
+   "decade": "1980s",
+   "genre": "Acid House",
+   "song": "Voodoo Ray",
+   "artist": "A Guy Called Gerald",
+   "synth": "Roland SH-101",
+   "cat": "Bass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland SH-101",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o1pw": 0.5,
+      "sub": 0.2,
+      "flt": "LP24 Ladder",
+      "cut": 420,
+      "res": 0.7,
+      "env": 0.45,
+      "fa": 0.5,
+      "fd": 200,
+      "fs": 0.1,
+      "fr": 80,
+      "aa": 0.5,
+      "ad": 600,
+      "as": 0.7,
+      "ar": 60,
+      "fdrive": 0.3,
+      "key": 0.3,
+      "velf": 0.3,
+      "drift": 0.08
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_trim": 6.18
+   }
+  },
+  {
+   "name": "French Kiss Bass",
+   "original": "Lately Bass",
+   "year": 1989,
+   "decade": "1980s",
+   "genre": "House",
+   "song": "French Kiss",
+   "artist": "Lil Louis",
+   "synth": "Yamaha TX81Z",
+   "cat": "Bass",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Yamaha TX81Z",
+     "p": {
+      "engine": "FM 6-op",
+      "alg": "5",
+      "fb": 0.4,
+      "fmvel": 0.5,
+      "flt": "Off",
+      "aa": 0.5,
+      "ad": 900,
+      "as": 0.45,
+      "ar": 90,
+      "op1crs": 0,
+      "op1fin": 0,
+      "op1lvl": 1.0,
+      "op1atk": 0.5,
+      "op1dec": 1200,
+      "op1sus": 0.6,
+      "op1rel": 90,
+      "op2crs": 0,
+      "op2fin": 0,
+      "op2lvl": 0.6,
+      "op2atk": 0.5,
+      "op2dec": 420,
+      "op2sus": 0.15,
+      "op2rel": 90,
+      "op3crs": 1,
+      "op3fin": 0,
+      "op3lvl": 0,
+      "op3atk": 0.5,
+      "op3dec": 300,
+      "op3sus": 0.0,
+      "op3rel": 90,
+      "op4crs": 1,
+      "op4fin": 0,
+      "op4lvl": 0,
+      "op4atk": 0.5,
+      "op4dec": 160,
+      "op4sus": 0.0,
+      "op4rel": 90,
+      "op5crs": 1,
+      "op5fin": 0,
+      "op5lvl": 0,
+      "op5atk": 0.5,
+      "op5dec": 200,
+      "op5sus": 0,
+      "op5rel": 90,
+      "op6crs": 1,
+      "op6fin": 0,
+      "op6lvl": 0,
+      "op6atk": 0.5,
+      "op6dec": 200,
+      "op6sus": 0,
+      "op6rel": 90,
+      "cut": 600
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_trim": 7.7
+   }
+  },
+  {
+   "name": "Metal Harp",
+   "original": "Metal Harp",
+   "year": 1989,
+   "decade": "1980s",
+   "genre": "Pop",
+   "song": "Another Day in Paradise",
+   "artist": "Phil Collins",
+   "synth": "Roland D-50",
+   "cat": "Pluck",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland D-50",
+     "p": {
+      "engine": "FM 6-op",
+      "alg": "5",
+      "fb": 0.0,
+      "fmvel": 0.6,
+      "flt": "Off",
+      "aa": 1,
+      "ad": 2000,
+      "as": 0.0,
+      "ar": 900,
+      "op1crs": 1,
+      "op1fin": 0,
+      "op1lvl": 1.0,
+      "op1atk": 0.5,
+      "op1dec": 1500,
+      "op1sus": 0,
+      "op1rel": 900,
+      "op2crs": 4,
+      "op2fin": 0,
+      "op2lvl": 0.4,
+      "op2atk": 0.5,
+      "op2dec": 400,
+      "op2sus": 0,
+      "op2rel": 300,
+      "op3crs": 1,
+      "op3fin": 0.01,
+      "op3lvl": 0.8,
+      "op3atk": 0.5,
+      "op3dec": 1200,
+      "op3sus": 0,
+      "op3rel": 900,
+      "op4crs": 7,
+      "op4fin": 0,
+      "op4lvl": 0.3,
+      "op4atk": 0.5,
+      "op4dec": 200,
+      "op4sus": 0,
+      "op4rel": 200,
+      "op5crs": 1,
+      "op5fin": 0,
+      "op5lvl": 0,
+      "op5atk": 1,
+      "op5dec": 1000,
+      "op5sus": 1,
+      "op5rel": 300,
+      "op6crs": 1,
+      "op6fin": 0,
+      "op6lvl": 0,
+      "op6atk": 1,
+      "op6dec": 1000,
+      "op6sus": 1,
+      "op6rel": 300
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.35,
+    "g_chomode": "I",
+    "g_trim": 2.45
+   }
+  },
+  {
+   "name": "Pacific State Lead",
+   "original": "",
+   "year": 1989,
+   "decade": "1980s",
+   "genre": "House",
+   "song": "Pacific State",
+   "artist": "808 State",
+   "synth": "Roland Juno-106",
+   "cat": "Lead",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Juno-106",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Pulse",
+      "o1pw": 0.5,
+      "o2lvl": 0.0,
+      "flt": "LP24 Ladder",
+      "cut": 4000,
+      "res": 0.05,
+      "env": 0.0,
+      "aa": 30,
+      "ad": 500,
+      "as": 0.9,
+      "ar": 500,
+      "lforate": 5.2,
+      "lfopitch": 0.15,
+      "lfodelay": 300,
+      "dlymix": 0.3,
+      "dlydiv": "1/8D"
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "I",
+    "g_revmix": 0.4,
+    "g_trim": 5.53
+   }
+  },
+  {
+   "name": "Ride on Time Piano",
+   "original": "Piano 16'",
+   "year": 1989,
+   "decade": "1980s",
+   "genre": "House",
+   "song": "Ride on Time",
+   "artist": "Black Box",
+   "synth": "Korg M1",
+   "cat": "Piano",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Korg M1",
+     "p": {
+      "engine": "Additive",
+      "addm": "Piano",
+      "bright": 0.8,
+      "tilt": 0.45,
+      "inh": 0.2,
+      "even": 1.0,
+      "aa": 1,
+      "ad": 3500,
+      "as": 0.0,
+      "ar": 350,
+      "flt": "Off",
+      "cut": 20000
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "I",
+    "g_chomix": 0.2,
+    "g_trim": -1.89
+   }
+  },
+  {
+   "name": "Solid Bass",
+   "original": "Solid Bass",
+   "year": 1990,
+   "decade": "1990s",
+   "genre": "Techno",
+   "song": "Chime",
+   "artist": "Orbital",
+   "synth": "Yamaha DX21",
+   "cat": "Bass",
+   "notes": "Solid Bass (DX21/DX100) è la versione originale del Lately Bass; Gearnews cita Chime di Orbital.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Yamaha DX21",
+     "p": {
+      "engine": "FM 6-op",
+      "alg": "5",
+      "fb": 0.3,
+      "fmvel": 0.5,
+      "flt": "Off",
+      "aa": 0.5,
+      "ad": 900,
+      "as": 0.45,
+      "ar": 90,
+      "op1crs": 0,
+      "op1fin": 0,
+      "op1lvl": 1.0,
+      "op1atk": 0.5,
+      "op1dec": 1800,
+      "op1sus": 0.5,
+      "op1rel": 90,
+      "op2crs": 1,
+      "op2fin": 0,
+      "op2lvl": 0.62,
+      "op2atk": 0.5,
+      "op2dec": 380,
+      "op2sus": 0.12,
+      "op2rel": 90,
+      "op3crs": 1,
+      "op3fin": 0,
+      "op3lvl": 0,
+      "op3atk": 0.5,
+      "op3dec": 260,
+      "op3sus": 0,
+      "op3rel": 90,
+      "op4crs": 1,
+      "op4fin": 0,
+      "op4lvl": 0,
+      "op4atk": 0.5,
+      "op4dec": 150,
+      "op4sus": 0,
+      "op4rel": 90,
+      "op5crs": 1,
+      "op5fin": 0,
+      "op5lvl": 0,
+      "op5atk": 0.5,
+      "op5dec": 200,
+      "op5sus": 0,
+      "op5rel": 90,
+      "op6crs": 1,
+      "op6fin": 0,
+      "op6lvl": 0,
+      "op6atk": 0.5,
+      "op6dec": 200,
+      "op6sus": 0,
+      "op6rel": 90
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_trim": 7.92
+   }
+  },
+  {
+   "name": "Twin Peaks E.Piano",
+   "original": "E.PIANO 1",
+   "year": 1990,
+   "decade": "1990s",
+   "genre": "Film / TV",
+   "song": "Twin Peaks Theme (Falling)",
+   "artist": "Angelo Badalamenti",
+   "synth": "Yamaha DX7",
+   "cat": "Keys",
+   "notes": "Attribuzione discussa: il suono è ricreato nello stile del brano.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Yamaha DX7",
+     "p": {
+      "engine": "FM 6-op",
+      "alg": "5",
+      "fb": 0.2,
+      "fmvel": 0.85,
+      "flt": "Off",
+      "aa": 1,
+      "ad": 3000,
+      "as": 1.0,
+      "ar": 450,
+      "op1crs": 1,
+      "op1fin": 0,
+      "op1lvl": 1.0,
+      "op1atk": 1,
+      "op1dec": 4200,
+      "op1sus": 0.0,
+      "op1rel": 450,
+      "op2crs": 1,
+      "op2fin": 0,
+      "op2lvl": 0.5900000000000001,
+      "op2atk": 1,
+      "op2dec": 1400,
+      "op2sus": 0.12,
+      "op2rel": 400,
+      "op3crs": 1,
+      "op3fin": 0.01,
+      "op3lvl": 0.75,
+      "op3atk": 1,
+      "op3dec": 2600,
+      "op3sus": 0.0,
+      "op3rel": 450,
+      "op4crs": 14,
+      "op4fin": 0,
+      "op4lvl": 0.44000000000000006,
+      "op4atk": 1,
+      "op4dec": 260,
+      "op4sus": 0.0,
+      "op4rel": 200,
+      "op5crs": 1,
+      "op5fin": 0,
+      "op5lvl": 0.35,
+      "op5atk": 1,
+      "op5dec": 3000,
+      "op5sus": 0.0,
+      "op5rel": 450,
+      "op6crs": 1,
+      "op6fin": 0,
+      "op6lvl": 0.3,
+      "op6atk": 1,
+      "op6dec": 2000,
+      "op6sus": 0.0,
+      "op6rel": 300,
+      "uni": 2,
+      "detune": 0.03
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "II",
+    "g_chomix": 0.35,
+    "g_vel": 0.7,
+    "g_revmix": 0.35,
+    "g_trim": -6.93
+   }
+  },
+  {
+   "name": "Vogue Piano",
+   "original": "Piano 16'",
+   "year": 1990,
+   "decade": "1990s",
+   "genre": "House",
+   "song": "Vogue",
+   "artist": "Madonna",
+   "synth": "Korg M1",
+   "cat": "Piano",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Korg M1",
+     "p": {
+      "engine": "Additive",
+      "addm": "Piano",
+      "bright": 0.72,
+      "tilt": 0.4,
+      "inh": 0.15,
+      "even": 1.0,
+      "aa": 1,
+      "ad": 4000,
+      "as": 0.0,
+      "ar": 400,
+      "flt": "Off",
+      "cut": 20000
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "I",
+    "g_chomix": 0.15,
+    "g_trim": -2.2
+   }
+  },
+  {
+   "name": "Dominator Hoover",
+   "original": "",
+   "year": 1991,
+   "decade": "1990s",
+   "genre": "Rave",
+   "song": "Dominator",
+   "artist": "Human Resource",
+   "synth": "Roland Alpha Juno-2",
+   "cat": "Lead",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Alpha Juno-2",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Pulse",
+      "o1pw": 0.3,
+      "pwm": 0.7,
+      "o2wave": "Saw",
+      "o2lvl": 0.8,
+      "o2oct": -1,
+      "o2fine": -12,
+      "sub": 0.4,
+      "uni": 5,
+      "detune": 0.55,
+      "flt": "LP24 Ladder",
+      "cut": 6000,
+      "res": 0.2,
+      "env": 0.15,
+      "fa": 1,
+      "fd": 900,
+      "fs": 0.8,
+      "fr": 400,
+      "aa": 2,
+      "ad": 700,
+      "as": 1.0,
+      "ar": 350,
+      "lforate": 7.0,
+      "lfoshape": "Triangle",
+      "penv": -12,
+      "pdec": 180,
+      "drift": 0.3
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 180,
+    "g_chomode": "I+II",
+    "g_chomix": 0.8,
+    "g_bend": 12,
+    "g_drive": 0.3,
+    "g_trim": 1.09
+   }
+  },
+  {
+   "name": "Get Ready Hoover",
+   "original": "",
+   "year": 1991,
+   "decade": "1990s",
+   "genre": "Eurodance",
+   "song": "Get Ready for This",
+   "artist": "2 Unlimited",
+   "synth": "Roland Alpha Juno-2",
+   "cat": "Lead",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Alpha Juno-2",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Pulse",
+      "o1pw": 0.3,
+      "pwm": 0.7,
+      "o2wave": "Saw",
+      "o2lvl": 0.8,
+      "o2oct": -1,
+      "o2fine": -12,
+      "sub": 0.4,
+      "uni": 5,
+      "detune": 0.55,
+      "flt": "LP24 Ladder",
+      "cut": 5000,
+      "res": 0.1,
+      "env": 0.15,
+      "fa": 1,
+      "fd": 900,
+      "fs": 0.8,
+      "fr": 400,
+      "aa": 2,
+      "ad": 700,
+      "as": 1.0,
+      "ar": 350,
+      "lforate": 7.0,
+      "lfoshape": "Triangle",
+      "penv": -12,
+      "pdec": 180,
+      "drift": 0.3
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 120,
+    "g_chomode": "I+II",
+    "g_chomix": 0.8,
+    "g_bend": 12,
+    "g_trim": 2.65
+   }
+  },
+  {
+   "name": "Gypsy Woman Organ",
+   "original": "Organ 2",
+   "year": 1991,
+   "decade": "1990s",
+   "genre": "House",
+   "song": "Gypsy Woman (She's Homeless)",
+   "artist": "Crystal Waters",
+   "synth": "Korg M1",
+   "cat": "Organ",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Korg M1",
+     "p": {
+      "engine": "Additive",
+      "addm": "House Organ",
+      "bright": 0.6,
+      "tilt": 0.6,
+      "inh": 0.0,
+      "even": 1.0,
+      "aa": 1,
+      "ad": 500,
+      "as": 0.35,
+      "ar": 100,
+      "flt": "Off",
+      "cut": 20000
+     }
+    }
+   ],
+   "g": {
+    "g_trim": -3.62
+   }
+  },
+  {
+   "name": "Lately Bass",
+   "original": "Lately Bass",
+   "year": 1991,
+   "decade": "1990s",
+   "genre": "Eurodance",
+   "song": "What Is Love",
+   "artist": "Haddaway",
+   "synth": "Yamaha TX81Z",
+   "cat": "Bass",
+   "notes": "Citato in liste di appassionati insieme a Whigfield e Ace of Base.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Yamaha TX81Z",
+     "p": {
+      "engine": "FM 6-op",
+      "alg": "5",
+      "fb": 0.55,
+      "fmvel": 0.5,
+      "flt": "Off",
+      "aa": 0.5,
+      "ad": 900,
+      "as": 0.45,
+      "ar": 90,
+      "op1crs": 0,
+      "op1fin": 0,
+      "op1lvl": 1.0,
+      "op1atk": 0.5,
+      "op1dec": 2500,
+      "op1sus": 0.55,
+      "op1rel": 90,
+      "op2crs": 0,
+      "op2fin": 0,
+      "op2lvl": 0.68,
+      "op2atk": 0.5,
+      "op2dec": 600,
+      "op2sus": 0.18,
+      "op2rel": 90,
+      "op3crs": 1,
+      "op3fin": 0,
+      "op3lvl": 0.0,
+      "op3atk": 0.5,
+      "op3dec": 300,
+      "op3sus": 0,
+      "op3rel": 90,
+      "op4crs": 1,
+      "op4fin": 0,
+      "op4lvl": 0.0,
+      "op4atk": 0.5,
+      "op4dec": 180,
+      "op4sus": 0,
+      "op4rel": 90,
+      "op5crs": 1,
+      "op5fin": 0,
+      "op5lvl": 0,
+      "op5atk": 0.5,
+      "op5dec": 200,
+      "op5sus": 0,
+      "op5rel": 90,
+      "op6crs": 1,
+      "op6fin": 0,
+      "op6lvl": 0,
+      "op6atk": 0.5,
+      "op6dec": 200,
+      "op6sus": 0,
+      "op6rel": 90
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_trim": 8.32
+   }
+  },
+  {
+   "name": "M1 Choir",
+   "original": "Choir",
+   "year": 1991,
+   "decade": "1990s",
+   "genre": "Synth-Pop",
+   "song": "Pandora's Box",
+   "artist": "OMD",
+   "synth": "Korg M1",
+   "cat": "Vox",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Korg M1",
+     "p": {
+      "engine": "Additive",
+      "addm": "Choir",
+      "bright": 0.55,
+      "tilt": 0.5,
+      "inh": 0.0,
+      "even": 1.0,
+      "aa": 150,
+      "ad": 3000,
+      "as": 1.0,
+      "ar": 1000,
+      "flt": "Off",
+      "cut": 20000
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.3,
+    "g_chomode": "I",
+    "g_trim": -6.39
+   }
+  },
+  {
+   "name": "Mentasm Hoover",
+   "original": "What The",
+   "year": 1991,
+   "decade": "1990s",
+   "genre": "Techno",
+   "song": "Mentasm",
+   "artist": "Second Phase",
+   "synth": "Roland Alpha Juno-2",
+   "cat": "Lead",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Alpha Juno-2",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Pulse",
+      "o1pw": 0.3,
+      "pwm": 0.7,
+      "o2wave": "Saw",
+      "o2lvl": 0.8,
+      "o2oct": -1,
+      "o2fine": -12,
+      "sub": 0.4,
+      "uni": 5,
+      "detune": 0.55,
+      "flt": "LP24 Ladder",
+      "cut": 4200,
+      "res": 0.1,
+      "env": 0.15,
+      "fa": 1,
+      "fd": 900,
+      "fs": 0.8,
+      "fr": 400,
+      "aa": 2,
+      "ad": 700,
+      "as": 1.0,
+      "ar": 350,
+      "lforate": 7.0,
+      "lfoshape": "Triangle",
+      "penv": -24,
+      "pdec": 260,
+      "drift": 0.3
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 240,
+    "g_chomode": "I+II",
+    "g_chomix": 0.8,
+    "g_bend": 12,
+    "g_trim": 2.42
+   }
+  },
+  {
+   "name": "Ooh/Aah",
+   "original": "Ooh/Aah",
+   "year": 1991,
+   "decade": "1990s",
+   "genre": "Rock",
+   "song": "I'm Going Slightly Mad",
+   "artist": "Queen",
+   "synth": "Korg M1",
+   "cat": "Vox",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Korg M1",
+     "p": {
+      "engine": "Additive",
+      "addm": "Choir",
+      "bright": 0.5,
+      "tilt": 0.5,
+      "inh": 0.0,
+      "even": 1.0,
+      "aa": 200,
+      "ad": 3000,
+      "as": 1.0,
+      "ar": 1200,
+      "flt": "Off",
+      "cut": 20000
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.3,
+    "g_trim": -6.18
+   }
+  },
+  {
+   "name": "Universe",
+   "original": "Universe",
+   "year": 1991,
+   "decade": "1990s",
+   "genre": "Rock",
+   "song": "Don't Try So Hard",
+   "artist": "Queen",
+   "synth": "Korg M1",
+   "cat": "Pad",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Korg M1",
+     "p": {
+      "engine": "Wavetable",
+      "wt": "Strings",
+      "wpos": 0.5,
+      "wenv": 0.0,
+      "flt": "LP24 Clean",
+      "cut": 4500,
+      "res": 0.1,
+      "env": 0.2,
+      "fa": 400,
+      "fd": 3000,
+      "fs": 0.4,
+      "fr": 1800,
+      "aa": 400,
+      "ad": 3000,
+      "as": 1.0,
+      "ar": 1800,
+      "uni": 3,
+      "detune": 0.18,
+      "wlfo": 0.25,
+      "lforate": 0.2
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "Ensemble",
+    "g_chomix": 0.4,
+    "g_revmix": 0.35,
+    "g_trim": -2.9
+   }
+  },
+  {
+   "name": "What The",
+   "original": "What The",
+   "year": 1991,
+   "decade": "1990s",
+   "genre": "Techno",
+   "song": "Mentasm",
+   "artist": "Second Phase (Joey Beltram & Mundo Muzique)",
+   "synth": "Roland Alpha Juno-2",
+   "cat": "Lead",
+   "notes": "Il riff è costruito interamente sul preset 'What the...' di Eric Persing: nasce l'hoover.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Alpha Juno-2",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Pulse",
+      "o1pw": 0.3,
+      "pwm": 0.7,
+      "o2wave": "Saw",
+      "o2lvl": 0.8,
+      "o2oct": -1,
+      "o2fine": -12,
+      "sub": 0.4,
+      "uni": 5,
+      "detune": 0.55,
+      "flt": "LP24 Ladder",
+      "cut": 4200,
+      "res": 0.1,
+      "env": 0.15,
+      "fa": 1,
+      "fd": 900,
+      "fs": 0.8,
+      "fr": 400,
+      "aa": 2,
+      "ad": 700,
+      "as": 1.0,
+      "ar": 350,
+      "lforate": 7.0,
+      "lfoshape": "Triangle",
+      "penv": -12,
+      "pdec": 180,
+      "drift": 0.3
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 180,
+    "g_chomode": "I+II",
+    "g_chomix": 0.8,
+    "g_bend": 12,
+    "g_trim": 2.64
+   }
+  },
+  {
+   "name": "Acperience",
+   "original": "",
+   "year": 1992,
+   "decade": "1990s",
+   "genre": "Acid House",
+   "song": "Acperience 1",
+   "artist": "Hardfloor",
+   "synth": "Roland TB-303",
+   "cat": "Bass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland TB-303",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o1pw": 0.5,
+      "flt": "LP 303 Diode",
+      "cut": 240,
+      "res": 0.9,
+      "env": 0.75,
+      "fa": 0.5,
+      "fd": 320,
+      "fs": 0.0,
+      "fr": 60,
+      "aa": 0.5,
+      "ad": 1300,
+      "as": 0.55,
+      "ar": 25,
+      "accent": 0.85,
+      "fdrive": 0.55,
+      "key": 0.2,
+      "velf": 0.15,
+      "drift": 0.05,
+      "dist": "RAT",
+      "dgain": 0.35,
+      "dtone": 0.6,
+      "lfocut": 0.25,
+      "lforate": 0.05,
+      "dlymix": 0.2,
+      "dlydiv": "1/8D"
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Legato",
+    "g_glide": 70,
+    "g_vel": 0.35,
+    "g_trim": -1.66
+   }
+  },
+  {
+   "name": "G-Funk Whistle",
+   "original": "",
+   "year": 1992,
+   "decade": "1990s",
+   "genre": "Hip-Hop",
+   "song": "Nuthin' but a 'G' Thang",
+   "artist": "Dr. Dre feat. Snoop Doggy Dogg",
+   "synth": "Moog Minimoog Model D",
+   "cat": "Lead",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Moog Minimoog Model D",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Sine",
+      "o2wave": "Saw",
+      "o2lvl": 0.0,
+      "o2fine": 8,
+      "flt": "LP24 Ladder",
+      "cut": 6000,
+      "res": 0.0,
+      "env": 0.0,
+      "fa": 2,
+      "fd": 600,
+      "fs": 0.5,
+      "fr": 200,
+      "aa": 3,
+      "ad": 600,
+      "as": 0.9,
+      "ar": 180,
+      "lforate": 5.5,
+      "lfoshape": "Sine",
+      "lfopitch": 0.3,
+      "lfodelay": 350,
+      "drift": 0.2,
+      "fdrive": 0.0,
+      "dlymix": 0.12
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 140,
+    "g_revmix": 0.2,
+    "g_trim": 6.23
+   }
+  },
+  {
+   "name": "Lore",
+   "original": "Lore",
+   "year": 1992,
+   "decade": "1990s",
+   "genre": "Pop",
+   "song": "Sleeping Satellite",
+   "artist": "Tasmin Archer",
+   "synth": "Korg M1",
+   "cat": "Pad",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Korg M1",
+     "p": {
+      "engine": "Wavetable",
+      "wt": "Vocal",
+      "wpos": 0.1,
+      "wenv": 0.0,
+      "flt": "LP24 Clean",
+      "cut": 5000,
+      "res": 0.1,
+      "env": 0.2,
+      "fa": 500,
+      "fd": 3000,
+      "fs": 0.4,
+      "fr": 2200,
+      "aa": 500,
+      "ad": 3000,
+      "as": 1.0,
+      "ar": 2200,
+      "uni": 2,
+      "detune": 0.1,
+      "wlfo": 0.4,
+      "lforate": 0.25
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.45,
+    "g_revsize": 0.85,
+    "g_trim": -5.43
+   }
+  },
+  {
+   "name": "Please Don't Go Organ",
+   "original": "Organ 2",
+   "year": 1992,
+   "decade": "1990s",
+   "genre": "Eurodance",
+   "song": "Please Don't Go",
+   "artist": "Double You",
+   "synth": "Korg M1",
+   "cat": "Organ",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Korg M1",
+     "p": {
+      "engine": "Additive",
+      "addm": "House Organ",
+      "bright": 0.6,
+      "tilt": 0.5,
+      "inh": 0.0,
+      "even": 1.0,
+      "aa": 1,
+      "ad": 600,
+      "as": 0.4,
+      "ar": 110,
+      "flt": "Off",
+      "cut": 20000
+     }
+    }
+   ],
+   "g": {
+    "g_trim": -3.68
+   }
+  },
+  {
+   "name": "Rhythm Is a Dancer Piano",
+   "original": "Piano 16'",
+   "year": 1992,
+   "decade": "1990s",
+   "genre": "Eurodance",
+   "song": "Rhythm Is a Dancer",
+   "artist": "Snap!",
+   "synth": "Korg M1",
+   "cat": "Piano",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Korg M1",
+     "p": {
+      "engine": "Additive",
+      "addm": "Piano",
+      "bright": 0.85,
+      "tilt": 0.4,
+      "inh": 0.2,
+      "even": 1.0,
+      "aa": 1,
+      "ad": 3000,
+      "as": 0.0,
+      "ar": 300,
+      "flt": "Off",
+      "cut": 20000
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "I",
+    "g_chomix": 0.2,
+    "g_trim": -1.6
+   }
+  },
+  {
+   "name": "Organ 2",
+   "original": "Organ 2",
+   "year": 1993,
+   "decade": "1990s",
+   "genre": "House",
+   "song": "Show Me Love",
+   "artist": "Robin S",
+   "synth": "Korg M1",
+   "cat": "Organ",
+   "notes": "Stonebridge trovò il basso scorrendo i preset dell'M1: Organ 2 (I17).",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Korg M1",
+     "p": {
+      "engine": "Additive",
+      "addm": "House Organ",
+      "bright": 0.55,
+      "tilt": 0.55,
+      "inh": 0.0,
+      "even": 1.0,
+      "aa": 1,
+      "ad": 900,
+      "as": 0.55,
+      "ar": 120,
+      "flt": "Off",
+      "cut": 20000,
+      "oct": -1
+     }
+    }
+   ],
+   "g": {
+    "g_trim": -3.85
+   }
+  },
+  {
+   "name": "Children Dream Organ",
+   "original": "Organ 2",
+   "year": 1995,
+   "decade": "1990s",
+   "genre": "Trance",
+   "song": "Children (Dream Version)",
+   "artist": "Robert Miles",
+   "synth": "Korg M1",
+   "cat": "Organ",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Korg M1",
+     "p": {
+      "engine": "Additive",
+      "addm": "House Organ",
+      "bright": 0.5,
+      "tilt": 0.6,
+      "inh": 0.0,
+      "even": 1.0,
+      "aa": 1,
+      "ad": 700,
+      "as": 0.4,
+      "ar": 200,
+      "flt": "Off",
+      "cut": 20000,
+      "dlymix": 0.2,
+      "dlydiv": "1/8D"
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.35,
+    "g_trim": -3.07
+   }
+  },
+  {
+   "name": "Da Funk Lead",
+   "original": "",
+   "year": 1995,
+   "decade": "1990s",
+   "genre": "House",
+   "song": "Da Funk",
+   "artist": "Daft Punk",
+   "synth": "Korg MS-20",
+   "cat": "Lead",
+   "notes": "Saw in quinta e leggero inviluppo sul filtro dell'MS-20 (Splice); altre fonti parlano di 303 distorta.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Korg MS-20",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2lvl": 0.9,
+      "o2semi": 7,
+      "flt": "LP12",
+      "cut": 900,
+      "res": 0.45,
+      "env": 0.35,
+      "fd": 500,
+      "fs": 0.3,
+      "aa": 1,
+      "ad": 600,
+      "as": 0.9,
+      "ar": 120,
+      "fdrive": 0.7,
+      "dist": "Tube",
+      "dgain": 0.5
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 40,
+    "g_drive": 0.3,
+    "g_trim": 3.95
+   }
+  },
+  {
+   "name": "Higher State 303",
+   "original": "",
+   "year": 1995,
+   "decade": "1990s",
+   "genre": "Acid House",
+   "song": "Higher State of Consciousness",
+   "artist": "Josh Wink",
+   "synth": "Roland TB-303",
+   "cat": "Bass",
+   "notes": "Due 303 non modificate, senza pedali.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland TB-303",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o1pw": 0.5,
+      "flt": "LP 303 Diode",
+      "cut": 200,
+      "res": 0.93,
+      "env": 0.8,
+      "fa": 0.5,
+      "fd": 150,
+      "fs": 0.0,
+      "fr": 60,
+      "aa": 0.5,
+      "ad": 1300,
+      "as": 0.55,
+      "ar": 25,
+      "accent": 0.85,
+      "fdrive": 0.6,
+      "key": 0.2,
+      "velf": 0.15,
+      "drift": 0.05,
+      "dist": "Off",
+      "dgain": 0.5,
+      "dtone": 0.5,
+      "lfocut": 0.7,
+      "lforate": 0.03
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Legato",
+    "g_glide": 70,
+    "g_vel": 0.35,
+    "g_trim": -2.69
+   }
+  },
+  {
+   "name": "Insomnia Pluck",
+   "original": "",
+   "year": 1995,
+   "decade": "1990s",
+   "genre": "Trance",
+   "song": "Insomnia",
+   "artist": "Faithless",
+   "synth": "Roland JP-8000",
+   "cat": "Pluck",
+   "notes": "Molti synth successivi hanno un preset chiamato 'Insomnia'. Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland JP-8000",
+     "p": {
+      "engine": "Wavetable",
+      "wt": "Analog Morph",
+      "wpos": 0.66,
+      "wenv": -0.3,
+      "flt": "LP24 Clean",
+      "cut": 1800,
+      "res": 0.3,
+      "env": 0.55,
+      "fa": 1,
+      "fd": 220,
+      "fs": 0.0,
+      "fr": 200,
+      "aa": 1,
+      "ad": 260,
+      "as": 0.0,
+      "ar": 200,
+      "uni": 2,
+      "detune": 0.1,
+      "dlymix": 0.25,
+      "dlydiv": "1/8D"
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.25,
+    "g_trim": 3.03
+   }
+  },
+  {
+   "name": "Born Slippy Chords",
+   "original": "",
+   "year": 1996,
+   "decade": "1990s",
+   "genre": "Techno",
+   "song": "Born Slippy .NUXX",
+   "artist": "Underworld",
+   "synth": "Roland Juno-106",
+   "cat": "Chord",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Juno-106",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Pulse",
+      "o2lvl": 0.6,
+      "o2fine": 7,
+      "o2pw": 0.35,
+      "flt": "LP24 Ladder",
+      "cut": 2200,
+      "res": 0.1,
+      "env": 0.3,
+      "fa": 1,
+      "fd": 1500,
+      "fs": 0.0,
+      "fr": 1500,
+      "aa": 1,
+      "ad": 2400.0,
+      "as": 0.0,
+      "ar": 1200.0,
+      "drift": 0.2,
+      "key": 0.5,
+      "velf": 0.35,
+      "dlymix": 0.25
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "I",
+    "g_chomix": 0.55,
+    "g_revmix": 0.3,
+    "g_trim": 1.14
+   }
+  },
+  {
+   "name": "Coco Jamboo Calliope",
+   "original": "Living Calliope",
+   "year": 1996,
+   "decade": "1990s",
+   "genre": "Eurodance",
+   "song": "Coco Jamboo",
+   "artist": "Mr. President",
+   "synth": "Roland D-50",
+   "cat": "Lead",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland D-50",
+     "p": {
+      "engine": "Additive",
+      "addm": "Glass",
+      "bright": 0.65,
+      "tilt": 0.5,
+      "inh": 0.0,
+      "even": 1.0,
+      "aa": 5,
+      "ad": 800,
+      "as": 0.5,
+      "ar": 250,
+      "flt": "Off",
+      "cut": 20000,
+      "lfopitch": 0.1,
+      "lforate": 5.5
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.2,
+    "g_trim": -1.56
+   }
+  },
+  {
+   "name": "Orinoco Living Calliope",
+   "original": "Living Calliope",
+   "year": 1996,
+   "decade": "1990s",
+   "genre": "Eurodance",
+   "song": "Coco Jamboo",
+   "artist": "Mr. President",
+   "synth": "Roland D-50",
+   "cat": "Lead",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland D-50",
+     "p": {
+      "engine": "Additive",
+      "addm": "Glass",
+      "bright": 0.6,
+      "tilt": 0.5,
+      "inh": 0.0,
+      "even": 1.0,
+      "aa": 5,
+      "ad": 900,
+      "as": 0.4,
+      "ar": 300,
+      "flt": "Off",
+      "cut": 20000
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.2,
+    "g_trim": -1.42
+   }
+  },
+  {
+   "name": "The Bells",
+   "original": "",
+   "year": 1996,
+   "decade": "1990s",
+   "genre": "Techno",
+   "song": "The Bells",
+   "artist": "Jeff Mills",
+   "synth": "Korg Wavestation",
+   "cat": "Bell",
+   "notes": "Strumento originale non documentato (citati DX100, K2000, campionatore): ricreato in FM.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Korg Wavestation",
+     "p": {
+      "engine": "FM 6-op",
+      "alg": "5",
+      "fb": 0.0,
+      "fmvel": 0.4,
+      "flt": "Off",
+      "aa": 1,
+      "ad": 1200,
+      "as": 0.0,
+      "ar": 400,
+      "op1crs": 1,
+      "op1fin": 0,
+      "op1lvl": 1.0,
+      "op1atk": 0.5,
+      "op1dec": 900,
+      "op1sus": 0,
+      "op1rel": 400,
+      "op2crs": 3,
+      "op2fin": 0.5,
+      "op2lvl": 0.55,
+      "op2atk": 0.5,
+      "op2dec": 600,
+      "op2sus": 0,
+      "op2rel": 300,
+      "op3crs": 1,
+      "op3fin": 0,
+      "op3lvl": 0.6,
+      "op3atk": 0.5,
+      "op3dec": 700,
+      "op3sus": 0,
+      "op3rel": 400,
+      "op4crs": 2,
+      "op4fin": 0,
+      "op4lvl": 0.5,
+      "op4atk": 0.5,
+      "op4dec": 400,
+      "op4sus": 0,
+      "op4rel": 300,
+      "op5crs": 1,
+      "op5fin": 0,
+      "op5lvl": 0,
+      "op5atk": 1,
+      "op5dec": 1000,
+      "op5sus": 1,
+      "op5rel": 300,
+      "op6crs": 1,
+      "op6fin": 0,
+      "op6lvl": 0,
+      "op6atk": 1,
+      "op6dec": 1000,
+      "op6sus": 1,
+      "op6rel": 300
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.15,
+    "g_trim": 5.0
+   }
+  },
+  {
+   "name": "Everybody Needs a 303",
+   "original": "",
+   "year": 1997,
+   "decade": "1990s",
+   "genre": "Rave",
+   "song": "Everybody Needs a 303",
+   "artist": "Fatboy Slim",
+   "synth": "Roland TB-303",
+   "cat": "Bass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland TB-303",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o1pw": 0.5,
+      "flt": "LP 303 Diode",
+      "cut": 450,
+      "res": 0.72,
+      "env": 0.55,
+      "fa": 0.5,
+      "fd": 240,
+      "fs": 0.0,
+      "fr": 60,
+      "aa": 0.5,
+      "ad": 1300,
+      "as": 0.55,
+      "ar": 25,
+      "accent": 0.85,
+      "fdrive": 0.35,
+      "key": 0.2,
+      "velf": 0.15,
+      "drift": 0.05,
+      "dist": "DS-1",
+      "dgain": 0.4,
+      "dtone": 0.5
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Legato",
+    "g_glide": 70,
+    "g_vel": 0.35,
+    "g_trim": -1.63
+   }
+  },
+  {
+   "name": "For an Angel Supersaw",
+   "original": "",
+   "year": 1998,
+   "decade": "1990s",
+   "genre": "Trance",
+   "song": "For an Angel (1998 remix)",
+   "artist": "Paul van Dyk",
+   "synth": "Roland JP-8000",
+   "cat": "Pluck",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland JP-8000",
+     "p": {
+      "engine": "Supersaw",
+      "ssdet": 0.35,
+      "ssmix": 0.55,
+      "flt": "LP12",
+      "cut": 1500,
+      "res": 0.1,
+      "env": 0.45,
+      "fa": 1,
+      "fd": 250,
+      "fs": 0.0,
+      "fr": 250,
+      "aa": 1,
+      "ad": 280,
+      "as": 0.0,
+      "ar": 250,
+      "dlymix": 0.3,
+      "dlydiv": "1/8D"
+     }
+    }
+   ],
+   "g": {
+    "g_width": 0.85,
+    "g_revmix": 0.2,
+    "g_trim": 5.4
+   }
+  },
+  {
+   "name": "Blue Lead",
+   "original": "",
+   "year": 1999,
+   "decade": "1990s",
+   "genre": "Eurodance",
+   "song": "Blue (Da Ba Dee)",
+   "artist": "Eiffel 65",
+   "synth": "Clavia Nord Lead",
+   "cat": "Lead",
+   "notes": "Lo strumento del lead non è documentato: ricreato su VA digitale.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Clavia Nord Lead",
+     "p": {
+      "engine": "Wavetable",
+      "wt": "Pulse Width",
+      "wpos": 0.3,
+      "wenv": 0.0,
+      "flt": "LP24 Clean",
+      "cut": 5000,
+      "res": 0.1,
+      "env": 0.2,
+      "fa": 1,
+      "fd": 300,
+      "fs": 0.4,
+      "fr": 150,
+      "aa": 1,
+      "ad": 300,
+      "as": 0.6,
+      "ar": 150,
+      "uni": 2,
+      "detune": 0.1,
+      "dlymix": 0.15
+     }
+    }
+   ],
+   "g": {
+    "g_trim": 7.75
+   }
+  },
+  {
+   "name": "Knights of the Jaguar Strings",
+   "original": "",
+   "year": 1999,
+   "decade": "1990s",
+   "genre": "Techno",
+   "song": "Knights of the Jaguar",
+   "artist": "DJ Rolando (UR)",
+   "synth": "Korg Triton",
+   "cat": "Strings",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Korg Triton",
+     "p": {
+      "engine": "Additive",
+      "addm": "Strings",
+      "bright": 0.55,
+      "tilt": 0.5,
+      "inh": 0.0,
+      "even": 1.0,
+      "aa": 120,
+      "ad": 2000,
+      "as": 1.0,
+      "ar": 900,
+      "flt": "Off",
+      "cut": 20000
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "Ensemble",
+    "g_chomix": 0.45,
+    "g_revmix": 0.3,
+    "g_trim": -3.28
+   }
+  },
+  {
+   "name": "Out of the Blue Supersaw",
+   "original": "",
+   "year": 1999,
+   "decade": "1990s",
+   "genre": "Trance",
+   "song": "Out of the Blue",
+   "artist": "System F (Ferry Corsten)",
+   "synth": "Roland JP-8000",
+   "cat": "Lead",
+   "notes": "Supersaw del JP-8000 'nella sua forma più pura' (ClassicTrance).",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland JP-8000",
+     "p": {
+      "engine": "Supersaw",
+      "ssdet": 0.5,
+      "ssmix": 0.7,
+      "flt": "LP12",
+      "cut": 10000,
+      "res": 0.1,
+      "env": 0.15,
+      "fa": 2,
+      "fd": 800,
+      "fs": 0.6,
+      "fr": 400,
+      "aa": 2,
+      "ad": 800,
+      "as": 1.0,
+      "ar": 400,
+      "dlymix": 0.12
+     }
+    }
+   ],
+   "g": {
+    "g_width": 0.85,
+    "g_revmix": 0.2,
+    "g_trim": 1.68
+   }
+  },
+  {
+   "name": "Sandstorm",
+   "original": "Sandstorm",
+   "year": 1999,
+   "decade": "1990s",
+   "genre": "Trance",
+   "song": "Sandstorm",
+   "artist": "Darude",
+   "synth": "Roland JP-8080",
+   "cat": "Pad",
+   "notes": "Il primo suono che il JP-8080 carica all'accensione si chiama Sandstorm: gli accordi del brano, che ne prese il nome.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland JP-8080",
+     "p": {
+      "engine": "Supersaw",
+      "ssdet": 0.4,
+      "ssmix": 0.6,
+      "flt": "LP12",
+      "cut": 4000,
+      "res": 0.1,
+      "env": 0.15,
+      "fa": 40,
+      "fd": 1500,
+      "fs": 0.6,
+      "fr": 600,
+      "aa": 40,
+      "ad": 1500,
+      "as": 0.9,
+      "ar": 600,
+      "dlymix": 0.12
+     }
+    }
+   ],
+   "g": {
+    "g_width": 0.85,
+    "g_revmix": 0.3,
+    "g_trim": -2.21
+   }
+  },
+  {
+   "name": "Sandstorm Lead",
+   "original": "",
+   "year": 1999,
+   "decade": "1990s",
+   "genre": "Trance",
+   "song": "Sandstorm",
+   "artist": "Darude",
+   "synth": "Roland JP-8080 + Access Virus",
+   "cat": "Lead",
+   "notes": "Sandstorm: Access Virus C, Korg MS2000R e Roland JP-8080 (Sound On Sound).",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland JP-8080",
+     "p": {
+      "engine": "Supersaw",
+      "ssdet": 0.28,
+      "ssmix": 0.45,
+      "flt": "LP12",
+      "cut": 5500,
+      "res": 0.1,
+      "env": 0.25,
+      "fa": 1,
+      "fd": 150,
+      "fs": 0.6,
+      "fr": 80,
+      "aa": 1,
+      "ad": 150,
+      "as": 0.85,
+      "ar": 80,
+      "dlymix": 0.15
+     }
+    },
+    {
+     "slot": 1,
+     "model": "Access Virus",
+     "p": {
+      "engine": "Wavetable",
+      "wt": "Analog Morph",
+      "wpos": 0.66,
+      "wenv": 0.0,
+      "flt": "LP24 Clean",
+      "cut": 4000,
+      "res": 0.1,
+      "env": 0.2,
+      "fa": 1,
+      "fd": 150,
+      "fs": 0.4,
+      "fr": 80,
+      "aa": 1,
+      "ad": 150,
+      "as": 0.8,
+      "ar": 80,
+      "uni": 3,
+      "detune": 0.15,
+      "level": 0.4
+     }
+    }
+   ],
+   "g": {
+    "g_width": 0.85,
+    "g_revmix": 0.2,
+    "g_drive": 0.2,
+    "g_trim": 1.55
+   }
+  },
+  {
+   "name": "Everything In Its Right Place",
+   "original": "",
+   "year": 2000,
+   "decade": "2000s",
+   "genre": "Indie",
+   "song": "Everything In Its Right Place",
+   "artist": "Radiohead",
+   "synth": "Sequential Prophet-5",
+   "cat": "Keys",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Sequential Prophet-5",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Pulse",
+      "o1pw": 0.35,
+      "o2wave": "Saw",
+      "o2lvl": 0.4,
+      "o2fine": 6,
+      "flt": "LP24 Ladder",
+      "cut": 1400,
+      "res": 0.15,
+      "env": 0.3,
+      "aa": 3,
+      "ad": 1200,
+      "as": 0.7,
+      "ar": 400
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "I",
+    "g_revmix": 0.25,
+    "g_trim": 0.86
+   }
+  },
+  {
+   "name": "Real Slim Shady Keys",
+   "original": "",
+   "year": 2000,
+   "decade": "2000s",
+   "genre": "Hip-Hop",
+   "song": "The Real Slim Shady",
+   "artist": "Eminem",
+   "synth": "Korg Triton",
+   "cat": "Keys",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Korg Triton",
+     "p": {
+      "engine": "FM 6-op",
+      "alg": "1",
+      "fb": 0.0,
+      "fmvel": 0.6,
+      "flt": "Off",
+      "aa": 1,
+      "ad": 900,
+      "as": 0.3,
+      "ar": 100,
+      "op1crs": 1,
+      "op1fin": 0,
+      "op1lvl": 1.0,
+      "op1atk": 0.5,
+      "op1dec": 600,
+      "op1sus": 0.2,
+      "op1rel": 100,
+      "op2crs": 3,
+      "op2fin": 0,
+      "op2lvl": 0.55,
+      "op2atk": 0.5,
+      "op2dec": 200,
+      "op2sus": 0.05,
+      "op2rel": 100,
+      "op3crs": 1,
+      "op3fin": 0,
+      "op3lvl": 0,
+      "op3atk": 1,
+      "op3dec": 1000,
+      "op3sus": 1,
+      "op3rel": 300,
+      "op4crs": 1,
+      "op4fin": 0,
+      "op4lvl": 0,
+      "op4atk": 1,
+      "op4dec": 1000,
+      "op4sus": 1,
+      "op4rel": 300,
+      "op5crs": 1,
+      "op5fin": 0,
+      "op5lvl": 0,
+      "op5atk": 1,
+      "op5dec": 1000,
+      "op5sus": 1,
+      "op5rel": 300,
+      "op6crs": 1,
+      "op6fin": 0,
+      "op6lvl": 0,
+      "op6atk": 1,
+      "op6dec": 1000,
+      "op6sus": 1,
+      "op6rel": 300
+     }
+    }
+   ],
+   "g": {
+    "g_trim": -1.65
+   }
+  },
+  {
+   "name": "Try Again 303",
+   "original": "",
+   "year": 2000,
+   "decade": "2000s",
+   "genre": "R&B",
+   "song": "Try Again",
+   "artist": "Aaliyah",
+   "synth": "Roland TB-303",
+   "cat": "Bass",
+   "notes": "Forse l'unico 303 in un singolo n.1 della Billboard Hot 100.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland TB-303",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o1pw": 0.5,
+      "flt": "LP 303 Diode",
+      "cut": 380,
+      "res": 0.65,
+      "env": 0.45,
+      "fa": 0.5,
+      "fd": 250,
+      "fs": 0.0,
+      "fr": 60,
+      "aa": 0.5,
+      "ad": 1300,
+      "as": 0.55,
+      "ar": 25,
+      "accent": 0.85,
+      "fdrive": 0.35,
+      "key": 0.2,
+      "velf": 0.15,
+      "drift": 0.05,
+      "dist": "Off",
+      "dgain": 0.5,
+      "dtone": 0.5
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Legato",
+    "g_glide": 50,
+    "g_vel": 0.35,
+    "g_trim": 0.21
+   }
+  },
+  {
+   "name": "Grindin' Triton Bass",
+   "original": "",
+   "year": 2002,
+   "decade": "2000s",
+   "genre": "Hip-Hop",
+   "song": "Grindin'",
+   "artist": "Clipse (The Neptunes)",
+   "synth": "Korg Triton",
+   "cat": "Bass",
+   "notes": "I Neptunes e il Korg Triton: Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Korg Triton",
+     "p": {
+      "engine": "Additive",
+      "addm": "Soft Pad",
+      "bright": 0.2,
+      "tilt": 0.5,
+      "inh": 0.0,
+      "even": 1.0,
+      "aa": 1,
+      "ad": 1500,
+      "as": 0.0,
+      "ar": 200,
+      "flt": "Off",
+      "cut": 20000,
+      "oct": -1,
+      "penv": -3,
+      "pdec": 40
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_drive": 0.3,
+    "g_trim": 3.59
+   }
+  },
+  {
+   "name": "Satisfaction Bass",
+   "original": "",
+   "year": 2002,
+   "decade": "2000s",
+   "genre": "Electro",
+   "song": "Satisfaction",
+   "artist": "Benny Benassi",
+   "synth": "Access Virus",
+   "cat": "Bass",
+   "notes": "Attribuzione discussa: il suono è ricreato nello stile del brano.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Access Virus",
+     "p": {
+      "engine": "Wavetable",
+      "wt": "Pulse Width",
+      "wpos": 0.35,
+      "wenv": 0.0,
+      "flt": "LP24 Clean",
+      "cut": 900,
+      "res": 0.45,
+      "env": 0.45,
+      "fa": 1,
+      "fd": 400,
+      "fs": 0.3,
+      "fr": 80,
+      "aa": 1,
+      "ad": 400,
+      "as": 0.7,
+      "ar": 80,
+      "uni": 1,
+      "detune": 0.2,
+      "oct": -1
+     }
+    }
+   ],
+   "g": {
+    "g_drive": 0.7,
+    "g_mode": "Mono",
+    "g_trim": 7.07
+   }
+  },
+  {
+   "name": "Kids Lead",
+   "original": "",
+   "year": 2008,
+   "decade": "2000s",
+   "genre": "Indie",
+   "song": "Kids",
+   "artist": "MGMT",
+   "synth": "Roland Juno-60",
+   "cat": "Lead",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Juno-60",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Pulse",
+      "o2wave": "Saw",
+      "o2lvl": 0.0,
+      "o2fine": 8,
+      "flt": "LP24 Ladder",
+      "cut": 3500,
+      "res": 0.1,
+      "env": 0.35,
+      "fa": 2,
+      "fd": 600,
+      "fs": 0.5,
+      "fr": 200,
+      "aa": 3,
+      "ad": 600,
+      "as": 0.9,
+      "ar": 180,
+      "lforate": 5.5,
+      "lfoshape": "Sine",
+      "lfopitch": 0.0,
+      "lfodelay": 0,
+      "drift": 0.2,
+      "fdrive": 0.3,
+      "dlymix": 0.12,
+      "o1pw": 0.4
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Poly",
+    "g_glide": 0,
+    "g_chomode": "II",
+    "g_revmix": 0.2,
+    "g_trim": 6.87
+   }
+  },
+  {
+   "name": "Bulletproof Synth",
+   "original": "",
+   "year": 2009,
+   "decade": "2000s",
+   "genre": "Synth-Pop",
+   "song": "Bulletproof",
+   "artist": "La Roux",
+   "synth": "Roland SH-101",
+   "cat": "Lead",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland SH-101",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Pulse",
+      "o2wave": "Saw",
+      "o2lvl": 0.0,
+      "o2fine": 8,
+      "flt": "LP24 Ladder",
+      "cut": 2500,
+      "res": 0.25,
+      "env": 0.35,
+      "fa": 2,
+      "fd": 600,
+      "fs": 0.5,
+      "fr": 200,
+      "aa": 3,
+      "ad": 600,
+      "as": 0.9,
+      "ar": 180,
+      "lforate": 5.5,
+      "lfoshape": "Sine",
+      "lfopitch": 0.0,
+      "lfodelay": 0,
+      "drift": 0.2,
+      "fdrive": 0.3,
+      "dlymix": 0.12,
+      "o1pw": 0.3,
+      "sub": 0.4
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 0,
+    "g_trim": 7.63
+   }
+  },
+  {
+   "name": "Strobe Pluck",
+   "original": "",
+   "year": 2009,
+   "decade": "2000s",
+   "genre": "EDM",
+   "song": "Strobe",
+   "artist": "deadmau5",
+   "synth": "LennarDigital Sylenth1",
+   "cat": "Pluck",
+   "notes": "Onda quadra 'larga' nel mix; synth originale incerto (Sylenth1 citato).",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "LennarDigital Sylenth1",
+     "p": {
+      "engine": "Wavetable",
+      "wt": "Pulse Width",
+      "wpos": 0.1,
+      "wenv": 0.0,
+      "flt": "LP24 Clean",
+      "cut": 1100,
+      "res": 0.3,
+      "env": 0.5,
+      "fa": 1,
+      "fd": 350,
+      "fs": 0.0,
+      "fr": 400,
+      "aa": 1,
+      "ad": 400,
+      "as": 0.0,
+      "ar": 400,
+      "uni": 3,
+      "detune": 0.15,
+      "dlymix": 0.35,
+      "dlydiv": "1/8D"
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.4,
+    "g_trim": 11.25
+   }
+  },
+  {
+   "name": "Nightcall Bass",
+   "original": "",
+   "year": 2010,
+   "decade": "2010s",
+   "genre": "Synthwave",
+   "song": "Nightcall",
+   "artist": "Kavinsky",
+   "synth": "Moog Minimoog Model D",
+   "cat": "Bass",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Moog Minimoog Model D",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2oct": 0,
+      "o2fine": 6,
+      "o2lvl": 0.85,
+      "flt": "LP24 Ladder",
+      "cut": 600,
+      "res": 0.2,
+      "env": 0.4,
+      "fa": 1,
+      "fd": 500,
+      "fs": 0.4,
+      "fr": 120,
+      "aa": 1,
+      "ad": 900,
+      "as": 0.85,
+      "ar": 90,
+      "fdrive": 0.35,
+      "key": 0.35,
+      "velf": 0.25,
+      "drift": 0.25
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 0,
+    "g_trim": 5.63
+   }
+  },
+  {
+   "name": "Scary Monsters Screamer",
+   "original": "LD Screamer",
+   "year": 2010,
+   "decade": "2010s",
+   "genre": "Dubstep",
+   "song": "Scary Monsters and Nice Sprites",
+   "artist": "Skrillex",
+   "synth": "LennarDigital Sylenth1",
+   "cat": "Bass",
+   "notes": "Un thread KVR attribuisce il suono a Sylenth1, preset LD Screamer (fonte forum).",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "LennarDigital Sylenth1",
+     "p": {
+      "engine": "Wavetable",
+      "wt": "Growl",
+      "wpos": 0.7,
+      "wenv": 0.3,
+      "flt": "LP24 Clean",
+      "cut": 3500,
+      "res": 0.45,
+      "env": 0.35,
+      "fa": 1,
+      "fd": 300,
+      "fs": 0.4,
+      "fr": 60,
+      "aa": 1,
+      "ad": 300,
+      "as": 0.8,
+      "ar": 60,
+      "uni": 3,
+      "detune": 0.15,
+      "oct": -1,
+      "lforate": 8,
+      "lfoshape": "S&H",
+      "lfotim": 0.7,
+      "lfocut": 0.4
+     }
+    }
+   ],
+   "g": {
+    "g_drive": 0.7,
+    "g_mode": "Mono",
+    "g_trim": 6.77
+   }
+  },
+  {
+   "name": "Doomsday Wobble",
+   "original": "",
+   "year": 2011,
+   "decade": "2010s",
+   "genre": "Dubstep",
+   "song": "Doomsday",
+   "artist": "Nero",
+   "synth": "NI Massive",
+   "cat": "Bass",
+   "notes": "Secondo la comunità i wobble di Nero nascono in Massive.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "NI Massive",
+     "p": {
+      "engine": "Wavetable",
+      "wt": "Growl",
+      "wpos": 0.3,
+      "wenv": 0.0,
+      "flt": "LP24 Clean",
+      "cut": 500,
+      "res": 0.4,
+      "env": 0.0,
+      "fa": 1,
+      "fd": 1000,
+      "fs": 0.4,
+      "fr": 80,
+      "aa": 1,
+      "ad": 1000,
+      "as": 1.0,
+      "ar": 80,
+      "uni": 2,
+      "detune": 0.1,
+      "oct": -1,
+      "lfoshape": "Sine",
+      "lforate": 3.0,
+      "lfocut": 0.8,
+      "wlfo": 0.6
+     }
+    }
+   ],
+   "g": {
+    "g_drive": 0.5,
+    "g_mode": "Mono",
+    "g_trim": 5.42
+   }
+  },
+  {
+   "name": "Levels Lead",
+   "original": "",
+   "year": 2011,
+   "decade": "2010s",
+   "genre": "EDM",
+   "song": "Levels",
+   "artist": "Avicii",
+   "synth": "LennarDigital Sylenth1",
+   "cat": "Lead",
+   "notes": "Avicii usava Sylenth1; il synth del brano non è documentato con certezza.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "LennarDigital Sylenth1",
+     "p": {
+      "engine": "Supersaw",
+      "ssdet": 0.45,
+      "ssmix": 0.6,
+      "flt": "LP12",
+      "cut": 6000,
+      "res": 0.1,
+      "env": 0.25,
+      "fa": 2,
+      "fd": 250,
+      "fs": 0.6,
+      "fr": 200,
+      "aa": 2,
+      "ad": 250,
+      "as": 0.7,
+      "ar": 200,
+      "dlymix": 0.15
+     }
+    }
+   ],
+   "g": {
+    "g_width": 0.85,
+    "g_revmix": 0.3,
+    "g_trim": 4.16
+   }
+  },
+  {
+   "name": "Don't You Worry Child Lead",
+   "original": "",
+   "year": 2012,
+   "decade": "2010s",
+   "genre": "EDM",
+   "song": "Don't You Worry Child",
+   "artist": "Swedish House Mafia",
+   "synth": "LennarDigital Sylenth1",
+   "cat": "Lead",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "LennarDigital Sylenth1",
+     "p": {
+      "engine": "Supersaw",
+      "ssdet": 0.5,
+      "ssmix": 0.7,
+      "flt": "LP12",
+      "cut": 8000,
+      "res": 0.1,
+      "env": 0.15,
+      "fa": 2,
+      "fd": 900,
+      "fs": 0.6,
+      "fr": 400,
+      "aa": 2,
+      "ad": 900,
+      "as": 1.0,
+      "ar": 400,
+      "dlymix": 0.2
+     }
+    }
+   ],
+   "g": {
+    "g_width": 0.85,
+    "g_revmix": 0.35,
+    "g_trim": 0.58
+   }
+  },
+  {
+   "name": "Veldt Synth",
+   "original": "",
+   "year": 2012,
+   "decade": "2010s",
+   "genre": "EDM",
+   "song": "The Veldt",
+   "artist": "deadmau5",
+   "synth": "NI Massive",
+   "cat": "Chord",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "NI Massive",
+     "p": {
+      "engine": "Supersaw",
+      "ssdet": 0.3,
+      "ssmix": 0.5,
+      "flt": "LP12",
+      "cut": 3000,
+      "res": 0.1,
+      "env": 0.3,
+      "fa": 5,
+      "fd": 600,
+      "fs": 0.6,
+      "fr": 300,
+      "aa": 5,
+      "ad": 600,
+      "as": 0.5,
+      "ar": 300,
+      "dlymix": 0.12
+     }
+    }
+   ],
+   "g": {
+    "g_width": 0.85,
+    "g_revmix": 0.3,
+    "g_trim": 0.99
+   }
+  },
+  {
+   "name": "Immunity MS-20",
+   "original": "",
+   "year": 2013,
+   "decade": "2010s",
+   "genre": "Ambient",
+   "song": "Open Eye Signal (Immunity)",
+   "artist": "Jon Hopkins",
+   "synth": "Korg MS-20",
+   "cat": "Bass",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Korg MS-20",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o1pw": 0.5,
+      "sub": 0.3,
+      "flt": "LP12",
+      "cut": 300,
+      "res": 0.6,
+      "env": 0.5,
+      "fa": 0.5,
+      "fd": 300,
+      "fs": 0.1,
+      "fr": 80,
+      "aa": 0.5,
+      "ad": 600,
+      "as": 0.7,
+      "ar": 60,
+      "fdrive": 0.8,
+      "key": 0.3,
+      "velf": 0.3,
+      "drift": 0.08,
+      "lfocut": 0.3,
+      "lforate": 0.1
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_trim": 3.18
+   }
+  },
+  {
+   "name": "Latch Chords",
+   "original": "",
+   "year": 2013,
+   "decade": "2010s",
+   "genre": "House",
+   "song": "Latch",
+   "artist": "Disclosure feat. Sam Smith",
+   "synth": "Roland Juno-106",
+   "cat": "Chord",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Juno-106",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Pulse",
+      "o2lvl": 0.6,
+      "o2fine": 7,
+      "o2pw": 0.35,
+      "flt": "LP24 Ladder",
+      "cut": 1600,
+      "res": 0.15,
+      "env": 0.4,
+      "fa": 1,
+      "fd": 450,
+      "fs": 0.0,
+      "fr": 450,
+      "aa": 1,
+      "ad": 720.0,
+      "as": 0.0,
+      "ar": 360.0,
+      "drift": 0.2,
+      "key": 0.5,
+      "velf": 0.35
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "II",
+    "g_chomix": 0.55,
+    "g_revmix": 0.2,
+    "g_trim": 1.93
+   }
+  },
+  {
+   "name": "Eventually Pad",
+   "original": "",
+   "year": 2015,
+   "decade": "2010s",
+   "genre": "Indie",
+   "song": "Eventually",
+   "artist": "Tame Impala",
+   "synth": "Roland Juno-106",
+   "cat": "Pad",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Juno-106",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o1pw": 0.42,
+      "pwm": 0.0,
+      "sub": 0.25,
+      "o2wave": "Saw",
+      "o2lvl": 0.0,
+      "flt": "LP24 Ladder",
+      "cut": 1300,
+      "res": 0.2,
+      "env": 0.25,
+      "fa": 600.0,
+      "fd": 2500,
+      "fs": 0.6,
+      "fr": 2000,
+      "aa": 500,
+      "ad": 1500,
+      "as": 1.0,
+      "ar": 2000,
+      "lforate": 0.6,
+      "lfoshape": "Triangle",
+      "lfotim": 0.0,
+      "drift": 0.3
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "II",
+    "g_chomix": 0.7,
+    "g_revmix": 0.4,
+    "g_revsize": 0.7,
+    "g_trim": -1.66
+   }
+  },
+  {
+   "name": "Powers of Ten Lead",
+   "original": "",
+   "year": 2015,
+   "decade": "2010s",
+   "genre": "Techno",
+   "song": "Powers of Ten",
+   "artist": "Stephan Bodzin",
+   "synth": "Moog Sub 37",
+   "cat": "Lead",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Moog Sub 37",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2lvl": 0.7,
+      "o2fine": 8,
+      "flt": "LP24 Ladder",
+      "cut": 900,
+      "res": 0.45,
+      "env": 0.55,
+      "fa": 2,
+      "fd": 900,
+      "fs": 0.3,
+      "fr": 200,
+      "aa": 3,
+      "ad": 600,
+      "as": 0.9,
+      "ar": 180,
+      "lforate": 5.5,
+      "lfoshape": "Sine",
+      "lfopitch": 0.0,
+      "lfodelay": 0,
+      "drift": 0.2,
+      "fdrive": 0.3,
+      "dlymix": 0.3,
+      "dlydiv": "1/8D"
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_glide": 120,
+    "g_revmix": 0.35,
+    "g_trim": 2.77
+   }
+  },
+  {
+   "name": "Secrets Lead",
+   "original": "",
+   "year": 2015,
+   "decade": "2010s",
+   "genre": "EDM",
+   "song": "Secrets",
+   "artist": "Tiësto & KSHMR",
+   "synth": "LennarDigital Sylenth1",
+   "cat": "Lead",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "LennarDigital Sylenth1",
+     "p": {
+      "engine": "Supersaw",
+      "ssdet": 0.5,
+      "ssmix": 0.7,
+      "flt": "LP12",
+      "cut": 7000,
+      "res": 0.1,
+      "env": 0.15,
+      "fa": 2,
+      "fd": 200,
+      "fs": 0.6,
+      "fr": 120,
+      "aa": 2,
+      "ad": 200,
+      "as": 0.8,
+      "ar": 120,
+      "dlymix": 0.12,
+      "penv": -12,
+      "pdec": 25
+     }
+    }
+   ],
+   "g": {
+    "g_width": 0.85,
+    "g_revmix": 0.35,
+    "g_drive": 0.25,
+    "g_trim": 0.25
+   }
+  },
+  {
+   "name": "Stranger Things Arp",
+   "original": "",
+   "year": 2016,
+   "decade": "2010s",
+   "genre": "Synthwave",
+   "song": "Stranger Things (main theme)",
+   "artist": "Kyle Dixon & Michael Stein",
+   "synth": "Sequential Prophet-5",
+   "cat": "Sequence",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Sequential Prophet-5",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Saw",
+      "o2lvl": 0.5,
+      "o2fine": 6,
+      "flt": "LP24 Ladder",
+      "cut": 900,
+      "res": 0.4,
+      "env": 0.5,
+      "fa": 0.5,
+      "fd": 260,
+      "fs": 0.0,
+      "fr": 260,
+      "aa": 0.5,
+      "ad": 650.0,
+      "as": 0.0,
+      "ar": 260,
+      "drift": 0.1,
+      "velf": 0.4,
+      "key": 0.6,
+      "dlymix": 0.25,
+      "dlydiv": "1/8D"
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.35,
+    "g_trim": 6.17
+   }
+  },
+  {
+   "name": "Cola Bass",
+   "original": "",
+   "year": 2017,
+   "decade": "2010s",
+   "genre": "Tech House",
+   "song": "Cola",
+   "artist": "CamelPhat & Elderbrook",
+   "synth": "Xfer Serum",
+   "cat": "Bass",
+   "notes": "Synth originale non documentato: basso ricreato nello stile del brano.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Xfer Serum",
+     "p": {
+      "engine": "Wavetable",
+      "wt": "Analog Morph",
+      "wpos": 0.66,
+      "wenv": 0.0,
+      "flt": "LP24 Clean",
+      "cut": 450,
+      "res": 0.3,
+      "env": 0.35,
+      "fa": 1,
+      "fd": 300,
+      "fs": 0.4,
+      "fr": 80,
+      "aa": 1,
+      "ad": 300,
+      "as": 0.5,
+      "ar": 80,
+      "uni": 2,
+      "detune": 0.08,
+      "oct": -1,
+      "lfocut": 0.2,
+      "lforate": 0.2
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Mono",
+    "g_trim": 2.86
+   }
+  },
+  {
+   "name": "Finesse ORCH5",
+   "original": "ORCH5",
+   "year": 2017,
+   "decade": "2010s",
+   "genre": "R&B",
+   "song": "Finesse",
+   "artist": "Bruno Mars",
+   "synth": "Fairlight CMI",
+   "cat": "Stab",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Fairlight CMI",
+     "p": {
+      "engine": "Additive",
+      "addm": "Brass",
+      "bright": 0.85,
+      "tilt": 0.5,
+      "inh": 0.0,
+      "even": 1.0,
+      "aa": 1,
+      "ad": 380,
+      "as": 0.0,
+      "ar": 200,
+      "flt": "Off",
+      "cut": 20000,
+      "bits": 0.5,
+      "srr": 0.3,
+      "oct": -1
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.2,
+    "g_trim": -0.1
+   }
+  },
+  {
+   "name": "Versace on the Floor",
+   "original": "E.PIANO 1",
+   "year": 2017,
+   "decade": "2010s",
+   "genre": "R&B",
+   "song": "Versace on the Floor",
+   "artist": "Bruno Mars",
+   "synth": "Yamaha DX7",
+   "cat": "Keys",
+   "notes": "",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Yamaha DX7",
+     "p": {
+      "engine": "FM 6-op",
+      "alg": "5",
+      "fb": 0.2,
+      "fmvel": 0.85,
+      "flt": "Off",
+      "aa": 1,
+      "ad": 3000,
+      "as": 1.0,
+      "ar": 450,
+      "op1crs": 1,
+      "op1fin": 0,
+      "op1lvl": 1.0,
+      "op1atk": 1,
+      "op1dec": 4200,
+      "op1sus": 0.0,
+      "op1rel": 450,
+      "op2crs": 1,
+      "op2fin": 0,
+      "op2lvl": 0.62,
+      "op2atk": 1,
+      "op2dec": 1400,
+      "op2sus": 0.12,
+      "op2rel": 400,
+      "op3crs": 1,
+      "op3fin": 0.01,
+      "op3lvl": 0.75,
+      "op3atk": 1,
+      "op3dec": 2600,
+      "op3sus": 0.0,
+      "op3rel": 450,
+      "op4crs": 14,
+      "op4fin": 0,
+      "op4lvl": 0.47000000000000003,
+      "op4atk": 1,
+      "op4dec": 260,
+      "op4sus": 0.0,
+      "op4rel": 200,
+      "op5crs": 1,
+      "op5fin": 0,
+      "op5lvl": 0.35,
+      "op5atk": 1,
+      "op5dec": 3000,
+      "op5sus": 0.0,
+      "op5rel": 450,
+      "op6crs": 1,
+      "op6fin": 0,
+      "op6lvl": 0.3,
+      "op6atk": 1,
+      "op6dec": 2000,
+      "op6sus": 0.0,
+      "op6rel": 300,
+      "uni": 2,
+      "detune": 0.03
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "II",
+    "g_chomix": 0.4,
+    "g_vel": 0.7,
+    "g_revmix": 0.3,
+    "g_trim": -6.26
+   }
+  },
+  {
+   "name": "Losing It Bass",
+   "original": "",
+   "year": 2018,
+   "decade": "2010s",
+   "genre": "Tech House",
+   "song": "Losing It",
+   "artist": "FISHER",
+   "synth": "Xfer Serum",
+   "cat": "Bass",
+   "notes": "Synth originale non documentato: basso ricreato nello stile del brano.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Xfer Serum",
+     "p": {
+      "engine": "Wavetable",
+      "wt": "Growl",
+      "wpos": 0.25,
+      "wenv": 0.25,
+      "flt": "LP24 Clean",
+      "cut": 700,
+      "res": 0.15,
+      "env": 0.4,
+      "fa": 1,
+      "fd": 160,
+      "fs": 0.4,
+      "fr": 60,
+      "aa": 1,
+      "ad": 160,
+      "as": 0.35,
+      "ar": 60,
+      "uni": 1,
+      "detune": 0.2,
+      "oct": -1
+     }
+    }
+   ],
+   "g": {
+    "g_drive": 0.45,
+    "g_mode": "Mono",
+    "g_trim": 5.16
+   }
+  },
+  {
+   "name": "Bad Guy Bass",
+   "original": "",
+   "year": 2019,
+   "decade": "2010s",
+   "genre": "Pop",
+   "song": "bad guy",
+   "artist": "Billie Eilish",
+   "synth": "Xfer Serum",
+   "cat": "Bass",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Xfer Serum",
+     "p": {
+      "engine": "Wavetable",
+      "wt": "Analog Morph",
+      "wpos": 0.0,
+      "wenv": 0.0,
+      "flt": "LP24 Clean",
+      "cut": 2000,
+      "res": 0.1,
+      "env": 0.2,
+      "fa": 1,
+      "fd": 800,
+      "fs": 0.4,
+      "fr": 100,
+      "aa": 1,
+      "ad": 800,
+      "as": 0.6,
+      "ar": 100,
+      "uni": 1,
+      "detune": 0.2,
+      "oct": -1
+     }
+    }
+   ],
+   "g": {
+    "g_drive": 0.35,
+    "g_mode": "Mono",
+    "g_trim": 4.28
+   }
+  },
+  {
+   "name": "Blinding Lights Lead",
+   "original": "",
+   "year": 2019,
+   "decade": "2010s",
+   "genre": "Synthwave",
+   "song": "Blinding Lights",
+   "artist": "The Weeknd",
+   "synth": "Roland Juno-60",
+   "cat": "Lead",
+   "notes": "La maggior parte degli esperti indica il Roland Juno-60 (MusicRadar).",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Juno-60",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Pulse",
+      "o1pw": 0.35,
+      "pwm": 0.2,
+      "o2wave": "Saw",
+      "o2lvl": 0.4,
+      "o2fine": 8,
+      "flt": "LP24 Ladder",
+      "cut": 3200,
+      "res": 0.1,
+      "env": 0.2,
+      "aa": 2,
+      "ad": 500,
+      "as": 0.8,
+      "ar": 300,
+      "dlymix": 0.25,
+      "dlydiv": "1/8D"
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "I",
+    "g_revmix": 0.35,
+    "g_trim": 5.66
+   }
+  },
+  {
+   "name": "Physical Synth",
+   "original": "",
+   "year": 2020,
+   "decade": "2020s",
+   "genre": "Pop",
+   "song": "Physical",
+   "artist": "Dua Lipa",
+   "synth": "Roland Juno-106",
+   "cat": "Lead",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland Juno-106",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Saw",
+      "o2wave": "Pulse",
+      "o2lvl": 0.5,
+      "o2fine": 6,
+      "flt": "LP24 Ladder",
+      "cut": 2200,
+      "res": 0.2,
+      "env": 0.35,
+      "aa": 1,
+      "ad": 400,
+      "as": 0.7,
+      "ar": 200,
+      "dlymix": 0.2,
+      "dlydiv": "1/8D"
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "I",
+    "g_trim": 4.76
+   }
+  },
+  {
+   "name": "Doppler Acid",
+   "original": "",
+   "year": 2021,
+   "decade": "2020s",
+   "genre": "Techno",
+   "song": "Doppler",
+   "artist": "Charlotte de Witte",
+   "synth": "Roland TB-303",
+   "cat": "Bass",
+   "notes": "Linea acid in stile 303 con distorsione RAT, tipica dell'acid techno; Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Roland TB-303",
+     "p": {
+      "engine": "Analog",
+      "oct": -1,
+      "o1wave": "Saw",
+      "o1pw": 0.5,
+      "flt": "LP 303 Diode",
+      "cut": 300,
+      "res": 0.86,
+      "env": 0.65,
+      "fa": 0.5,
+      "fd": 200,
+      "fs": 0.0,
+      "fr": 60,
+      "aa": 0.5,
+      "ad": 1300,
+      "as": 0.55,
+      "ar": 25,
+      "accent": 0.85,
+      "fdrive": 0.6,
+      "key": 0.2,
+      "velf": 0.15,
+      "drift": 0.05,
+      "dist": "RAT",
+      "dgain": 0.55,
+      "dtone": 0.45,
+      "dlymix": 0.15
+     }
+    }
+   ],
+   "g": {
+    "g_mode": "Legato",
+    "g_glide": 70,
+    "g_vel": 0.35,
+    "g_drive": 0.2,
+    "g_trim": 2.33
+   }
+  },
+  {
+   "name": "Break My Soul Organ",
+   "original": "Organ 2",
+   "year": 2022,
+   "decade": "2020s",
+   "genre": "House",
+   "song": "Break My Soul",
+   "artist": "Beyoncé",
+   "synth": "Korg M1",
+   "cat": "Organ",
+   "notes": "M1 Organ e M1 Piano insieme (Sonicstate): due moduli digitali in layer.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Korg M1",
+     "p": {
+      "engine": "Additive",
+      "addm": "House Organ",
+      "bright": 0.55,
+      "tilt": 0.55,
+      "inh": 0.0,
+      "even": 1.0,
+      "aa": 1,
+      "ad": 800,
+      "as": 0.5,
+      "ar": 120,
+      "flt": "Off",
+      "cut": 20000,
+      "oct": -1
+     }
+    },
+    {
+     "slot": 1,
+     "model": "Korg M1",
+     "p": {
+      "engine": "Additive",
+      "addm": "Piano",
+      "bright": 0.75,
+      "tilt": 0.45,
+      "inh": 0.0,
+      "even": 1.0,
+      "aa": 1,
+      "ad": 3000,
+      "as": 0.0,
+      "ar": 300,
+      "flt": "Off",
+      "cut": 20000,
+      "level": 0.5
+     }
+    }
+   ],
+   "g": {
+    "g_trim": -4.17
+   }
+  },
+  {
+   "name": "Rumble Sub",
+   "original": "",
+   "year": 2022,
+   "decade": "2020s",
+   "genre": "Techno",
+   "song": "Rumble techno (es. Amelie Lens - Higher)",
+   "artist": "Amelie Lens",
+   "synth": "Moog Sub 37",
+   "cat": "Bass",
+   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Moog Sub 37",
+     "p": {
+      "engine": "Analog",
+      "o1wave": "Sine",
+      "oct": -1,
+      "o2lvl": 0.0,
+      "flt": "LP24 Ladder",
+      "cut": 200,
+      "res": 0.2,
+      "aa": 1,
+      "ad": 900,
+      "as": 0.0,
+      "ar": 600,
+      "penv": 5,
+      "pdec": 40,
+      "fdrive": 0.8
+     }
+    }
+   ],
+   "g": {
+    "g_revmix": 0.5,
+    "g_revsize": 0.8,
+    "g_revdamp": 0.9,
+    "g_drive": 0.4,
+    "g_trim": -3.68
+   }
+  },
+  {
+   "name": "Nanana Piano",
+   "original": "",
+   "year": 2023,
+   "decade": "2020s",
+   "genre": "House",
+   "song": "(It Goes Like) Nanana",
+   "artist": "Peggy Gou",
+   "synth": "Korg M1",
+   "cat": "Piano",
+   "notes": "Revival del piano house anni '90 in stile M1: Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "modules": [
+    {
+     "slot": 0,
+     "model": "Korg M1",
+     "p": {
+      "engine": "Additive",
+      "addm": "Piano",
+      "bright": 0.78,
+      "tilt": 0.45,
+      "inh": 0.18,
+      "even": 1.0,
+      "aa": 1,
+      "ad": 3200,
+      "as": 0.0,
+      "ar": 350,
+      "flt": "Off",
+      "cut": 20000
+     }
+    }
+   ],
+   "g": {
+    "g_chomode": "I",
+    "g_chomix": 0.15,
+    "g_revmix": 0.12,
+    "g_trim": -1.11
+   }
+  }
+ ]
+}
