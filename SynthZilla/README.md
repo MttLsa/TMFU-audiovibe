@@ -46,7 +46,7 @@ Saw Up/Down, Square, S&H, Random; rate libero o **SYNC** al tempo (8 battute …
 fase. Il **+** apre la vista con tutti gli 8 LFO. LFO, EQ e filtri d'uscita non cambiano quando carichi un preset.
 
 ## Grafica
-- Stile Twinbox (piatto, scuro, in stile Ableton) con un leggero **rilievo**; font **Comfortaa** (SIL OFL, grassetto ispessito) per tutto
+- Stile Twinbox (piatto, scuro, in stile Ableton) con un leggero **rilievo**; font **Urbanist** Light / Bold (SIL OFL) per tutto
   il testo dell'interfaccia, logo e display compresi. Tutte le scritte di moduli, parametri e preset sono in inglese.
 - Ogni modulo prende l'aspetto dello strumento scelto (34 skin: legno Moog/Prophet, fader Juno/CS-80/Alpha Juno, TB-303
   argento, LCD e membrane DX7/M1, PPG blu, Virus/Nord rossi, CRT Fairlight…), senza loghi o grafiche originali.

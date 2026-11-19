@@ -1,10 +1,6 @@
-Comfortaa (Comfortaa-Regular.ttf) - SIL Open Font License 1.1, see Comfortaa-LICENSE.txt.
-  Copyright 2011 The Comfortaa Project Authors (https://github.com/alexeiva/comfortaa), by Johan Aakerlund.
-  Used for all interface text. Distributed unmodified.
-
-SynthZilla Heavy (SynthZillaHeavy.ttf) - SIL Open Font License 1.1, see Comfortaa-LICENSE.txt.
-  Modified version of Comfortaa Bold (thicker strokes, tools/make_heavy_font.py), renamed as the OFL requires
-  for the Reserved Font Name "Comfortaa". Used for all bold interface text. Comfortaa-Bold.ttf is its source.
+Urbanist (Urbanist-Light.ttf, Urbanist-Bold.ttf) - SIL Open Font License 1.1, see Urbanist-LICENSE.txt.
+  Copyright The Urbanist Project Authors (https://github.com/coreyhu/Urbanist).
+  Light is used for all interface text, Bold for all bold text. Distributed unmodified.
 
 Rostex Outline (Rostex-Outline.ttf) - Copyright (c) 2025 Roomspace Creative Lab, designer Bakhrudin Ja'far.
   Used only for the "SynthZilla" logo lettering. Supplied by the plug-in author: the font embeds no license text

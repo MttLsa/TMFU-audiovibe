@@ -5,17 +5,15 @@ using namespace params;
 using skins::Skin;
 
 // =====================================================================================================
-//  Fonts: Comfortaa (SIL OFL) for all text, Rostex Outline for the logo lettering + relief
+//  Fonts: Urbanist Light / Bold (SIL OFL) for all text, Rostex Outline for the logo lettering + relief
 // =====================================================================================================
 juce::Typeface::Ptr ui::typeface (bool bold)
 {
-    static juce::Typeface::Ptr reg = juce::Typeface::createSystemTypefaceFor (BinaryData::ComfortaaRegular_ttf, BinaryData::ComfortaaRegular_ttfSize);
-    // bold = "SynthZilla Heavy": Comfortaa Bold with slightly thicker strokes (tools/make_heavy_font.py)
-    static juce::Typeface::Ptr bld = juce::Typeface::createSystemTypefaceFor (BinaryData::SynthZillaHeavy_ttf, BinaryData::SynthZillaHeavy_ttfSize);
+    static juce::Typeface::Ptr reg = juce::Typeface::createSystemTypefaceFor (BinaryData::UrbanistLight_ttf, BinaryData::UrbanistLight_ttfSize);
+    static juce::Typeface::Ptr bld = juce::Typeface::createSystemTypefaceFor (BinaryData::UrbanistBold_ttf, BinaryData::UrbanistBold_ttfSize);
     return bold ? bld : reg;
 }
-// Comfortaa is wider than the previous UI font: slightly tighter tracking keeps the short captions apart
-juce::Font ui::font (float h, bool bold) { return juce::Font (juce::FontOptions (typeface (bold)).withHeight (h).withKerningFactor (-0.03f)); }
+juce::Font ui::font (float h, bool bold) { return juce::Font (juce::FontOptions (typeface (bold)).withHeight (h)); }
 
 // logo lettering only: Rostex Outline
 juce::Font ui::logoFont (float h)
