@@ -1,6 +1,14 @@
 #include "LookAndFeel.h"
+#include "BinaryData.h"
 
 using namespace juce;
+
+Typeface::Ptr theme::comfortaa (bool bold)
+{
+    static const Typeface::Ptr regular = Typeface::createSystemTypefaceFor (BinaryData::ComfortaaRegular_ttf, (size_t) BinaryData::ComfortaaRegular_ttfSize);
+    static const Typeface::Ptr boldFace = Typeface::createSystemTypefaceFor (BinaryData::ComfortaaBold_ttf, (size_t) BinaryData::ComfortaaBold_ttfSize);
+    return bold ? boldFace : regular;
+}
 
 GroovLookAndFeel::GroovLookAndFeel()
 {

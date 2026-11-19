@@ -35,13 +35,16 @@ namespace theme
         return module < 5 ? red : (module == 5 ? customC : (module == 6 ? amber : (module <= 9 ? teal : olive)));
     }
 
+    // Every text in the plugin uses Comfortaa (SIL OFL, embedded via BinaryData: resources/fonts)
+    juce::Typeface::Ptr comfortaa (bool bold);
+
     inline juce::Font font (float h, bool bold = false)
     {
-        return juce::Font (juce::FontOptions (h, bold ? juce::Font::bold : juce::Font::plain));
+        return juce::Font (juce::FontOptions (comfortaa (bold)).withHeight (h));
     }
-    inline juce::Font mono (float h, bool bold = false)
+    inline juce::Font mono (float h, bool bold = false)   // numbers / LCD readouts: Comfortaa too
     {
-        return juce::Font (juce::FontOptions (juce::Font::getDefaultMonospacedFontName(), h, bold ? juce::Font::bold : juce::Font::plain));
+        return font (h, bold);
     }
 }
 
@@ -60,6 +63,7 @@ public:
         label.setFont (getComboBoxFont (b));
         label.setBorderSize ({ 0, 3, 0, 0 });
     }
+    juce::Typeface::Ptr getTypefaceForFont (const juce::Font& f) override { return theme::comfortaa (f.isBold()); }
     juce::Font getPopupMenuFont() override { return theme::font (14.0f); }
     juce::Font getTextButtonFont (juce::TextButton&, int h) override { return theme::font (juce::jmin (13.0f, h * 0.58f), true); }
     void drawDocumentWindowTitleBar (juce::DocumentWindow&, juce::Graphics&, int w, int h, int, int, const juce::Image*, bool) override;
