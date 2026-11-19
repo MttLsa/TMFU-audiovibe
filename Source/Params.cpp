@@ -129,6 +129,12 @@ AudioProcessorValueTreeState::ParameterLayout createLayout()
     addBool   (l, aNorm, "A NORM (output normaliser)", false);
     addBool   (l, aSeq,  "A SEQ (sequencer on)", true);
     addFloat  (l, aLevel, "A Master", NormalisableRange<float> (-60.f, 6.f), 0.f, dbText);
+    addBool   (l, aClickOn,   "A Kick Click On", false);
+    addInt    (l, aClickWav,  "A Kick Click Sample", 0, 127, 0);
+    addFloat  (l, aClickGain, "A Kick Click Gain", NormalisableRange<float> (-60.f, 6.f), -6.f, dbText);
+    addFloat  (l, aClickTune, "A Kick Click Tune", NormalisableRange<float> (-24.f, 24.f), 0.f, stText);
+    addFloat  (l, aClickDcy,  "A Kick Click Decay", NormalisableRange<float> (0.f, 100.f), 50.f, pctText);
+    addFloat  (l, aClickHp,   "A Kick Click High Pass", logRange (20.f, 8000.f, 600.f), 20.f, hzText);
 
     // ===================================================================== SECTION B (Limelite 1.3)
     auto pctR = NormalisableRange<float> (0.f, 100.f);

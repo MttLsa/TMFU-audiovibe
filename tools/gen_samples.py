@@ -671,8 +671,33 @@ for genre in GENRES:
         write("Hat", fname, hat(tau, hp, metal, base, max(0.12, tau * 7), seed=seed, **extra), [genre])
         write("Hat", fname, hat(otau, hp, metal, base, max(0.3, otau * 6), seed=seed, **extra), [genre], subdir="open")
 
+# ===== CLICK: short transients layered on the Kick of Section A (Twinbox Click)
+def tr_noise(fc, tau, length=0.08, mode="bp", q=0.8, seed=1):
+    t = t_axis(length); n = rng(seed).standard_normal(len(t))
+    return svf(n, fc, q, mode) * env_exp(t, tau)
+def tr_tone(f, tau, length=0.08, drop=0.5, partial=0.0):
+    t = t_axis(length); fc = f * (1 + drop * env_exp(t, tau * 0.6))
+    return (osc_sine(fc) + partial * osc_sine(fc * 2.3)) * env_exp(t, tau)
+CLICKS = [
+    ("Beater Hard",   lambda s: tr_noise(3500, 0.0025, seed=s) * 1.2 + 0.6 * tr_tone(1200, 0.004)),
+    ("Beater Soft",   lambda s: svf(tr_noise(2200, 0.004, seed=s) + 0.5 * tr_tone(800, 0.006), 5000, 0.7, "lp")),
+    ("909 Attack",    lambda s: tr_noise(4000, 0.003, mode="hp", seed=s) + 0.8 * tr_tone(1600, 0.003, drop=1.0)),
+    ("Wood Tick",     lambda s: tr_tone(1800, 0.006, partial=0.25) + 0.3 * tr_noise(3000, 0.002, seed=s)),
+    ("Tick Short",    lambda s: tr_noise(5000, 0.0015, q=1.2, seed=s)),
+    ("Knock",         lambda s: tr_tone(900, 0.012, drop=0.3) + 0.3 * tr_noise(1500, 0.003, seed=s)),
+    ("Felt Thump",    lambda s: svf(tr_tone(400, 0.015, drop=0.8) + 0.4 * tr_noise(900, 0.004, seed=s), 2500, 0.7, "lp")),
+    ("Tape Click",    lambda s: lofi(tr_noise(3000, 0.003, seed=s) + 0.5 * tr_tone(1300, 0.004), 10, 2, 8000)),
+    ("Air Snap",      lambda s: tr_noise(7000, 0.004, mode="hp", seed=s) * 0.9),
+    ("Plastic Pop",   lambda s: tr_tone(2500, 0.004, drop=1.5) + 0.2 * tr_noise(5000, 0.002, seed=s)),
+    ("Mid Punch",     lambda s: tr_tone(600, 0.02, drop=1.2) + 0.5 * tr_noise(2000, 0.003, seed=s)),
+    ("Dusty Click",   lambda s: vinyl(svf(tr_noise(2600, 0.0035, seed=s) + 0.4 * tr_tone(1100, 0.005), 6000, 0.7, "lp"), 0.2, s)),
+]
+for i, (name, fn) in enumerate(CLICKS):
+    seed += 1
+    write("Click", f"C{i + 1:02d} {name}", fn(seed), ["all"])
+
 with open(os.path.join(OUT, "manifest.json"), "w") as f:
-    json.dump({"version": 6, "genres": GENRES, "modules": manifest}, f, indent=1)
+    json.dump({"version": 7, "genres": GENRES, "modules": manifest}, f, indent=1)
 print({k: len(v) for k, v in manifest.items()})
 
 import zipfile, shutil

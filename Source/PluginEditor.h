@@ -16,7 +16,7 @@ public:
     int designWidth() const;          // preferred width (wide, ~16:10)
     int minimumWidth() const;         // narrowest layout
     int sectionWidth() const;         // current width of the two sections (grows with the window)
-    static constexpr int minSectionWidth = 1400, preferredSectionWidth = 1780, heightA = 430, heightB = 740, margin = 8;
+    static constexpr int minSectionWidth = 1400, preferredSectionWidth = 1780, heightA = 500, heightB = 740, margin = 8;
     static constexpr int titleH = 46;
     static constexpr int designHeight = titleH + heightA + margin + heightB + margin;
     GlobalPanel global;

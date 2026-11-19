@@ -1,4 +1,4 @@
-# TWINBOX — groovebox ibrida VST3 / AU (v2.13)
+# TWINBOX — groovebox ibrida VST3 / AU (v2.14)
 
 Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in un solo plugin:
 
@@ -8,7 +8,7 @@ Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in 
 | **B — Groovebox** (in basso) | NI Reaktor **Limelite 1.3** | 5 voci a campioni (Kick, Snare, Hat, **Belt**, **Capsule**), sequencer A–D fino a **64 step** con catena di pattern e motore **Remix**, effetti Filter / EQ / Delay / xFx (23 modi) / Mix / Out, **fino a 8 LFO**, pulsanti **NORM** e **MIDI** |
 | **GLOBAL CONTROL** (a destra, comprimibile) | — | Crossfader A↔B, filtro master **Cutoff** (manopola grande) HP/BP/LP + **Resonance**, Master, Tempo / Run |
 
-📖 **Manuale d'uso completo (PDF):** [docs/Twinbox_Manuale_v2.13.0.pdf](docs/Twinbox_Manuale_v2.13.0.pdf)
+📖 **Manuale d'uso completo (PDF):** [docs/Twinbox_Manuale_v2.14.0.pdf](docs/Twinbox_Manuale_v2.14.0.pdf)
 
 ![Interfaccia principale](docs/gui_main.png)
 
@@ -16,6 +16,10 @@ Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in 
 > indipendente che riprende l'*architettura* e l'organizzazione dei controlli di questi strumenti. Non contiene codice,
 > grafica o campioni originali. I campioni originali di Limelite si possono importare solo dal proprio file `.ens`
 > (vedi "Cartelle Legacy").
+
+## Novità 2.14
+
+- Modulo **CLICK** nella Sezione A (sotto la lista dei canali): un campione di transiente suonato in layer con il **Kick** (canale 1). Cartella di fabbrica *Twinbox Click* con 12 click (beater, 909 attack, wood tick, felt thump, tape click...) oppure una tua cartella (📁). Controlli ON, scelta del campione, Gain, Tune, Decay, HP.
 
 ## Novità 2.13
 
@@ -198,7 +202,7 @@ JUCE 8.0.4 viene scaricato in automatico.
 Il workflow `.github/workflows/build.yml`:
 - compila le tre piattaforme;
 - su macOS verifica l'AU con `auval`;
-- produce l'installer **`Twinbox-2.13.0-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
+- produce l'installer **`Twinbox-2.14.0-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
 
 Gli script che generano campioni e preset (`resources/`) sono `tools/gen_samples.py` e `tools/gen_presets.py`.
 

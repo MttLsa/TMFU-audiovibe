@@ -5,7 +5,7 @@ using namespace juce;
 
 namespace
 {
-    const char* moduleNames[] { "Kick", "Snare", "Hat", "Belt", "Capsule" };   // Belt / Capsule were called Tie / Pod before v2.12
+    const char* moduleNames[] { "Kick", "Snare", "Hat", "Belt", "Capsule", "Click" };   // Belt / Capsule were called Tie / Pod before v2.12
     const char* sourceKeys[]  { "twinbox", "legacy", "user" };
 
     Array<File> audioFilesIn (const File& folder)
