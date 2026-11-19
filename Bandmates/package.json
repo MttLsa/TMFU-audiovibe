@@ -1,0 +1,12 @@
+{
+  "name": "bandmates",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bandmates: virtual session players for Ableton Live (Max for Live) - TMFU audiovibe",
+  "scripts": {
+    "test": "node --test",
+    "build": "node tools/build.js",
+    "check": "node tools/build.js --check"
+  },
+  "license": "UNLICENSED"
+}
