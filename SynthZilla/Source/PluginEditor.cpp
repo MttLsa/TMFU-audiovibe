@@ -1216,6 +1216,9 @@ void SynthZillaEditor::paint (juce::Graphics& g)
     {   // logo: the kaiju with its keyboard, bobbing a little with the sound
         const float lvl = juce::jlimit (0.0f, 1.0f, proc.meter() * 1.5f);
         const float bob = std::sin (animT * 6.0f) * 1.2f * lvl;
+        // images are drawn with the current colour's opacity: relief() just left black at 45 % -> the logo looked faded
+        g.setOpacity (1.0f);
+        g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
         g.drawImageWithin (logo, (int) logoArea.getX(), (int) (logoArea.getY() + bob), (int) logoArea.getWidth(), (int) logoArea.getHeight(),
                            juce::RectanglePlacement::centred, false);
     }
