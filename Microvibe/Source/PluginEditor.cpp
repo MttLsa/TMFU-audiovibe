@@ -1,4 +1,5 @@
 #include "PluginEditor.h"
+#include "BinaryData.h"
 #include <map>
 
 using namespace prm;
@@ -27,9 +28,17 @@ static juce::String shortSource (int s)
     return "-";
 }
 
+juce::Typeface::Ptr ui::typeface (bool bold)
+{
+    static const juce::Typeface::Ptr regular = juce::Typeface::createSystemTypefaceFor (BinaryData::ComfortaaRegular_ttf, BinaryData::ComfortaaRegular_ttfSize);
+    static const juce::Typeface::Ptr heavy   = juce::Typeface::createSystemTypefaceFor (BinaryData::ComfortaaBold_ttf, BinaryData::ComfortaaBold_ttfSize);
+    return bold ? heavy : regular;
+}
+
 // =============================================================================================== look
 MvLook::MvLook()
 {
+    setDefaultSansSerifTypeface (ui::typeface (false));
     setColour (juce::ComboBox::backgroundColourId, ui::panel2);
     setColour (juce::ComboBox::textColourId, ui::text);
     setColour (juce::ComboBox::outlineColourId, ui::line);
@@ -633,7 +642,7 @@ void DestButton::paint (juce::Graphics& g)
     g.setColour (ui::line); g.drawRoundedRectangle (r, 4, 1);
     const int d = (int) proc.getParam (pid);
     g.setColour (d > 0 ? ui::text : ui::dim); g.setFont (ui::font (10.5f));
-    g.drawFittedText (d > 0 ? def (dests()[(size_t) d - 1]).name : juce::String ("destinazione..."), getLocalBounds().reduced (4, 0), juce::Justification::centredLeft, 1, 0.7f);
+    g.drawFittedText (d > 0 ? def (dests()[(size_t) d - 1]).name : juce::String ("destination..."), getLocalBounds().reduced (4, 0), juce::Justification::centredLeft, 1, 0.7f);
 }
 
 void DestButton::mouseDown (const juce::MouseEvent&)
@@ -805,10 +814,10 @@ void ModPanel::refresh()
     {
         const auto& I = ids();
         juce::String s;
-        s << "Scala: " << tuning::builtinNames()[(int) proc.getParam (I.tuScale)];
-        if ((int) proc.getParam (I.tuScale) == tuning::builtinNames().size() - 1) s << "  (" << (proc.scaleName().isEmpty() ? juce::String ("nessun file") : proc.scaleName()) << ")";
-        s << "\nGradi: " << proc.engine.tuning.currentSize();
-        s << "\nMTS-ESP: " << (proc.engine.display.mts.load() ? "master attivo, accordatura globale" : "nessun master");
+        s << "Scale: " << tuning::builtinNames()[(int) proc.getParam (I.tuScale)];
+        if ((int) proc.getParam (I.tuScale) == tuning::builtinNames().size() - 1) s << "  (" << (proc.scaleName().isEmpty() ? juce::String ("no file") : proc.scaleName()) << ")";
+        s << "\nSteps: " << proc.engine.tuning.currentSize();
+        s << "\nMTS-ESP: " << (proc.engine.display.mts.load() ? "master active, global tuning" : "no master");
         s << "\n\nLa scala quantizza percussioni, risonatori, drone, grani,\npitch del glitch, del delay e dello shimmer (Snap).";
         if (! scaleInfo.getText().startsWith ("Errore") && ! scaleInfo.getText().startsWith ("Carica")) scaleInfo.setText (s, juce::dontSendNotification);
     }
@@ -864,7 +873,7 @@ void ModPanel::paint (juce::Graphics& g)
 {
     g.setColour (ui::panel); g.fillRoundedRectangle (getLocalBounds().toFloat().reduced (3), 6);
     g.setColour (ui::mod); g.setFont (ui::font (13.0f, true));
-    g.drawText ("MODULAZIONE", getLocalBounds().reduced (12, 6).removeFromTop (18), juce::Justification::left);
+    g.drawText ("MODULATION", getLocalBounds().reduced (12, 6).removeFromTop (18), juce::Justification::left);
     g.setColour (ui::dim); g.setFont (ui::font (10.0f));
     g.drawText ("trascina una sorgente su qualsiasi manopola", getLocalBounds().reduced (12, 6).removeFromTop (18), juce::Justification::right);
     if (page == 4)
@@ -872,7 +881,7 @@ void ModPanel::paint (juce::Graphics& g)
         g.setColour (ui::dim); g.setFont (ui::font (9.5f));
         auto r = getLocalBounds().reduced (8).withTrimmedTop (52).removeFromTop (14);
         r.removeFromLeft (20);
-        for (auto [t, w] : { std::pair<const char*, int> { "SORGENTE", 68 }, { "VIA (x)", 50 }, { "DESTINAZIONE", 98 }, { "CURVA", 38 }, { "AMOUNT", 60 } })
+        for (auto [t, w] : { std::pair<const char*, int> { "SOURCE", 68 }, { "VIA (x)", 50 }, { "DESTINATION", 98 }, { "CURVE", 38 }, { "AMOUNT", 60 } })
             g.drawText (t, r.removeFromLeft (w), juce::Justification::centred);
     }
 }
@@ -1095,9 +1104,9 @@ void MicrovibeEditor::paint (juce::Graphics& g)
     }
     if (proc.engine.display.limiting.load()) { g.setColour (juce::Colour (0xffff5a5a)); g.fillEllipse (m.getX() + 3, m.getY() - 7, 6, 6); }
 
-    panel (rSrc, ui::src, "SORGENTI");
-    panel (rCtr, ui::glitch, "CORSIE  /  GLITCH");
-    panel (rFx, ui::fx, "CATENA FX");
+    panel (rSrc, ui::src, "SOURCES");
+    panel (rCtr, ui::glitch, "LANES  /  GLITCH");
+    panel (rFx, ui::fx, "FX CHAIN");
     // centre extras
     g.setColour (ui::dim); g.setFont (ui::font (10.0f));
     const juce::String pat = juce::String::charToString ((juce::juce_wchar) ('A' + proc.engine.display.pattern.load()));

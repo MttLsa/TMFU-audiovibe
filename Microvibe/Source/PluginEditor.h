@@ -15,7 +15,9 @@ namespace ui
     const juce::Colour fx     { 0xff5ab8ff };   // fx chain
     const juce::Colour mod    { 0xffc792ff };   // modulation
     const juce::Colour tune   { 0xffffd166 };   // tuning
-    inline juce::Font font (float h, bool bold = false) { return juce::Font (juce::FontOptions (h, bold ? juce::Font::bold : juce::Font::plain)); }
+    // house font: Comfortaa (SIL OFL 1.1, embedded as binary data), regular + bold
+    juce::Typeface::Ptr typeface (bool bold);
+    inline juce::Font font (float h, bool bold = false) { return juce::Font (juce::FontOptions (typeface (bold)).withHeight (h)); }
     juce::Colour sourceColour (int src);
 }
 
@@ -31,6 +33,7 @@ public:
     juce::Font getPopupMenuFont() override { return ui::font (13.0f); }
     juce::Font getTextButtonFont (juce::TextButton&, int h) override { return ui::font (juce::jmin (11.5f, h * 0.6f), true); }
     void positionComboBoxText (juce::ComboBox&, juce::Label&) override;
+    juce::Typeface::Ptr getTypefaceForFont (const juce::Font& f) override { return ui::typeface (f.isBold()); }
 };
 
 // ----------------------------------------------------------------------------------------------- controls
@@ -184,7 +187,7 @@ private:
     juce::Viewport viewport;
     juce::Component matrixHolder;
     std::vector<std::unique_ptr<MatrixRow>> rows;
-    juce::TextButton loadScl { "CARICA .SCL" }, loadKbm { "+ .KBM" };
+    juce::TextButton loadScl { "LOAD .SCL" }, loadKbm { "+ .KBM" };
     juce::Label scaleInfo;
     std::unique_ptr<juce::FileChooser> chooser;
     juce::File pendingScl;
@@ -228,7 +231,7 @@ private:
     LaneView lanes;
     Tabs ctrTabs;
     ParamGrid ctrGrid;
-    juce::TextButton laneRandom { "RANDOM" }, laneClear { "CLEAR" }, patCopy { "COPIA PATTERN IN TUTTI" };
+    juce::TextButton laneRandom { "RANDOM" }, laneClear { "CLEAR" }, patCopy { "COPY PATTERN TO ALL" };
     int ctrPage = 0;
 
     // fx

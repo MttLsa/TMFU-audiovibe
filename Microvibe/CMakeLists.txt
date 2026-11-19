@@ -49,7 +49,8 @@ target_sources(Microvibe PRIVATE ${MV_SOURCES})
 set_source_files_properties(third_party/MTS-ESP/libMTSClient.cpp PROPERTIES COMPILE_OPTIONS "-w")
 target_include_directories(Microvibe PRIVATE Source)
 
-juce_add_binary_data(MicrovibeData SOURCES resources/presets.json)
+juce_add_binary_data(MicrovibeData SOURCES resources/presets.json
+  resources/fonts/Comfortaa-Regular.ttf resources/fonts/Comfortaa-Bold.ttf)
 set_target_properties(MicrovibeData PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 set(MV_DEFS JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0 JUCE_DISPLAY_SPLASH_SCREEN=0)
