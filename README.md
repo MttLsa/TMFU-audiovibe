@@ -10,7 +10,7 @@ Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in 
 | **B — Groovebox** (in basso) | NI Reaktor **Limelite 1.3** | 5 voci a campioni (Kick, Snare, Hat, **Belt**, **Capsule**), sequencer A–D fino a **64 step** con catena di pattern e motore **Remix**, effetti Filter / EQ / Delay / xFx (23 modi) / Mix / Out, **fino a 8 LFO**, pulsanti **NORM** e **MIDI** |
 | **GLOBAL CONTROL** (a destra, comprimibile) | — | Crossfader A↔B, filtro master **Cutoff** (manopola grande) HP/BP/LP + **Resonance**, Master, Tempo / Run |
 
-📖 **Manuale d'uso completo (PDF):** [docs/Twinbox_Manuale_v2.14.0.pdf](docs/Twinbox_Manuale_v2.14.0.pdf)
+📖 **Manuale d'uso completo (PDF):** [docs/Twinbox_Manuale_v2.14.1.pdf](docs/Twinbox_Manuale_v2.14.1.pdf)
 
 ![Interfaccia principale](docs/gui_main.png)
 
@@ -26,7 +26,7 @@ Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in 
 ## Novità 2.13
 
 - Il knob **WAV** (scelta del campione) dei moduli B si muove con le frecce della tastiera.
-- Risoluzione dei knob più fine: con le frecce **Pan** si sposta di 1, i parametri continui (Cutoff, Gain, Sat, ...) dello 0,2 % (Shift: 0,02 %); trascinamento col mouse più fine (1000 pixel per l'intera escursione).
+- Risoluzione dei knob più fine: con le frecce **Pan** si sposta di 1, i parametri continui (Cutoff, Gain, Sat, ...) dello 0,2 % (Shift: 0,02 %); trascinamento col mouse più fine (700 pixel per l'intera escursione).
 - Nel browser della DAW il plugin compare sotto il produttore **TMFU audiovibe** (prima "Twinbox Audio").
 
 ## Novità 2.12
@@ -204,7 +204,7 @@ JUCE 8.0.4 viene scaricato in automatico.
 Il workflow `.github/workflows/build.yml`:
 - compila le tre piattaforme;
 - su macOS verifica l'AU con `auval`;
-- produce l'installer **`Twinbox-2.14.0-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
+- produce l'installer **`Twinbox-2.14.1-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
 
 Gli script che generano campioni e preset (`resources/`) sono `tools/gen_samples.py` e `tools/gen_presets.py`.
 
