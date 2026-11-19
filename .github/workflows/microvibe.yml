@@ -1,0 +1,48 @@
+name: microvibe
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ "Microvibe/**", ".github/workflows/microvibe.yml" ]
+  pull_request:
+    paths: [ "Microvibe/**", ".github/workflows/microvibe.yml" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15-intel    # AU + VST3 + Standalone, universal binary (Intel + Apple Silicon); arm64 runners unavailable
+    defaults:
+      run:
+        working-directory: Microvibe
+    steps:
+      - uses: actions/checkout@v5
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release --parallel
+      - name: "Offline tests (units, every preset: NaN / silence / clipping)"
+        run: |
+          cmake -S . -B build-test -DCMAKE_BUILD_TYPE=Release -DMICROVIBE_BUILD_TESTS=ON
+          cmake --build build-test --target MicrovibeTest --parallel
+          build-test/MicrovibeTest_artefacts/Release/MicrovibeTest test-out units
+          build-test/MicrovibeTest_artefacts/Release/MicrovibeTest test-out check
+      - name: Validate AU
+        run: |
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R build/Microvibe_artefacts/Release/AU/Microvibe.component ~/Library/Audio/Plug-Ins/Components/
+          killall -9 AudioComponentRegistrar || true
+          auval -v aumf Mcvb Tmfu
+      - name: Build installer (.pkg, Intel + Apple Silicon)
+        run: ./packaging/macos/make_pkg.sh 1.0.0
+      - name: Upload installer
+        uses: actions/upload-artifact@v5
+        with:
+          name: Microvibe-1.0.0-macOS-Installer
+          path: Microvibe/build/installer/Microvibe-1.0.0-macOS.pkg
+      - uses: actions/upload-artifact@v5
+        with:
+          name: Microvibe-macOS
+          path: |
+            Microvibe/build/Microvibe_artefacts/Release/VST3
+            Microvibe/build/Microvibe_artefacts/Release/AU
+            Microvibe/build/Microvibe_artefacts/Release/Standalone
