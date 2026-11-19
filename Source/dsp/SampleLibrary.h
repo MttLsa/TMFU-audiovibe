@@ -46,7 +46,7 @@ using SampleSetPtr = std::shared_ptr<const SampleSet>;
 class SampleLibrary : public juce::ChangeBroadcaster
 {
 public:
-    enum Module { kick = 0, snare, hat, tie, pod, numModules };
+    enum Module { kick = 0, snare, hat, tie, pod, click, numModules };   // click = Section A kick transient layer
     enum Source { twinbox = 0, legacy, user, numSources };
 
     SampleLibrary();

@@ -4,6 +4,7 @@
 #include <atomic>
 #include "Transport.h"
 #include "ModMatrix.h"
+#include "SampleLibrary.h"
 #include "../Params.h"
 
 struct TriggerEvent
@@ -127,6 +128,8 @@ public:
 
     MicroEngine();
     void bind (ParamSource& apvts);   // parameters (LFO-modulated copies)
+    void setClickLibrary (SampleLibrary* lib) { clickLib = lib; }   // CLICK layer of the Kick (channel 1)
+    int  clickHits() const { return clickHitCount.load(); }
     void prepare (double sampleRate);
 
     // Renders (adds) Section A into L/R. midiEvents are external triggers (target = channel).
@@ -154,6 +157,17 @@ private:
     std::array<ChannelParams, NC> cp;
     std::array<std::atomic<float>*, NC> pNudge {};
     std::atomic<float>* pSeq = nullptr;
+    // CLICK: transient sample layered on channel 1 (Kick)
+    struct ClickVoice
+    {
+        SamplePtr smp; bool active = false;
+        double pos = 0.0, rate = 1.0; float gain = 0.0f, env = 1.0f, envMul = 1.0f, hpA = 0.0f, hpX[2] {}, hpY[2] {};
+    } click;
+    SampleLibrary* clickLib = nullptr;
+    std::atomic<float>* pClickOn = nullptr, *pClickWav = nullptr, *pClickGain = nullptr, *pClickTune = nullptr, *pClickDcy = nullptr, *pClickHp = nullptr;
+    std::atomic<int> clickHitCount { 0 };
+    void startClick (float vel);
+    void renderClick (float* L, float* R, int n);
     LookaheadWindow look;
     NudgeQueue<TriggerEvent> queue;
     std::atomic<float>* pPattern = nullptr, *pSwing = nullptr, *pFillRate = nullptr, *pFill = nullptr, *pLevel = nullptr;

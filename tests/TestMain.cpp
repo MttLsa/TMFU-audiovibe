@@ -475,6 +475,30 @@ int main (int argc, char** argv)
                 + "; energy with Sat 80 %: hat x" + String (h1.first / jmax (1e-9, h0.first), 2) + ", pod x" + String (p1.first / jmax (1e-9, p0.first), 2));
     }
 
+    // ---------------------------------------------------------------- CLICK layer on the Section A kick
+    {
+        auto hitEnergy = [] (bool clickOn, float& hitsOut) -> double
+        {
+            TwinboxProcessor p; waitLibrary (p);
+            for (int i = 0; i < 100 && p.library.set (SampleLibrary::click)->size() == 0; ++i) Thread::sleep (10);
+            setP (p, params::gXfade, 0); setP (p, params::aClickOn, clickOn ? 1.0f : 0.0f); setP (p, params::aClickWav, 2); setP (p, params::aClickGain, 0);
+            p.setPlayConfigDetails (0, 2, 48000, 480); p.prepareToPlay (48000, 480);
+            AudioBuffer<float> buf (2, 480); MidiBuffer m; double e = 0;
+            for (int i = 0; i < 40; ++i) { buf.clear(); p.processBlock (buf, m); }          // let the A/B cross-fade settle
+            p.micro.auditionChannel (0, 1.0f);
+            buf.clear(); p.processBlock (buf, m);
+            for (int k = 0; k < 480; ++k) { const float hf = buf.getSample (0, k) - (k ? buf.getSample (0, k - 1) : 0.0f); e += hf * hf; }   // transient (high-passed) energy, 10 ms
+            hitsOut = (float) p.micro.clickHits();
+            return e;
+        };
+        float h0 = 0, h1 = 0;
+        const double off = hitEnergy (false, h0), on = hitEnergy (true, h1);
+        TwinboxProcessor q; waitLibrary (q);
+        const int n = q.library.set (SampleLibrary::click)->size();
+        report ("CLICK layer on the A kick", h0 < 0.5f && h1 > 0.5f && on > off * 1.5 && n >= 10,
+                String (n) + " factory clicks; transient energy x" + String (on / jmax (1.0e-12, off), 1) + " with CLICK on");
+    }
+
     // ---------------------------------------------------------------- knobs: arrow keys (Pan 1 unit, continuous fine, sample select 1 sample)
     {
         TwinboxProcessor p; waitLibrary (p);

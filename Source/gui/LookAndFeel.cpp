@@ -186,7 +186,7 @@ Knob::Knob (const String& c, Colour a) : caption (c), accent (a)
     slider.setColour (Slider::rotarySliderFillColourId, accent);
     slider.setRotaryParameters (MathConstants<float>::pi * 1.2f, MathConstants<float>::pi * 2.8f, true);
     slider.setVelocityBasedMode (false);
-    slider.setMouseDragSensitivity (1000);
+    slider.setMouseDragSensitivity (700);
     slider.onValueChange = [this] { repaint(); };
     addAndMakeVisible (slider);
 }

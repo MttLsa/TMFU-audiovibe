@@ -1,6 +1,6 @@
-# TWINBOX — groovebox ibrida VST3 / AU (v2.13)
+# TWINBOX — groovebox ibrida VST3 / AU (v2.14)
 
-> Nello stesso repository: **[TWINSYNTH](Twinsynth/README.md)**, synth A (analogico) + D (digitale) con 321 preset dei suoni di synth più famosi 1960–2020.
+> Nello stesso repository: **[SynthZilla](SynthZilla/README.md)**, fino a 5 moduli synth analogici / digitali con 151 suoni di synth famosi 1963–2023, ognuno legato al suo brano.
 > E **[MICROVIBE](Microvibe/README.md)**, plugin di glitch, texture, percussioni organiche ed effetti (tape, vinile, wobble, delay, reverb, Shepard) per minimal e microhouse, con matrice di modulazione, poliritmie e microtonalità.
 
 Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in un solo plugin:
@@ -11,7 +11,7 @@ Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in 
 | **B — Groovebox** (in basso) | NI Reaktor **Limelite 1.3** | 5 voci a campioni (Kick, Snare, Hat, **Belt**, **Capsule**), sequencer A–D fino a **64 step** con catena di pattern e motore **Remix**, effetti Filter / EQ / Delay / xFx (23 modi) / Mix / Out, **fino a 8 LFO**, pulsanti **NORM** e **MIDI** |
 | **GLOBAL CONTROL** (a destra, comprimibile) | — | Crossfader A↔B, filtro master **Cutoff** (manopola grande) HP/BP/LP + **Resonance**, Master, Tempo / Run |
 
-📖 **Manuale d'uso completo (PDF):** [docs/Twinbox_Manuale_v2.13.0.pdf](docs/Twinbox_Manuale_v2.13.0.pdf)
+📖 **Manuale d'uso completo (PDF):** [docs/Twinbox_Manuale_v2.14.1.pdf](docs/Twinbox_Manuale_v2.14.1.pdf)
 
 ![Interfaccia principale](docs/gui_main.png)
 
@@ -20,10 +20,14 @@ Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in 
 > grafica o campioni originali. I campioni originali di Limelite si possono importare solo dal proprio file `.ens`
 > (vedi "Cartelle Legacy").
 
+## Novità 2.14
+
+- Modulo **CLICK** nella Sezione A (sotto la lista dei canali): un campione di transiente suonato in layer con il **Kick** (canale 1). Cartella di fabbrica *Twinbox Click* con 12 click (beater, 909 attack, wood tick, felt thump, tape click...) oppure una tua cartella (📁). Controlli ON, scelta del campione, Gain, Tune, Decay, HP.
+
 ## Novità 2.13
 
 - Il knob **WAV** (scelta del campione) dei moduli B si muove con le frecce della tastiera.
-- Risoluzione dei knob più fine: con le frecce **Pan** si sposta di 1, i parametri continui (Cutoff, Gain, Sat, ...) dello 0,2 % (Shift: 0,02 %); trascinamento col mouse più fine (1000 pixel per l'intera escursione).
+- Risoluzione dei knob più fine: con le frecce **Pan** si sposta di 1, i parametri continui (Cutoff, Gain, Sat, ...) dello 0,2 % (Shift: 0,02 %); trascinamento col mouse più fine (700 pixel per l'intera escursione).
 - Nel browser della DAW il plugin compare sotto il produttore **TMFU audiovibe** (prima "Twinbox Audio").
 
 ## Novità 2.12
@@ -201,7 +205,7 @@ JUCE 8.0.4 viene scaricato in automatico.
 Il workflow `.github/workflows/build.yml`:
 - compila le tre piattaforme;
 - su macOS verifica l'AU con `auval`;
-- produce l'installer **`Twinbox-2.13.0-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
+- produce l'installer **`Twinbox-2.14.1-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
 
 Gli script che generano campioni e preset (`resources/`) sono `tools/gen_samples.py` e `tools/gen_presets.py`.
 

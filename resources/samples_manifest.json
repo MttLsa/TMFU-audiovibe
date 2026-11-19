@@ -1,5 +1,5 @@
 {
- "version": 6,
+ "version": 7,
  "genres": [
   "techno",
   "minimal",
@@ -1690,6 +1690,80 @@
     "file": "H32 Electro Soft Hat.wav",
     "tags": [
      "breakbeat"
+    ]
+   }
+  ],
+  "Click": [
+   {
+    "file": "C01 Beater Hard.wav",
+    "tags": [
+     "all"
+    ]
+   },
+   {
+    "file": "C02 Beater Soft.wav",
+    "tags": [
+     "all"
+    ]
+   },
+   {
+    "file": "C03 909 Attack.wav",
+    "tags": [
+     "all"
+    ]
+   },
+   {
+    "file": "C04 Wood Tick.wav",
+    "tags": [
+     "all"
+    ]
+   },
+   {
+    "file": "C05 Tick Short.wav",
+    "tags": [
+     "all"
+    ]
+   },
+   {
+    "file": "C06 Knock.wav",
+    "tags": [
+     "all"
+    ]
+   },
+   {
+    "file": "C07 Felt Thump.wav",
+    "tags": [
+     "all"
+    ]
+   },
+   {
+    "file": "C08 Tape Click.wav",
+    "tags": [
+     "all"
+    ]
+   },
+   {
+    "file": "C09 Air Snap.wav",
+    "tags": [
+     "all"
+    ]
+   },
+   {
+    "file": "C10 Plastic Pop.wav",
+    "tags": [
+     "all"
+    ]
+   },
+   {
+    "file": "C11 Mid Punch.wav",
+    "tags": [
+     "all"
+    ]
+   },
+   {
+    "file": "C12 Dusty Click.wav",
+    "tags": [
+     "all"
     ]
    }
   ]

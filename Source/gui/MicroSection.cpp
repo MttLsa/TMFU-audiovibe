@@ -1,4 +1,5 @@
 #include "MicroSection.h"
+#include "LimeSection.h"   // SampleSelector (shared with the Section B modules)
 
 using namespace juce;
 using namespace params;
@@ -381,8 +382,39 @@ void MicroSection::ChannelRow::resized()
 
 void MicroSection::ChannelRow::mouseDown (const MouseEvent&) { owner.selectChannel (ch); }
 
+// CLICK: a transient sample layered on the Kick (channel 1). Factory folder "Twinbox Click" or your own folder.
+class ClickPanel : public Panel
+{
+public:
+    explicit ClickPanel (TwinboxProcessor& p) : Panel ("CLICK  (Kick layer)", theme::accentA), selector (p, SampleLibrary::click, false)
+    {
+        on.attach (p.apvts, aClickOn);
+        on.setTooltip ("CLICK on / off: plays the selected transient together with the Kick (channel 1)");
+        gain.attach (p.apvts, aClickGain); tune.attach (p.apvts, aClickTune); dcy.attach (p.apvts, aClickDcy); hp.attach (p.apvts, aClickHp);
+        for (auto* c : std::initializer_list<Component*> { &on, &selector, &gain, &tune, &dcy, &hp }) addAndMakeVisible (c);
+    }
+    void resized() override
+    {
+        Panel::resized();
+        auto r = content();
+        auto top = r.removeFromTop (22);
+        on.setBounds (top.removeFromLeft (36).reduced (1, 1));
+        top.removeFromLeft (3);
+        selector.setBounds (top);
+        r.removeFromTop (2);
+        const int w = r.getWidth() / 4;
+        gain.setBounds (r.removeFromLeft (w)); tune.setBounds (r.removeFromLeft (w)); dcy.setBounds (r.removeFromLeft (w)); hp.setBounds (r);
+    }
+private:
+    Toggle on { "ON", theme::accentA };
+    SampleSelector selector;
+    Knob gain { "Gain", theme::accentA }, tune { "Tune", theme::accentA }, dcy { "Decay", theme::accentA }, hp { "HP", theme::accentA };
+};
+
 MicroSection::MicroSection (TwinboxProcessor& p) : proc (p), patch (p), grid (p, false)
 {
+    clickPanel = std::make_unique<ClickPanel> (p);
+    addAndMakeVisible (*clickPanel);
     lfo = std::make_unique<LfoPanel> (p, 0);
     addAndMakeVisible (*lfo);
     // header: patterns A-L
@@ -605,6 +637,8 @@ void MicroSection::resized()
     auto cp = left.removeFromTop (24);
     copyBtn.setBounds (cp.removeFromLeft (cp.getWidth() / 2).reduced (0, 0).withTrimmedRight (2));
     pasteBtn.setBounds (cp.withTrimmedLeft (2));
+    left.removeFromTop (6);
+    clickPanel->setBounds (left);
 
     auto patArea = r.removeFromBottom (jmax (130, r.getHeight() * 2 / 5));
     r.removeFromBottom (6);

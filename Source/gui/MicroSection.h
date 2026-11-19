@@ -138,6 +138,7 @@ private:
 
     MicroPatchEditor patch;
     std::unique_ptr<LfoPanel> lfo;   // 3 LFOs for Section A
+    std::unique_ptr<juce::Component> clickPanel;   // CLICK: transient layer of the Kick (channel 1)
 
     // pattern panel
     Panel patPanel { "Pattern", theme::accentA };

@@ -186,6 +186,8 @@ void MicroEngine::bind (ParamSource& apvts)
     pFill     = apvts.get (aFill);
     pLevel    = apvts.get (aLevel);
     pSeq      = apvts.get (aSeq);
+    pClickOn = apvts.get (aClickOn); pClickWav = apvts.get (aClickWav); pClickGain = apvts.get (aClickGain);
+    pClickTune = apvts.get (aClickTune); pClickDcy = apvts.get (aClickDcy); pClickHp = apvts.get (aClickHp);
 }
 
 void MicroEngine::prepare (double sr)
@@ -219,6 +221,55 @@ void MicroEngine::startVoice (int ch, float vel)
             if (o != ch && patch[(size_t) o].choke) voices[(size_t) o].choke();
     voices[(size_t) ch].trigger (patch[(size_t) ch], vel);
     hits[(size_t) ch].fetch_add (1);
+    if (ch == 0) startClick (vel);
+}
+
+void MicroEngine::startClick (float vel)
+{
+    if (clickLib == nullptr || pClickOn == nullptr || pClickOn->load() < 0.5f) return;
+    auto set = clickLib->set (SampleLibrary::click);
+    if (set == nullptr || set->size() == 0) return;
+    const int idx = juce::jlimit (0, set->size() - 1, (int) pClickWav->load());
+    click.smp = set->samples[(size_t) idx];
+    if (click.smp == nullptr || click.smp->length() < 2) return;
+    click.pos = 0.0;
+    click.rate = click.smp->sourceRate / sampleRate * std::pow (2.0, pClickTune->load() / 12.0);
+    click.gain = juce::Decibels::decibelsToGain (pClickGain->load(), -60.0f) * (0.4f + 0.6f * vel);
+    // Decay 0..100 %: 3 ms ... whole sample (100 % = no fade)
+    const float dcy = pClickDcy->load() * 0.01f;
+    const double tau = 0.003 * std::pow (150.0, (double) dcy);           // 3 ms .. 450 ms
+    click.envMul = dcy >= 0.995f ? 1.0f : (float) std::exp (-1.0 / (sampleRate * tau));
+    click.env = 1.0f;
+    const double hp = juce::jlimit (20.0, 8000.0, (double) pClickHp->load());
+    click.hpA = (float) std::exp (-2.0 * juce::MathConstants<double>::pi * hp / sampleRate);
+    click.active = true;
+    clickHitCount.fetch_add (1);
+}
+
+void MicroEngine::renderClick (float* L, float* R, int n)
+{
+    if (! click.active || click.smp == nullptr) return;
+    const auto& S = *click.smp;
+    const int len = S.length();
+    const bool st = S.stereo();
+    for (int i = 0; i < n; ++i)
+    {
+        const int i0 = (int) click.pos;
+        if (i0 >= len - 1 || click.env < 1.0e-4f) { click.active = false; break; }
+        const float fr = (float) (click.pos - i0);
+        float x[2];
+        x[0] = S.L[(size_t) i0] + fr * (S.L[(size_t) i0 + 1] - S.L[(size_t) i0]);
+        x[1] = st ? S.R[(size_t) i0] + fr * (S.R[(size_t) i0 + 1] - S.R[(size_t) i0]) : x[0];
+        for (int c = 0; c < 2; ++c)                                    // one-pole high pass
+        {
+            const float y = click.hpA * (click.hpY[c] + x[c] - click.hpX[c]);
+            click.hpX[c] = x[c]; click.hpY[c] = y; x[c] = y;
+        }
+        const float g = click.gain * click.env;
+        L[i] += x[0] * g; R[i] += x[1] * g;
+        click.env *= click.envMul;
+        click.pos += click.rate;
+    }
 }
 
 void MicroEngine::process (float* L, float* R, int numSamples, const BlockTime& bt, const std::vector<TriggerEvent>& midiEvents)
@@ -306,6 +357,7 @@ void MicroEngine::process (float* L, float* R, int numSamples, const BlockTime& 
         const int n = juce::jmax (1, next - pos);
         for (int ch = 0; ch < NC; ++ch)
             voices[(size_t) ch].render (patch[(size_t) ch], L + pos, R + pos, n);
+        renderClick (L + pos, R + pos, n);
         pos += n;
     }
     if (std::abs (levelGain - 1.0f) > 1.0e-4f)

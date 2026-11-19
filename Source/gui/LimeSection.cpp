@@ -567,17 +567,23 @@ SampleSelector::SampleSelector (TwinboxProcessor& p, int m, bool b2) : proc (p),
     leg.setTooltip ("Legacy folder: original Limelite samples (use IMPORT LEGACY first)");
     usr.setTooltip ("Choose your own folder for this module");
     play.setTooltip ("Audition");
-    for (auto* b3 : { &twb, &leg, &usr }) b3->setColour (TextButton::buttonOnColourId, theme::accentB);
+    const bool isClick = m == SampleLibrary::click;                 // Section A kick CLICK layer: factory or user folder only
+    for (auto* b3 : { &twb, &leg, &usr }) b3->setColour (TextButton::buttonOnColourId, isClick ? theme::accentA : theme::accentB);
     twb.onClick = [this] { proc.library.setSource (module, SampleLibrary::twinbox); };
     leg.onClick = [this] { proc.library.setSource (module, SampleLibrary::legacy); };
     usr.onClick = [this] { chooseFolder(); };
-    play.onClick = [this] { proc.lime.audition (targetOfModule (module), 1.0f); };
+    play.onClick = [this]
+    {
+        if (module == SampleLibrary::click) proc.micro.auditionChannel (0, 1.0f);      // kick + click
+        else proc.lime.audition (targetOfModule (module), 1.0f);
+    };
     box.onChange = [this]
     {
         const int i = box.getSelectedItemIndex();
-        if (i >= 0 && i != shownIndex) { shownIndex = i; setParam (proc.apvts, b (module, lv::wav), (float) i); }
+        if (i >= 0 && i != shownIndex) { shownIndex = i; setParam (proc.apvts, wavParamId(), (float) i); }
     };
     for (auto* c : std::initializer_list<Component*> { &twb, &leg, &usr, &box, &play }) addAndMakeVisible (c);
+    leg.setVisible (! isClick);                                      // no Legacy folder for the CLICK layer
     proc.library.addChangeListener (this);
     refresh();
     startTimerHz (8);
@@ -615,7 +621,7 @@ void SampleSelector::timerCallback()
 {
     const int n = box.getNumItems();
     if (n == 0) return;
-    const int idx = ((int) getParam (proc.apvts, b (module, lv::wav))) % n;
+    const int idx = ((int) getParam (proc.apvts, wavParamId())) % n;
     if (idx != shownIndex) { shownIndex = idx; box.setSelectedItemIndex (idx, dontSendNotification); }
 }
 
@@ -626,7 +632,7 @@ void SampleSelector::resized()
     auto r = getLocalBounds();
     const int bw = big ? 46 : 30;
     twb.setBounds (r.removeFromLeft (bw).reduced (1, 0));
-    leg.setBounds (r.removeFromLeft (bw).reduced (1, 0));
+    if (leg.isVisible()) leg.setBounds (r.removeFromLeft (bw).reduced (1, 0));
     usr.setBounds (r.removeFromLeft (big ? 34 : 24).reduced (1, 0));
     play.setBounds (r.removeFromRight (big ? 34 : 22).reduced (1, 0));
     box.setBounds (r.reduced (1, 0));

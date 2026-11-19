@@ -17,6 +17,7 @@ TwinboxProcessor::TwinboxProcessor()
 {
     mod.init (apvts);
     micro.bind (mod);
+    micro.setClickLibrary (&library);
     lime.bind (mod);
     library.installFactoryIfMissing();
     library.reloadAll();

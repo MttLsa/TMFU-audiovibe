@@ -117,6 +117,9 @@ namespace params
     inline const char* aNorm = "a_norm", *bNorm = "b_norm";
     // SEQ buttons: sequencer of each section on / off (independent of MIDI)
     inline const char* aSeq = "a_seq", *bSeq = "b_seq";
+    // CLICK: transient sample layered on the Kick (channel 1) of Section A
+    inline const char* aClickOn = "a_click_on", *aClickWav = "a_click_wav", *aClickGain = "a_click_gain",
+                      *aClickTune = "a_click_tune", *aClickDcy = "a_click_dcy", *aClickHp = "a_click_hp";
     // FILTER
     inline const char* bFltCut = "b_flt_cut", *bFltTrk = "b_flt_trk", *bFltSm = "b_flt_sm", *bFltMod = "b_flt_mod";
     // EQ
