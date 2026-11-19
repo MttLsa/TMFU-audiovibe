@@ -1,5 +1,4 @@
 #include "PluginEditor.h"
-#include "Kaiju.h"
 #include "BinaryData.h"
 
 using namespace params;
@@ -1089,10 +1088,10 @@ SynthZillaEditor::SynthZillaEditor (SynthZillaProcessor& p)
 
     content.setBounds (0, 0, W, H);
     setResizable (true, true);
-    setResizeLimits (W / 2, H / 2, W * 2, H * 2);
-    getConstrainer()->setFixedAspectRatio ((double) W / H);
-    const double sc = (double) proc.uiState.getProperty ("scale", 1.0);
-    setSize ((int) (W * sc), (int) (H * sc));
+    setResizeLimits (BW / 2, BH / 2, 16384, 16384);   // free aspect ratio: maximise / full screen fills the screen
+    logo = juce::ImageCache::getFromMemory (BinaryData::kaiju_keyboard_png, BinaryData::kaiju_keyboard_pngSize);
+    const double sc = (double) proc.uiState.getProperty ("scale", 1.0);   // sessions saved before 2.0.1 only stored a scale
+    setSize ((int) proc.uiState.getProperty ("w", (int) (BW * sc)), (int) proc.uiState.getProperty ("h", (int) (BH * sc)));
     selectModule (0);
     startTimerHz (30);
     updateHeader();
@@ -1148,20 +1147,25 @@ void SynthZillaEditor::layoutSlots()
 
 void SynthZillaEditor::resized()
 {
-    const float s = (float) getWidth() / (float) W;
-    content.setTransform (juce::AffineTransform::scale (s));
-    proc.uiState.setProperty ("scale", (double) s, nullptr);
+    uiScale = juce::jmax (0.25f, juce::jmin ((float) getWidth() / (float) BW, (float) getHeight() / (float) BH));
+    W = juce::jmax (BW, juce::roundToInt ((float) getWidth() / uiScale));
+    H = juce::jmax (BH, juce::roundToInt ((float) getHeight() / uiScale));
+    const int dh = H - BH;                       // extra height goes to the module area
+    content.setBounds (0, 0, W, H);
+    content.setTransform (juce::AffineTransform::scale (uiScale));
+    proc.uiState.setProperty ("w", getWidth(), nullptr);
+    proc.uiState.setProperty ("h", getHeight(), nullptr);
     // header
-    logoArea = { 0, -4, 100, 72 };
+    logoArea = { 22, 3, 58, 58 };
     // preset name / info stop before the < > buttons (the info label used to cover their lower half)
     presetName.setBounds (272, 6, W - 420 - 12 - 272, 28);
     presetInfo.setBounds (272, 34, W - 420 - 12 - 272, 22);
     prev.setBounds (W - 420, 16, 34, 34); next.setBounds (W - 382, 16, 34, 34); browse.setBounds (W - 344, 16, 110, 34);
     layoutSlots();
-    moduleView.setBounds (8, 132, W - 16, 486);
-    browser.setBounds (8, 66, W - 16, 552);
+    moduleView.setBounds (8, 132, W - 16, 486 + dh);
+    browser.setBounds (8, 66, W - 16, 552 + dh);
     // bottom strip
-    const int y0 = 626, gh = 158;
+    const int y0 = 626 + dh, gh = 158;
     int x = 8;
     globalGroups.clear();
     auto place = [&] (int grp, int cols)
@@ -1189,9 +1193,11 @@ void SynthZillaEditor::resized()
     eqExpand.setBounds (x + 250 - 26, y0 + 4, 22, 18);
     x += 256;
     lfoSmall.setBounds (x, y0, W - 8 - x, gh);
-    keys.setBounds (8, 792, W - 16, 100);
-    eqBig.setBounds (40, 140, W - 80, 600);
-    lfoBig.setBounds (40, 140, W - 80, 600);
+    keys.setBounds (8, 792 + dh, W - 16, 100);
+    keys.setKeyWidth ((float) (W - 16) / 75.0f);   // the 75 white keys of the MIDI range fill the whole width
+    keys.setLowestVisibleKey (0);
+    eqBig.setBounds (40, 140, W - 80, 600 + dh);
+    lfoBig.setBounds (40, 140, W - 80, 600 + dh);
     overlayClose.setBounds (W - 40 - 90, 146, 80, 26);
     if (panels[selected]) selectModule (selected);
 }
@@ -1199,9 +1205,14 @@ void SynthZillaEditor::resized()
 void SynthZillaEditor::paint (juce::Graphics& g)
 {
     g.fillAll (ui::bg);
-    g.addTransform (juce::AffineTransform::scale ((float) getWidth() / (float) W));
+    g.addTransform (juce::AffineTransform::scale (uiScale));
     ui::relief (g, juce::Rectangle<float> (0, 0, (float) W, 64), ui::panel, 0.0f, true);
-    drawKaiju (g, logoArea, animT, juce::jlimit (0.0f, 1.0f, proc.meter() * 1.5f));
+    {   // logo: the kaiju with its keyboard, bobbing a little with the sound
+        const float lvl = juce::jlimit (0.0f, 1.0f, proc.meter() * 1.5f);
+        const float bob = std::sin (animT * 6.0f) * 1.2f * lvl;
+        g.drawImageWithin (logo, (int) logoArea.getX(), (int) (logoArea.getY() + bob), (int) logoArea.getWidth(), (int) logoArea.getHeight(),
+                           juce::RectanglePlacement::centred, false);
+    }
     g.setColour (ui::text); g.setFont (ui::logoFont (29.0f));
     g.drawText ("SynthZilla", 100, 6, 160, 34, juce::Justification::left);
     g.setColour (ui::dim); g.setFont (ui::font (11.0f));
@@ -1256,7 +1267,7 @@ void SynthZillaEditor::timerCallback()
     if (proc.presetIndex() != shownPreset) updateHeader();
     const int slots = (int) proc.apvts.getRawParameterValue (def (layout().gSlots).id)->load();
     if (slots != shownSlots) { layoutSlots(); if (selected >= slots) selectModule (0); }
-    const float s = (float) getWidth() / (float) W;
+    const float s = uiScale;
     repaint (logoArea.transformedBy (juce::AffineTransform::scale (s)).toNearestInt().expanded (2));
     repaint ((int) ((W - 104) * s), 0, (int) (104 * s), (int) (60 * s));
     repaint (0, (int) (70 * s), getWidth(), (int) (60 * s));

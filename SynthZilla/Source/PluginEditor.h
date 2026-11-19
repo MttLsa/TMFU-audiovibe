@@ -228,5 +228,10 @@ private:
     int shownPreset = -2, selected = 0, shownSlots = -1;
     float animT = 0;
     juce::Rectangle<float> logoArea;
-    static constexpr int W = 1400, H = 900;
+    // BW x BH = reference layout. The window can take any size (full screen too): the UI is scaled by
+    // uiScale = min (width / BW, height / BH) and the logical area W x H grows on the other side.
+    static constexpr int BW = 1400, BH = 900;
+    int W = BW, H = BH;
+    float uiScale = 1.0f;
+    juce::Image logo;
 };

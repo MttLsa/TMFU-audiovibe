@@ -53,7 +53,7 @@ fase. Il **+** apre la vista con tutti gli 8 LFO. LFO, EQ e filtri d'uscita non 
 - **Fader più lunghi** sugli strumenti che hanno fader. Risoluzione fine: le manopole si muovono a passi di **0,01**, i fader di
   **0,001**; dopo un clic le frecce muovono di 1 % (fader 0,1 %), Shift = 10× più fine; doppio clic = valore di default.
 - Finestra **ridimensionabile** (dal 50 % al 200 %, la dimensione viene ricordata), con EQ e LFO espandibili.
-- Logo: **SynthZilla** in Comfortaa Bold e un piccolo kaiju viola animato, con due occhi rossi, che suona una tastiera.
+- Logo: **SynthZilla** in Comfortaa Bold e il kaiju in piedi su una tastiera synth (`tools/make_logo.py`).
 
 ## Preset
 151 preset dal 1963 al 2023, **ordinati per anno**. Nel browser ogni riga è:
