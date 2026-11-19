@@ -4,10 +4,10 @@
 
 using namespace juce;
 
-Typeface::Ptr theme::comfortaa (bool bold)
+Typeface::Ptr theme::uiTypeface (bool bold)
 {
-    static const Typeface::Ptr regular = Typeface::createSystemTypefaceFor (BinaryData::ComfortaaRegular_ttf, BinaryData::ComfortaaRegular_ttfSize);
-    static const Typeface::Ptr heavy   = Typeface::createSystemTypefaceFor (BinaryData::ComfortaaBold_ttf, BinaryData::ComfortaaBold_ttfSize);
+    static const Typeface::Ptr regular = Typeface::createSystemTypefaceFor (BinaryData::UrbanistLight_ttf, BinaryData::UrbanistLight_ttfSize);
+    static const Typeface::Ptr heavy   = Typeface::createSystemTypefaceFor (BinaryData::UrbanistSemiBold_ttf, BinaryData::UrbanistSemiBold_ttfSize);
     return bold ? heavy : regular;
 }
 
@@ -38,7 +38,7 @@ TwinLookAndFeel::TwinLookAndFeel()
     setColour (TextEditor::highlightColourId, theme::accentA.withAlpha (0.4f));
     setColour (TextEditor::outlineColourId, theme::outline);
     setColour (CaretComponent::caretColourId, theme::text);
-    setDefaultSansSerifTypeface (theme::comfortaa (false));
+    setDefaultSansSerifTypeface (theme::uiTypeface (false));
 }
 
 void TwinLookAndFeel::drawRotarySlider (Graphics& g, int x, int y, int w, int h, float pos, float start, float end, Slider& s)

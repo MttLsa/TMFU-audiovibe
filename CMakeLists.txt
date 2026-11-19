@@ -66,8 +66,8 @@ juce_add_binary_data(TwinboxData SOURCES
   resources/factory_samples.zip
   resources/presets_A.json
   resources/presets_B.json
-  resources/fonts/Comfortaa-Regular.ttf
-  resources/fonts/Comfortaa-Bold.ttf)
+  resources/fonts/Urbanist-Light.ttf
+  resources/fonts/Urbanist-SemiBold.ttf)
 set_target_properties(TwinboxData PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_compile_definitions(Twinbox PUBLIC
