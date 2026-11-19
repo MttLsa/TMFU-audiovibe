@@ -148,8 +148,8 @@ function buildPatcher(devId) {
       assistshowspatchername: 0,
       boxes, lines,
       dependency_cache: [
-        { name: d.file, bootpath: '.', type: 'TEXT', implicit: 1 },
-        ...(d.noXY ? [] : [{ name: 'bm_xy.js', bootpath: '.', type: 'TEXT', implicit: 1 }])
+        { name: d.file, bootpath: '.', patcherrelativepath: '.', type: 'TEXT', implicit: 1 },
+        ...(d.noXY ? [] : [{ name: 'bm_xy.js', bootpath: '.', patcherrelativepath: '.', type: 'TEXT', implicit: 1 }])
       ],
       latency: 0, is_mpe: 0, minimum_live_version: '', minimum_max_version: '', platform_compatibility: 0, autosave: 0
     }

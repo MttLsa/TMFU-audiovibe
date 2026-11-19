@@ -1269,6 +1269,7 @@
 			{
 				"name": "bm_chords.js",
 				"bootpath": ".",
+				"patcherrelativepath": ".",
 				"type": "TEXT",
 				"implicit": 1
 			}

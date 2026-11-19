@@ -3303,12 +3303,14 @@
 			{
 				"name": "bm_beats.js",
 				"bootpath": ".",
+				"patcherrelativepath": ".",
 				"type": "TEXT",
 				"implicit": 1
 			},
 			{
 				"name": "bm_xy.js",
 				"bootpath": ".",
+				"patcherrelativepath": ".",
 				"type": "TEXT",
 				"implicit": 1
 			}

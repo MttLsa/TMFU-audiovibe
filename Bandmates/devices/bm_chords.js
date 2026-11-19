@@ -2207,10 +2207,13 @@ inlets = 1;
 outlets = 2; // 0: status text, 1: UI commands (routed in the patcher: xy, followmenu, textedit)
 autowatch = 0;
 
+// the js object itself (top-level `this`): plain function calls must not rely on `this`
+var JSTHIS = this;
 var ready = false, seed = 1 + Math.floor(Math.random() * 99999), autoTask = null, clipWatcher = null;
 var followTrackName = '';
 
 function log(s) { post('[Bandmates] ' + s + '\n'); }
+function fail(e) { status('Errore: ' + e); log('ERROR ' + e + (e && e.stack ? '\n' + e.stack : '')); }
 function status(s) { outlet(0, 'set', s); }
 
 // ---------------------------------------------------------------- Live helpers
@@ -2257,12 +2260,26 @@ function findTrackByName(name) {
 
 // ---------------------------------------------------------------- clips
 function readNotes(clip, from, len) {
-  var r = clip.call('get_notes_extended', 0, 128, from, len), out = [], d;
-  if (typeof r !== 'string') r = r.join(' ');
-  try { d = JSON.parse(r); } catch (e) { log('cannot parse notes: ' + e); return out; }
-  var ns = d.notes || [];
-  for (var i = 0; i < ns.length; i++) {
-    out.push({ pitch: ns[i].pitch, start: ns[i].start_time - from, dur: ns[i].duration, vel: ns[i].velocity, mute: ns[i].mute });
+  var out = [], d = null, i;
+  try {
+    var r = clip.call('get_notes_extended', 0, 128, from, len);
+    if (typeof r !== 'string') r = r.join(' ');
+    d = JSON.parse(r);
+  } catch (e) { d = null; }
+  if (d && d.notes) {
+    for (i = 0; i < d.notes.length; i++) {
+      var n = d.notes[i];
+      out.push({ pitch: n.pitch, start: n.start_time - from, dur: n.duration, vel: n.velocity, mute: n.mute });
+    }
+    return out;
+  }
+  // Live 10 style: "notes N note p t d v m note ... done"
+  var flat = clip.call('get_notes', from, 0, len, 128);
+  for (i = 0; i < flat.length; i++) {
+    if (flat[i] === 'note') {
+      out.push({ pitch: +flat[i + 1], start: +flat[i + 2] - from, dur: +flat[i + 3], vel: +flat[i + 4], mute: +flat[i + 5] });
+      i += 5;
+    }
   }
   return out;
 }
@@ -2321,15 +2338,25 @@ function arrangementNotes(track, start, length) {
 }
 
 function writeNotes(clip, notes, offset) {
-  var lp = loopOf(clip), end = Math.max(getv(clip, 'end_marker') || 0, lp.start + lp.length);
-  clip.call('remove_notes_extended', 0, 128, -16, end + 64);
+  var lp = loopOf(clip), end = Math.max(getv(clip, 'end_marker') || 0, lp.start + lp.length) + 64, i;
+  try { clip.call('remove_notes_extended', 0, 128, -16, end + 16); }
+  catch (e) { clip.call('remove_notes', -16, 0, end + 16, 128); }
   if (!notes.length) return;
   var arr = [];
-  for (var i = 0; i < notes.length; i++) {
+  for (i = 0; i < notes.length; i++) {
     arr.push({ pitch: notes[i].pitch, start_time: notes[i].start + (offset || 0), duration: notes[i].dur,
                velocity: notes[i].vel, mute: notes[i].mute ? 1 : 0 });
   }
-  clip.call('add_new_notes', { notes: arr });
+  var ok = false;
+  try { clip.call('add_new_notes', { notes: arr }); ok = true; } catch (e) { log('add_new_notes failed, using set_notes: ' + e); }
+  if (ok) return;
+  // classic API, available in every Live version with Max for Live
+  clip.call('set_notes');
+  clip.call('notes', arr.length);
+  for (i = 0; i < arr.length; i++) {
+    clip.call('note', arr[i].pitch, arr[i].start_time.toFixed(6), Math.max(0.01, arr[i].duration).toFixed(6), arr[i].velocity, arr[i].mute);
+  }
+  clip.call('done');
 }
 
 // ---------------------------------------------------------------- targets (what "Genera" writes into)
@@ -2352,8 +2379,35 @@ function selectedTarget() {
     m = /tracks (\d+) clip_slots (\d+)/.exec(upath(hs));
     if (m && +m[1] === me) return sessionTarget(+m[2]);
   }
+  if (arrangementFocused()) return arrangementTarget(me);
   m = /scenes (\d+)/.exec(upath(L('live_set view selected_scene')));
   return sessionTarget(m ? +m[1] : 0);
+}
+
+function arrangementFocused() {
+  try { return String(getv(L('live_app view'), 'focused_document_view')) === 'Arranger'; } catch (e) { return false; }
+}
+
+// Arrangement view with no clip selected: write at the playhead's bar (or into the chord region found there)
+function arrangementTarget(me) {
+  var info = songInfo(), song = L('live_set'), bpb = info.beatsPerBar;
+  var pos = Math.floor((getv(song, 'current_song_time') || 0) / bpb + 1e-6) * bpb;
+  var start = pos, length = 8 * bpb, ct = chordTrack(), i;
+  if (ct >= 0) {
+    var cn = L('live_set tracks ' + ct).getcount('arrangement_clips');
+    for (i = 0; i < cn; i++) {
+      var c = L('live_set tracks ' + ct + ' arrangement_clips ' + i), st = getv(c, 'start_time'), en = getv(c, 'end_time');
+      if (pos >= st - 1e-6 && pos < en - 1e-6) { start = st; length = en - st; break; }
+    }
+  }
+  var idx = arrangementClipAt(me, start);
+  if (idx < 0) {
+    L('live_set tracks ' + me).call('create_midi_clip', start, length);
+    idx = arrangementClipAt(me, start);
+    if (idx < 0) throw new Error('serve Live 12 per creare clip in Arrangement: crea un clip vuoto e selezionalo');
+  }
+  var p = 'live_set tracks ' + me + ' arrangement_clips ' + idx, cl = L(p);
+  return { kind: 'arr', track: me, path: p, start: getv(cl, 'start_time'), length: getv(cl, 'end_time') - getv(cl, 'start_time') };
 }
 
 function sceneName(slot) { return String(getv(L('live_set scenes ' + slot), 'name') || ''); }
@@ -2424,7 +2478,7 @@ function paramSpec(id) {
   for (var i = 0; i < ps.length; i++) if (ps[i].id === id) return ps[i];
   return null;
 }
-function ctl(id) { return this.patcher.getnamed(id); }
+function ctl(id) { return JSTHIS.patcher.getnamed(id); }
 function uiValue(id) {
   var o = ctl(id), p = paramSpec(id);
   if (!o) return p ? p.def : 0;
@@ -2506,15 +2560,22 @@ function report(r) {
          (r.section ? ' · ' + r.section : '') + (DEV.needs && DEV.needs.chords ? ' (' + r.source + ')' : ''));
 }
 
+// buttons must work even if the load-time init was missed
+function ensureReady() {
+  if (!clipWatcher) { try { init(); } catch (e) { log(e); } }
+  ready = true;
+}
+
 function generate() {
-  if (!ready) return;
-  try { report(generateInto(selectedTarget())); } catch (e) { status('Errore: ' + e); log(e); }
+  ensureReady();
+  status('Genero...');
+  try { report(generateInto(selectedTarget())); } catch (e) { fail(e); }
 }
 
 function newvariation() { seed = 1 + Math.floor(Math.random() * 1679615); generate(); }
 
 function generate_scenes() {
-  if (!ready) return;
+  ensureReady();
   try {
     var n = L('live_set').getcount('scenes'), ct = chordTrack(), me = myTrack(), done = 0;
     for (var s = 0; s < n; s++) {
@@ -2526,11 +2587,11 @@ function generate_scenes() {
       done++;
     }
     status(done ? 'Generati ' + done + ' clip (una per scena)' : 'Nessuna scena con accordi o nome');
-  } catch (e) { status('Errore: ' + e); log(e); }
+  } catch (e) { fail(e); }
 }
 
 function generate_arrangement() {
-  if (!ready) return;
+  ensureReady();
   try {
     var me = myTrack(), ct = chordTrack(), t = L('live_set tracks ' + me), regions = [], i;
     if (ct >= 0) {
@@ -2554,7 +2615,7 @@ function generate_arrangement() {
       done++;
     }
     status('Arrangement: generati ' + done + ' clip');
-  } catch (e) { status('Errore: ' + e); log(e); }
+  } catch (e) { fail(e); }
 }
 
 function arrangementClipAt(track, start) {
@@ -2570,7 +2631,8 @@ function init() {
   clipWatcher.property = 'detail_clip';
   refreshTracks();
   syncPad();
-  var t = new Task(function () { ready = true; status('Pronto. Seleziona uno slot/clip e premi Genera.'); }, this);
+  status('Avvio...');
+  var t = new Task(function () { ready = true; status('Pronto. Seleziona uno slot o un clip su questa traccia e premi Genera.'); }, JSTHIS);
   t.schedule(600);
 }
 
@@ -2591,8 +2653,8 @@ function scheduleRegenerate() {
     if (target.kind === 'session' && !getv(L(target.path), 'has_clip')) return;
     var clip = target.kind === 'session' ? L(target.path + ' clip') : L(target.path);
     if (!BM.spec.decodeTag(DEV.id, String(getv(clip, 'name')))) return;
-    try { report(generateInto(target)); } catch (e) { status('Errore: ' + e); }
-  }, this);
+    try { report(generateInto(target)); } catch (e) { fail(e); }
+  }, JSTHIS);
   autoTask.schedule(250);
 }
 
@@ -2632,7 +2694,7 @@ function anything() { log('unknown message ' + messagename); }
 // Bandmates Chords - the chord track: type or pick a progression, write it as a MIDI clip, or detect chords (Chord ID).
 // The players read the chords from this track's clips (same scene / same arrangement position).
 var DEV = { id: 'chords', personas: [], needs: {} };
-var progText = '', pendingWrite = false;
+var progText = 'C G/B | Am7 - | Fmaj7 | G7sus4 G7', pendingWrite = false;
 
 function keyRoot(info) {
   var k = Math.round(uiValue('key'));
@@ -2656,7 +2718,15 @@ function use_preset() {
   status('Progressione: ' + BM.chords.PRESETS[Math.round(uiValue('progPreset'))].name + '. Premi "Scrivi nel clip".');
 }
 
-function write() { pendingWrite = true; outlet(1, 'textedit', 'bang'); }
+function write() {
+  ensureReady();
+  status('Scrivo...');
+  pendingWrite = true;
+  outlet(1, 'textedit', 'bang');
+  // if the text box does not answer, write the last text it sent
+  var t = new Task(function () { if (pendingWrite) { pendingWrite = false; doWrite(); } }, JSTHIS);
+  t.schedule(150);
+}
 
 function doWrite() {
   try {
@@ -2676,7 +2746,7 @@ function doWrite() {
     var label = BM.chords.toText(parsed.prog, info.beatsPerBar, flats());
     clip.set('name', label.length > 60 ? label.substr(0, 57) + '...' : label);
     status(parsed.errors.length ? 'Non riconosciuti: ' + parsed.errors.join(' ') : 'Scritti ' + parsed.prog.length + ' accordi in ' + (length / info.beatsPerBar) + ' battute');
-  } catch (e) { status('Errore: ' + e); log(e); }
+  } catch (e) { fail(e); }
 }
 
 // Chord ID: analyse the selected clip on any track
@@ -2686,7 +2756,7 @@ function read() {
     if (!valid(dc) || !getv(dc, 'is_midi_clip')) { status('Seleziona un clip MIDI da analizzare'); return; }
     showText(textFromClip(dc));
     status('Chord ID: ' + BM.spec.stripTag(String(getv(dc, 'name'))));
-  } catch (e) { status('Errore: ' + e); log(e); }
+  } catch (e) { fail(e); }
 }
 
 function textFromClip(clip) {

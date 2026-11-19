@@ -1,7 +1,7 @@
 // Bandmates Chords - the chord track: type or pick a progression, write it as a MIDI clip, or detect chords (Chord ID).
 // The players read the chords from this track's clips (same scene / same arrangement position).
 var DEV = { id: 'chords', personas: [], needs: {} };
-var progText = '', pendingWrite = false;
+var progText = 'C G/B | Am7 - | Fmaj7 | G7sus4 G7', pendingWrite = false;
 
 function keyRoot(info) {
   var k = Math.round(uiValue('key'));
@@ -25,7 +25,15 @@ function use_preset() {
   status('Progressione: ' + BM.chords.PRESETS[Math.round(uiValue('progPreset'))].name + '. Premi "Scrivi nel clip".');
 }
 
-function write() { pendingWrite = true; outlet(1, 'textedit', 'bang'); }
+function write() {
+  ensureReady();
+  status('Scrivo...');
+  pendingWrite = true;
+  outlet(1, 'textedit', 'bang');
+  // if the text box does not answer, write the last text it sent
+  var t = new Task(function () { if (pendingWrite) { pendingWrite = false; doWrite(); } }, JSTHIS);
+  t.schedule(150);
+}
 
 function doWrite() {
   try {
@@ -45,7 +53,7 @@ function doWrite() {
     var label = BM.chords.toText(parsed.prog, info.beatsPerBar, flats());
     clip.set('name', label.length > 60 ? label.substr(0, 57) + '...' : label);
     status(parsed.errors.length ? 'Non riconosciuti: ' + parsed.errors.join(' ') : 'Scritti ' + parsed.prog.length + ' accordi in ' + (length / info.beatsPerBar) + ' battute');
-  } catch (e) { status('Errore: ' + e); log(e); }
+  } catch (e) { fail(e); }
 }
 
 // Chord ID: analyse the selected clip on any track
@@ -55,7 +63,7 @@ function read() {
     if (!valid(dc) || !getv(dc, 'is_midi_clip')) { status('Seleziona un clip MIDI da analizzare'); return; }
     showText(textFromClip(dc));
     status('Chord ID: ' + BM.spec.stripTag(String(getv(dc, 'name'))));
-  } catch (e) { status('Errore: ' + e); log(e); }
+  } catch (e) { fail(e); }
 }
 
 function textFromClip(clip) {

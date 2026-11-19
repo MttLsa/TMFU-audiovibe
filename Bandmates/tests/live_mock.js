@@ -11,7 +11,7 @@ function makeSet() {
     tempo: 124, num: 4, den: 4, root_note: 9, scale_name: 'Minor',
     scenes: [{ name: 'Strofa' }, { name: 'Ritornello' }, { name: '' }],
     cue_points: [{ time: 0, name: 'Intro' }, { time: 32, name: 'Chorus' }],
-    tracks: [], view: { detail: null, highlighted: null, scene: 0 }, clip
+    tracks: [], view: { detail: null, highlighted: null, scene: 0, focused: 'Session' }, song_time: 0, clip
   };
   for (const [n, d] of [['Chords', 'Bandmates Chords'], ['Drums', 'Bandmates Drums'], ['Bass', 'Bandmates Bass'], ['Keys', 'Bandmates Keys'], ['Beats', 'Bandmates Beats']]) set.tracks.push(track(n, d, 3));
   return set;
@@ -21,6 +21,7 @@ function resolve(set, p) {
   p = p.replace(/^id \d+$/, '');
   const t = p.split(' ');
   let node = null, kind = null, i = 0;
+  if (p === 'live_app view') return { node: set.view, kind: 'appview', path: p };
   if (t[0] === 'live_set') { node = set; kind = 'song'; i = 1; } else return { node: null };
   while (i < t.length) {
     const k = t[i], n = parseInt(t[i + 1], 10);
@@ -53,8 +54,9 @@ function makeLiveAPI(set, thisDevice) {
     this.path = '"' + this.unquotedpath + '"';
     const node = r.node, kind = r.kind;
     this.get = (prop) => {
+      if (kind === 'appview') return [prop === 'focused_document_view' ? set.view.focused : null];
       if (kind === 'song') {
-        const m = { tempo: set.tempo, signature_numerator: set.num, signature_denominator: set.den, root_note: set.root_note, scale_name: set.scale_name };
+        const m = { current_song_time: set.song_time, tempo: set.tempo, signature_numerator: set.num, signature_denominator: set.den, root_note: set.root_note, scale_name: set.scale_name };
         return [m[prop]];
       }
       if (kind === 'slot' && prop === 'has_clip') return [node.clip ? 1 : 0];

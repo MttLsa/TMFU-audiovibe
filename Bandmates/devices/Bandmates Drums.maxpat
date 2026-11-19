@@ -3167,12 +3167,14 @@
 			{
 				"name": "bm_drums.js",
 				"bootpath": ".",
+				"patcherrelativepath": ".",
 				"type": "TEXT",
 				"implicit": 1
 			},
 			{
 				"name": "bm_xy.js",
 				"bootpath": ".",
+				"patcherrelativepath": ".",
 				"type": "TEXT",
 				"implicit": 1
 			}

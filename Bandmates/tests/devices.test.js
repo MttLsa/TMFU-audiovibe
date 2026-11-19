@@ -37,8 +37,8 @@ test('chords -> drums -> bass -> keys -> beats in a simulated Live set', () => {
   const chords = loadDevice(set, 'bm_chords.js', 0);
   chords.init();
   set.view.highlighted = 'live_set tracks 0 clip_slots 0';
-  chords.write();
   chords.text('text', 'Am7', '|', 'Dm7', '|', 'G7', '|', 'Cmaj7');
+  chords.write();
   const cc = set.tracks[0].slots[0].clip;
   assert.ok(cc, 'chord clip created');
   assert.equal(cc.length, 16);
@@ -117,4 +117,23 @@ test('chords -> drums -> bass -> keys -> beats in a simulated Live set', () => {
   bass.generate_arrangement();
   assert.equal(set.tracks[2].arrangement.length, 1);
   assert.match(set.tracks[2].arrangement[0].name, /Chorus/);
+
+  // 10) Arrangement view, nothing selected: Genera writes at the playhead, inside the chord region
+  set.view.focused = 'Arranger';
+  set.view.highlighted = null;
+  set.song_time = 37;
+  drums.generate();
+  const arr = set.tracks[1].arrangement;
+  assert.equal(arr.length, 1);
+  assert.equal(arr[0].start_time, 32);
+  assert.equal(arr[0].length, 16);
+  assert.ok(arr[0].notes.length > 30);
+});
+
+test('buttons work even when the load-time init message was missed', () => {
+  const set = makeSet();
+  const drums = loadDevice(set, 'bm_drums.js', 1);
+  set.view.highlighted = 'live_set tracks 1 clip_slots 0';
+  drums.generate();
+  assert.ok(set.tracks[1].slots[0].clip.notes.length > 30);
 });
