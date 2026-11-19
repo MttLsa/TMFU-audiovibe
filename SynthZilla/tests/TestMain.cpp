@@ -3,6 +3,7 @@
 //   SynthZillaTest <outDir> levels           write <outDir>/levels.json: g_trim so that every preset peaks at -1 dBFS
 //   SynthZillaTest <outDir> wav <substring>  render matching presets to WAV
 //   SynthZillaTest <outDir> gui              GUI snapshots (PNG)
+//   SynthZillaTest <outDir> params           <outDir>/params.json: every parameter (for tools/make_manual.py)
 //   SynthZillaTest <outDir> units            unit checks (5 modules, LFO modulation, EQ, output filters, model change, FM 6-op)
 #include "../Source/PluginProcessor.h"
 #include "../Source/PluginEditor.h"
@@ -195,6 +196,22 @@ int main (int argc, char** argv)
             const auto b = render (p, nullptr, 2.0, nullptr, 60);
             expect (b.loud > a.loud, "module delay adds echoes");
         }
+    }
+    else if (mode == "params")
+    {
+        Array<var> arr;
+        for (int i = 0; i < numParams(); ++i)
+        {
+            const auto& d = def (i);
+            auto o = std::make_unique<DynamicObject>();
+            o->setProperty ("id", d.id); o->setProperty ("name", d.name); o->setProperty ("kind", (int) d.kind);
+            o->setProperty ("min", d.mn); o->setProperty ("max", d.mx); o->setProperty ("def", d.def);
+            o->setProperty ("unit", d.unit); o->setProperty ("choices", d.choices.joinIntoString ("|"));
+            o->setProperty ("module", d.module);
+            arr.add (var (o.release()));
+        }
+        outDir.getChildFile ("params.json").replaceWithText (JSON::toString (var (arr)));
+        std::printf ("%d parameters\n", numParams());
     }
     else if (mode == "wav")
     {
