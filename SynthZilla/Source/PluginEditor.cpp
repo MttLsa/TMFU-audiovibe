@@ -5,18 +5,24 @@ using namespace params;
 using skins::Skin;
 
 // =====================================================================================================
-//  Fonts: Comfortaa (SIL OFL) for all text, logo included + relief
+//  Fonts: Comfortaa (SIL OFL) for all text, Rostex Outline for the logo lettering + relief
 // =====================================================================================================
 juce::Typeface::Ptr ui::typeface (bool bold)
 {
     static juce::Typeface::Ptr reg = juce::Typeface::createSystemTypefaceFor (BinaryData::ComfortaaRegular_ttf, BinaryData::ComfortaaRegular_ttfSize);
-    static juce::Typeface::Ptr bld = juce::Typeface::createSystemTypefaceFor (BinaryData::ComfortaaBold_ttf, BinaryData::ComfortaaBold_ttfSize);
+    // bold = "SynthZilla Heavy": Comfortaa Bold with slightly thicker strokes (tools/make_heavy_font.py)
+    static juce::Typeface::Ptr bld = juce::Typeface::createSystemTypefaceFor (BinaryData::SynthZillaHeavy_ttf, BinaryData::SynthZillaHeavy_ttfSize);
     return bold ? bld : reg;
 }
 // Comfortaa is wider than the previous UI font: slightly tighter tracking keeps the short captions apart
 juce::Font ui::font (float h, bool bold) { return juce::Font (juce::FontOptions (typeface (bold)).withHeight (h).withKerningFactor (-0.03f)); }
 
-juce::Font ui::logoFont (float h) { return ui::font (h, true); }
+// logo lettering only: Rostex Outline
+juce::Font ui::logoFont (float h)
+{
+    static juce::Typeface::Ptr tf = juce::Typeface::createSystemTypefaceFor (BinaryData::RostexOutline_ttf, BinaryData::RostexOutline_ttfSize);
+    return juce::Font (juce::FontOptions (tf).withHeight (h));
+}
 
 void ui::relief (juce::Graphics& g, juce::Rectangle<float> r, juce::Colour base, float corner, bool raised)
 {
@@ -1158,8 +1164,8 @@ void SynthZillaEditor::resized()
     // header
     logoArea = { 22, 3, 58, 58 };
     // preset name / info stop before the < > buttons (the info label used to cover their lower half)
-    presetName.setBounds (272, 6, W - 420 - 12 - 272, 28);
-    presetInfo.setBounds (272, 34, W - 420 - 12 - 272, 22);
+    presetName.setBounds (310, 6, W - 420 - 12 - 310, 28);
+    presetInfo.setBounds (310, 34, W - 420 - 12 - 310, 22);
     prev.setBounds (W - 420, 16, 34, 34); next.setBounds (W - 382, 16, 34, 34); browse.setBounds (W - 344, 16, 110, 34);
     layoutSlots();
     moduleView.setBounds (8, 132, W - 16, 486 + dh);
@@ -1213,8 +1219,18 @@ void SynthZillaEditor::paint (juce::Graphics& g)
         g.drawImageWithin (logo, (int) logoArea.getX(), (int) (logoArea.getY() + bob), (int) logoArea.getWidth(), (int) logoArea.getHeight(),
                            juce::RectanglePlacement::centred, false);
     }
-    g.setColour (ui::text); g.setFont (ui::logoFont (29.0f));
-    g.drawText ("SynthZilla", 100, 6, 160, 34, juce::Justification::left);
+    {   // "SynthZilla" in Rostex Outline (a wide, outline-only face): as large as fits between the kaiju and the preset name,
+        // its thin outline stroked a little thicker so it reads on the dark header
+        auto f = ui::logoFont (32.0f);
+        const float w = juce::GlyphArrangement::getStringWidth (f, "SynthZilla");
+        if (w > 196.0f) f = ui::logoFont (32.0f * 196.0f / w);
+        juce::GlyphArrangement ga;
+        ga.addLineOfText (f, "SynthZilla", 100.0f, 6.0f + 17.0f + f.getAscent() * 0.5f - f.getDescent() * 0.5f);
+        juce::Path p; ga.createPath (p);
+        g.setColour (juce::Colours::white);
+        g.fillPath (p);
+        g.strokePath (p, juce::PathStrokeType (0.7f));
+    }
     g.setColour (ui::dim); g.setFont (ui::font (11.0f));
     g.drawText ("TMFU audiovibe  v" + juce::String (JucePlugin_VersionString), 102, 40, 160, 16, juce::Justification::left);
     // output meter
