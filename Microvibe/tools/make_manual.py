@@ -17,20 +17,20 @@ version = sys.argv[2] if len(sys.argv) > 2 else "1.0.0"
 presets = json.load(open(os.path.join(ROOT, "resources", "presets.json")))
 OUT = os.path.join(ROOT, "docs", "Microvibe_Manuale_v%s.pdf" % version)
 
-# house font: Comfortaa (resources/fonts, SIL OFL 1.1) for every text in the manual
+# house font: Urbanist (Light + SemiBold) (resources/fonts, SIL OFL 1.1) for every text in the manual
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.fonts import addMapping
 FONTS = os.path.join(ROOT, "resources", "fonts")
-pdfmetrics.registerFont(TTFont("Comfortaa", os.path.join(FONTS, "Comfortaa-Regular.ttf")))
-pdfmetrics.registerFont(TTFont("Comfortaa-Bold", os.path.join(FONTS, "Comfortaa-Bold.ttf")))
-for bold, italic, face in ((0, 0, "Comfortaa"), (1, 0, "Comfortaa-Bold"), (0, 1, "Comfortaa"), (1, 1, "Comfortaa-Bold")):
-    addMapping("Comfortaa", bold, italic, face)
+pdfmetrics.registerFont(TTFont("Urbanist", os.path.join(FONTS, "Urbanist-Light.ttf")))
+pdfmetrics.registerFont(TTFont("Urbanist-SemiBold", os.path.join(FONTS, "Urbanist-SemiBold.ttf")))
+for bold, italic, face in ((0, 0, "Urbanist"), (1, 0, "Urbanist-SemiBold"), (0, 1, "Urbanist"), (1, 1, "Urbanist-SemiBold")):
+    addMapping("Urbanist", bold, italic, face)
 
 ss = getSampleStyleSheet()
 for st in ss.byName.values():
     if hasattr(st, "fontName"):
-        st.fontName = "Comfortaa-Bold" if "Bold" in st.fontName else "Comfortaa"
+        st.fontName = "Urbanist-SemiBold" if "Bold" in st.fontName else "Urbanist"
 ACC = colors.HexColor("#c0392b")
 H1 = ParagraphStyle("h1", parent=ss["Heading1"], fontSize=18, textColor=ACC, spaceAfter=8)
 H2 = ParagraphStyle("h2", parent=ss["Heading2"], fontSize=13, textColor=colors.HexColor("#1f4e79"), spaceBefore=8, spaceAfter=4)
@@ -242,7 +242,7 @@ for prm in params:
     rows.append([Paragraph(name, SMALL), Paragraph(prm["group"], SMALL), Paragraph(vals, SMALL), Paragraph(dflt, SMALL), "mod" if prm["dest"] else ""])
 t = Table(rows, colWidths=[50 * mm, 24 * mm, 70 * mm, 22 * mm, 9 * mm], repeatRows=1)
 t.setStyle(TableStyle([
-    ("FONTNAME", (0, 0), (-1, -1), "Comfortaa"), ("FONTNAME", (0, 0), (-1, 0), "Comfortaa-Bold"),
+    ("FONTNAME", (0, 0), (-1, -1), "Urbanist"), ("FONTNAME", (0, 0), (-1, 0), "Urbanist-SemiBold"),
     ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1f4e79")), ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
     ("FONTSIZE", (0, 0), (-1, 0), 8), ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f1f4f8")]),
     ("VALIGN", (0, 0), (-1, -1), "TOP"), ("FONTSIZE", (4, 1), (4, -1), 7),
@@ -255,7 +255,7 @@ p("<font size=7.5>Microtuning: client MTS-ESP di ODDSound (licenza 0BSD). RC-20 
   "campioni di altri prodotti.</font>")
 
 def footer(c, d):
-    c.saveState(); c.setFont("Comfortaa", 7.5); c.setFillColor(colors.grey)
+    c.saveState(); c.setFont("Urbanist", 7.5); c.setFillColor(colors.grey)
     c.drawString(15 * mm, 10 * mm, "Microvibe %s — TMFU audiovibe" % version)
     c.drawRightString(195 * mm, 10 * mm, str(d.page)); c.restoreState()
 

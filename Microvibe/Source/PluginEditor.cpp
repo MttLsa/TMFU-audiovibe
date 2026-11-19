@@ -30,8 +30,8 @@ static juce::String shortSource (int s)
 
 juce::Typeface::Ptr ui::typeface (bool bold)
 {
-    static const juce::Typeface::Ptr regular = juce::Typeface::createSystemTypefaceFor (BinaryData::ComfortaaRegular_ttf, BinaryData::ComfortaaRegular_ttfSize);
-    static const juce::Typeface::Ptr heavy   = juce::Typeface::createSystemTypefaceFor (BinaryData::ComfortaaBold_ttf, BinaryData::ComfortaaBold_ttfSize);
+    static const juce::Typeface::Ptr regular = juce::Typeface::createSystemTypefaceFor (BinaryData::UrbanistLight_ttf, BinaryData::UrbanistLight_ttfSize);
+    static const juce::Typeface::Ptr heavy   = juce::Typeface::createSystemTypefaceFor (BinaryData::UrbanistSemiBold_ttf, BinaryData::UrbanistSemiBold_ttfSize);
     return bold ? heavy : regular;
 }
 
@@ -1207,7 +1207,7 @@ void MicrovibeEditor::paint (juce::Graphics& g)
     g.setColour (ui::panel); g.fillRect (rHeader);
     g.setColour (ui::text); g.setFont (ui::font (24.0f, true));
     g.drawText ("MICROVIBE", 16, 10, 200, 30, juce::Justification::left);
-    g.setColour (ui::dim); g.setFont (ui::font (11.0f));
+    g.setColour (ui::text); g.setFont (ui::font (11.0f));
     g.drawText ("TMFU audiovibe  -  glitch / texture / fx", 16, 40, 260, 16, juce::Justification::left);
     if (proc.presetIndex() >= 0 && proc.presetIndex() < (int) PresetLibrary::get().all().size())
     {
