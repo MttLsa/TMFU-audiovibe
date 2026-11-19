@@ -92,7 +92,7 @@ namespace mv
     struct RandomMod
     {
         enum Mode { SH = 0, Smooth, Drift, Brown };
-        double phase = 0; float a = 0, b = 0, out = 0, sm = 0, walk = 0, d1 = 0, d2 = 0, d1t = 0, d2t = 0;
+        double phase = 0; float a = 0, b = 0, out = 0, sm = 0, walk = 0, d1 = 0, d1t = 0;
         Rng rng { 0xBEEFu };
         void seed (uint32_t s) { rng.seed (s); a = rng.bi(); b = rng.bi(); }
         float tick (double dtCycles, int mode, float smooth, float sr, int blk)
@@ -117,7 +117,8 @@ namespace mv
                 case Brown:
                 {
                     walk += rng.bi() * (float) std::min (1.0, dtCycles * 4.0);
-                    if (walk > 1) walk = 2 - walk; if (walk < -1) walk = -2 - walk;
+                    if (walk > 1) walk = 2 - walk;
+                    if (walk < -1) walk = -2 - walk;
                     v = walk; break;
                 }
                 default: break;

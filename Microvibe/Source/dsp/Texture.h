@@ -57,7 +57,7 @@ namespace mv
                         const float hz = (float) tuning::Tuning::toHz (semis);
                         bandL[k].set (hz, q, sr); bandR[k].set (hz * 1.0007f, q, sr);
                     }
-                    bandNorm = std::sqrt (q) * 0.35f / std::sqrt ((float) std::max (1, nb));
+                    bandNorm = 0.9f / (std::sqrt (q) * std::sqrt ((float) std::max (1, nb)));
                 }
                 for (int k = 0; k < nb; ++k)
                 {

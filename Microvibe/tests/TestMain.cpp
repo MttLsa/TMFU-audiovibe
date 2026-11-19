@@ -175,6 +175,34 @@ int main (int argc, char** argv)
         }
         std::printf ("loudness range: %.1f .. %.1f dB, max cpu %.1f%% of one core\n", minL, maxL, maxCpu);
     }
+    else if (mode == "params")
+    {
+        Array<var> arr;
+        for (int i = 0; i < prm::count(); ++i)
+        {
+            const auto& d = prm::def (i);
+            DynamicObject::Ptr o = new DynamicObject();
+            o->setProperty ("id", d.id); o->setProperty ("name", d.name); o->setProperty ("group", d.group);
+            o->setProperty ("kind", (int) d.kind); o->setProperty ("min", d.mn); o->setProperty ("max", d.mx); o->setProperty ("def", d.def);
+            o->setProperty ("unit", d.unit); o->setProperty ("choices", d.choices.joinIntoString ("|")); o->setProperty ("dest", d.dest);
+            arr.add (var (o.get()));
+        }
+        outDir.getChildFile ("params.json").replaceWithText (JSON::toString (var (arr)));
+    }
+    else if (mode == "levels")
+    {
+        DynamicObject::Ptr lv = new DynamicObject();
+        for (int i = 0; i < (int) all.size(); ++i)
+        {
+            MicrovibeProcessor proc; proc.loadPreset (i);
+            const auto st = render (proc, 8.0);
+            const float trimNow = proc.getParam (prm::ids().trim);
+            const double t = jlimit (-24.0, 24.0, std::round ((trimNow + (-16.0 - st.loud)) * 10.0) / 10.0);
+            lv->setProperty (all[(size_t) i].name, t);
+            std::printf ("%-30s loud %6.1f -> trim %5.1f\n", all[(size_t) i].name.toRawUTF8(), st.loud, t);
+        }
+        outDir.getChildFile ("levels.json").replaceWithText (JSON::toString (var (lv.get())));
+    }
     else if (mode == "wav")
     {
         const String q = argc > 3 ? String (argv[3]).toLowerCase() : String();

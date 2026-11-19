@@ -1,6 +1,7 @@
 # TWINBOX — groovebox ibrida VST3 / AU (v2.13)
 
 > Nello stesso repository: **[TWINSYNTH](Twinsynth/README.md)**, synth A (analogico) + D (digitale) con 321 preset dei suoni di synth più famosi 1960–2020.
+> E **[MICROVIBE](Microvibe/README.md)**, plugin di glitch, texture, percussioni organiche ed effetti (tape, vinile, wobble, delay, reverb, Shepard) per minimal e microhouse, con matrice di modulazione, poliritmie e microtonalità.
 
 Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in un solo plugin:
 

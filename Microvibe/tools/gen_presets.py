@@ -285,8 +285,8 @@ for i, (n, amt, bal, wow, flut, flux) in enumerate(wl):
     p.chain(["Wobble"] + extra + ["Filter", "Tape", "Reverb"])
     p.set(wb_amt=amt, wb_bal=bal, wb_wow=wow, wb_flut=flut, wb_flux=flux, wb_spread=0.3, tp_drive=0.35, tp_hiss=0.1, tp_age=0.5,
           ft_type="LP", ft_cut=[7000, 4500, 3000][i % 3], ft_res=0.15, rv_mix=0.12, cr_bits=8 if "8 Bit" in n else 10, cr_rate=0.35)
-    if "Telephone" in n: p.set(ft_type="BP", ft_cut=1400, ft_res=0.45)
-    if "Formant" in n: p.set(ft_type="Formant", ft_vowel=0.3).lfo_(3, "Triangle", div="1 bar").mod("LFO 3", "ft_vowel", 0.5)
+    if "Telephone" in n: p.set(ft_type="BP", ft_cut=1100, ft_res=0.2, ft_mix=0.85, ft_drive=0.4)
+    if "Formant" in n: p.set(ft_type="Formant", ft_vowel=0.3, ft_mix=0.75, ft_cut=600).lfo_(3, "Triangle", div="1 bar").mod("LFO 3", "ft_vowel", 0.5)
     if "Comb" in n: p.set(ft_type="Comb", ft_cut=220, ft_res=0.6, ft_mix=0.5).lfo_(3, "Smooth Random", div="1/2").mod("LFO 3", "ft_cut", 0.3)
     p.glitch(1, 0.15, repeat=0.5, stop=0.3, crush=0.5).lane(1, 16, 3, div="1/8")
     p.mod("Random 2", "wb_amt", 0.15).set(rn2_mode="Drift", rn2_sync=0, rn2_rate=0.3)

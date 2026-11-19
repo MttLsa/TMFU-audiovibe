@@ -10,4 +10,5 @@
   con `packaging/macos/make_pkg.sh` (modello: `Twinsynth/packaging/macos/make_pkg.sh`): AU in /Library/Audio/Plug-Ins/Components,
   VST3 in /Library/Audio/Plug-Ins/VST3, app Standalone in /Applications; controlla con `lipo` che i binari siano universali
   e che l'AU si presenti come "TMFU audiovibe: <nome>".
-- Validazione AU in CI: `auval -v aumu <PLUGIN_CODE> Tmfu`.
+- Validazione AU in CI: `auval -v aumu <PLUGIN_CODE> Tmfu` per gli strumenti; per gli effetti che ricevono MIDI (music effect,
+  `AU_MAIN_TYPE kAudioUnitType_MusicEffect`, es. Microvibe) `auval -v aumf <PLUGIN_CODE> Tmfu`.

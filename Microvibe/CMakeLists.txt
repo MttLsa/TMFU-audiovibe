@@ -36,7 +36,7 @@ juce_add_plugin(Microvibe
   NEEDS_MIDI_INPUT TRUE
   NEEDS_MIDI_OUTPUT FALSE
   IS_MIDI_EFFECT FALSE
-  EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+  EDITOR_WANTS_KEYBOARD_FOCUS TRUE
   COPY_PLUGIN_AFTER_BUILD FALSE
   VST3_CATEGORIES Fx Modulation Delay Reverb
   AU_MAIN_TYPE kAudioUnitType_MusicEffect
@@ -46,6 +46,7 @@ set(MV_SOURCES
   Source/PluginProcessor.cpp Source/PluginEditor.cpp Source/Params.cpp Source/Presets.cpp
   Source/dsp/Engine.cpp Source/dsp/Tuning.cpp third_party/MTS-ESP/libMTSClient.cpp)
 target_sources(Microvibe PRIVATE ${MV_SOURCES})
+set_source_files_properties(third_party/MTS-ESP/libMTSClient.cpp PROPERTIES COMPILE_OPTIONS "-w")
 target_include_directories(Microvibe PRIVATE Source)
 
 juce_add_binary_data(MicrovibeData SOURCES resources/presets.json)

@@ -129,7 +129,7 @@ FDN a 8 linee (stile Dattorro/Feedback Delay Network): Size, Decay, Pre-delay (s
 - **4 corsie ritmiche** indipendenti che possono pilotare: glitch engine, le 6 voci PERC, la granulazione TEXTURE, gli LFO (reset), i tap del delay.
 - Per corsia: lunghezza 1–64 step (**polimetro**: 16 contro 13 contro 7…), divisione libera (**poliritmia**: 3:2, 5:4, 7:8, tuplet arbitrari), **Euclideo** (passi, pulsazioni, rotazione), swing indipendente, probabilità per step, ratchet 1–8, condizioni (1:2, 3:4, "solo al primo giro", "se l'altra corsia ha suonato").
 - Modalità **Free** (Hz, non sincronizzata) per derive e phasing alla Steve Reich.
-- **Pattern** A–H con catena e morph tra pattern.
+- **Pattern** A–H con catena (avanza di un pattern a ogni battuta, da quello scelto fino a *Chain End*).
 
 ---
 
@@ -158,12 +158,12 @@ FDN a 8 linee (stile Dattorro/Feedback Delay Network): Size, Decay, Pre-delay (s
 - **32 slot**: Sorgente × **Via** (secondo moltiplicatore, es. LFO1 × Macro2) → Destinazione, Amount bipolare, curva (lineare/esp/log/S), Smoothing.
 - **Ogni parametro automatizzabile è una destinazione**, compresi i parametri dei modulatori stessi (rate, depth, forma, fase) → **intermodulazione** (LFO che modula LFO, random che modula la probabilità di una corsia, ecc.).
 - **Modulazione rapida**: trascinando una sorgente su qualsiasi knob si crea uno slot; l'anello colorato intorno al knob mostra la portata.
-- Cicli di feedback ammessi con un campione di ritardo (stabile e prevedibile).
+- Cicli di feedback ammessi con un blocco di controllo (32 campioni) di ritardo: stabile e prevedibile.
 - Valutazione a blocchi di 32 campioni con interpolazione lineare (abbastanza fluido per audio-rate leggero, CPU contenuta).
 
 ---
 
-## 8. Interfaccia (1200 × 760, ridimensionabile come Twinbox)
+## 8. Interfaccia (1280 × 790, ridimensionabile)
 
 ```
 ┌───────────────────────────────────────────────────────────────────────────────┐
@@ -214,3 +214,15 @@ Microvibe/
 2. Glitch engine + FX base (Wobble, Tape, Vinyl, Delay, Reverb, Filter).
 3. Generatori: PERC modale, TEXTURE, SHEPARD; microtonalità.
 4. GUI completa, drag-to-modulate, preset, manuale PDF, test e `auval`.
+
+---
+
+## 12. Stato dell'implementazione (v1.0.0)
+
+Implementato tutto quanto sopra, con queste differenze rispetto alla bozza:
+- **Morph tra pattern**: non implementato (c'è la catena A–H).
+- **Tape/Vinyl**: tecniche standard (isteresi Jiles–Atherton, filtri d'epoca, polvere/crackle Poisson), non copiati
+  da Groovulation, che non è in questo repository.
+- **Oversampling 2×** solo nel modello a isteresi del Tape.
+- I cicli di modulazione hanno un ritardo di un blocco di controllo (32 campioni), non di un campione.
+- Interfaccia 1280 × 790 invece di 1200 × 760.
