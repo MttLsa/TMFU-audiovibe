@@ -1,6 +1,6 @@
 # TWINBOX — groovebox ibrida VST3 / AU (v2.14)
 
-> Nello stesso repository: **[TWINSYNTH](Twinsynth/README.md)**, synth A (analogico) + D (digitale) con 321 preset dei suoni di synth più famosi 1960–2020.
+> Nello stesso repository: **[SynthZilla](SynthZilla/README.md)**, fino a 5 moduli synth analogici / digitali con 151 suoni di synth famosi 1963–2023, ognuno legato al suo brano.
 
 Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in un solo plugin:
 
