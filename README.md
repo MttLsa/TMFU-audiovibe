@@ -1,6 +1,8 @@
 # TWINBOX — groovebox ibrida VST3 / AU (v2.14)
 
 > Nello stesso repository: **[SynthZilla](SynthZilla/README.md)**, fino a 5 moduli synth analogici / digitali con 151 suoni di synth famosi 1963–2023, ognuno legato al suo brano.
+>
+> Nello stesso repository: **[GLOBAL CONTROL](GLOBAL_CONTROL/README.md)**, app macOS + bridge Max for Live per controllare lo stesso parametro su più istanze di un plug-in in Ableton Live.
 
 Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in un solo plugin:
 
