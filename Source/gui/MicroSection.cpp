@@ -73,7 +73,7 @@ void MicroStepGrid::paint (Graphics& g)
             g.drawText (rowShort[sub], labelW() - 18, (int) first.getY(), 14, (int) first.getHeight(), Justification::centred);
         }
         else
-            g.drawText (rowNames[sub], 2, (int) first.getY(), labelW() - 6, (int) first.getHeight(), Justification::centredLeft);
+            g.drawFittedText (rowNames[sub], 2, (int) first.getY(), labelW() - 6, (int) first.getHeight(), Justification::centredLeft, 1, 0.8f);
 
         const bool muted = proc.apvts.getRawParameterValue (a (ch, mt::mute))->load() > 0.5f;
         for (int ci = 0; ci < visible(); ++ci)

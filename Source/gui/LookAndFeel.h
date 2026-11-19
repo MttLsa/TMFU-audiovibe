@@ -26,7 +26,8 @@ namespace theme
 
     inline juce::Font font (float h, bool bold = false)
     {
-        return juce::Font (juce::FontOptions (comfortaa (bold)).withHeight (h));
+        // Comfortaa Bold is light for a bold face: bold text (module titles, headers) gets 8 % more height for contrast
+        return juce::Font (juce::FontOptions (comfortaa (bold)).withHeight (bold ? h * 1.08f : h));
     }
 }
 
