@@ -1,7 +1,7 @@
 #include "PluginEditor.h"
 #include "Scales.h"
 #ifndef JucePlugin_VersionString
- #define JucePlugin_VersionString "1.1.10"
+ #define JucePlugin_VersionString "1.1.11"
 #endif
 
 using namespace juce;

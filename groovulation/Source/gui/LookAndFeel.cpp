@@ -3,11 +3,10 @@
 
 using namespace juce;
 
-Typeface::Ptr theme::comfortaa (bool bold)
+Typeface::Ptr theme::urbanist()
 {
-    static const Typeface::Ptr regular = Typeface::createSystemTypefaceFor (BinaryData::ComfortaaRegular_ttf, (size_t) BinaryData::ComfortaaRegular_ttfSize);
-    static const Typeface::Ptr boldFace = Typeface::createSystemTypefaceFor (BinaryData::ComfortaaBold_ttf, (size_t) BinaryData::ComfortaaBold_ttfSize);
-    return bold ? boldFace : regular;
+    static const Typeface::Ptr light = Typeface::createSystemTypefaceFor (BinaryData::UrbanistLight_ttf, (size_t) BinaryData::UrbanistLight_ttfSize);
+    return light;
 }
 
 GroovLookAndFeel::GroovLookAndFeel()
