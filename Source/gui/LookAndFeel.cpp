@@ -1,6 +1,15 @@
 #include "LookAndFeel.h"
 
+#include <BinaryData.h>
+
 using namespace juce;
+
+Typeface::Ptr theme::comfortaa (bool bold)
+{
+    static const Typeface::Ptr regular = Typeface::createSystemTypefaceFor (BinaryData::ComfortaaRegular_ttf, BinaryData::ComfortaaRegular_ttfSize);
+    static const Typeface::Ptr heavy   = Typeface::createSystemTypefaceFor (BinaryData::ComfortaaBold_ttf, BinaryData::ComfortaaBold_ttfSize);
+    return bold ? heavy : regular;
+}
 
 TwinLookAndFeel::TwinLookAndFeel()
 {
@@ -29,6 +38,7 @@ TwinLookAndFeel::TwinLookAndFeel()
     setColour (TextEditor::highlightColourId, theme::accentA.withAlpha (0.4f));
     setColour (TextEditor::outlineColourId, theme::outline);
     setColour (CaretComponent::caretColourId, theme::text);
+    setDefaultSansSerifTypeface (theme::comfortaa (false));
 }
 
 void TwinLookAndFeel::drawRotarySlider (Graphics& g, int x, int y, int w, int h, float pos, float start, float end, Slider& s)
