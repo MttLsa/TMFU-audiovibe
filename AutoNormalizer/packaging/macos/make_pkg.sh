@@ -15,7 +15,7 @@ cd "$(dirname "$0")/../.."
 
 VERSION="${1:-$(sed -n 's/^project(AutoNormalizer VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)}"
 NAME="AutoNormalizer"
-ID="com.autonormalizer.autonormalizer"
+ID="com.tmfuaudiovibe.autonormalizer"
 ART="build/${NAME}_artefacts/Release"
 OUT="build/installer"
 PKG="$OUT/${NAME}-${VERSION}-macOS.pkg"
@@ -85,7 +85,7 @@ done
 # ---------------------------------------------------------------- installer texts
 cat > "$OUT/res/welcome.html" <<HTML
 <html><body style="font-family:-apple-system,Helvetica;font-size:13px">
-<h2>AutoNormalizer ${VERSION}</h2>
+<h2>AutoNormalizer ${VERSION} — TMFU audiovibe</h2>
 <p>Normalizza il plugin che lo precede a un livello <b>LUFS</b> una sola volta per ogni cambio di preset, poi mantiene il guadagno fisso.
 Un limiter con look-ahead garantisce che l'uscita non superi mai <b>-1 dBFS</b>.</p>
 <p>Verranno installati i formati selezionati in <code>/Library/Audio/Plug-Ins</code>.
@@ -110,7 +110,7 @@ done
 cat > "$OUT/distribution.xml" <<XML
 <?xml version="1.0" encoding="utf-8"?>
 <installer-gui-script minSpecVersion="2">
-  <title>AutoNormalizer ${VERSION}</title>
+  <title>TMFU audiovibe AutoNormalizer ${VERSION}</title>
   <welcome file="welcome.html" mime-type="text/html"/>
   <options customize="allow" require-scripts="false" hostArchitectures="x86_64,arm64"/>
   <domains enable_localSystem="true"/>

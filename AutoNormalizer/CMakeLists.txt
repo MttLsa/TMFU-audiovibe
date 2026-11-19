@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum macOS version")
 set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "macOS architectures")
 
-project(AutoNormalizer VERSION 1.1.0 LANGUAGES C CXX)
+project(AutoNormalizer VERSION 1.1.1 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -43,9 +43,9 @@ if(AN_STANDALONE)
 endif()
 
 juce_add_plugin(AutoNormalizer
-  COMPANY_NAME "AutoNormalizer"
-  BUNDLE_ID "com.autonormalizer.autonormalizer"
-  PLUGIN_MANUFACTURER_CODE Atnm
+  COMPANY_NAME "TMFU audiovibe"
+  BUNDLE_ID "com.tmfuaudiovibe.autonormalizer"
+  PLUGIN_MANUFACTURER_CODE Tmfu
   PLUGIN_CODE AtNz
   FORMATS ${AN_FORMATS}
   PRODUCT_NAME "AutoNormalizer"
