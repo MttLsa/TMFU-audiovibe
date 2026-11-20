@@ -1,4 +1,4 @@
-# DUALBOX — groovebox ibrida VST3 / AU (v2.15)
+# DUALBOX — groovebox ibrida VST3 / AU (v2.16)
 
 > Dalla v2.15 il plugin si chiama **DUALBOX** (prima *Twinbox*). L'installer rimuove le vecchie copie
 > `Twinbox.component` / `Twinbox.vst3`; i campioni stanno ora in `…/Dualbox/Samples`.
@@ -14,10 +14,20 @@ DUALBOX è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in 
 | **B — Groovebox** (in basso) | 5 voci a campioni (Kick, Snare, Hat, **Belt**, **Capsule**), sequencer A–D fino a **64 step** con catena di pattern e motore **Remix**, effetti Filter / EQ / Delay / xFx (23 modi) / Mix / Out, **fino a 8 LFO**, pulsanti **NORM** e **MIDI** |
 | **GLOBAL CONTROL** (a destra, comprimibile) | Crossfader A↔B, filtro master **Cutoff** (manopola grande) HP/BP/LP + **Resonance**, Master, Tempo / Run |
 
-📖 **Manuale d'uso completo (PDF):** [docs/DUALBOX_Manuale_v2.15.0.pdf](docs/DUALBOX_Manuale_v2.15.0.pdf)
+📖 **Manuale d'uso completo (PDF):** [docs/DUALBOX_Manuale_v2.16.0.pdf](docs/DUALBOX_Manuale_v2.16.0.pdf)
 
 ![Interfaccia principale](docs/gui_main.png)
 
+
+## Novità 2.16
+
+- **Belt: analisi dei campioni e SCALE come in Groovulation.** Ogni campione viene analizzato per tonalità (maggiore / minore),
+  accordatura in cent, cromagramma e fondamentale; con **SCALE** il campione intero viene trasposto nella scala con la
+  stessa logica di Groovulation, e la trasposizione è fatta con un pitch-shift di alta qualità (Signalsmith Stretch) che non
+  cambia la durata. Tune, melodie (VEL = tune), portamento e FM restano trasposizioni da campionatore sopra di essa.
+- **IMPORT PATTERN** nella Sezione A: importa un file di preset (.mtpreset: 8 suoni + pattern A–L), di pattern (.mtpattern:
+  nel pattern corrente) o di suono (.mtdrum: nel canale selezionato) dal tuo computer.
+- Font dell'interfaccia: **Inter**.
 
 ## Novità 2.14
 

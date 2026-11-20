@@ -17,7 +17,7 @@ from reportlab.platypus import (BaseDocTemplate, PageTemplate, Frame, Paragraph,
 from reportlab.platypus.tableofcontents import TableOfContents
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-VERSION = sys.argv[1] if len(sys.argv) > 1 else "2.15.0"
+VERSION = sys.argv[1] if len(sys.argv) > 1 else "2.16.0"
 OUT = os.path.join(ROOT, "docs", "DUALBOX_Manuale_v%s.pdf" % VERSION)
 DOCS = os.path.join(ROOT, "docs")
 
@@ -168,9 +168,13 @@ table([["Stadio", "Descrizione"],
 
 h2("1.2 Novità della versione %s" % VERSION)
 bullets([
+    "<b>Novità 2.16</b>: il modulo <b>Belt</b> analizza i campioni e gestisce la scala con il motore di Groovulation "
+    "(tonalità maggiore / minore, accordatura, cromagramma, trasposizione dell'intero campione nella scala con pitch-shift "
+    "di alta qualità che non ne cambia la durata, vedi 6.5); pulsante <b>IMPORT PATTERN</b> nella Sezione A per importare "
+    "preset, pattern e suoni da file (vedi 5.6); font dell'interfaccia <b>Inter</b>.",
     "<b>Novità 2.15</b>: il plugin si chiama <b>DUALBOX</b> (prima <i>Twinbox</i>): nel browser della DAW compare come "
-    "<b>TMFU audiovibe: DUALBOX</b>. Nuovo logo con la scritta TMFU audiovibe; l'interfaccia usa il font <b>Urbanist</b> "
-    "e tutte le scritte di moduli e parametri sono in inglese. I campioni si trovano in <font face='DV-M'>…/Dualbox/Samples</font> "
+    "<b>TMFU audiovibe: DUALBOX</b>. Nuovo logo con la scritta TMFU audiovibe; tutte"
+    " le scritte di moduli e parametri sono in inglese. I campioni si trovano in <font face='DV-M'>…/Dualbox/Samples</font> "
     "con le cartelle di fabbrica <b>Dualbox Kick / Snare / Hat / Belt / Capsule / Click</b>; il pulsante della cartella di "
     "fabbrica si chiama <b>DBX</b>. L'installer macOS installa anche i campioni di fabbrica e rimuove le vecchie copie "
     "di Twinbox.",
@@ -330,6 +334,7 @@ table([["Controllo", "Funzione"],
        ["PATTERN A–L", "Seleziona il pattern da modificare/suonare. Durante la riproduzione il cambio avviene alla fine "
         "del pattern in corso (il pulsante del pattern in attesa si illumina in tenue)."],
        ["BROWSER", "Apre il browser dei 128 preset di genere della Sezione A (vedi capitolo 8)."],
+       ["IMPORT PATTERN", "Importa preset, pattern o suoni da un file sul tuo computer (vedi 5.6)."],
        ["Store L / Morph / Store R", "Store L e Store R memorizzano lo stato attuale degli 8 drum patch come estremi "
         "sinistro e destro. La manopola Morph interpola tra i due set (i parametri a scelta commutano al 50 %). I "
         "pulsanti si colorano quando l'estremo è memorizzato."],
@@ -406,6 +411,24 @@ fig("gui_main.png", "Fig. 3b – Il pannello LFO della Sezione A (a destra dell'
 p("Da 1 a 8 LFO (3 di default) modulano qualsiasi parametro della Sezione A: i parametri di ognuno degli 8 canali (Osc "
   "Freq, Decay, Distort, Level, Pan, Nudge...) e quelli generali (Swing, Fill Rate, Level A...). Ogni riga del pannello "
   "è un LFO; il pulsante ↗ apre la finestra grande con forma d'onda e Phase. Comandi come nel paragrafo 6.9.")
+h2("5.6 Importare pattern e suoni (IMPORT PATTERN)")
+p("Il pulsante <b>IMPORT PATTERN</b> nell'intestazione della Sezione A apre un file di drum machine salvato sul tuo "
+  "computer e lo carica nella Sezione A. Il tipo di file decide cosa viene caricato:")
+table([["File", "Cosa viene caricato"],
+       [".mtpreset (preset)", "Gli 8 suoni (drum patch, con i nomi dei canali), tutti i pattern del file negli slot A–L "
+        "con lunghezza, Trigger, Accent e Fill, e lo Swing."],
+       [".mtpattern (pattern)", "Un pattern nello slot di pattern selezionato (A–L): gli 8 canali con lunghezza, Trigger, "
+        "Accent e Fill. I suoni non cambiano."],
+       [".mtdrum (suono)", "Il suono nel canale selezionato nella lista dei canali."]], [40, 130])
+bullets([
+    "I parametri del suono vengono convertiti nelle unità della Sezione A: forma d'onda e frequenza dell'oscillatore, "
+    "attacco e decay, modulazione di pitch (modo, quantità, velocità), filtro e inviluppo del rumore, mix oscillatore / "
+    "rumore, distorsione, EQ, livello, pan, choke e sensibilità alla velocity.",
+    "Dopo l'importazione un messaggio accanto al pulsante dice quanti pattern e suoni sono stati caricati; se il file "
+    "non contiene pattern né suoni non viene cambiato nulla.",
+    "Vengono letti solo file presenti sul tuo computer: DUALBOX non contiene pattern o suoni di altri prodotti. Importa "
+    "solo materiale che hai il diritto di usare.",
+])
 
 # ---------------------------------------------------------------------------------------------- 6
 h1("6. Sezione B – Groovebox")
@@ -517,39 +540,44 @@ fig("win_B_tie.png", "Fig. 7 – Finestra grande del modulo Belt con la forma d'
 
 h2("6.5 SCALE e intonazione dei campioni (Belt e Capsule)")
 p("I campioni di Belt e Capsule hanno spesso tonalità diverse fra loro. DUALBOX offre due modi per farli suonare "
-  "intonati: <b>SCALE</b> (automatico) e <b>MANUAL</b> (campione per campione).")
-h3("Rilevamento dell'intonazione")
+  "intonati: <b>SCALE</b> (automatico) e <b>MANUAL</b> (campione per campione). Il modulo <b>Belt</b> usa lo stesso motore "
+  "di analisi e di gestione della scala di Groovulation, il plugin di loop di TMFU audiovibe.")
+h3("Analisi dei campioni del Belt")
 bullets([
-    "Quando una cartella viene caricata, DUALBOX analizza ogni campione in background e ne rileva la nota fondamentale "
-    "(nota e cent; C3 = nota MIDI 60).",
-    "I suoni senza un'altezza chiara (rumori, molte percussioni, accordi) vengono marcati <b>no pitch</b> e restano "
-    "invariati.",
-    "Il risultato viene salvato nel file nascosto <font face='DV-M'>.dualbox_pitch.txt</font> dentro la cartella: le volte "
+    "Quando una cartella viene caricata, DUALBOX analizza ogni campione del Belt in background e ne ricava: la "
+    "<b>tonalità</b> (nota e modo maggiore / minore), l'<b>accordatura</b> in cent rispetto al La a 440 Hz, il "
+    "<b>cromagramma</b> (quanta energia c'è su ognuna delle 12 note) e la <b>fondamentale</b>.",
+    "Il cromagramma viene misurato su picchi spettrali ad alta risoluzione (55 Hz – 5 kHz), compensando l'accordatura e "
+    "sommando le armoniche alle loro fondamentali; la tonalità è quella che si accorda meglio ai profili di tonalità "
+    "maggiore e minore. Per i bassi conta anche la fondamentale più frequente.",
+    "Un accordo può essere letto nella sua tonalità relativa (per esempio Do minore 7 come Mi♭ maggiore): le note sono le "
+    "stesse e il risultato della modalità SCALE non cambia.",
+    "I suoni senza contenuto tonale restano come sono (no key).",
+    "Il risultato viene salvato nel file nascosto <font face='DV-M'>.dualbox_key.txt</font> dentro la cartella: le volte "
     "successive il caricamento è immediato.",
-    "Non serve fermare l'audio: mentre l'analisi è in corso il modulo continua a suonare i campioni precedenti; i nuovi "
-    "entrano in uso solo quando sono caricati e analizzati.",
+    "Il modulo <b>Capsule</b> (percussioni) usa il rilevamento della sola nota fondamentale "
+    "(<font face='DV-M'>.dualbox_pitch.txt</font>).",
+    "Non serve fermare l'audio: mentre l'analisi è in corso il modulo continua a suonare i campioni precedenti.",
 ])
 h3("Tonalità dal nome del file (NAME)")
-p("Accordi, pad, molte percussioni e i suoni ricchi di armoniche non hanno un'unica altezza misurabile: l'analisi audio "
-  "li segna no pitch. Per questi casi Belt e Capsule hanno il pulsante <b>NAME</b> (nell'intestazione del modulo e nella "
-  "finestra ♪, come KEY FROM FILE NAME).")
+p("Per i suoni che l'analisi audio non riesce a leggere bene, Belt e Capsule hanno il pulsante <b>NAME</b> "
+  "(nell'intestazione del modulo e nella finestra ♪, come KEY FROM FILE NAME).")
 bullets([
-    "<b>NAME acceso</b>: la tonalità di ogni campione viene letta dal nome del file. Se il nome non contiene una "
-    "tonalità, DUALBOX usa l'analisi audio.",
+    "<b>NAME acceso</b>: la tonalità di ogni campione viene letta dal nome del file; nel Belt anche il modo (m, min, minor, "
+    "minore = minore; maj, major, maggiore o niente = maggiore). Se il nome non contiene una tonalità, DUALBOX usa "
+    "l'analisi audio.",
     "<b>NAME spento</b>: vale solo l'analisi audio.",
-    "La tonalità letta dal nome viene usata dalla modalità SCALE esattamente come quella misurata.",
 ])
 table([["Nome del file", "Tonalità letta", "Note"],
-       ["pad chord Db", "D♭ (= C#)", "bemolle con 'b', anche minuscolo ('pad chord db')"],
-       ["Rhodes Cm9 · Am7 stab · 120bpm Ebmaj7", "C · A · E♭", "le sigle degli accordi (m, min, maj, sus, add, dim, "
-        "aug, numeri) vengono ignorate: conta la fondamentale"],
-       ["Bass_F#2 · Kick C1", "F#2 · C1", "un numero subito dopo la nota è l'ottava (C3 = nota MIDI 60)"],
-       ["La minore · Sol# lead · Re", "A · G# · D", "nomi solfeggio Do, Re, Mi, Fa, Sol, La, Si"],
+       ["pad chord Db", "D♭ maggiore", "bemolle con 'b', anche minuscolo ('pad chord db')"],
+       ["Rhodes Cm9 · Am7 stab · 120bpm Ebmaj7", "C min · A min · E♭ magg.", "le estensioni degli accordi (7, 9, sus, add, "
+        "dim, aug) vengono ignorate"],
+       ["Bass_F#2 · Kick C1", "F# · C", "un numero subito dopo la nota è l'ottava"],
+       ["La minore · Sol# lead · Re", "A min · G# · D", "nomi solfeggio Do, Re, Mi, Fa, Sol, La, Si"],
        ["Kick · Sub Bass · Cello · Remix", "nessuna", "le parole che iniziano con una lettera di nota non vengono "
-        "confuse con le note"]], [52, 30, 88])
-p("Se nel nome ci sono più note, conta l'ultima. Senza ottava nel nome, la nota viene collocata nell'ottava più vicina "
-  "all'altezza misurata (o intorno a C3). Nella finestra ♪ ogni campione mostra entrambe le letture, audio e name: "
-  "quella in uso è evidenziata.")
+        "confuse con le note"]], [52, 36, 82])
+p("Se nel nome ci sono più note, conta l'ultima. Nella finestra ♪ ogni campione mostra entrambe le letture, audio e "
+  "name: quella in uso è evidenziata.")
 h3("Modalità SCALE")
 table([["Controllo", "Funzione"],
        ["SCALE (intestazione B)", "Root (C … B) e tipo di scala, condivisi da Belt e Capsule: Major, Minor, Dorian, "
@@ -557,9 +585,19 @@ table([["Controllo", "Funzione"],
         "Pentatonic, Major Pentatonic, Harmonic Minor, Harmonic Major, Dorian #4, Phrygian Dominant, Melodic Minor, "
         "Lydian Augmented, Lydian Dominant, Super Locrian, 8-Tone Spanish, Bhairav, Hungarian Minor, Hirajoshi, In-Sen, "
         "Iwato, Kumoi, Pelog Selisir, Pelog Tembung, Messiaen 3–7."],
-       ["SCALE (modulo Belt / Capsule)", "Accende la modalità SCALE per quel modulo. Ogni nota suonata parte "
-        "dall'intonazione rilevata del campione (più il Tune del modulo) e viene portata sulla nota della scala più "
-        "vicina: campioni di tonalità diverse suonano intonati fra loro."],
+       ["SCALE (modulo Belt)", "Ogni campione viene trasposto <b>per intero</b> nella scala: DUALBOX prova le trasposizioni "
+        "da −6 a +5 semitoni e sceglie quella che porta più energia del cromagramma sulle note della scala, preferendo "
+        "quella che mette la tonica del campione sulla Root (poi sulla scala, poi lo spostamento più piccolo). Il Tune del "
+        "modulo si aggiunge sopra e il risultato viene portato sulla nota della scala più vicina; l'accordatura del "
+        "campione (cent) viene corretta. Esempio con Root C, Major: un campione in E maggiore scende di 4 semitoni, uno "
+        "in D maggiore di 2, uno in A minore resta com'è."],
+       ["Pitch-shift del Belt", "La trasposizione nella scala è fatta con un pitch-shift polifonico di alta qualità "
+        "(Signalsmith Stretch): il campione cambia intonazione ma non durata, e l'attacco resta al suo posto. La copia "
+        "trasposta viene preparata in background pochi istanti dopo ogni cambio di scala, di Root o di cartella; fino ad "
+        "allora il campione viene trasposto come in un campionatore classico. Tune, melodie, portamento e FM agiscono "
+        "sopra la copia trasposta."],
+       ["SCALE (modulo Capsule)", "Ogni nota parte dalla nota rilevata del campione (più il Tune del modulo) e viene "
+        "portata sulla nota della scala più vicina."],
        ["Melodie", "Con VEL = tune, in modalità SCALE le barre della corsia Belt/Capsule si muovono per gradi della "
         "scala (circa un'ottava sopra e sotto la linea centrale) invece che per semitoni."]], [42, 128])
 h3("Modalità MANUAL e finestra ♪")
@@ -783,6 +821,11 @@ table([["Problema", "Soluzione"],
        ["I moduli B mostrano '(empty folder)'", "La cartella attiva è vuota: premi DBX, oppure importa una libreria "
         "Legacy prima di premere LEG, oppure scegli una cartella con campioni."],
        ["IMPORT LEGACY dà errore", "Il file scelto non contiene mappe di campioni leggibili da DUALBOX."],
+       ["IMPORT PATTERN: 'No patterns or drum patches found'", "Il file non è un file di preset, pattern o suono in "
+        "formato testo leggibile da DUALBOX: non viene cambiato nulla."],
+       ["Il Belt in SCALE suona un attimo diverso subito dopo un cambio di scala", "La copia trasposta in alta qualità "
+        "viene preparata in background (pochi istanti): nel frattempo il campione è trasposto come in un campionatore "
+        "classico."],
        ["Gli effetti coprono il kit", "Abbassa GAIN di Delay/xFx o FX Mix; ricarica il preset per tornare ai livelli "
         "bilanciati (Delay a −60 dB)."],
        ["Non sento il delay", "È voluto: il GAIN del Delay parte da −60 dB. Alzalo (es. −18 … −10 dB)."],
@@ -807,7 +850,10 @@ table([["Voce", "Valore"],
        ["LFO", "da 1 a 8 per sezione (default 3); 7 forme; SYNC 8 bar … 1/32 (anche terzine e puntati) o RATE 10 ms … "
         "30 s; Depth ±100 %"],
        ["Nudge", "per traccia, −50 … +50 ms (passo 0,1 ms), senza latenza aggiunta"],
-       ["Rilevamento pitch", "YIN, 30 Hz – 2 kHz, cache per cartella; opzionale dal nome del file (NAME)"],
+       ["Analisi dei campioni", "Belt: tonalità maggiore / minore (cromagramma ad alta risoluzione, profili di tonalità), "
+        "accordatura in cent, fondamentale YIN; Capsule: fondamentale YIN 30 Hz – 2 kHz; cache per cartella; tonalità "
+        "opzionale dal nome del file (NAME)"],
+       ["Pitch-shift del Belt in SCALE", "Signalsmith Stretch (polifonico, durata invariata), preparato in background"],
        ["Scale", "35 scale, Root condivisa da Belt e Capsule"],
        ["Preset", "128 per sezione (8 generi × 16)"],
        ["Campioni per modulo", "max 128 per cartella"],
@@ -815,7 +861,7 @@ table([["Voce", "Valore"],
        ["Latenza", "Nessuna"]], [45, 125])
 p("<font size=7.5 color='#6b6b6b'>DUALBOX è un prodotto TMFU audiovibe, costruito con il framework JUCE 8. I campioni di "
   "fabbrica sono sintetizzati appositamente o provengono da librerie gratuite CC0 / Public Domain (crediti in "
-  "SAMPLE_CREDITS.md). L'interfaccia usa il font Urbanist (SIL Open Font License 1.1). I nomi di DAW e di sistemi "
+  "SAMPLE_CREDITS.md). L'interfaccia usa il font Inter (SIL Open Font License 1.1). Il pitch-shift del Belt usa Signalsmith Stretch (licenza MIT). I nomi di DAW e di sistemi "
   "operativi citati in questo manuale appartengono ai rispettivi proprietari e sono usati solo per indicare la "
   "compatibilità.</font>")
 
