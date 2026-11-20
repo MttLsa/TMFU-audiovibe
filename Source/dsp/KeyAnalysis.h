@@ -34,6 +34,9 @@ namespace keyanalysis
     bool keyFromName (const juce::String& fileName, int& root, bool& minor);
     bool nameSaysBass (const juce::String& fileName);
     juce::String keyName (int root, bool minor);     // "C min", "F# maj", "-"
+    // a single note without chords / harmony: clear fundamental in most frames and at least half of the
+    // pitch-class energy on its note (basses, subs, single synth notes). Such samples use the note-based SCALE.
+    bool singleTone (const Result& r);
 
     // serialisation for the per-folder cache file
     juce::String toString (const Result& r);

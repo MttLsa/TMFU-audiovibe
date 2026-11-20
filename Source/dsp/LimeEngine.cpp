@@ -98,7 +98,7 @@ void LimeEngine::bind (ParamSource& apvts)
     beltStretch.setCorrectionFunction ([this] (const Sample& s) -> float
     {
         const auto& k = vk[(size_t) tie];
-        if (G (k[kScale], 0) < 0.5f) return std::nanf ("");
+        if (G (k[kScale], 0) < 0.5f || keyanalysis::singleTone (s.key)) return std::nanf ("");   // single notes: no stretch
         float semis, corr; int note;
         if (! beltScale (s, G (k[kTune], 0) + G (bTuneP, 0), semis, corr, note)) return std::nanf ("");
         return corr;
@@ -226,7 +226,7 @@ void LimeEngine::trigger (int target, float vel, float laneValue, int forcedInde
     nv.pos = start * (double) smp->length();
     // ---- pitch: SCALE mode (detected pitch quantized to the shared scale) or MANUAL (per-sample offset)
     nv.set = set; nv.smpIndex = wav; nv.manualPitch = false;
-    if (voice == tie && G (k[kScale], 0) > 0.5f)
+    if (voice == tie && G (k[kScale], 0) > 0.5f && ! (smp->hasKey && keyanalysis::singleTone (smp->key)))
     {
         // Belt SCALE: Groovulation analysis + scale logic; the scale correction comes pre-rendered with Signalsmith
         // Stretch (same duration), melodies / Tune are re-sampled on top of it

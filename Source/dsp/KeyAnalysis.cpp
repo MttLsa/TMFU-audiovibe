@@ -148,6 +148,13 @@ bool keyFromName (const String& fileName, int& rootOut, bool& minorOut)
     return false;
 }
 
+bool singleTone (const Result& r)
+{
+    if (! r.ok || r.f0 <= 0.0f || r.voiced < 0.45f) return false;
+    const int pc = ((int) std::lround (69.0 + 12.0 * std::log2 (r.f0 / 440.0) - r.tuneCents / 100.0) % 12 + 12) % 12;
+    return r.chroma[(size_t) pc] >= 0.5f;
+}
+
 String keyName (int root, bool minor)
 {
     if (root < 0) return "-";

@@ -1,6 +1,7 @@
 // Offline test harness: renders audio through the processor, checks presets / FX / Legacy import, snapshots the GUI.
 #include "dsp/BeltStretch.h"
 #include "PatternImport.h"
+#include "dsp/KeyAnalysis.h"
 #include "../Source/PluginProcessor.h"
 #include "../Source/PluginEditor.h"
 #include "../Source/Presets.h"
@@ -727,20 +728,30 @@ int main (int argc, char** argv)
         setP (p, params::bScaleRoot, 2); setP (p, params::bScaleType, 0);           // D Major: C is not in the scale -> C#
         const float scaled = renderAudition (idx, 0.6);
         // the scale correction is rendered in the background with Signalsmith Stretch and then used by the voice
-        float semisS = 0, corrS = 0; int noteS = 0;
-        const bool keyed = p.lime.beltScale (*tieSet->samples[(size_t) idx], 0.0f, semisS, corrS, noteS);
-        SamplePtr rendered;
-        for (int i = 0; i < 2000 && (rendered = p.lime.beltRendered (idx, corrS)) == nullptr; ++i) Thread::sleep (10);
-        const float scaledStretch = renderAudition (idx, 0.6);
-        report ("Belt SCALE uses the stretched copy", keyed && rendered != nullptr && rendered->length() == tieSet->samples[(size_t) idx]->length()
-                                                      && std::abs (scaledStretch - (src + 2.0f)) < 0.35f,
-                "correction " + String (corrS, 2) + " st rendered in background (same length), measured " + SampleLibrary::noteName (scaledStretch));
+        {
+            // chords / harmonic material: Groovulation scale logic + stretched copy; single notes: note-based logic, no copy
+            int chordIdx = -1;
+            for (int i = 0; i < tieSet->size(); ++i) if (tieSet->names[i].contains ("Strings Cm7")) chordIdx = i;
+            const auto& ck = tieSet->samples[(size_t) chordIdx]->key;
+            float semisS = 0, corrS = 0; int noteS = 0;
+            const bool keyed = p.lime.beltScale (*tieSet->samples[(size_t) chordIdx], 0.0f, semisS, corrS, noteS);
+            const int expectShift = params::bestShift (ck.chroma, ck.keyRoot, 2, 0);
+            SamplePtr rendered;
+            for (int i = 0; i < 2000 && (rendered = p.lime.beltRendered (chordIdx, corrS)) == nullptr; ++i) Thread::sleep (10);
+            Thread::sleep (100);
+            const bool singleNoCopy = keyanalysis::singleTone (tieSet->samples[(size_t) idx]->key) && ! keyanalysis::singleTone (ck)
+                                      && p.lime.beltRendered (idx, 0.0f) == nullptr;
+            report ("Belt SCALE: chords stretched, single notes note-based", keyed && rendered != nullptr && std::abs (corrS) > 0.5f
+                                                      && rendered->length() == tieSet->samples[(size_t) chordIdx]->length() && singleNoCopy,
+                    "Strings Cm7 (" + keyanalysis::keyName (ck.keyRoot, ck.minor) + ") -> D Major: shift " + String (expectShift) + ", correction "
+                    + String (corrS, 2) + " st rendered (same length); Deep Sub C = single note, no stretched copy");
+        }
         setP (p, params::b (params::tie, params::lv::scale), 0);
         p.library.setSampleOffset (SampleLibrary::tie, idx, 5.0f);                  // MANUAL +5 st
         const float manual = renderAudition (idx, 0.6);
         p.library.setSampleOffset (SampleLibrary::tie, idx, 0.0f);
-        // Groovulation scale logic: the whole sample is moved so that its tonic (C) lands on the scale root (D): +2 st
-        const bool okScale = std::abs (scaled - (src + 2.0f)) < 0.35f;
+        // single note (no harmony): note-based SCALE, nearest scale note (C -> C#)
+        const bool okScale = std::abs (scaled - (float) params::quantizeToScale (src, 2, 0)) < 0.35f && std::abs (scaled - src) > 0.5f;
         const bool okManual = std::abs (manual - (src + 5.0f)) < 0.35f;
         report ("SCALE + MANUAL pitch (measured)", okScale && okManual,
                 "sample " + SampleLibrary::noteName (src) + " -> scale D Major " + SampleLibrary::noteName (scaled) + ", manual +5 " + SampleLibrary::noteName (manual));
@@ -781,8 +792,8 @@ int main (int argc, char** argv)
             setP (p, params::b (params::tie, params::lv::scale), 0);
             p.library.setSource (SampleLibrary::tie, SampleLibrary::factory);
             Thread::sleep (30); while (p.library.isLoading()) Thread::sleep (5);
-            // NAME off: analysed key A -> tonic on the C Major root (+3, C5 = 72); NAME on: "Db" (D-flat major) -> C major = -1 (G#4 = 68)
-            report ("key from file name: measured", std::abs (offPitch - 72.0f) < 0.35f && std::abs (onPitch - 68.0f) < 0.35f,
+            // single tone: note-based SCALE. NAME off: A4 stays A (C Major); NAME on: "Db" -> nearest scale note D (+1)
+            report ("key from file name: measured", std::abs (offPitch - 69.0f) < 0.35f && std::abs (onPitch - 70.0f) < 0.35f,
                     "A4 tone named 'Db', C Major: NAME off " + SampleLibrary::noteName (offPitch) + ", NAME on " + SampleLibrary::noteName (onPitch));
             dir.deleteRecursively();
         }

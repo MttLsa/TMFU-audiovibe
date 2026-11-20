@@ -169,8 +169,9 @@ table([["Stadio", "Descrizione"],
 h2("1.2 Novità della versione %s" % VERSION)
 bullets([
     "<b>Novità 2.16</b>: il modulo <b>Belt</b> analizza i campioni e gestisce la scala con il motore di Groovulation "
-    "(tonalità maggiore / minore, accordatura, cromagramma, trasposizione dell'intero campione nella scala con pitch-shift "
-    "di alta qualità che non ne cambia la durata, vedi 6.5); pulsante <b>IMPORT PATTERN</b> nella Sezione A per importare "
+    "(tonalità maggiore / minore, accordatura, cromagramma; accordi, pad e suoni armonici vengono trasposti per intero "
+    "nella scala con un pitch-shift di alta qualità che non ne cambia la durata, i suoni singoli vanno sulla nota della "
+    "scala più vicina, vedi 6.5); pulsante <b>IMPORT PATTERN</b> nella Sezione A per importare "
     "preset, pattern e suoni da file (vedi 5.6); font dell'interfaccia <b>Inter</b>.",
     "<b>Novità 2.15</b>: il plugin si chiama <b>DUALBOX</b> (prima <i>Twinbox</i>): nel browser della DAW compare come "
     "<b>TMFU audiovibe: DUALBOX</b>. Nuovo logo con la scritta TMFU audiovibe; tutte"
@@ -585,13 +586,17 @@ table([["Controllo", "Funzione"],
         "Pentatonic, Major Pentatonic, Harmonic Minor, Harmonic Major, Dorian #4, Phrygian Dominant, Melodic Minor, "
         "Lydian Augmented, Lydian Dominant, Super Locrian, 8-Tone Spanish, Bhairav, Hungarian Minor, Hirajoshi, In-Sen, "
         "Iwato, Kumoi, Pelog Selisir, Pelog Tembung, Messiaen 3–7."],
-       ["SCALE (modulo Belt)", "Ogni campione viene trasposto <b>per intero</b> nella scala: DUALBOX prova le trasposizioni "
+       ["SCALE (modulo Belt): suoni singoli", "Un campione con una sola nota e senza armonia (bassi, sub, note singole di "
+        "synth: fondamentale chiara e almeno metà dell'energia sulla sua nota) parte dalla nota rilevata (più il Tune del "
+        "modulo) e viene portato sulla nota della scala più vicina, come nel Capsule. Esempio: in D Major un basso in C "
+        "diventa C#."],
+       ["SCALE (modulo Belt): accordi, pad e suoni armonici", "Il campione viene trasposto <b>per intero</b> nella scala: DUALBOX prova le trasposizioni "
         "da −6 a +5 semitoni e sceglie quella che porta più energia del cromagramma sulle note della scala, preferendo "
         "quella che mette la tonica del campione sulla Root (poi sulla scala, poi lo spostamento più piccolo). Il Tune del "
         "modulo si aggiunge sopra e il risultato viene portato sulla nota della scala più vicina; l'accordatura del "
         "campione (cent) viene corretta. Esempio con Root C, Major: un campione in E maggiore scende di 4 semitoni, uno "
         "in D maggiore di 2, uno in A minore resta com'è."],
-       ["Pitch-shift del Belt", "La trasposizione nella scala è fatta con un pitch-shift polifonico di alta qualità "
+       ["Pitch-shift del Belt", "Per accordi, pad e suoni armonici la trasposizione nella scala è fatta con un pitch-shift polifonico di alta qualità "
         "(Signalsmith Stretch): il campione cambia intonazione ma non durata, e l'attacco resta al suo posto. La copia "
         "trasposta viene preparata in background pochi istanti dopo ogni cambio di scala, di Root o di cartella; fino ad "
         "allora il campione viene trasposto come in un campionatore classico. Tune, melodie, portamento e FM agiscono "

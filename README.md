@@ -22,9 +22,9 @@ DUALBOX è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in 
 ## Novità 2.16
 
 - **Belt: analisi dei campioni e SCALE come in Groovulation.** Ogni campione viene analizzato per tonalità (maggiore / minore),
-  accordatura in cent, cromagramma e fondamentale; con **SCALE** il campione intero viene trasposto nella scala con la
-  stessa logica di Groovulation, e la trasposizione è fatta con un pitch-shift di alta qualità (Signalsmith Stretch) che non
-  cambia la durata. Tune, melodie (VEL = tune), portamento e FM restano trasposizioni da campionatore sopra di essa.
+  accordatura in cent, cromagramma e fondamentale. Con **SCALE**, accordi, pad e suoni armonici vengono trasposti per intero
+  nella scala con la stessa logica di Groovulation, con un pitch-shift di alta qualità (Signalsmith Stretch) che non cambia la
+  durata; i suoni singoli (una nota senza armonia, per esempio i bassi) vanno sulla nota della scala più vicina. Tune, melodie (VEL = tune), portamento e FM restano trasposizioni da campionatore sopra di essa.
 - **IMPORT PATTERN** nella Sezione A: importa un file di preset (.mtpreset: 8 suoni + pattern A–L), di pattern (.mtpattern:
   nel pattern corrente) o di suono (.mtdrum: nel canale selezionato) dal tuo computer.
 - Font dell'interfaccia: **Inter**.
