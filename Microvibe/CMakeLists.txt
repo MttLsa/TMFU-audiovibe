@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum macOS version")
 set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "macOS architectures")
 
-project(MICROVIBE VERSION 1.1.0 LANGUAGES C CXX)
+project(MICROVIBE VERSION 1.1.1 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -50,7 +50,7 @@ set_source_files_properties(third_party/MTS-ESP/libMTSClient.cpp PROPERTIES COMP
 target_include_directories(Microvibe PRIVATE Source)
 
 juce_add_binary_data(MicrovibeData SOURCES resources/presets.json
-  resources/fonts/Urbanist-Light.ttf resources/fonts/Urbanist-SemiBold.ttf)
+  resources/fonts/Inter-Regular.ttf resources/fonts/Inter-SemiBold.ttf resources/fonts/Urbanist-SemiBold.ttf)
 set_target_properties(MicrovibeData PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 set(MV_DEFS JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0 JUCE_DISPLAY_SPLASH_SCREEN=0)

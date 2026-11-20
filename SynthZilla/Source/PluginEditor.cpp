@@ -5,12 +5,12 @@ using namespace params;
 using skins::Skin;
 
 // =====================================================================================================
-//  Fonts: Urbanist Light / Bold (SIL OFL) for all text, Rostex Outline for the logo lettering + relief
+//  Fonts: Inter Regular / SemiBold (SIL OFL) for all text, Rostex Outline for the logo lettering + relief
 // =====================================================================================================
 juce::Typeface::Ptr ui::typeface (bool bold)
 {
-    static juce::Typeface::Ptr reg = juce::Typeface::createSystemTypefaceFor (BinaryData::UrbanistLight_ttf, BinaryData::UrbanistLight_ttfSize);
-    static juce::Typeface::Ptr bld = juce::Typeface::createSystemTypefaceFor (BinaryData::UrbanistBold_ttf, BinaryData::UrbanistBold_ttfSize);
+    static juce::Typeface::Ptr reg = juce::Typeface::createSystemTypefaceFor (BinaryData::InterRegular_ttf, BinaryData::InterRegular_ttfSize);
+    static juce::Typeface::Ptr bld = juce::Typeface::createSystemTypefaceFor (BinaryData::InterSemiBold_ttf, BinaryData::InterSemiBold_ttfSize);
     return bold ? bld : reg;
 }
 juce::Font ui::font (float h, bool bold) { return juce::Font (juce::FontOptions (typeface (bold)).withHeight (h)); }

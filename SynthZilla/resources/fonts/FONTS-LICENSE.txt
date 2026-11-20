@@ -1,6 +1,6 @@
-Urbanist (Urbanist-Light.ttf, Urbanist-Bold.ttf) - SIL Open Font License 1.1, see Urbanist-LICENSE.txt.
-  Copyright The Urbanist Project Authors (https://github.com/coreyhu/Urbanist).
-  Light is used for all interface text, Bold for all bold text. Distributed unmodified.
+Inter (Inter-Regular.ttf, Inter-SemiBold.ttf) - SIL Open Font License 1.1, see Inter-LICENSE.txt.
+  Copyright (c) 2016 The Inter Project Authors (https://github.com/rsms/inter).
+  Regular is used for all interface text, SemiBold for all bold text. Distributed unmodified.
 
 Rostex Outline (Rostex-Outline.ttf) - Copyright (c) 2025 Roomspace Creative Lab, designer Bakhrudin Ja'far.
   Used only for the "SynthZilla" logo lettering. Supplied by the plug-in author: the font embeds no license text

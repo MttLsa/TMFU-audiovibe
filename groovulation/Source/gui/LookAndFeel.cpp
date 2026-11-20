@@ -3,6 +3,13 @@
 
 using namespace juce;
 
+Typeface::Ptr theme::inter (bool bold)
+{
+    static const Typeface::Ptr regular = Typeface::createSystemTypefaceFor (BinaryData::InterRegular_ttf, (size_t) BinaryData::InterRegular_ttfSize);
+    static const Typeface::Ptr semi    = Typeface::createSystemTypefaceFor (BinaryData::InterSemiBold_ttf, (size_t) BinaryData::InterSemiBold_ttfSize);
+    return bold ? semi : regular;
+}
+
 Typeface::Ptr theme::urbanist()
 {
     static const Typeface::Ptr light = Typeface::createSystemTypefaceFor (BinaryData::UrbanistLight_ttf, (size_t) BinaryData::UrbanistLight_ttfSize);

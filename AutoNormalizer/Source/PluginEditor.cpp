@@ -108,7 +108,7 @@ void AutoNormalizerEditor::paint (juce::Graphics& g)
     auto area = getLocalBounds().reduced (14);
     auto header = area.removeFromTop (30);
     g.setColour (kText);
-    g.setFont (juce::FontOptions (22.0f, juce::Font::bold));
+    g.setFont (lnf.nameFont (22.0f));
     g.drawText ("AutoNormalizer", header, juce::Justification::centredLeft);
     g.setColour (kDim);
     g.setFont (juce::FontOptions (12.0f));

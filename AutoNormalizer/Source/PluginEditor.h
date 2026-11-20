@@ -6,9 +6,10 @@
 #include "PluginProcessor.h"
 #include "BinaryData.h"
 
-// Comfortaa (SIL Open Font License) for every text in the plugin. It is installed as the
+// Inter (SIL Open Font License; Regular + SemiBold) for every text in the plugin. It is installed as the
 // default look-and-feel while an editor is open, so every Font without an explicit
-// typeface (labels, sliders, buttons, menus, painted text) resolves to Comfortaa.
+// typeface (labels, sliders, buttons, menus, painted text) resolves to Inter.
+// Only the plug-in name in the header keeps Comfortaa Bold (nameFont).
 struct ComfortaaLookAndFeel : public juce::LookAndFeel_V4
 {
     ComfortaaLookAndFeel()
@@ -25,9 +26,13 @@ struct ComfortaaLookAndFeel : public juce::LookAndFeel_V4
         return f.isBold() ? bold : regular;
     }
 
-    juce::Typeface::Ptr regular = juce::Typeface::createSystemTypefaceFor (BinaryData::ComfortaaRegular_ttf,
-                                                                          (size_t) BinaryData::ComfortaaRegular_ttfSize);
-    juce::Typeface::Ptr bold = juce::Typeface::createSystemTypefaceFor (BinaryData::ComfortaaBold_ttf,
+    juce::Font nameFont (float h) const { return juce::Font (juce::FontOptions (name).withHeight (h)); }
+
+    juce::Typeface::Ptr regular = juce::Typeface::createSystemTypefaceFor (BinaryData::InterRegular_ttf,
+                                                                          (size_t) BinaryData::InterRegular_ttfSize);
+    juce::Typeface::Ptr bold = juce::Typeface::createSystemTypefaceFor (BinaryData::InterSemiBold_ttf,
+                                                                       (size_t) BinaryData::InterSemiBold_ttfSize);
+    juce::Typeface::Ptr name = juce::Typeface::createSystemTypefaceFor (BinaryData::ComfortaaBold_ttf,
                                                                        (size_t) BinaryData::ComfortaaBold_ttfSize);
 };
 

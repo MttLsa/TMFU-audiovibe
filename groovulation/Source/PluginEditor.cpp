@@ -243,7 +243,7 @@ void MainView::paint (Graphics& g)
     logoArea = Rectangle<float> (bar.getX() + 8.0f, bar.getY() + 1.0f, bar.getHeight() - 2.0f, bar.getHeight() - 2.0f);
     drawWoofer (g, logoArea.reduced (2.0f));
     GlyphArrangement ga;
-    const auto f = theme::font (25.0f, true).withExtraKerningFactor (0.12f);
+    const auto f = theme::nameFont (25.0f).withExtraKerningFactor (0.12f);
     ga.addLineOfText (f, "GROOVULATION", logoArea.getRight() + 12.0f, bar.getCentreY() + 10.0f);
     g.setColour (theme::headerText);
     ga.draw (g);

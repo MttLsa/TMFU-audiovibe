@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum macOS version")
 set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "macOS architectures")
 
-project(GROOVULATION VERSION 1.1.11 LANGUAGES C CXX)
+project(GROOVULATION VERSION 1.1.12 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -61,6 +61,8 @@ target_sources(Groovulation PRIVATE ${GROOV_SOURCES})
 target_include_directories(Groovulation PRIVATE Source)
 
 juce_add_binary_data(GroovulationData SOURCES resources/factory_loops.zip
+  resources/fonts/Inter-Regular.ttf
+  resources/fonts/Inter-SemiBold.ttf
   resources/fonts/Urbanist-Light.ttf)
 set_target_properties(GroovulationData PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
@@ -85,7 +87,7 @@ if(GROOV_BUILD_TESTS)
   juce_add_console_app(GroovulationTest PRODUCT_NAME "GroovulationTest")
   target_sources(GroovulationTest PRIVATE tests/TestMain.cpp ${GROOV_SOURCES})
   target_include_directories(GroovulationTest PRIVATE Source)
-  target_compile_definitions(GroovulationTest PRIVATE ${GROOV_DEFS} JucePlugin_Name="Groovulation" JucePlugin_VersionString="1.1.11"
+  target_compile_definitions(GroovulationTest PRIVATE ${GROOV_DEFS} JucePlugin_Name="Groovulation" JucePlugin_VersionString="1.1.12"
     JUCE_STANDALONE_APPLICATION=0 JUCE_MODAL_LOOPS_PERMITTED=1)
   target_link_libraries(GroovulationTest PRIVATE ${GROOV_LIBS} juce::juce_recommended_config_flags)
 endif()

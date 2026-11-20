@@ -325,7 +325,7 @@ void DeckView::drawTape (Graphics& g)
     auto plate = Rectangle<float> (body.getX() + 22.0f, body.getY() + 14.0f, 250.0f, 30.0f);
     Path plateP; plateP.addRoundedRectangle (plate, 5.0f);
     inked (g, plateP, metalGrad (plate), 2.0f);
-    g.setColour (ink); g.setFont (theme::font (16.0f, true).withExtraKerningFactor (0.08f));
+    g.setColour (ink); g.setFont (theme::nameFont (16.0f).withExtraKerningFactor (0.08f));
     g.drawText ("GROOVULATION  TAPE 60", plate, Justification::centred);
 
     // tape path
@@ -421,7 +421,7 @@ void DeckView::drawVinyl (Graphics& g)
         g.setColour (theme::red); g.drawEllipse (platter.x - L * 0.93f, platter.y - L * 0.93f, L * 1.86f, L * 1.86f, L * 0.06f);
         drawGroovLogo (g, Rectangle<float> (platter.x - L * 0.5f, platter.y - L * 0.66f, L, L), proc.masterLevel(), logoPhase);
         g.setColour (ink);
-        g.setFont (theme::font (L * 0.14f, true));
+        g.setFont (theme::nameFont (L * 0.14f));
         g.drawText ("GROOVULATION", Rectangle<float> (platter.x - L, platter.y + L * 0.4f, L * 2, L * 0.2f), Justification::centred);
         g.setFont (theme::font (L * 0.1f, true));
         g.drawText ("33 1/3  -  SIDE A", Rectangle<float> (platter.x - L, platter.y + L * 0.6f, L * 2, L * 0.16f), Justification::centred);

@@ -35,15 +35,21 @@ namespace theme
         return module < 5 ? red : (module == 5 ? customC : (module == 6 ? amber : (module <= 9 ? teal : olive)));
     }
 
-    // Every text in the plugin uses Urbanist Light (SIL OFL, embedded via BinaryData: resources/fonts).
-    // Only the Light weight is embedded: 'bold' text uses it too.
+    // Every text in the plugin uses Inter (SIL OFL, embedded via BinaryData: resources/fonts):
+    // Regular for normal text, SemiBold for bold text.
+    juce::Typeface::Ptr inter (bool bold);
+    // The plug-in name ("GROOVULATION") keeps Urbanist Light, as before the switch to Inter.
     juce::Typeface::Ptr urbanist();
 
-    inline juce::Font font (float h, bool /*bold*/ = false)
+    inline juce::Font font (float h, bool bold = false)
+    {
+        return juce::Font (juce::FontOptions (inter (bold)).withHeight (h));
+    }
+    inline juce::Font nameFont (float h)
     {
         return juce::Font (juce::FontOptions (urbanist()).withHeight (h));
     }
-    inline juce::Font mono (float h, bool bold = false)   // numbers / LCD readouts: Urbanist too
+    inline juce::Font mono (float h, bool bold = false)   // numbers / LCD readouts: Inter too
     {
         return font (h, bold);
     }
@@ -64,7 +70,7 @@ public:
         label.setFont (getComboBoxFont (b));
         label.setBorderSize ({ 0, 3, 0, 0 });
     }
-    juce::Typeface::Ptr getTypefaceForFont (const juce::Font& f) override { juce::ignoreUnused (f); return theme::urbanist(); }
+    juce::Typeface::Ptr getTypefaceForFont (const juce::Font& f) override { return theme::inter (f.isBold()); }
     juce::Font getPopupMenuFont() override { return theme::font (14.0f); }
     juce::Font getTextButtonFont (juce::TextButton&, int h) override { return theme::font (juce::jmin (13.0f, h * 0.58f), true); }
     void drawDocumentWindowTitleBar (juce::DocumentWindow&, juce::Graphics&, int w, int h, int, int, const juce::Image*, bool) override;
