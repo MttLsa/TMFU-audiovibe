@@ -8,20 +8,16 @@
 
 DUALBOX è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in un solo plugin:
 
-| Sezione | Architettura di riferimento | Contenuto |
-|---|---|---|
-| **A — Drum Synth** (in alto) | Sonic Charge **Microtonic** | 8 canali di percussioni sintetiche, 12 pattern (A–L) fino a **64 step** con Trigger / Accent / Fill, Swing, Fill Rate, Morph, **fino a 8 LFO** |
-| **B — Groovebox** (in basso) | NI Reaktor **Limelite 1.3** | 5 voci a campioni (Kick, Snare, Hat, **Belt**, **Capsule**), sequencer A–D fino a **64 step** con catena di pattern e motore **Remix**, effetti Filter / EQ / Delay / xFx (23 modi) / Mix / Out, **fino a 8 LFO**, pulsanti **NORM** e **MIDI** |
-| **GLOBAL CONTROL** (a destra, comprimibile) | — | Crossfader A↔B, filtro master **Cutoff** (manopola grande) HP/BP/LP + **Resonance**, Master, Tempo / Run |
+| Sezione | Contenuto |
+|---|---|
+| **A — Drum Synth** (in alto) | 8 canali di percussioni sintetiche, 12 pattern (A–L) fino a **64 step** con Trigger / Accent / Fill, Swing, Fill Rate, Morph, **fino a 8 LFO** |
+| **B — Groovebox** (in basso) | 5 voci a campioni (Kick, Snare, Hat, **Belt**, **Capsule**), sequencer A–D fino a **64 step** con catena di pattern e motore **Remix**, effetti Filter / EQ / Delay / xFx (23 modi) / Mix / Out, **fino a 8 LFO**, pulsanti **NORM** e **MIDI** |
+| **GLOBAL CONTROL** (a destra, comprimibile) | Crossfader A↔B, filtro master **Cutoff** (manopola grande) HP/BP/LP + **Resonance**, Master, Tempo / Run |
 
 📖 **Manuale d'uso completo (PDF):** [docs/DUALBOX_Manuale_v2.15.0.pdf](docs/DUALBOX_Manuale_v2.15.0.pdf)
 
 ![Interfaccia principale](docs/gui_main.png)
 
-> Microtonic è un marchio di Sonic Charge; Reaktor e Limelite sono marchi di Native Instruments. DUALBOX è un progetto
-> indipendente che riprende l'*architettura* e l'organizzazione dei controlli di questi strumenti. Non contiene codice,
-> grafica o campioni originali. I campioni originali di Limelite si possono importare solo dal proprio file `.ens`
-> (vedi "Cartelle Legacy").
 
 ## Novità 2.14
 
@@ -56,9 +52,7 @@ DUALBOX è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in 
 
 Il crossfader è lineare: al centro hai il 50 % di A e il 50 % di B.
 
-## Sezione B — fedele a Limelite 1.3
-
-Parametri, nomi e organizzazione vengono dall'analisi del file originale (dettagli in [`docs/limelite_analysis.md`](docs/limelite_analysis.md)).
+## Sezione B — Groovebox
 
 **SEQUENCER**
 - Pattern A–D.
@@ -137,7 +131,7 @@ Ogni sampler (Kick, Snare, Hat, Belt, Capsule) ha la manopola **WAV** e un menu 
 | Pulsante | Cartella |
 |---|---|
 | **DBX** | `Dualbox Kick`, `Dualbox Snare`, … (libreria di fabbrica v5: 48 kick puliti, 48 snare e clap morbidi, 32 coppie di hat, 46 Belt con **solo bassi e accordi, tutti in Do** (bassi accordati su Do, accordi della famiglia Do minore), 66 Capsule con **tom 808 e 909 Hi/Mid/Low, conga 808 Hi/Mid/Low**, conga, bongo, tom, darbuka, cajon, claves, log drum, snare morbide e dissonant hit; una parte dei campioni viene da librerie gratuite CC0 / Public Domain, vedi [`resources/SAMPLE_CREDITS.md`](resources/SAMPLE_CREDITS.md); installata al primo avvio e aggiornata automaticamente quando esce una nuova libreria, senza toccare i file tuoi) |
-| **LEG** | `Legacy Kick`, `Legacy Snare`, … (campioni originali di Limelite, vedi sotto) |
+| **LEG** | `Legacy Kick`, `Legacy Snare`, … (campioni importati con IMPORT LEGACY, vedi sotto) |
 | **📁** | una cartella a tua scelta, impostabile per ogni modulo e salvata col progetto |
 
 Posizione delle cartelle:
@@ -147,9 +141,9 @@ Posizione delle cartelle:
 
 Per l'Hat, se esiste `open/<stesso nome>.wav` dentro la cartella, viene usato per l'hat aperto.
 
-### Cartelle Legacy (omaggio a Limelite)
+### Cartelle Legacy
 
-Premi **IMPORT LEGACY** nella sezione B e seleziona il **tuo** file `Limelite 1.3.ens`. DUALBOX estrae le 6 mappe di campioni originali nelle cartelle `Legacy *`, con i nomi originali:
+Premi **IMPORT LEGACY** nella sezione B e seleziona un file di ensemble (`.ens`) di tua proprietà. DUALBOX ne estrae le mappe di campioni nelle cartelle `Legacy *`, con i nomi originali:
 - Kick 128 campioni;
 - Snare 128;
 - Hat 127 chiusi + 127 aperti, abbinati;
@@ -160,7 +154,7 @@ I campioni restano solo sul tuo computer.
 
 ## Preset di genere: 128 per sezione
 
-Ogni sezione ha un pulsante **BROWSER**. I preset sono 16 per ciascuno degli 8 generi: Techno, Minimal, Microhouse, Rominimal, House, Tech House, Deep House, Breakbeat. Per ogni genere 8 sono **SIMPLE** (8 groove essenziali tutti diversi: per House, Techno e Tech House sono i groove classici del genere, cioè cassa in quattro, clap su 2 e 4, open hat in levare, shaker sui sedicesimi, hat a sedicesimi con accenti, percussioni 3+3+2, tom fra le casse, rullata di snare come fill; per Minimal, Microhouse e Rominimal: percussioni su 2 e 4, hat in levare con swing, hat chiusi a ottavi in stile electro, micro-percussioni, rimshot e conga a bassa velocity fra i tempi, tom intonati ipnotici, basso che rotola) e 8 **COMPLEX** (poliritmi, ghost note, variazioni). Kit e suoni sono costruiti sui riferimenti di ogni genere: per esempio CVO e Alarico per la Techno, Jan Jelinek e Farben per la Minimal, Villalobos e Zavor per la Microhouse, Barac e Sublee per la Rominimal, Kerri Chandler per la House, Adonis e Kevin Saunderson per la Tech House, Mr G e DJ Koze per la Deep House, Silicon Scally per la Breakbeat (electro).
+Ogni sezione ha un pulsante **BROWSER**. I preset sono 16 per ciascuno degli 8 generi: Techno, Minimal, Microhouse, Rominimal, House, Tech House, Deep House, Breakbeat. Per ogni genere 8 sono **SIMPLE** (8 groove essenziali tutti diversi: per House, Techno e Tech House sono i groove classici del genere, cioè cassa in quattro, clap su 2 e 4, open hat in levare, shaker sui sedicesimi, hat a sedicesimi con accenti, percussioni 3+3+2, tom fra le casse, rullata di snare come fill; per Minimal, Microhouse e Rominimal: percussioni su 2 e 4, hat in levare con swing, hat chiusi a ottavi in stile electro, micro-percussioni, rimshot e conga a bassa velocity fra i tempi, tom intonati ipnotici, basso che rotola) e 8 **COMPLEX** (poliritmi, ghost note, variazioni). Kit e suoni seguono il carattere di ogni genere.
 
 - **Sezione A**: kit di 8 drum patch con nomi + pattern (fino a 64 step), swing e fill rate. Il pattern viene caricato nello slot corrente.
 - **Sezione B**: snapshot completo (campioni, voci, effetti, lunghezze, swing, Remix) + pattern A–D.
@@ -169,7 +163,7 @@ Ogni sezione ha un pulsante **BROWSER**. I preset sono 16 per ciascuno degli 8 g
 - Nessun preset usa drive/saturazione sulle voci. Nella Tech House l'acid compare solo in 2 preset su 16.
 - Caricare un preset non cambia mai lo stato acceso/spento dei moduli .
 
-Il Rominimal segue i riferimenti indicati (Villalobos, Bauch, Barac, Ohm Hourani, Sublee, Zavor, 118–130 BPM):
+I preset Rominimal (118–130 BPM) hanno queste caratteristiche:
 - groove lunghi da 32 o 64 step;
 - poca snare;
 - percussioni legnose fuori griglia;
@@ -223,7 +217,7 @@ cmake --build build --target DualboxTest
 ```
 
 ```bash
-xvfb-run ./build/DualboxTest_artefacts/Release/DualboxTest ./out [percorso/Limelite 1.3.ens] [fuzz]
+xvfb-run ./build/DualboxTest_artefacts/Release/DualboxTest ./out [percorso/file.ens] [fuzz]
 ```
 
 Cosa controlla il test:
@@ -238,6 +232,5 @@ L'opzione `fuzz` imposta parametri a caso, a frequenze di campionamento e dimens
 
 ## Note e limiti
 
-- **EXT / FX** di Limelite (ingresso audio esterno, modalità solo-effetto) non sono implementati: il plugin è uno strumento senza ingresso audio.
-- I 127 schemi di Remix e alcune curve dei parametri sono ricostruzioni: le tabelle numeriche originali non sono leggibili dal file.
+- Il plugin è uno strumento senza ingresso audio (nessuna modalità effetto su segnale esterno).
 - Su **Linux**, pluginval va saltuariamente in crash nel proprio codice di hosting VST3 (run loop Linux dell'host, nessun frame nel codice di DUALBOX). Il plugin compilato con AddressSanitizer passa sempre la validazione.

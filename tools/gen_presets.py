@@ -7,10 +7,10 @@ Style notes per genre (what the rules below try to capture):
   techno      125-138  driving 4/4, rumble (Tie sub on off-beats), off-beat hats, metallic perc, tension via Mod
   minimal     122-128  sparse, clicky, space; ghost notes, odd lane lengths (polymeter), small accents
   microhouse  120-126  swung 16ths, tiny clicks, vocal blips, glitchy re-orders (xFx slice / lofi)
-  rominimal   118-130  (Villalobos, Bauch, Barac, Ohm Hourani, Sublee, Zavor) rolling hypnotic grooves,
+  rominimal   118-130  rolling hypnotic grooves,
                        long 32/64-step bars, off-grid wooden perc, rolling sub with portamento, heavy swing,
                        very little snare, shuffled rims, dub delays, constant micro-variation
-  house       120-125  deep/garage house (Adriano, Kerri Chandler, Darryl B & Matt Cole, Enrico Mantini): warm 909, claps, organ/rhodes
+  house       120-125  deep/garage house: warm 909, claps, organ/rhodes
   techhouse   124-128  shuffle groove, bass stabs, percussive hooks, clap/snare layers
   deephouse   118-124  swung hats, rims, shakers, Rhodes/organ chords on Tie, warm reverb
   breakbeat   126-136  syncopated kick/snare breaks, ghost snares, electro zaps, chopped fx
@@ -121,7 +121,7 @@ SIMPLE = {
   "X---x---X---x---|----X--x----X---|--x---x---x---x-|--x-------x-----|x-x---x---x-x---|-------x-------x",   # jack
  ],
  # minimal / microhouse / rominimal: four-on-the-floor kick, percussion on beats 2 and 4, hat on every off-beat, 55-60 % swing
- # (Attack "minimal house"), electro-style closed hat on 8ths + micro percussion (Attack, Villalobos "Dexter"), very low-velocity
+ # electro-style closed hat on 8ths + micro percussion, very low-velocity
  # rimshots / congas between the main beats (Samplesound), knocks around straight hats (MusicRadar minimal groove),
  # a tuned tom pattern as the hypnotic element, closed hat on the 8th and 16th divisions for shuffle (Attack).
  "minimal": [
@@ -150,7 +150,7 @@ SIMPLE = {
   "X---x---X---x---|----------------|x-xxx-xxx-xxx-xx|----------------|-x-----x-x------|---x------x-----",   # no snare, busy hats, log drum
   "X---x---X---x---|----------------|--x---x---x---x-|----------------|x--x------x-----|--x--x-x--x--x-x",   # conga conversation
   "X---x---X---x---|------------x---|-------x-------x|--x---x---x---x-|--x-------x--x--|-----x-------x--",   # shuffle on 8 / 16 + off-beat open hat
-  "X---x---X--xx---|----------------|--x---x---x---x-|----------------|--x--x----x--x--|x-----x---x-----",   # Barac-style double kick + bongos
+  "X---x---X--xx---|----------------|--x---x---x---x-|----------------|--x--x----x--x--|x-----x---x-----",   # double kick + bongos
   "X---x---X---x---|----------------|--x---x---x---x-|----------------|x---------x-----|x--x--x---x--x--",   # hypnotic tumba / tom 3-3-2
   "X---x---X---x---|----x-----------|--x---x---x---x-|----------------|-x---x-x-x---x--|-------x-------x",   # rolling bass, sparse rim
  ],
@@ -214,7 +214,7 @@ def simple_patterns(genre, idx, r, L):
                      "tieVel": tv, "podVel": pv, "mod": [0.5] * L})
     return pats
 
-# ------------------------------------------------------------------------------- Section B (Limelite kit)
+# ------------------------------------------------------------------------------- Section B (sample kit)
 # Minimal: round sounds only - no clicks, ticks, rims, sticks, claves, tabla or other "blip" sounds
 AVOID = {"minimal": {"Kick": ["Click", "Micro", "Tight"], "Hat": ["Tick", "Micro", "Crackle", "Steel", "Cymbal", "Ride"], "Snare": ["Tiny", "Paper", "Brush", "Short"],
                      "Capsule": ["Rim", "Stick", "Clave", "Tabla", "Sidestick", "Snare", "Dissonant", "Muted", "Darbuka Tek", "Bongo Hi"],
@@ -262,28 +262,28 @@ def b_patterns(genre, r, length, cx=1, idx=0):
         return v
     pats = []
     for variant in range(4):
-        if genre == "techno":                    # CVO / Alarico / Danny Wabbit: hypnotic, rumble, rolling percussion
+        if genre == "techno":                    # hypnotic, rumble, rolling percussion
             k = T("X---x---X---x---")
             sn = T(r.choice(["----x-------x---", "----------------"])) if not cx else ghosts(T("----x-------x---"), 0.03, k)
             ch = T("--x---x---x---x-") if not cx else accent_some(T("x-X-x-X-x-X-x-X-"), 0.0, r)
             oh = T("--x---x---x---x-") if (variant % 2 and not cx) else ([0] * L if not cx else evolve(T("------x-------x-")))
             tie = vals({2, 6, 10, 14}) if not cx else vals({2, 3, 6, 7, 10, 11, 14, 15}, 0.3, 0.95, 0.7)       # rumble on the off-beats
             pod = vals({3}, prob=0.8) if not cx else [round(r.uniform(0.3, 0.9), 2) if x else 0.0 for x in tile(euclid(5, 16, r.randint(0, 4)), L)]
-        elif genre == "minimal":                 # Jan Jelinek / Farben / Farine: clicks & cuts, space, micro jazz
+        elif genre == "minimal":                 # clicks & cuts, space, micro jazz
             k = T("X---x---X---x---") if not cx else T(r.choice(["X-----x-X---x--x", "X---x---X--x-x--", "X---x--xX---x---"]))
             sn = T("----x-------x---") if not cx else ghosts(T("----x-------x--x"), 0.05, k)
             ch = T("--x---x---x---x-") if not cx else thin(tile(euclid(7, 16, r.randint(0, 6)), L), 0.1, r)
             oh = [0] * L
             tie = vals({0, 10}, 0.5, 0.6) if not cx else vals({0, 3, 7, 10, 13}, 0.3, 0.9, 0.8)                # double-bass notes
             pod = vals({7, 15}, 0.3, 0.6, 0.7) if not cx else [round(r.uniform(0.2, 0.8), 2) if x else 0.0 for x in tile(euclid(9, 16, r.randint(0, 8)), L)]
-        elif genre == "microhouse":              # Zavor / Villalobos: organic percussion, rolling, vocal snippets
+        elif genre == "microhouse":              # organic percussion, rolling, vocal snippets
             k = T("X---x---X---x---") if not cx else evolve(T(r.choice(["X---x---X---x---", "X---x--xX---x---", "X---x---X--xx---"])), 2)
             sn = T(r.choice(["----x-------x---", "----------------"])) if not cx else ghosts(T("----x-------x---"), 0.06, k)
             ch = T("x-x-x-x-x-x-x-x-") if not cx else accent_some(ghosts(T("x-xxx-x-x-xx--x-"), 0.1), 0.2, r)
             oh = [0] * L
             tie = vals({2, 10}, 0.5, 0.7) if not cx else vals({2, 5, 7, 10, 13, 15}, 0.3, 0.95, 0.6)
             pod = vals({3, 6, 11, 14}, 0.4, 0.8) if not cx else [round(r.uniform(0.25, 0.9), 2) if x else 0.0 for x in tile(euclid(7, 12, r.randint(0, 5)), L)]
-        elif genre == "rominimal":               # Barac / David Nicolas / Sublee / Takashi Himeoka / Arapu
+        elif genre == "rominimal":               # round kicks, rimshots, rolling bass, swing
             base_k = grid("X---x---X---x---") if not cx else grid(r.choice(["X---x---X--xx---", "X---x--xX---x---", "X-----x-X---x---"]))
             k = tile(base_k, L) if not cx else vary_bars(base_k, L, r, lambda b, bar: (b[:13] + [0, 1 if r.random() < 0.5 else 0, 0]) if bar % 2 else b)
             sn = [1 if i % 16 in (4, 12) and r.random() < (0.5 if not cx else 0.25) else 0 for i in range(L)]
@@ -291,14 +291,14 @@ def b_patterns(genre, r, length, cx=1, idx=0):
             oh = [0] * L if (not cx or variant < 2) else [1 if i % 16 in (6, 14) and r.random() < 0.5 else 0 for i in range(L)]
             tie = vals({2, 7, 10, 15}, 0.5, 0.8) if not cx else vals({2, 5, 7, 10, 13, 15}, 0.3, 0.95, 0.75)    # rolling bass
             pod = vals({3, 11}, 0.4, 0.8) if not cx else [round(r.uniform(0.3, 0.95), 2) if r.random() < (0.38 if i % 2 else 0.22) else 0.0 for i in range(L)]
-        elif genre == "house":                   # Adriano / Kerri Chandler / Darryl B & Matt Cole / Enrico Mantini
+        elif genre == "house":                   # warm 909, claps, organ / rhodes, garage swing
             k = T("X---x---X---x---") if not cx else T(r.choice(["X---x---X---x-x-", "X---x---X---x---", "X---x--xX---x---"]))
             sn = T("----X-------X---") if not cx else ghosts(T("----X-------X---"), 0.05, k)
             ch = T("--x---x---x---x-") if not cx else accent_some(T("x-xxx-x-x-xxx-xx"), 0.25, r)
             oh = T("--x---x---x---x-") if not cx else evolve(T("--x---x---x---x-"))
             tie = vals(r.choice([{3, 11}, {0, 6, 10}, {2, 10}]), 0.5, 0.8) if not cx else vals({0, 3, 6, 10, 13}, 0.3, 0.95, 0.7)  # organ / rhodes stabs
             pod = vals({2, 6, 10, 14}, 0.4, 0.7) if not cx else [round(r.uniform(0.3, 0.9), 2) if x else 0.0 for x in tile(euclid(7, 16, r.randint(0, 6)), L)]
-        elif genre == "techhouse":               # Adonis / Henriku / Noha / Saunderson-Larkin: raw jack, acid, Detroit
+        elif genre == "techhouse":               # raw jack, acid, Detroit strings
             k = T("X---x---X---x---")
             sn = T("----X-------X---") if not cx else ghosts(T("----X-------X--x"), 0.04, k)
             ch = accent_some(T("xxxxxxxxxxxxxxxx"), 0.0, r) if not cx else [2 if i % 4 == 2 else (1 if v else 0) for i, v in enumerate(thin(T("xxxxxxxxxxxxxxxx"), 0.12, r))]
@@ -306,14 +306,14 @@ def b_patterns(genre, r, length, cx=1, idx=0):
             bass_pos = r.choice([{0, 3, 8, 11, 14}, {2, 6, 10, 13}, {3, 7, 10, 11}, {0, 6, 10}])
             tie = vals(bass_pos, 0.3, 0.95, 0.85)                                                                  # bass / acid line
             pod = vals({3, 7, 11, 15}, 0.5, 0.8, 0.6) if not cx else [round(r.uniform(0.3, 0.9), 2) if x else 0.0 for x in tile(euclid(5, 16, 2), L)]
-        elif genre == "deephouse":               # Mr G / UGLH / Sid Le Rock (DJ Koze) / Edit Murphy: dusty, dub, funky
+        elif genre == "deephouse":               # dusty, dub, funky
             k = T("X---x---X---x---") if not cx else T(r.choice(["X---x---X---x--x", "X---x---X-x-x---"]))
             sn = T("----x-------x---") if not cx else ghosts(T("----x-------x---"), 0.05, k)
             ch = T("--x---x---x---x-") if not cx else ghosts(T("--x---x---x---x-"), 0.25)
             oh = [0] * L if not cx else evolve(T("------x-------x-"))
             tie = vals(r.choice([{0, 7}, {3, 11}, {0, 10}]), 0.5, 0.8) if not cx else vals({0, 3, 7, 10, 14}, 0.3, 0.95, 0.7)   # dub chords / funky bass
             pod = vals({5, 13}, 0.3, 0.6, 0.6) if not cx else [round(r.uniform(0.3, 0.7), 2) if i % 2 == 1 and r.random() < 0.35 else 0.0 for i in range(L)]
-        else:                                    # breakbeat -> electro: Silicon Scally / Fleisch Fantasy / OzzE
+        else:                                    # breakbeat -> electro
             k = T(r.choice(["X------x--X-----", "X-----x---X-----"])) if not cx else T(r.choice(["X--x----x-X--x--", "X-x-------x-x---", "X------xx-----x-"]))
             sn = T("----X-------X---") if not cx else ghosts(T(r.choice(["----X--x----X--x", "----X-------X-x-"])), 0.06, k)
             ch = T("x-x-x-x-x-x-x-x-") if not cx else accent_some(ghosts(T("x-x-x-x-x-x-x-x-"), 0.25), 0.2, r)
@@ -376,7 +376,7 @@ def b_kit(genre, r, cx=1, idx=0):
         v("tie", "ft", 0); v("tie", "cut", r.choice([900, 1400, 2200])); v("tie", "res", r.randint(30, 55)); v("tie", "d", 55)
         fx.update({"b_swing": r.randint(10, 30), "b_norm": 1, "b_dirt": r.randint(3, 12)})
         fx.update(X([4, 18, 3, 11], (30, 70), (20, 60)) if cx else X([0, 3], (50, 70), (20, 40)))
-    elif genre == "deephouse":       # dusty, dub chords, funky bass, Koze-style quirks
+    elif genre == "deephouse":       # dusty, dub chords, funky bass, playful quirks
         v("tie", "d", 80); v("tie", "a", 5); v("tie", "gain", -6); v("hat", "cd", 30)
         fx.update({"b_swing": r.randint(20, 45), "b_eq_hi": -2, "b_eq_amp": 3, "b_dirt": r.randint(5, 15)})
         fx.update(dict(X([11], (55, 85), (40, 70)), b_x_dly=30) if cx else X([0, 11], (50, 70), (40, 60)))
@@ -436,20 +436,20 @@ def b_preset(genre, idx, r):
     return lanes_to_samples(preset, genre, r, cx)
 
 
-# ------------------------------------------------------------------------------- Section A (Microtonic kit)
+# ------------------------------------------------------------------------------- Section A (drum synth kit)
 def patch(role, genre, r):
-    """Returns a drum patch in natural units for the Microtonic-style voice."""
+    """Returns a drum patch in natural units for the Section A voice."""
     j = lambda a, b: round(r.uniform(a, b), 2)
     if role == "kick":
         # (freq lo, hi, decay lo, hi, distort lo, hi) - tuned on the reference styles
-        base = {"techno": (44, 50, 380, 700, 0, 6),      # long rumble-ready kicks (CVO, Alarico)
+        base = {"techno": (44, 50, 380, 700, 0, 6),      # long rumble-ready kicks
                 "minimal": (48, 56, 200, 420, 0, 2),      # round, warm kicks (no tiny clicks)
-                "microhouse": (48, 60, 200, 450, 0, 4),   # soft round kicks (Villalobos, Zavor)
-                "rominimal": (48, 56, 160, 380, 0, 4),    # round, short-medium (Barac, Sublee)
-                "house": (48, 54, 280, 520, 0, 4),       # warm 909 (Kerri Chandler)
-                "techhouse": (46, 56, 180, 450, 0, 5),   # raw 707/808/909 (Adonis, Saunderson)
-                "deephouse": (46, 54, 300, 600, 0, 4),   # dusty, saturated (Mr G, UGLH)
-                "breakbeat": (42, 50, 500, 1100, 0, 4)}[genre]   # electro 808 booms (Silicon Scally)
+                "microhouse": (48, 60, 200, 450, 0, 4),   # soft round kicks
+                "rominimal": (48, 56, 160, 380, 0, 4),    # round, short-medium
+                "house": (48, 54, 280, 520, 0, 4),       # warm 909
+                "techhouse": (46, 56, 180, 450, 0, 5),   # raw 707/808/909
+                "deephouse": (46, 54, 300, 600, 0, 4),   # dusty, saturated
+                "breakbeat": (42, 50, 500, 1100, 0, 4)}[genre]   # electro 808 booms
         return dict(osc_wave=0, osc_freq=j(base[0], base[1]), osc_atk=0, osc_dcy=j(base[2], base[3]), pm_mode=0,
                     pm_amt=j(18, 40), pm_rate=j(30, 45), n_mode=0, n_freq=j(1500, 4000), n_q=0.9, n_stereo=0, n_env=0,
                     n_atk=0, n_dcy=j(6, 20), mix=j(3, 12), dist=j(base[4], base[5]), eq_freq=j(70, 110), eq_gain=j(0, 3),

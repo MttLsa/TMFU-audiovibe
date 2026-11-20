@@ -42,7 +42,7 @@ using SampleSetPtr = std::shared_ptr<const SampleSet>;
 //  Folder based sample management for the Section B samplers.
 //
 //  <root>/Dualbox Kick, Dualbox Snare, Dualbox Hat, Dualbox Belt, Dualbox Capsule, Dualbox Click   (factory, installed on first run)
-//  <root>/Legacy Kick,  Legacy Snare,  Legacy Hat,  Legacy Tie,  Legacy Pod     (filled by the Limelite importer)
+//  <root>/Legacy Kick,  Legacy Snare,  Legacy Hat,  Legacy Tie,  Legacy Pod     (filled by IMPORT LEGACY)
 //  or any user folder per module.
 //  <root> = macOS /Users/Shared/Dualbox/Samples, Windows C:\Users\Public\Documents\Dualbox\Samples,
 //           Linux ~/Documents/Dualbox/Samples
@@ -106,7 +106,7 @@ private:
 };
 
 // -------------------------------------------------------------------------------------------------
-//  Imports the original sample maps from a user's own "Limelite 1.3.ens" into the Legacy folders.
+//  Imports the sample maps of an ensemble file (.ens) owned by the user into the Legacy folders.
 //  Nothing from the original ensemble is shipped with DUALBOX.
 // -------------------------------------------------------------------------------------------------
 struct LegacyImporter

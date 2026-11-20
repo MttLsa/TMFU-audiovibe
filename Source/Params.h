@@ -5,8 +5,8 @@
 
 // =====================================================================================
 //  Parameter IDs
-//  Section A  ("a…")  : 8-channel synthetic drum machine (Microtonic architecture)
-//  Section B  ("b…")  : 5-part sample groovebox        (Limelite architecture)
+//  Section A  ("a…")  : 8-channel synthetic drum machine
+//  Section B  ("b…")  : 5-part sample groovebox
 //  Global     ("g…")  : A/B crossfader, master cutoff filter, master volume, clock
 // =====================================================================================
 namespace params
@@ -14,7 +14,7 @@ namespace params
     constexpr int numMicroChannels = 8;
     constexpr int numMicroPatterns = 12;   // A … L
     constexpr int numSteps         = 64;   // max steps per pattern (both sections)
-    constexpr int numLimePatterns  = 4;    // patterns A … D (as in Limelite)
+    constexpr int numLimePatterns  = 4;    // patterns A … D
 
     // ---------------- Section A : per-channel drum patch ----------------
     // Suffixes, combined as "a<ch>_<suffix>" with ch = 1..8
@@ -70,7 +70,7 @@ namespace params
     inline const char* aLevel    = "a_level";
     inline const char* bLevelAlias = "b_gain";   // Section B master = OUT Gain
 
-    // ---------------- Section B (Limelite 1.3 architecture) ----------------
+    // ---------------- Section B (sample groovebox) ----------------
     constexpr int numLimeSteps   = 64;
     constexpr int numLimeVoices  = 5;
     enum LimeVoice { kick = 0, snare, hat, tie, pod };

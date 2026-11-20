@@ -517,7 +517,7 @@ LegacyImporter::Result LegacyImporter::run (const File& ens, std::function<void 
 
     std::vector<size_t> mapPos;
     for (size_t p = find ("NIMapFile", 0); p < n; p = find ("NIMapFile", p + 9)) mapPos.push_back (p);
-    if (mapPos.empty()) { res.message = "No sample maps found: is this the Limelite ensemble?"; return res; }
+    if (mapPos.empty()) { res.message = "No sample maps found in this file."; return res; }
 
     for (size_t mi = 0; mi < mapPos.size(); ++mi)
     {
@@ -566,7 +566,7 @@ LegacyImporter::Result LegacyImporter::run (const File& ens, std::function<void 
 
     int total = 0, done = 0;
     for (auto& t : targets) if (auto* m = findMap (t.map)) total += (int) m->entries.size();
-    if (total == 0) { res.message = "The sample maps of Limelite were not found in this file."; return res; }
+    if (total == 0) { res.message = "No readable sample maps were found in this file."; return res; }
 
     const Map* closedHat = findMap ("Closed Hat");
     WavAudioFormat wav;

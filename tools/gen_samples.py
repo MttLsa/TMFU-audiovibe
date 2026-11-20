@@ -6,7 +6,7 @@ Renders the default sample folders for Section B ("Dualbox Kick", "Dualbox Snare
 "Dualbox Tie", "Dualbox Pod") as 44.1 kHz / 16-bit mono WAV files, plus a manifest with genre tags
 that the preset generator uses to build genre-coherent kits.
 
-Hats follow the Limelite convention: every closed hat "X.wav" may have an open partner in "open/X.wav".
+Hats follow this convention: every closed hat "X.wav" may have an open partner in "open/X.wav".
 
 Usage: python3 tools/gen_samples.py resources/samples
 """

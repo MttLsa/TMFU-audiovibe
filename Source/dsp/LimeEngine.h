@@ -5,7 +5,7 @@
 #include "BeltStretch.h"
 
 // =================================================================================================
-//  Section B : groovebox modelled on Limelite 1.3 (Reaktor, NI 2004)
+//  Section B : sample groovebox
 //   Voices    : Kick, Snare, Hat (closed/open), Tie (tonal), Pod (percussion)
 //   Sequencer : patterns A-D, main grid Kick/Snare/C-Hat/O-Hat (off/on/accent), value lanes Tie/Pod/Mod,
 //               own lengths (up to 64) + stretch, start step, swing, half tempo, pattern chain (8 slots),

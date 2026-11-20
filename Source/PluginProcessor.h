@@ -53,7 +53,7 @@ public:
     void copyChannel (int ch);
     void pasteChannel (int ch);
 
-    // Legacy import from the user's own Limelite .ens (runs on a background thread)
+    // Legacy import from an ensemble file (.ens) owned by the user (runs on a background thread)
     void importLegacy (const juce::File& ens, std::function<void (LegacyImporter::Result)> onDone,
                        std::function<void (float)> progress = {});
 

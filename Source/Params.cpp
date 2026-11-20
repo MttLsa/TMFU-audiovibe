@@ -136,7 +136,7 @@ AudioProcessorValueTreeState::ParameterLayout createLayout()
     addFloat  (l, aClickDcy,  "A Kick Click Decay", NormalisableRange<float> (0.f, 100.f), 50.f, pctText);
     addFloat  (l, aClickHp,   "A Kick Click High Pass", logRange (20.f, 8000.f, 600.f), 20.f, hzText);
 
-    // ===================================================================== SECTION B (Limelite 1.3)
+    // ===================================================================== SECTION B
     auto pctR = NormalisableRange<float> (0.f, 100.f);
     auto bip  = NormalisableRange<float> (-100.f, 100.f);
     for (int v = 0; v < numLimeVoices; ++v)

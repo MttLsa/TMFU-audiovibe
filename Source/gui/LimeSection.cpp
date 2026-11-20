@@ -89,7 +89,7 @@ void ControlPanel::resized()
 }
 
 //==============================================================================
-//  Panels factory (original control sets of Limelite 1.3)
+//  Panels factory (control sets of the Section B panels)
 //==============================================================================
 std::unique_ptr<ControlPanel> makeLimePanel (TwinboxProcessor& p, const String& which, bool big)
 {
@@ -564,7 +564,7 @@ void LimeSeqPanel::resized()
 SampleSelector::SampleSelector (TwinboxProcessor& p, int m, bool b2) : proc (p), module (m), big (b2)
 {
     twb.setTooltip ("Factory folder: Dualbox " + SampleLibrary::moduleName (m));
-    leg.setTooltip ("Legacy folder: original Limelite samples (use IMPORT LEGACY first)");
+    leg.setTooltip ("Legacy folder: samples imported with IMPORT LEGACY");
     usr.setTooltip ("Choose your own folder for this module");
     play.setTooltip ("Audition");
     const bool isClick = m == SampleLibrary::click;                 // Section A kick CLICK layer: factory or user folder only
@@ -1095,7 +1095,7 @@ LimeSection::LimeSection (TwinboxProcessor& p) : proc (p)
     browserBtn.onClick = [this] { if (onOpenBrowser) onOpenBrowser(); };
     browserBtn.setTooltip ("Genre preset browser (128 kits + patterns)");
     legacyBtn.onClick = [this] { importLegacy(); };
-    legacyBtn.setTooltip ("Import the original Limelite samples from your own 'Limelite 1.3.ens' into the Legacy folders");
+    legacyBtn.setTooltip ("Import the sample maps of an ensemble file (.ens) you own into the Legacy folders");
     levelB.attach (p.apvts, bGain);
     scaleRoot.addItemList (StringArray { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" }, 1);
     for (auto& sc : scales()) scaleType.addItem (sc.name, scaleType.getNumItems() + 1);
@@ -1152,7 +1152,7 @@ void LimeSection::openWindow (const String& key, const String& title, std::funct
 
 void LimeSection::importLegacy()
 {
-    chooser = std::make_unique<FileChooser> ("Select your 'Limelite 1.3.ens'", File::getSpecialLocation (File::userHomeDirectory), "*.ens");
+    chooser = std::make_unique<FileChooser> ("Select an ensemble file (.ens)", File::getSpecialLocation (File::userHomeDirectory), "*.ens");
     chooser->launchAsync (FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles, [this] (const FileChooser& fc)
     {
         const auto f = fc.getResult();
