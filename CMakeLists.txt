@@ -87,11 +87,14 @@ target_link_libraries(Dualbox
     juce::juce_audio_utils
     juce::juce_dsp
     DualboxData
-    $<$<PLATFORM_ID:Darwin>:-framework Accelerate>
   PUBLIC
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags
     juce::juce_recommended_warning_flags)
+
+if(APPLE)
+  target_link_libraries(Dualbox PRIVATE "-framework Accelerate")   # FFT of Signalsmith Stretch (Belt pitch shift)
+endif()
 
 # ---------------------------------------------------------------- offline test harness (optional)
 option(DUALBOX_BUILD_TESTS "Build the offline render / GUI snapshot test" OFF)
@@ -104,6 +107,8 @@ if(DUALBOX_BUILD_TESTS)
   target_include_directories(DualboxTest PRIVATE Source)
   target_compile_definitions(DualboxTest PRIVATE ${DUALBOX_ACCEL} JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JucePlugin_Name="DUALBOX"
     JUCE_STANDALONE_APPLICATION=0 JUCE_MODAL_LOOPS_PERMITTED=1)
-  target_link_libraries(DualboxTest PRIVATE juce::juce_audio_utils juce::juce_dsp DualboxData juce::juce_recommended_config_flags
-    $<$<PLATFORM_ID:Darwin>:-framework Accelerate>)
+  target_link_libraries(DualboxTest PRIVATE juce::juce_audio_utils juce::juce_dsp DualboxData juce::juce_recommended_config_flags)
+  if(APPLE)
+    target_link_libraries(DualboxTest PRIVATE "-framework Accelerate")
+  endif()
 endif()
