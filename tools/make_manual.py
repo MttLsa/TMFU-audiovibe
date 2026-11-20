@@ -17,7 +17,7 @@ from reportlab.platypus import (BaseDocTemplate, PageTemplate, Frame, Paragraph,
 from reportlab.platypus.tableofcontents import TableOfContents
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-VERSION = sys.argv[1] if len(sys.argv) > 1 else "2.16.0"
+VERSION = sys.argv[1] if len(sys.argv) > 1 else "2.16.1"
 OUT = os.path.join(ROOT, "docs", "DUALBOX_Manuale_v%s.pdf" % VERSION)
 DOCS = os.path.join(ROOT, "docs")
 
@@ -168,6 +168,10 @@ table([["Stadio", "Descrizione"],
 
 h2("1.2 Novità della versione %s" % VERSION)
 bullets([
+    "<b>Novità 2.16.1</b>: volumi rivisti. Con i pattern di default la Sezione A ha lo stesso volume della Sezione B "
+    "(prima era circa 8 dB più forte); ogni sezione è limitata a −1 dBFS prima del mix, quindi a qualsiasi posizione del "
+    "crossfader (50 % compreso) e con Master a 0 dB l'uscita non supera mai 0 dBFS, anche nei progetti a 32 bit float; "
+    "i suoni importati con IMPORT PATTERN che sarebbero più forti del kit di fabbrica vengono abbassati automaticamente.",
     "<b>Novità 2.16</b>: il modulo <b>Belt</b> analizza i campioni e gestisce la scala con il motore di Groovulation "
     "(tonalità maggiore / minore, accordatura, cromagramma; accordi, pad e suoni armonici vengono trasposti per intero "
     "nella scala con un pitch-shift di alta qualità che non ne cambia la durata, i suoni singoli vanno sulla nota della "
@@ -425,6 +429,8 @@ bullets([
     "I parametri del suono vengono convertiti nelle unità della Sezione A: forma d'onda e frequenza dell'oscillatore, "
     "attacco e decay, modulazione di pitch (modo, quantità, velocità), filtro e inviluppo del rumore, mix oscillatore / "
     "rumore, distorsione, EQ, livello, pan, choke e sensibilità alla velocity.",
+    "Il volume viene adattato: ogni suono importato che sarebbe più forte del suono più forte del kit di fabbrica "
+    "(per esempio per un EQ con molti dB di guadagno) ha il Level abbassato quanto basta.",
     "Dopo l'importazione un messaggio accanto al pulsante dice quanti pattern e suoni sono stati caricati; se il file "
     "non contiene pattern né suoni non viene cambiato nulla.",
     "Vengono letti solo file presenti sul tuo computer: DUALBOX non contiene pattern o suoni di altri prodotti. Importa "
@@ -863,6 +869,8 @@ table([["Voce", "Valore"],
        ["Preset", "128 per sezione (8 generi × 16)"],
        ["Campioni per modulo", "max 128 per cartella"],
        ["Libreria di fabbrica", "252 campioni + 32 hat aperti, 44,1 kHz / 16 bit"],
+       ["Livelli", "Sezione A e Sezione B con lo stesso volume (pattern di default); ogni sezione limitata a −1 dBFS prima "
+        "del mix; limitatore di sicurezza sull'uscita a −0,3 dBFS"],
        ["Latenza", "Nessuna"]], [45, 125])
 p("<font size=7.5 color='#6b6b6b'>DUALBOX è un prodotto TMFU audiovibe, costruito con il framework JUCE 8. I campioni di "
   "fabbrica sono sintetizzati appositamente o provengono da librerie gratuite CC0 / Public Domain (crediti in "

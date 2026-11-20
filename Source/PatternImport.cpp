@@ -180,6 +180,11 @@ namespace
         set ("OscVel",  mt::velOsc, [] (const String& v) { return (float) num (v); });
         set ("NVel",    mt::velNoise, [] (const String& v) { return (float) num (v); });
         set ("ModVel",  mt::velMod, [] (const String& v) { return (float) num (v); });
+        // loudness: the source synth has a different gain structure (EQ up to +40 dB, levels up to +10 dB);
+        // channels that would be louder than the default kit are turned down to its loudest channel
+        const float peakDb = Decibels::gainToDecibels (PatternImport::channelPeak (p, ch), -100.0f);
+        if (peakDb > PatternImport::maxChannelPeakDb)
+            setNatural (s, a (ch, mt::level), p.apvts.getRawParameterValue (a (ch, mt::level))->load() - (peakDb - PatternImport::maxChannelPeakDb));
     }
 
     // ---- one pattern -> slot
@@ -220,6 +225,29 @@ namespace
         if (d >= 1 && d <= MicroEngine::NP) return d - 1;
         return fallback;
     }
+}
+
+float PatternImport::channelPeak (TwinboxProcessor& p, int ch)
+{
+    auto v = [&] (const char* id) { return p.apvts.getRawParameterValue (a (ch, id))->load(); };
+    MicroPatch m;
+    m.wave = (int) v (mt::oscWave); m.freq = v (mt::oscFreq); m.atkMs = v (mt::oscAtk); m.dcyMs = v (mt::oscDcy);
+    m.pmMode = (int) v (mt::pmMode); m.pmAmt = v (mt::pmAmt); m.pmRate = v (mt::pmRate);
+    m.nMode = (int) v (mt::nMode); m.nFreq = v (mt::nFreq); m.nQ = v (mt::nQ); m.stereo = v (mt::nStereo) > 0.5f; m.nEnv = (int) v (mt::nEnv);
+    m.nAtkMs = v (mt::nAtk); m.nDcyMs = v (mt::nDcy);
+    m.mix = v (mt::mix); m.dist = v (mt::dist); m.eqFreq = v (mt::eqFreq); m.eqGain = v (mt::eqGain); m.levelDb = v (mt::level); m.pan = v (mt::pan);
+    m.velOsc = v (mt::velOsc); m.velNoise = v (mt::velNoise); m.velMod = v (mt::velMod);
+    constexpr double sr = 48000.0; constexpr int bs = 512;
+    MicroVoice voice; voice.prepare (sr); voice.updateFilters (m); voice.trigger (m, 1.0f);
+    std::vector<float> L (bs), R (bs);
+    float peak = 0.0f;
+    for (int pos = 0; pos < (int) (sr * 4.0) && voice.isActive(); pos += bs)
+    {
+        std::fill (L.begin(), L.end(), 0.0f); std::fill (R.begin(), R.end(), 0.0f);
+        voice.render (m, L.data(), R.data(), bs);
+        for (int i = 0; i < bs; ++i) peak = jmax (peak, std::abs (L[(size_t) i]), std::abs (R[(size_t) i]));
+    }
+    return peak;
 }
 
 std::unique_ptr<PatternImport::Node> PatternImport::parse (const String& text)

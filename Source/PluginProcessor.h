@@ -81,6 +81,9 @@ private:
     TptSvf gFilt[2];
     OutputNorm normA, normB;          // NORM buttons of Section A / B
     SafetyLimiter safety;             // output never clips
+    // each section is limited at -1 dBFS before the A/B mix: at any crossfade position (50 % included) the sum of the
+    // two sections stays below -1 dBFS (with Master at 0 dB)
+    SafetyLimiter secLimA { 0.891f }, secLimB { 0.891f };
     std::atomic<float>* pNormA = nullptr, *pNormB = nullptr, *pMidiTarget = nullptr;
     float  cutSm = 20000.0f;
     float  xfadeSm = 0.5f;

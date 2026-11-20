@@ -28,5 +28,10 @@ struct PatternImport
     static Result run (TwinboxProcessor& p, const juce::File& file, int targetPattern, int channel);
     static Result runText (TwinboxProcessor& p, const juce::String& text, int targetPattern, int channel);
 
+    // peak (linear) of one accented hit of channel ch with its current parameters (offline render, voice level)
+    static float channelPeak (TwinboxProcessor& p, int ch);
+    static constexpr float maxChannelPeakDb = 3.0f;   // = the loudest channel of the default kit; imported channels louder than
+                                                      // this (EQ boosts, high levels) get their Level lowered to it
+
     static juce::String fileFilter() { return "*.mtpreset;*.mtpattern;*.mtdrum;*.txt"; }
 };

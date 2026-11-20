@@ -60,14 +60,14 @@ private:
     float rmsCoef = 0, upCoef = 0, downCoef = 0, limRel = 0, ms = 0, gain = 1, lim = 1;
 };
 
-// Transparent safety limiter on the plug-in output: ceiling -0.3 dBFS, instant attack, 60 ms release.
+// Transparent safety limiter: instant attack (per sample), 60 ms release. Default ceiling -0.3 dBFS.
 class SafetyLimiter
 {
 public:
+    explicit SafetyLimiter (float ceilingGain = 0.966f) : ceiling (ceilingGain) {}
     void prepare (double sr) { rel = (float) std::exp (-1.0 / (sr * 0.06)); g = 1.0f; }
     void process (float* L, float* R, int n)
     {
-        constexpr float ceiling = 0.966f;
         for (int i = 0; i < n; ++i)
         {
             const float pk = std::max (std::abs (L[i]), std::abs (R[i]));
@@ -77,5 +77,5 @@ public:
         }
     }
 private:
-    float rel = 0.999f, g = 1.0f;
+    float ceiling = 0.966f, rel = 0.999f, g = 1.0f;
 };

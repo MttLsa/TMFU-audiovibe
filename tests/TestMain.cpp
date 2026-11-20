@@ -894,6 +894,41 @@ int main (int argc, char** argv)
         report ("render with Legacy samples", st.nans == 0 && st.peak > 0.01f, "peak " + String (Decibels::gainToDecibels (st.peak), 1) + " dBFS");
     }
 
+    // ---------------------------------------------------------------- loudness: Section A vs Section B (default patterns)
+    {
+        auto measure = [] (TwinboxProcessor& q, float xfade) -> std::pair<float, float>   // (RMS dBFS, peak dBFS) before the safety limiter
+        {
+            setP (q, params::gMaster, -30); setP (q, params::gXfade, xfade); setP (q, params::gRun, 1);
+            const auto st = render (q, 8.0);
+            return { Decibels::gainToDecibels ((float) st.rms) + 30.0f, Decibels::gainToDecibels (st.peak) + 30.0f };
+        };
+        TwinboxProcessor pa; waitLibrary (pa);
+        const auto A = measure (pa, 0);
+        TwinboxProcessor pb; waitLibrary (pb);
+        const auto Bm = measure (pb, 100);
+        TwinboxProcessor pi; waitLibrary (pi);
+        PatternImport::run (pi, File (__FILE__).getParentDirectory().getChildFile ("data/example.mtpreset"), 0, 0);
+        setP (pi, params::aPattern, 0);
+        const auto I = measure (pi, 0);
+        // 50 / 50 mix with Master at 0 dB: real plug-in output (default and imported kit)
+        auto mixPeak = [] (TwinboxProcessor& q) { setP (q, params::gMaster, 0); setP (q, params::gXfade, 50); setP (q, params::gRun, 1);
+                                                  return Decibels::gainToDecibels (render (q, 8.0).peak); };
+        TwinboxProcessor pm; waitLibrary (pm);
+        const float mixDefault = mixPeak (pm);
+        TwinboxProcessor pm2; waitLibrary (pm2);
+        PatternImport::run (pm2, File (__FILE__).getParentDirectory().getChildFile ("data/example.mtpreset"), 0, 0);
+        setP (pm2, params::aPattern, 0);
+        const float mixImported = mixPeak (pm2);
+        float maxImported = -100.0f;
+        for (int ch = 0; ch < 8; ++ch) maxImported = jmax (maxImported, Decibels::gainToDecibels (PatternImport::channelPeak (pi, ch)));
+        report ("loudness A vs B, 50 % mix never above 0 dBFS",
+                std::abs (A.first - Bm.first) < 2.0f && A.second < -1.0f && I.second < -0.9f && mixDefault < -1.0f && mixImported < -1.0f
+                && maxImported <= PatternImport::maxChannelPeakDb + 0.2f,
+                "RMS A " + String (A.first, 1) + " / B " + String (Bm.first, 1) + " dBFS; peak A " + String (A.second, 1) + ", B " + String (Bm.second, 1)
+                + ", imported kit A " + String (I.second, 1) + " (RMS " + String (I.first, 1) + "); 50 % mix peak " + String (mixDefault, 1)
+                + " / imported " + String (mixImported, 1) + " dBFS");
+    }
+
     // ---------------------------------------------------------------- IMPORT PATTERN (Section A)
     {
         TwinboxProcessor p;

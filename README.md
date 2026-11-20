@@ -1,4 +1,4 @@
-# DUALBOX — groovebox ibrida VST3 / AU (v2.16)
+# DUALBOX — groovebox ibrida VST3 / AU (v2.16.1)
 
 > Dalla v2.15 il plugin si chiama **DUALBOX** (prima *Twinbox*). L'installer rimuove le vecchie copie
 > `Twinbox.component` / `Twinbox.vst3`; i campioni stanno ora in `…/Dualbox/Samples`.
@@ -14,10 +14,16 @@ DUALBOX è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in 
 | **B — Groovebox** (in basso) | 5 voci a campioni (Kick, Snare, Hat, **Belt**, **Capsule**), sequencer A–D fino a **64 step** con catena di pattern e motore **Remix**, effetti Filter / EQ / Delay / xFx (23 modi) / Mix / Out, **fino a 8 LFO**, pulsanti **NORM** e **MIDI** |
 | **GLOBAL CONTROL** (a destra, comprimibile) | Crossfader A↔B, filtro master **Cutoff** (manopola grande) HP/BP/LP + **Resonance**, Master, Tempo / Run |
 
-📖 **Manuale d'uso completo (PDF):** [docs/DUALBOX_Manuale_v2.16.0.pdf](docs/DUALBOX_Manuale_v2.16.0.pdf)
+📖 **Manuale d'uso completo (PDF):** [docs/DUALBOX_Manuale_v2.16.1.pdf](docs/DUALBOX_Manuale_v2.16.1.pdf)
 
 ![Interfaccia principale](docs/gui_main.png)
 
+
+## Novità 2.16.1
+
+- Volumi: con i pattern di default la Sezione A ha lo stesso volume della B (prima era circa 8 dB più forte). Ogni sezione è
+  limitata a −1 dBFS prima del mix: a qualsiasi posizione del crossfader l'uscita non supera mai 0 dBFS (Master a 0 dB).
+- IMPORT PATTERN abbassa automaticamente i suoni importati che sarebbero più forti del kit di fabbrica.
 
 ## Novità 2.16
 

@@ -61,6 +61,7 @@ void TwinboxProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     bufB.setSize (2, samplesPerBlock);
     gFilt[0].reset(); gFilt[1].reset();
     normA.prepare (sampleRate); normB.prepare (sampleRate); safety.prepare (sampleRate);
+    secLimA.prepare (sampleRate); secLimB.prepare (sampleRate);
     midiA.reserve (256); midiB.reserve (256);
     wasPlaying = false;
 }
@@ -131,6 +132,8 @@ void TwinboxProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mid
     lime.process  (bufB.getWritePointer (0), bufB.getWritePointer (1), n, bt, midiB);
     normA.process (bufA.getWritePointer (0), bufA.getWritePointer (1), n, pNormA->load() > 0.5f);
     normB.process (bufB.getWritePointer (0), bufB.getWritePointer (1), n, pNormB->load() > 0.5f);
+    secLimA.process (bufA.getWritePointer (0), bufA.getWritePointer (1), n);
+    secLimB.process (bufB.getWritePointer (0), bufB.getWritePointer (1), n);
 
     // ------------------------------------------------------------ A/B mix -> cutoff filter -> master
     const float xTarget = pXfade->load() * 0.01f;

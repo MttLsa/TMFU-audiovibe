@@ -37,13 +37,13 @@ jobs:
           auval -a | grep "Twbx Twnb" | tee /dev/stderr | grep -q "TMFU audiovibe: DUALBOX"   # name shown in the hosts
       - name: Build installer (macOS)
         if: runner.os == 'macOS'
-        run: ./packaging/macos/make_pkg.sh 2.16.0
+        run: ./packaging/macos/make_pkg.sh 2.16.1
       - name: Upload installer (macOS)
         if: runner.os == 'macOS'
         uses: actions/upload-artifact@v5
         with:
           name: DUALBOX-macOS-Installer
-          path: build/installer/DUALBOX-2.16.0-macOS.pkg
+          path: build/installer/DUALBOX-2.16.1-macOS.pkg
       - uses: actions/upload-artifact@v5
         with:
           name: DUALBOX-${{ matrix.name }}
