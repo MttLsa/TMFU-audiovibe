@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum macOS version")
 set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "macOS architectures")
 
-project(SYNTHZILLA VERSION 2.0.0 LANGUAGES C CXX)
+project(SYNTHZILLA VERSION 2.0.2 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -48,7 +48,7 @@ set(TS_SOURCES
 target_sources(SynthZilla PRIVATE ${TS_SOURCES})
 target_include_directories(SynthZilla PRIVATE Source)
 
-juce_add_binary_data(SynthZillaData SOURCES resources/presets.json resources/fonts/Inter-Regular.ttf resources/fonts/Inter-SemiBold.ttf resources/fonts/TeXGyreAdventor-Bold.otf)
+juce_add_binary_data(SynthZillaData SOURCES resources/presets.json resources/fonts/Urbanist-Light.ttf resources/fonts/Urbanist-Bold.ttf resources/fonts/Rostex-Outline.ttf resources/logo/kaiju_keyboard.png)
 set_target_properties(SynthZillaData PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 set(TS_DEFS JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0 JUCE_DISPLAY_SPLASH_SCREEN=0)
@@ -63,6 +63,6 @@ if(SYNTHZILLA_BUILD_TESTS)
   juce_add_console_app(SynthZillaTest PRODUCT_NAME "SynthZillaTest")
   target_sources(SynthZillaTest PRIVATE tests/TestMain.cpp ${TS_SOURCES})
   target_include_directories(SynthZillaTest PRIVATE Source)
-  target_compile_definitions(SynthZillaTest PRIVATE ${TS_DEFS} JucePlugin_Name="SynthZilla" JucePlugin_VersionString="2.0.0" JUCE_STANDALONE_APPLICATION=0 JUCE_MODAL_LOOPS_PERMITTED=1)
+  target_compile_definitions(SynthZillaTest PRIVATE ${TS_DEFS} JucePlugin_Name="SynthZilla" JucePlugin_VersionString="2.0.2" JUCE_STANDALONE_APPLICATION=0 JUCE_MODAL_LOOPS_PERMITTED=1)
   target_link_libraries(SynthZillaTest PRIVATE juce::juce_audio_utils juce::juce_dsp SynthZillaData juce::juce_recommended_config_flags)
 endif()

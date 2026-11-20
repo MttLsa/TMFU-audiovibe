@@ -2,9 +2,9 @@
 # Builds an (unsigned) macOS installer: SynthZilla-<version>-macOS.pkg  (TMFU audiovibe)
 # Contains: AU (/Library/Audio/Plug-Ins/Components), VST3 (/Library/Audio/Plug-Ins/VST3), Standalone app (/Applications).
 # Universal binaries: Intel x86_64 + Apple Silicon arm64 (checked below).
-# Run from the SynthZilla folder after a Release build:  ./packaging/macos/make_pkg.sh 2.0.0
+# Run from the SynthZilla folder after a Release build:  ./packaging/macos/make_pkg.sh 2.0.2
 set -euo pipefail
-VERSION="${1:-2.0.0}"
+VERSION="${1:-2.0.2}"
 NAME="SynthZilla"
 ID="com.tmfuaudiovibe.synthzilla"
 ART="build/${NAME}_artefacts/Release"

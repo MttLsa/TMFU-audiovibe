@@ -5,6 +5,8 @@ storia, ognuno legato al **brano più famoso che l'ha usato**. La libreria è or
 
 ![SynthZilla](docs/gui_Organ_2.png)
 
+**Manuale d'uso (PDF):** [docs/SynthZilla_Manuale_v2.0.2.pdf](docs/SynthZilla_Manuale_v2.0.2.pdf)
+
 ## Moduli synth A–E
 
 - Ci sono 2 moduli all'avvio (A, B); il pulsante **+ CUSTOM** ne aggiunge altri 3 (C, D, E); la **x** sulla scheda toglie l'ultimo.
@@ -46,15 +48,15 @@ Saw Up/Down, Square, S&H, Random; rate libero o **SYNC** al tempo (8 battute …
 fase. Il **+** apre la vista con tutti gli 8 LFO. LFO, EQ e filtri d'uscita non cambiano quando carichi un preset.
 
 ## Grafica
-- Stile Twinbox (piatto, scuro, in stile Ableton) con un leggero **rilievo**; font **Inter** (il più vicino, con licenza libera,
-  al font dell'interfaccia di Ableton Live, che è proprietario).
+- Stile Twinbox (piatto, scuro, in stile Ableton) con un leggero **rilievo**; font **Urbanist** Light / Bold (SIL OFL) per tutto
+  il testo dell'interfaccia (la scritta del logo è in Rostex Outline). Tutte le scritte di moduli, parametri e preset sono in inglese.
 - Ogni modulo prende l'aspetto dello strumento scelto (34 skin: legno Moog/Prophet, fader Juno/CS-80/Alpha Juno, TB-303
   argento, LCD e membrane DX7/M1, PPG blu, Virus/Nord rossi, CRT Fairlight…), senza loghi o grafiche originali.
 - **Fader più lunghi** sugli strumenti che hanno fader. Risoluzione fine: le manopole si muovono a passi di **0,01**, i fader di
   **0,001**; dopo un clic le frecce muovono di 1 % (fader 0,1 %), Shift = 10× più fine; doppio clic = valore di default.
-- Finestra **ridimensionabile** (dal 50 % al 200 %, la dimensione viene ricordata), con EQ e LFO espandibili.
-- Logo: **SynthZilla** in TeX Gyre Adventor (equivalente libero dell'ITC Avant Garde Gothic, che è commerciale e non si
-  può incorporare) e un piccolo kaiju viola animato, con due occhi rossi, che suona una tastiera.
+- Finestra **ridimensionabile** liberamente (la dimensione viene ricordata): ingrandita o a schermo intero occupa tutto lo
+  schermo, lo spazio in più va ai moduli. EQ e LFO espandibili.
+- Logo: **SynthZilla** in Rostex Outline e il kaiju in piedi su una tastiera synth (`tools/make_logo.py`).
 
 ## Preset
 151 preset dal 1963 al 2023, **ordinati per anno**. Nel browser ogni riga è:
@@ -102,10 +104,11 @@ cmake --build SynthZilla/build --config Release --parallel
 ```
 
 Su macOS la CI (`.github/workflows/synthzilla.yml`, runner Intel) produce l'installer universale
-**SynthZilla-2.0.0-macOS.pkg** (Intel + Apple Silicon: AU, VST3, app Standalone). Nella DAW compare sotto **TMFU audiovibe**
+**SynthZilla-2.0.2-macOS.pkg** (Intel + Apple Silicon: AU, VST3, app Standalone). Nella DAW compare sotto **TMFU audiovibe**
 (AU `aumu Szla Tmfu`).
 
-Strumenti: `tools/gen_presets.py` (libreria + `docs/PRESETS.md`); test con `-DSYNTHZILLA_BUILD_TESTS=ON`:
+Strumenti: `tools/gen_presets.py` (libreria + `docs/PRESETS.md`); `tools/make_manual.py <params.json> <versione>` (manuale PDF,
+`params.json` da `SynthZillaTest <dir> params`); `tools/make_logo.py` (logo); test con `-DSYNTHZILLA_BUILD_TESTS=ON`:
 `SynthZillaTest <dir> units | check | levels | wav <nome> | gui`.
 
 > Marchi e nomi degli strumenti appartengono ai rispettivi proprietari e sono usati solo per indicare lo strumento di

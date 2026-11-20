@@ -3,6 +3,7 @@
 //   SynthZillaTest <outDir> levels           write <outDir>/levels.json: g_trim so that every preset peaks at -1 dBFS
 //   SynthZillaTest <outDir> wav <substring>  render matching presets to WAV
 //   SynthZillaTest <outDir> gui              GUI snapshots (PNG)
+//   SynthZillaTest <outDir> params           <outDir>/params.json: every parameter (for tools/make_manual.py)
 //   SynthZillaTest <outDir> units            unit checks (5 modules, LFO modulation, EQ, output filters, model change, FM 6-op)
 #include "../Source/PluginProcessor.h"
 #include "../Source/PluginEditor.h"
@@ -21,7 +22,9 @@ static bool isPoly (const Preset& p)
 
 static void setP (SynthZillaProcessor& p, int i, float v) { auto* pr = p.apvts.getParameter (def (i).id); pr->setValueNotifyingHost (pr->convertTo0to1 (v)); }
 
-static Stats render (SynthZillaProcessor& proc, const Preset* pr, double seconds, AudioBuffer<float>* keep = nullptr, int fixedNote = -1)
+using NoteList = std::vector<std::tuple<double, int, int, double>>;   // start s, note, velocity, duration s
+
+static Stats render (SynthZillaProcessor& proc, const Preset* pr, double seconds, AudioBuffer<float>* keep = nullptr, int fixedNote = -1, const NoteList* notes = nullptr)
 {
     const double sr = 48000.0; const int bs = 256;
     proc.setPlayConfigDetails (0, 2, sr, bs);
@@ -32,7 +35,8 @@ static Stats render (SynthZillaProcessor& proc, const Preset* pr, double seconds
     MidiBuffer midi;
     Stats st;
     std::vector<std::tuple<double, int, int, double>> ev;
-    if (fixedNote >= 0) ev.push_back ({ 0.05, fixedNote, 100, seconds * 0.6 });
+    if (notes != nullptr) ev = *notes;
+    else if (fixedNote >= 0) ev.push_back ({ 0.05, fixedNote, 100, seconds * 0.6 });
     else
     {
         const bool poly = pr && isPoly (*pr);
@@ -86,7 +90,7 @@ int main (int argc, char** argv)
     const auto& all = PresetLibrary::get().all();
     std::printf ("%d presets, %d parameters\n", (int) all.size(), numParams());
     bool ok = true;
-    auto expect = [&] (bool c, const char* what) { std::printf ("%s %s\n", c ? "ok  " : "FAIL", what); ok &= c; };
+    auto expect = [&] (bool c, const juce::String& what) { std::printf ("%s %s\n", c ? "ok  " : "FAIL", what.toRawUTF8()); ok &= c; };
 
     if (mode == "check" || mode == "levels")
     {
@@ -163,6 +167,28 @@ int main (int argc, char** argv)
             const auto c = render (p, nullptr, 1.0, nullptr, 36);
             expect (c.nans == 0 && c.loud > b.loud, "RAT pedal drives the 303");
         }
+        {   // mono / legato: overlapping notes must not click (oscillator phases keep running on a retrigger)
+            for (int engine : { 0, 5 })
+                for (int vm : { 1, 2 })
+                {
+                    SynthZillaProcessor p; p.loadPreset (findPreset ("Acid Tracks"));
+                    setP (p, mod (0, mEngine), (float) engine); setP (p, mod (0, mO1Wave), 3); setP (p, mod (0, mO1Lvl), 1);
+                    setP (p, mod (0, mO2Lvl), 0); setP (p, mod (0, mSub), 0); setP (p, mod (0, mNoise), 0); setP (p, mod (0, mUni), 1);
+                    setP (p, mod (0, mDrift), 0); setP (p, mod (0, mFlt), 7); setP (p, mod (0, mDist), 0); setP (p, mod (0, mDlyMix), 0);
+                    setP (p, mod (0, mAccent), 0); setP (p, mod (0, mPenv), 0); setP (p, mod (0, mAddM), 0); setP (p, mod (0, mBright), 0);
+                    setP (p, mod (0, mAA), 5); setP (p, mod (0, mAS), 1); setP (p, mod (0, mAR), 30);
+                    setP (p, L.gMode, (float) vm); setP (p, L.gGlide, 0); setP (p, L.gChoMode, 0); setP (p, L.gRevMix, 0); setP (p, L.gDrive, 0);
+                    const NoteList ev { { 0.10, 48, 100, 0.50 }, { 0.45, 52, 100, 0.40 }, { 0.80, 55, 100, 0.50 }, { 1.25, 48, 100, 0.40 } };
+                    AudioBuffer<float> out;
+                    const auto st = render (p, nullptr, 1.8, &out, -1, &ev);
+                    float worst = 0;   // largest jump of the 2nd difference, relative to the peak
+                    for (int i = 2; i < out.getNumSamples(); ++i)
+                        worst = jmax (worst, std::abs (out.getSample (0, i) - 2.0f * out.getSample (0, i - 1) + out.getSample (0, i - 2)));
+                    worst /= jmax (1.0e-6f, st.peak);
+                    std::printf ("  mono click test engine %d mode %d: max 2nd diff / peak = %.4f\n", engine, vm, worst);
+                    expect (st.nans == 0 && st.peak > 0.01f && worst < 0.05f, "no click on overlapping notes (engine " + String (engine) + ", voice mode " + String (vm) + ")");
+                }
+        }
         {   // module delay
             SynthZillaProcessor p; p.loadPreset (findPreset ("Popcorn Pluck"));
             const auto a = render (p, nullptr, 2.0, nullptr, 60);
@@ -170,6 +196,22 @@ int main (int argc, char** argv)
             const auto b = render (p, nullptr, 2.0, nullptr, 60);
             expect (b.loud > a.loud, "module delay adds echoes");
         }
+    }
+    else if (mode == "params")
+    {
+        Array<var> arr;
+        for (int i = 0; i < numParams(); ++i)
+        {
+            const auto& d = def (i);
+            auto o = std::make_unique<DynamicObject>();
+            o->setProperty ("id", d.id); o->setProperty ("name", d.name); o->setProperty ("kind", (int) d.kind);
+            o->setProperty ("min", d.mn); o->setProperty ("max", d.mx); o->setProperty ("def", d.def);
+            o->setProperty ("unit", d.unit); o->setProperty ("choices", d.choices.joinIntoString ("|"));
+            o->setProperty ("module", d.module);
+            arr.add (var (o.release()));
+        }
+        outDir.getChildFile ("params.json").replaceWithText (JSON::toString (var (arr)));
+        std::printf ("%d parameters\n", numParams());
     }
     else if (mode == "wav")
     {
@@ -208,6 +250,13 @@ int main (int argc, char** argv)
             ed->setSize (1400, 900);
             snap (*ed, "gui_" + File::createLegalFileName (n).replaceCharacter (' ', '_') + ".png");
         }
+        for (auto sz : { Point<int> (1920, 1080), Point<int> (2560, 1600) })
+        {   // free aspect ratio: a full-screen window is filled edge to edge
+            SynthZillaProcessor proc; proc.loadPreset (findPreset ("Final Countdown Brass"));
+            std::unique_ptr<AudioProcessorEditor> ed (proc.createEditor());
+            ed->setSize (sz.x, sz.y);
+            snap (*ed, "gui_fullscreen_" + String (sz.x) + "x" + String (sz.y) + ".png");
+        }
         {   // modern FM view, 5 modules, browser, EQ overlay
             SynthZillaProcessor proc; proc.loadPreset (findPreset ("E.PIANO 1"));
             setP (proc, mod (0, mFmModern), 1);
@@ -220,6 +269,25 @@ int main (int argc, char** argv)
                 for (auto* ch : c->getChildren()) if (auto* r = find (ch, id)) return r;
                 return nullptr; };
             auto click = [&] (const String& id) { if (auto* b = dynamic_cast<Button*> (find (ed.get(), id))) b->triggerClick(); else std::printf ("no %s\n", id.toRawUTF8()); };
+            // every point of the < > preset buttons must reach the button (no label on top of them)
+            ed->setVisible (true);
+            for (auto* id : { "prev", "next", "browse" })
+                if (auto* b = find (ed.get(), id))
+                {
+                    const auto r = ed->getLocalArea (b, b->getLocalBounds()).reduced (2);
+                    for (int y = r.getY(); y < r.getBottom(); y += 2)
+                        for (int x = r.getX(); x < r.getRight(); x += 2)
+                        {
+                            auto* hit = ed->getComponentAt (x, y);
+                            if (hit != b && ! b->isParentOf (hit))
+                            {
+                                ok = false;
+                                std::printf ("FAIL click on '%s' at %d,%d goes to %s\n", id, x, y, hit != nullptr ? typeid (*hit).name() : "nothing");
+                                y = r.getBottom(); break;
+                            }
+                        }
+                }
+                else { ok = false; std::printf ("no %s\n", id); }
             click ("browse");
             snap (*ed, "gui_browser.png");
             click ("browse");

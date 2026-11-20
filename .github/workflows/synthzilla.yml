@@ -27,12 +27,12 @@ jobs:
           killall -9 AudioComponentRegistrar || true
           auval -v aumu Szla Tmfu
       - name: Build installer (.pkg, Intel + Apple Silicon)
-        run: ./packaging/macos/make_pkg.sh 2.0.0
+        run: ./packaging/macos/make_pkg.sh 2.0.2
       - name: Upload installer
         uses: actions/upload-artifact@v5
         with:
-          name: SynthZilla-2.0.0-macOS-Installer
-          path: SynthZilla/build/installer/SynthZilla-2.0.0-macOS.pkg
+          name: SynthZilla-2.0.2-macOS-Installer
+          path: SynthZilla/build/installer/SynthZilla-2.0.2-macOS.pkg
       - uses: actions/upload-artifact@v5
         with:
           name: SynthZilla-macOS

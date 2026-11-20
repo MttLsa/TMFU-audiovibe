@@ -1,25 +1,24 @@
 #include "PluginEditor.h"
-#include "Kaiju.h"
 #include "BinaryData.h"
 
 using namespace params;
 using skins::Skin;
 
 // =====================================================================================================
-//  Fonts (Inter, SIL OFL: the closest freely licensed match for Ableton Live's interface font) + relief
+//  Fonts: Urbanist Light / Bold (SIL OFL) for all text, Rostex Outline for the logo lettering + relief
 // =====================================================================================================
 juce::Typeface::Ptr ui::typeface (bool bold)
 {
-    static juce::Typeface::Ptr reg = juce::Typeface::createSystemTypefaceFor (BinaryData::InterRegular_ttf, BinaryData::InterRegular_ttfSize);
-    static juce::Typeface::Ptr semi = juce::Typeface::createSystemTypefaceFor (BinaryData::InterSemiBold_ttf, BinaryData::InterSemiBold_ttfSize);
-    return bold ? semi : reg;
+    static juce::Typeface::Ptr reg = juce::Typeface::createSystemTypefaceFor (BinaryData::UrbanistLight_ttf, BinaryData::UrbanistLight_ttfSize);
+    static juce::Typeface::Ptr bld = juce::Typeface::createSystemTypefaceFor (BinaryData::UrbanistBold_ttf, BinaryData::UrbanistBold_ttfSize);
+    return bold ? bld : reg;
 }
 juce::Font ui::font (float h, bool bold) { return juce::Font (juce::FontOptions (typeface (bold)).withHeight (h)); }
 
-// Logo font: TeX Gyre Adventor (GUST Font License), a free equivalent of ITC Avant Garde Gothic
+// logo lettering only: Rostex Outline
 juce::Font ui::logoFont (float h)
 {
-    static juce::Typeface::Ptr tf = juce::Typeface::createSystemTypefaceFor (BinaryData::TeXGyreAdventorBold_otf, BinaryData::TeXGyreAdventorBold_otfSize);
+    static juce::Typeface::Ptr tf = juce::Typeface::createSystemTypefaceFor (BinaryData::RostexOutline_ttf, BinaryData::RostexOutline_ttfSize);
     return juce::Font (juce::FontOptions (tf).withHeight (h));
 }
 
@@ -580,7 +579,7 @@ void ModulePanel::paint (juce::Graphics& g)
         g.setColour (s.lcdBg); g.fillRoundedRectangle (lcd, 2.0f);
         if (s.pattern == skins::Crt) for (float yy = lcd.getY(); yy < lcd.getBottom(); yy += 2.0f) { g.setColour (juce::Colours::black.withAlpha (0.25f)); g.drawHorizontalLine ((int) yy, lcd.getX(), lcd.getRight()); }
         g.setColour (s.lcdText);
-        g.setFont (juce::Font (juce::FontOptions (juce::Font::getDefaultMonospacedFontName(), 14.0f, juce::Font::bold)));
+        g.setFont (ui::font (14.0f, true));
         g.drawFittedText (txt.toUpperCase(), lcd.reduced (6, 2).toNearestInt(), juce::Justification::centredLeft, 1, 0.7f);
     }
     for (size_t gi = 0; gi < groups.size(); ++gi)
@@ -921,7 +920,8 @@ void PresetBrowser::paint (juce::Graphics& g)
 {
     g.fillAll (ui::bg);
     g.setColour (ui::dim); g.setFont (ui::font (11.0f));
-    g.drawText (juce::String ((int) rows.size()) + " presets, ordered by year", getLocalBounds().reduced (12, 8).removeFromTop (16), juce::Justification::topRight);
+    g.drawText (juce::String ((int) rows.size()) + " presets, ordered by year", getLocalBounds().reduced (10).removeFromTop (28).withTrimmedRight (90),
+                juce::Justification::centredRight);
 }
 
 void PresetBrowser::resized()
@@ -1047,6 +1047,8 @@ SynthZillaEditor::SynthZillaEditor (SynthZillaProcessor& p)
     eqExpand.onClick = [this] { showOverlay (&eqBig); };
     eqExpand.setComponentID ("eqExpand");
     browse.setComponentID ("browse");
+    prev.setComponentID ("prev");
+    next.setComponentID ("next");
     overlayClose.setComponentID ("overlayClose");
     content.addAndMakeVisible (eqExpand);
     lfoSmall.onExpand = [this] { showOverlay (&lfoBig); };
@@ -1080,6 +1082,7 @@ SynthZillaEditor::SynthZillaEditor (SynthZillaProcessor& p)
     presetInfo.setFont (ui::font (12.5f));
     presetInfo.setColour (juce::Label::textColourId, ui::dim);
     presetName.setInterceptsMouseClicks (false, false);
+    presetInfo.setInterceptsMouseClicks (false, false);   // it must never swallow clicks meant for the < > buttons
     content.addAndMakeVisible (presetName);
     content.addAndMakeVisible (presetInfo);
     keys.setKeyWidth (17.0f);
@@ -1089,10 +1092,10 @@ SynthZillaEditor::SynthZillaEditor (SynthZillaProcessor& p)
 
     content.setBounds (0, 0, W, H);
     setResizable (true, true);
-    setResizeLimits (W / 2, H / 2, W * 2, H * 2);
-    getConstrainer()->setFixedAspectRatio ((double) W / H);
-    const double sc = (double) proc.uiState.getProperty ("scale", 1.0);
-    setSize ((int) (W * sc), (int) (H * sc));
+    setResizeLimits (BW / 2, BH / 2, 16384, 16384);   // free aspect ratio: maximise / full screen fills the screen
+    logo = juce::ImageCache::getFromMemory (BinaryData::kaiju_keyboard_png, BinaryData::kaiju_keyboard_pngSize);
+    const double sc = (double) proc.uiState.getProperty ("scale", 1.0);   // sessions saved before 2.0.1 only stored a scale
+    setSize ((int) proc.uiState.getProperty ("w", (int) (BW * sc)), (int) proc.uiState.getProperty ("h", (int) (BH * sc)));
     selectModule (0);
     startTimerHz (30);
     updateHeader();
@@ -1148,19 +1151,25 @@ void SynthZillaEditor::layoutSlots()
 
 void SynthZillaEditor::resized()
 {
-    const float s = (float) getWidth() / (float) W;
-    content.setTransform (juce::AffineTransform::scale (s));
-    proc.uiState.setProperty ("scale", (double) s, nullptr);
+    uiScale = juce::jmax (0.25f, juce::jmin ((float) getWidth() / (float) BW, (float) getHeight() / (float) BH));
+    W = juce::jmax (BW, juce::roundToInt ((float) getWidth() / uiScale));
+    H = juce::jmax (BH, juce::roundToInt ((float) getHeight() / uiScale));
+    const int dh = H - BH;                       // extra height goes to the module area
+    content.setBounds (0, 0, W, H);
+    content.setTransform (juce::AffineTransform::scale (uiScale));
+    proc.uiState.setProperty ("w", getWidth(), nullptr);
+    proc.uiState.setProperty ("h", getHeight(), nullptr);
     // header
-    logoArea = { 0, -4, 100, 72 };
-    presetName.setBounds (272, 6, 640, 28);
-    presetInfo.setBounds (272, 34, 790, 22);
+    logoArea = { 22, 3, 58, 58 };
+    // preset name / info stop before the < > buttons (the info label used to cover their lower half)
+    presetName.setBounds (310, 6, W - 420 - 12 - 310, 28);
+    presetInfo.setBounds (310, 34, W - 420 - 12 - 310, 22);
     prev.setBounds (W - 420, 16, 34, 34); next.setBounds (W - 382, 16, 34, 34); browse.setBounds (W - 344, 16, 110, 34);
     layoutSlots();
-    moduleView.setBounds (8, 132, W - 16, 486);
-    browser.setBounds (8, 66, W - 16, 552);
+    moduleView.setBounds (8, 132, W - 16, 486 + dh);
+    browser.setBounds (8, 66, W - 16, 552 + dh);
     // bottom strip
-    const int y0 = 626, gh = 158;
+    const int y0 = 626 + dh, gh = 158;
     int x = 8;
     globalGroups.clear();
     auto place = [&] (int grp, int cols)
@@ -1188,9 +1197,11 @@ void SynthZillaEditor::resized()
     eqExpand.setBounds (x + 250 - 26, y0 + 4, 22, 18);
     x += 256;
     lfoSmall.setBounds (x, y0, W - 8 - x, gh);
-    keys.setBounds (8, 792, W - 16, 100);
-    eqBig.setBounds (40, 140, W - 80, 600);
-    lfoBig.setBounds (40, 140, W - 80, 600);
+    keys.setBounds (8, 792 + dh, W - 16, 100);
+    keys.setKeyWidth ((float) (W - 16) / 75.0f);   // the 75 white keys of the MIDI range fill the whole width
+    keys.setLowestVisibleKey (0);
+    eqBig.setBounds (40, 140, W - 80, 600 + dh);
+    lfoBig.setBounds (40, 140, W - 80, 600 + dh);
     overlayClose.setBounds (W - 40 - 90, 146, 80, 26);
     if (panels[selected]) selectModule (selected);
 }
@@ -1198,12 +1209,30 @@ void SynthZillaEditor::resized()
 void SynthZillaEditor::paint (juce::Graphics& g)
 {
     g.fillAll (ui::bg);
-    g.addTransform (juce::AffineTransform::scale ((float) getWidth() / (float) W));
+    g.addTransform (juce::AffineTransform::scale (uiScale));
     ui::relief (g, juce::Rectangle<float> (0, 0, (float) W, 64), ui::panel, 0.0f, true);
-    drawKaiju (g, logoArea, animT, juce::jlimit (0.0f, 1.0f, proc.meter() * 1.5f));
-    g.setColour (ui::text); g.setFont (ui::logoFont (29.0f));
-    g.drawText ("SynthZilla", 100, 6, 160, 34, juce::Justification::left);
-    g.setColour (ui::dim); g.setFont (ui::font (11.0f));
+    {   // logo: the kaiju with its keyboard, bobbing a little with the sound
+        const float lvl = juce::jlimit (0.0f, 1.0f, proc.meter() * 1.5f);
+        const float bob = std::sin (animT * 6.0f) * 1.2f * lvl;
+        // images are drawn with the current colour's opacity: relief() just left black at 45 % -> the logo looked faded
+        g.setOpacity (1.0f);
+        g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
+        g.drawImageWithin (logo, (int) logoArea.getX(), (int) (logoArea.getY() + bob), (int) logoArea.getWidth(), (int) logoArea.getHeight(),
+                           juce::RectanglePlacement::centred, false);
+    }
+    {   // "SynthZilla" in Rostex Outline (a wide, outline-only face): as large as fits between the kaiju and the preset name,
+        // its thin outline stroked a little thicker so it reads on the dark header
+        auto f = ui::logoFont (32.0f);
+        const float w = juce::GlyphArrangement::getStringWidth (f, "SynthZilla");
+        if (w > 196.0f) f = ui::logoFont (32.0f * 196.0f / w);
+        juce::GlyphArrangement ga;
+        ga.addLineOfText (f, "SynthZilla", 100.0f, 6.0f + 17.0f + f.getAscent() * 0.5f - f.getDescent() * 0.5f);
+        juce::Path p; ga.createPath (p);
+        g.setColour (juce::Colours::white);
+        g.fillPath (p);
+        g.strokePath (p, juce::PathStrokeType (0.7f));
+    }
+    g.setColour (ui::text); g.setFont (ui::font (11.0f));   // brighter than the other secondary text: it belongs to the logo
     g.drawText ("TMFU audiovibe  v" + juce::String (JucePlugin_VersionString), 102, 40, 160, 16, juce::Justification::left);
     // output meter
     const float m = juce::jlimit (0.0f, 1.0f, proc.meter());
@@ -1255,7 +1284,7 @@ void SynthZillaEditor::timerCallback()
     if (proc.presetIndex() != shownPreset) updateHeader();
     const int slots = (int) proc.apvts.getRawParameterValue (def (layout().gSlots).id)->load();
     if (slots != shownSlots) { layoutSlots(); if (selected >= slots) selectModule (0); }
-    const float s = (float) getWidth() / (float) W;
+    const float s = uiScale;
     repaint (logoArea.transformedBy (juce::AffineTransform::scale (s)).toNearestInt().expanded (2));
     repaint ((int) ((W - 104) * s), 0, (int) (104 * s), (int) (60 * s));
     repaint (0, (int) (70 * s), getWidth(), (int) (60 * s));

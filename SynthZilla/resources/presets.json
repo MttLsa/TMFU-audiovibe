@@ -351,7 +351,7 @@
    "artist": "Ron Grainer / Delia Derbyshire",
    "synth": "BBC Radiophonic oscillators",
    "cat": "Bass",
-   "notes": "Oscillatori a valvole e nastro, non un synth commerciale.",
+   "notes": "Tube oscillators and tape, not a commercial synth.",
    "modules": [
     {
      "slot": 0,
@@ -789,7 +789,7 @@
    "artist": "The Temptations",
    "synth": "ARP 2600",
    "cat": "Bass",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -1163,7 +1163,7 @@
    "artist": "Jean-Michel Jarre",
    "synth": "ARP Odyssey",
    "cat": "Lead",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -1215,7 +1215,7 @@
    "artist": "Jean-Michel Jarre",
    "synth": "ARP Solina String Ensemble",
    "cat": "Strings",
-   "notes": "String machine Eminent 310, stessa famiglia della Solina.",
+   "notes": "Eminent 310 string machine, same family as the Solina.",
    "modules": [
     {
      "slot": 0,
@@ -1311,7 +1311,7 @@
    "artist": "Parliament",
    "synth": "Moog Minimoog Model D",
    "cat": "Bass",
-   "notes": "Bernie Worrell, Minimoog multi-traccia.",
+   "notes": "Bernie Worrell, multitracked Minimoog.",
    "modules": [
     {
      "slot": 0,
@@ -1359,7 +1359,7 @@
    "artist": "Donna Summer",
    "synth": "Moog modular",
    "cat": "Bass",
-   "notes": "Giorgio Moroder: Moog modular sincronizzato a 1/16.",
+   "notes": "Giorgio Moroder: Moog modular synced to 1/16.",
    "modules": [
     {
      "slot": 0,
@@ -1411,7 +1411,7 @@
    "artist": "Kraftwerk",
    "synth": "Polymoog",
    "cat": "Lead",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -1512,7 +1512,7 @@
    "artist": "Kraftwerk",
    "synth": "Moog Minimoog Model D",
    "cat": "Sequence",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -1653,7 +1653,7 @@
    "artist": "The Cars",
    "synth": "Sequential Prophet-5",
    "cat": "Lead",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -1701,7 +1701,7 @@
    "artist": "New England Digital demo",
    "synth": "Synclavier",
    "cat": "Strings",
-   "notes": "Sintesi additiva/FM del primo Synclavier.",
+   "notes": "Additive/FM synthesis of the first Synclavier.",
    "modules": [
     {
      "slot": 0,
@@ -2528,7 +2528,7 @@
    "artist": "Afrika Bambaataa & The Soulsonic Force",
    "synth": "Fairlight CMI",
    "cat": "Stab",
-   "notes": "Fairlight = campionatore digitale a 8 bit: il colpo d'orchestra è sintetizzato (additivo + riduzione bit/frequenza).",
+   "notes": "Fairlight = 8-bit digital sampler: the orchestra hit is synthesized (additive + bit/rate reduction).",
    "modules": [
     {
      "slot": 0,
@@ -2617,7 +2617,7 @@
    "artist": "Michael Jackson",
    "synth": "Roland Jupiter-8",
    "cat": "Pad",
-   "notes": "Anthony Marinelli, Jupiter-8 per i pad d'apertura (fonte: blog di settore).",
+   "notes": "Anthony Marinelli, Jupiter-8 for the opening pads (source: industry blog).",
    "modules": [
     {
      "slot": 0,
@@ -2714,7 +2714,7 @@
    "artist": "Michael Jackson",
    "synth": "Synclavier",
    "cat": "FX",
-   "notes": "Intro di gong del Synclavier.",
+   "notes": "Synclavier gong intro.",
    "modules": [
     {
      "slot": 0,
@@ -2932,7 +2932,7 @@
    "artist": "Eurythmics",
    "synth": "Oberheim OB-X",
    "cat": "Sequence",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -2978,7 +2978,7 @@
    "artist": "Cyndi Lauper",
    "synth": "Roland Juno-60",
    "cat": "Pad",
-   "notes": "Il produttore racconta di essere partito dal preset 61 del Juno-60.",
+   "notes": "The producer says he started from Juno-60 preset 61.",
    "modules": [
     {
      "slot": 0,
@@ -3028,7 +3028,7 @@
    "artist": "Harold Faltermeyer",
    "synth": "Roland Jupiter-8",
    "cat": "Lead",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -3198,7 +3198,7 @@
    "artist": "Talk Talk",
    "synth": "Roland Juno-106",
    "cat": "Lead",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -3237,7 +3237,7 @@
    "artist": "Thomas Dolby",
    "synth": "PPG Wave 2.3 + Roland Juno-60",
    "cat": "Pad",
-   "notes": "PPG = wavetable digitale + filtro analogico SSM: layer di un modulo digitale e di uno analogico.",
+   "notes": "PPG = digital wavetable + analog SSM filter: layer of a digital and an analog module.",
    "modules": [
     {
      "slot": 0,
@@ -3363,7 +3363,7 @@
    "artist": "Wham!",
    "synth": "Roland Juno-106",
    "cat": "Bass",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -3408,7 +3408,7 @@
    "artist": "a-ha",
    "synth": "Yamaha DX7",
    "cat": "Bass",
-   "notes": "Il basso slap di Take On Me: preset 15 BASS 1 con chorus.",
+   "notes": "The slap bass of Take On Me: preset 15 BASS 1 with chorus.",
    "modules": [
     {
      "slot": 0,
@@ -3485,7 +3485,7 @@
    "artist": "Whitney Houston",
    "synth": "Yamaha DX7",
    "cat": "Keys",
-   "notes": "Il preset 11 del DX7 è il suono delle ballate anni '80; per alcuni brani di Whitney Houston si discute se sia DX7, Rhodes o entrambi.",
+   "notes": "DX7 preset 11 is the sound of '80s ballads; for some Whitney Houston songs it is debated whether it is DX7, Rhodes or both.",
    "modules": [
     {
      "slot": 0,
@@ -3642,7 +3642,7 @@
    "artist": "a-ha",
    "synth": "Roland Juno-60 + Yamaha DX7",
    "cat": "Lead",
-   "notes": "Riff principale sul Juno-60 con DX7 nella produzione: layer analogico + digitale.",
+   "notes": "Main riff on the Juno-60 with DX7 in the production: analog + digital layer.",
    "modules": [
     {
      "slot": 0,
@@ -3790,7 +3790,7 @@
    "artist": "Europe",
    "synth": "Roland JX-8P + Yamaha TX-816",
    "cat": "Brass",
-   "notes": "Fanfara: Yamaha TX-816 (FM) + Roland JX-8P (analogico) in layer.",
+   "notes": "Fanfare: Yamaha TX-816 (FM) + Roland JX-8P (analog) layered.",
    "modules": [
     {
      "slot": 0,
@@ -3975,7 +3975,7 @@
    "artist": "Colonel Abrams",
    "synth": "Roland Juno-106",
    "cat": "Bass",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -4265,7 +4265,7 @@
    "artist": "Rhythim Is Rhythim (Derrick May)",
    "synth": "Korg M1",
    "cat": "Stab",
-   "notes": "Archi campionati da un'esecuzione di Michael James: strumento esatto non documentato. Ricreato su modulo digitale.",
+   "notes": "Strings sampled from a Michael James performance: exact instrument not documented. Recreated on a digital module.",
    "modules": [
     {
      "slot": 0,
@@ -4347,7 +4347,7 @@
    "artist": "Frankie Knuckles & Jamie Principle",
    "synth": "Roland Juno-60",
    "cat": "Sequence",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -4396,7 +4396,7 @@
    "artist": "Inner City",
    "synth": "Yamaha TX81Z",
    "cat": "Bass",
-   "notes": "Lately Bass del TX81Z, citato dalla comunità per Big Fun e Good Life.",
+   "notes": "TX81Z Lately Bass, cited by the community for Big Fun and Good Life.",
    "modules": [
     {
      "slot": 0,
@@ -4519,7 +4519,7 @@
    "artist": "Reese (Kevin Saunderson)",
    "synth": "Casio CZ-5000",
    "cat": "Bass",
-   "notes": "Il 'Reese bass': due saw desintonizzate a distorsione di fase.",
+   "notes": "The 'Reese bass': two detuned saws with phase distortion.",
    "modules": [
     {
      "slot": 0,
@@ -4736,7 +4736,7 @@
    "artist": "Lil Louis",
    "synth": "Yamaha TX81Z",
    "cat": "Bass",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -4888,7 +4888,7 @@
    "artist": "808 State",
    "synth": "Roland Juno-106",
    "cat": "Lead",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -4967,7 +4967,7 @@
    "artist": "Orbital",
    "synth": "Yamaha DX21",
    "cat": "Bass",
-   "notes": "Solid Bass (DX21/DX100) è la versione originale del Lately Bass; Gearnews cita Chime di Orbital.",
+   "notes": "Solid Bass (DX21/DX100) is the original version of Lately Bass; Gearnews cites Orbital's Chime.",
    "modules": [
     {
      "slot": 0,
@@ -5042,7 +5042,7 @@
    "artist": "Angelo Badalamenti",
    "synth": "Yamaha DX7",
    "cat": "Keys",
-   "notes": "Attribuzione discussa: il suono è ricreato nello stile del brano.",
+   "notes": "Disputed attribution: the sound is recreated in the style of the track.",
    "modules": [
     {
      "slot": 0,
@@ -5216,7 +5216,7 @@
    "artist": "2 Unlimited",
    "synth": "Roland Alpha Juno-2",
    "cat": "Lead",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -5307,7 +5307,7 @@
    "artist": "Haddaway",
    "synth": "Yamaha TX81Z",
    "cat": "Bass",
-   "notes": "Citato in liste di appassionati insieme a Whigfield e Ace of Base.",
+   "notes": "Cited in enthusiasts' lists along with Whigfield and Ace of Base.",
    "modules": [
     {
      "slot": 0,
@@ -5557,7 +5557,7 @@
    "artist": "Second Phase (Joey Beltram & Mundo Muzique)",
    "synth": "Roland Alpha Juno-2",
    "cat": "Lead",
-   "notes": "Il riff è costruito interamente sul preset 'What the...' di Eric Persing: nasce l'hoover.",
+   "notes": "The riff is built entirely on Eric Persing's 'What the...' preset: the birth of the hoover.",
    "modules": [
     {
      "slot": 0,
@@ -5834,7 +5834,7 @@
    "artist": "Robin S",
    "synth": "Korg M1",
    "cat": "Organ",
-   "notes": "Stonebridge trovò il basso scorrendo i preset dell'M1: Organ 2 (I17).",
+   "notes": "Stonebridge found the bass scrolling through the M1 presets: Organ 2 (I17).",
    "modules": [
     {
      "slot": 0,
@@ -5908,7 +5908,7 @@
    "artist": "Daft Punk",
    "synth": "Korg MS-20",
    "cat": "Lead",
-   "notes": "Saw in quinta e leggero inviluppo sul filtro dell'MS-20 (Splice); altre fonti parlano di 303 distorta.",
+   "notes": "Saws in fifths and a light filter envelope on the MS-20 (Splice); other sources mention a distorted 303.",
    "modules": [
     {
      "slot": 0,
@@ -5952,7 +5952,7 @@
    "artist": "Josh Wink",
    "synth": "Roland TB-303",
    "cat": "Bass",
-   "notes": "Due 303 non modificate, senza pedali.",
+   "notes": "Two unmodified 303s, no pedals.",
    "modules": [
     {
      "slot": 0,
@@ -6004,7 +6004,7 @@
    "artist": "Faithless",
    "synth": "Roland JP-8000",
    "cat": "Pluck",
-   "notes": "Molti synth successivi hanno un preset chiamato 'Insomnia'. Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Many later synths have a preset called 'Insomnia'. Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -6170,7 +6170,7 @@
    "artist": "Jeff Mills",
    "synth": "Korg Wavestation",
    "cat": "Bell",
-   "notes": "Strumento originale non documentato (citati DX100, K2000, campionatore): ricreato in FM.",
+   "notes": "Original instrument not documented (DX100, K2000, sampler cited): recreated in FM.",
    "modules": [
     {
      "slot": 0,
@@ -6337,7 +6337,7 @@
    "artist": "Eiffel 65",
    "synth": "Clavia Nord Lead",
    "cat": "Lead",
-   "notes": "Lo strumento del lead non è documentato: ricreato su VA digitale.",
+   "notes": "The lead instrument is not documented: recreated on a digital VA.",
    "modules": [
     {
      "slot": 0,
@@ -6379,7 +6379,7 @@
    "artist": "DJ Rolando (UR)",
    "synth": "Korg Triton",
    "cat": "Strings",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -6417,7 +6417,7 @@
    "artist": "System F (Ferry Corsten)",
    "synth": "Roland JP-8000",
    "cat": "Lead",
-   "notes": "Supersaw del JP-8000 'nella sua forma più pura' (ClassicTrance).",
+   "notes": "JP-8000 supersaw 'in its purest form' (ClassicTrance).",
    "modules": [
     {
      "slot": 0,
@@ -6458,7 +6458,7 @@
    "artist": "Darude",
    "synth": "Roland JP-8080",
    "cat": "Pad",
-   "notes": "Il primo suono che il JP-8080 carica all'accensione si chiama Sandstorm: gli accordi del brano, che ne prese il nome.",
+   "notes": "The first sound the JP-8080 loads at power-up is called Sandstorm: the chords of the track, which took its name from it.",
    "modules": [
     {
      "slot": 0,
@@ -6499,7 +6499,7 @@
    "artist": "Darude",
    "synth": "Roland JP-8080 + Access Virus",
    "cat": "Lead",
-   "notes": "Sandstorm: Access Virus C, Korg MS2000R e Roland JP-8080 (Sound On Sound).",
+   "notes": "Sandstorm: Access Virus C, Korg MS2000R and Roland JP-8080 (Sound On Sound).",
    "modules": [
     {
      "slot": 0,
@@ -6605,7 +6605,7 @@
    "artist": "Eminem",
    "synth": "Korg Triton",
    "cat": "Keys",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -6679,7 +6679,7 @@
    "artist": "Aaliyah",
    "synth": "Roland TB-303",
    "cat": "Bass",
-   "notes": "Forse l'unico 303 in un singolo n.1 della Billboard Hot 100.",
+   "notes": "Perhaps the only 303 on a Billboard Hot 100 number-one single.",
    "modules": [
     {
      "slot": 0,
@@ -6729,7 +6729,7 @@
    "artist": "Clipse (The Neptunes)",
    "synth": "Korg Triton",
    "cat": "Bass",
-   "notes": "I Neptunes e il Korg Triton: Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "The Neptunes and the Korg Triton: Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -6769,7 +6769,7 @@
    "artist": "Benny Benassi",
    "synth": "Access Virus",
    "cat": "Bass",
-   "notes": "Attribuzione discussa: il suono è ricreato nello stile del brano.",
+   "notes": "Disputed attribution: the sound is recreated in the style of the track.",
    "modules": [
     {
      "slot": 0,
@@ -6813,7 +6813,7 @@
    "artist": "MGMT",
    "synth": "Roland Juno-60",
    "cat": "Lead",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -6865,7 +6865,7 @@
    "artist": "La Roux",
    "synth": "Roland SH-101",
    "cat": "Lead",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -6916,7 +6916,7 @@
    "artist": "deadmau5",
    "synth": "LennarDigital Sylenth1",
    "cat": "Pluck",
-   "notes": "Onda quadra 'larga' nel mix; synth originale incerto (Sylenth1 citato).",
+   "notes": "'Wide' square wave in the mix; original synth uncertain (Sylenth1 cited).",
    "modules": [
     {
      "slot": 0,
@@ -6960,7 +6960,7 @@
    "artist": "Kavinsky",
    "synth": "Moog Minimoog Model D",
    "cat": "Bass",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -7008,7 +7008,7 @@
    "artist": "Skrillex",
    "synth": "LennarDigital Sylenth1",
    "cat": "Bass",
-   "notes": "Un thread KVR attribuisce il suono a Sylenth1, preset LD Screamer (fonte forum).",
+   "notes": "A KVR thread attributes the sound to Sylenth1, preset LD Screamer (forum source).",
    "modules": [
     {
      "slot": 0,
@@ -7056,7 +7056,7 @@
    "artist": "Nero",
    "synth": "NI Massive",
    "cat": "Bass",
-   "notes": "Secondo la comunità i wobble di Nero nascono in Massive.",
+   "notes": "According to the community, Nero's wobbles were made in Massive.",
    "modules": [
     {
      "slot": 0,
@@ -7104,7 +7104,7 @@
    "artist": "Avicii",
    "synth": "LennarDigital Sylenth1",
    "cat": "Lead",
-   "notes": "Avicii usava Sylenth1; il synth del brano non è documentato con certezza.",
+   "notes": "Avicii used Sylenth1; the synth on the track is not documented with certainty.",
    "modules": [
     {
      "slot": 0,
@@ -7145,7 +7145,7 @@
    "artist": "Swedish House Mafia",
    "synth": "LennarDigital Sylenth1",
    "cat": "Lead",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -7186,7 +7186,7 @@
    "artist": "deadmau5",
    "synth": "NI Massive",
    "cat": "Chord",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -7274,7 +7274,7 @@
    "artist": "Disclosure feat. Sam Smith",
    "synth": "Roland Juno-106",
    "cat": "Chord",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -7321,7 +7321,7 @@
    "artist": "Tame Impala",
    "synth": "Roland Juno-106",
    "cat": "Pad",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -7466,7 +7466,7 @@
    "artist": "Kyle Dixon & Michael Stein",
    "synth": "Sequential Prophet-5",
    "cat": "Sequence",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -7512,7 +7512,7 @@
    "artist": "CamelPhat & Elderbrook",
    "synth": "Xfer Serum",
    "cat": "Bass",
-   "notes": "Synth originale non documentato: basso ricreato nello stile del brano.",
+   "notes": "Original synth not documented: bass recreated in the style of the track.",
    "modules": [
     {
      "slot": 0,
@@ -7676,7 +7676,7 @@
    "artist": "FISHER",
    "synth": "Xfer Serum",
    "cat": "Bass",
-   "notes": "Synth originale non documentato: basso ricreato nello stile del brano.",
+   "notes": "Original synth not documented: bass recreated in the style of the track.",
    "modules": [
     {
      "slot": 0,
@@ -7720,7 +7720,7 @@
    "artist": "Billie Eilish",
    "synth": "Xfer Serum",
    "cat": "Bass",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -7764,7 +7764,7 @@
    "artist": "The Weeknd",
    "synth": "Roland Juno-60",
    "cat": "Lead",
-   "notes": "La maggior parte degli esperti indica il Roland Juno-60 (MusicRadar).",
+   "notes": "Most experts point to the Roland Juno-60 (MusicRadar).",
    "modules": [
     {
      "slot": 0,
@@ -7806,7 +7806,7 @@
    "artist": "Dua Lipa",
    "synth": "Roland Juno-106",
    "cat": "Lead",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -7845,7 +7845,7 @@
    "artist": "Charlotte de Witte",
    "synth": "Roland TB-303",
    "cat": "Bass",
-   "notes": "Linea acid in stile 303 con distorsione RAT, tipica dell'acid techno; Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "303-style acid line with RAT distortion, typical of acid techno; Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -7897,7 +7897,7 @@
    "artist": "Beyoncé",
    "synth": "Korg M1",
    "cat": "Organ",
-   "notes": "M1 Organ e M1 Piano insieme (Sonicstate): due moduli digitali in layer.",
+   "notes": "M1 Organ and M1 Piano together (Sonicstate): two digital modules layered.",
    "modules": [
     {
      "slot": 0,
@@ -7952,7 +7952,7 @@
    "artist": "Amelie Lens",
    "synth": "Moog Sub 37",
    "cat": "Bass",
-   "notes": "Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
@@ -7993,7 +7993,7 @@
    "artist": "Peggy Gou",
    "synth": "Korg M1",
    "cat": "Piano",
-   "notes": "Revival del piano house anni '90 in stile M1: Strumento attribuito da fonti di settore / comunità, non documentato ufficialmente.",
+   "notes": "Revival of '90s M1-style house piano: Instrument attributed by industry / community sources, not officially documented.",
    "modules": [
     {
      "slot": 0,
