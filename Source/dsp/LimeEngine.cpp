@@ -54,12 +54,56 @@ LimeEngine::LimeEngine (SampleLibrary& lib) : library (lib)
 
 std::atomic<float>* LimeEngine::p (const juce::String& id) const { return state->get (id); }
 
+bool LimeEngine::beltScale (const Sample& s, float tuneBase, float& semis, float& corr, int& note) const
+{
+    // Groovulation's computeSemitones(): key root + chroma from the analysis (or from the file name with NAME on),
+    // best transposition of the whole sample into the scale, manual Tune on top snapped to the nearest scale note,
+    // tuning of the recording compensated
+    if (! s.hasKey) return false;
+    const auto& K = s.key;
+    const bool byName = G (vk[(size_t) tie][(size_t) kName], 0) > 0.5f && K.nameRoot >= 0;
+    int root; std::array<float, 12> chroma {};
+    float tc = 0.0f;
+    if (byName)
+    {
+        root = K.nameRoot;
+        const auto msk = scaleMask (root, K.nameMinor ? 1 : 0);
+        float sum = 0.0f;
+        for (int i = 0; i < 12; ++i) { chroma[(size_t) i] = msk[(size_t) i] ? (i == root ? 2.0f : 1.0f) : 0.0f; sum += chroma[(size_t) i]; }
+        for (auto& c : chroma) c /= sum;
+    }
+    else
+    {
+        if (K.keyRoot < 0) return false;
+        root = K.keyRoot; chroma = K.chroma; tc = K.tuneCents;
+    }
+    const int sRoot = (int) G (scaleRootP, 0), sType = (int) G (scaleTypeP, 1);
+    const int shift = bestShift (chroma, root, sRoot, sType);
+    const int total = shift + (int) std::lround (tuneBase);
+    const int snap = snapMove (((root + total) % 12 + 12) % 12, scaleMask (sRoot, sType));
+    semis = (float) (total + snap) - tc / 100.0f;
+    corr = semis - (float) std::lround (tuneBase);     // Tune stays a sampler transposition on top
+    note = 60 + root + total + snap;
+    return true;
+}
+
 void LimeEngine::bind (ParamSource& apvts)
 {
     state = &apvts;
     for (int v = 0; v < numLimeVoices; ++v)
         for (int k = 0; k < kCount; ++k)
             vk[(size_t) v][(size_t) k] = apvts.get (b (v, keyNames[k]));   // nullptr if the voice lacks it
+    scaleRootP = apvts.get (bScaleRoot); scaleTypeP = apvts.get (bScaleType); bTuneP = apvts.get (bTune);
+    // Belt pitch engine: renders the scale correction of every Belt sample with Signalsmith Stretch
+    beltStretch.setCorrectionFunction ([this] (const Sample& s) -> float
+    {
+        const auto& k = vk[(size_t) tie];
+        if (G (k[kScale], 0) < 0.5f) return std::nanf ("");
+        float semis, corr; int note;
+        if (! beltScale (s, G (k[kTune], 0) + G (bTuneP, 0), semis, corr, note)) return std::nanf ("");
+        return corr;
+    });
+    beltStretch.start();
 }
 
 void LimeEngine::prepare (double sampleRate, int blockSize)
@@ -182,7 +226,24 @@ void LimeEngine::trigger (int target, float vel, float laneValue, int forcedInde
     nv.pos = start * (double) smp->length();
     // ---- pitch: SCALE mode (detected pitch quantized to the shared scale) or MANUAL (per-sample offset)
     nv.set = set; nv.smpIndex = wav; nv.manualPitch = false;
-    if (voice == tie || voice == pod)
+    if (voice == tie && G (k[kScale], 0) > 0.5f)
+    {
+        // Belt SCALE: Groovulation analysis + scale logic; the scale correction comes pre-rendered with Signalsmith
+        // Stretch (same duration), melodies / Tune are re-sampled on top of it
+        float semis = 0.0f, corr = 0.0f; int note = 60;
+        if (beltScale (*smp, tuneBase, semis, corr, note))
+        {
+            if (velTune)
+            {
+                const int root = (int) G (scaleRootP, 0), type = (int) G (scaleTypeP, 1);
+                semis += (float) (stepScale (note, velDegrees, root, type) - note);
+            }
+            tune = semis;
+            if (auto shifted = beltStretch.lookup (set.get(), wav, corr)) { smp = shifted; tune -= corr; }
+        }
+        // atonal sample (no key): plays with its own pitch + Tune, like in Groovulation
+    }
+    else if (voice == tie || voice == pod)
     {
         const bool scaleOn = G (k[kScale], 0) > 0.5f;
         // pitch source: key from the file name (if enabled and present), otherwise the audio analysis
@@ -202,6 +263,7 @@ void LimeEngine::trigger (int target, float vel, float laneValue, int forcedInde
             tune += set->offsets[(size_t) wav].load();
         }
     }
+    nv.smp = smp;                                         // (Belt SCALE may have switched to the rendered copy)
     nv.rateTarget = smp->sourceRate / sr * std::pow (2.0, tune / 12.0);
     if (voice == tie)
     {

@@ -192,6 +192,42 @@ namespace params
         return n;
     }
 
+    // ---- Groovulation scale logic (Scales.h): transposition of a whole sample into the scale
+    inline std::array<bool, 12> scaleMask (int root, int type)
+    {
+        std::array<bool, 12> m {};
+        for (int st : scales()[(size_t) juce::jlimit (0, (int) scales().size() - 1, type)].steps) m[(size_t) ((root + st) % 12)] = true;
+        return m;
+    }
+    // nearest pitch class (signed semitone move, ties -> downwards) from 'pc' that lies in the scale
+    inline int snapMove (int pc, const std::array<bool, 12>& m)
+    {
+        for (int d = 0; d <= 6; ++d)
+        {
+            if (m[(size_t) (((pc - d) % 12 + 12) % 12)]) return -d;
+            if (m[(size_t) ((pc + d) % 12)]) return d;
+        }
+        return 0;
+    }
+    // best transposition (-6..+5 semitones) of a sample into a scale: maximises the chroma energy on scale notes;
+    // ties prefer the sample's tonic on the scale root, then the smallest move
+    inline int bestShift (const std::array<float, 12>& chroma, int sampleRoot, int scaleRoot, int scaleType)
+    {
+        const auto m = scaleMask (scaleRoot, scaleType);
+        int best = 0; float bestScore = -1.0e9f;
+        for (int sh = -6; sh <= 5; ++sh)
+        {
+            float score = 0.0f;
+            for (int pc = 0; pc < 12; ++pc)
+                score += m[(size_t) (((pc + sh) % 12 + 12) % 12)] ? chroma[(size_t) pc] : -chroma[(size_t) pc];
+            if ((((sampleRoot + sh) % 12 + 12) % 12) == scaleRoot) score += 0.08f;
+            else if (m[(size_t) (((sampleRoot + sh) % 12 + 12) % 12)]) score += 0.03f;
+            score -= 0.004f * (float) std::abs (sh);
+            if (score > bestScore) { bestScore = score; best = sh; }
+        }
+        return best;
+    }
+
     inline const juce::StringArray& xfxModeNames()
     {
         static const juce::StringArray s { "off", "highpass", "bandpass", "lowpass", "phaser", "vowel", "flanger", "fm", "reson",

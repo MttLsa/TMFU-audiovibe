@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <atomic>
+#include "KeyAnalysis.h"
 
 // One audio sample in memory (mono or stereo, de-interleaved).
 struct Sample
@@ -16,6 +17,9 @@ struct Sample
     float pitch = -1.0f;                  // detected fundamental as MIDI note (69 = A4); -1 = no clear pitch
     float pitchConf = 0.0f;               // 0..1
     float namePitch = -1.0f;              // key read from the file name (MIDI note), -1 = no key in the name
+    // Belt: full tonal analysis (same as Groovulation): key, mode, tuning, chroma, fundamental, key from the name
+    keyanalysis::Result key;
+    bool hasKey = false;
     int length() const noexcept { return (int) L.size(); }
     bool stereo() const noexcept { return ! R.empty(); }
 };

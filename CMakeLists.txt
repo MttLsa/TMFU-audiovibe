@@ -47,6 +47,8 @@ target_sources(Dualbox PRIVATE
   Source/PluginEditor.cpp
   Source/Params.cpp
   Source/dsp/SampleLibrary.cpp
+  Source/dsp/KeyAnalysis.cpp
+  Source/dsp/BeltStretch.cpp
   Source/dsp/MicroEngine.cpp
   Source/dsp/LimeEngine.cpp
   Source/dsp/LimeFX.cpp
@@ -70,7 +72,10 @@ juce_add_binary_data(DualboxData SOURCES
   resources/fonts/Urbanist-SemiBold.ttf)
 set_target_properties(DualboxData PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-target_compile_definitions(Dualbox PUBLIC
+if(APPLE)
+  set(DUALBOX_ACCEL SIGNALSMITH_USE_ACCELERATE ACCELERATE_NEW_LAPACK)   # Signalsmith Stretch FFT on Accelerate
+endif()
+target_compile_definitions(Dualbox PUBLIC ${DUALBOX_ACCEL}
   JUCE_WEB_BROWSER=0
   JUCE_USE_CURL=0
   JUCE_VST3_CAN_REPLACE_VST2=0
@@ -81,6 +86,7 @@ target_link_libraries(Dualbox
     juce::juce_audio_utils
     juce::juce_dsp
     DualboxData
+    $<$<PLATFORM_ID:Darwin>:-framework Accelerate>
   PUBLIC
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags
@@ -92,10 +98,11 @@ if(DUALBOX_BUILD_TESTS)
   juce_add_console_app(DualboxTest PRODUCT_NAME "DualboxTest")
   target_sources(DualboxTest PRIVATE tests/TestMain.cpp
     Source/PluginProcessor.cpp Source/PluginEditor.cpp Source/Params.cpp
-    Source/dsp/SampleLibrary.cpp Source/dsp/MicroEngine.cpp Source/dsp/LimeEngine.cpp Source/dsp/LimeFX.cpp Source/dsp/ModMatrix.cpp
+    Source/dsp/SampleLibrary.cpp Source/dsp/KeyAnalysis.cpp Source/dsp/BeltStretch.cpp Source/dsp/MicroEngine.cpp Source/dsp/LimeEngine.cpp Source/dsp/LimeFX.cpp Source/dsp/ModMatrix.cpp
     Source/Presets.cpp Source/gui/PresetBrowser.cpp Source/gui/LookAndFeel.cpp Source/gui/MicroSection.cpp Source/gui/LimeSection.cpp Source/gui/LfoPanel.cpp Source/gui/GlobalPanel.cpp)
   target_include_directories(DualboxTest PRIVATE Source)
-  target_compile_definitions(DualboxTest PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JucePlugin_Name="DUALBOX"
+  target_compile_definitions(DualboxTest PRIVATE ${DUALBOX_ACCEL} JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JucePlugin_Name="DUALBOX"
     JUCE_STANDALONE_APPLICATION=0 JUCE_MODAL_LOOPS_PERMITTED=1)
-  target_link_libraries(DualboxTest PRIVATE juce::juce_audio_utils juce::juce_dsp DualboxData juce::juce_recommended_config_flags)
+  target_link_libraries(DualboxTest PRIVATE juce::juce_audio_utils juce::juce_dsp DualboxData juce::juce_recommended_config_flags
+    $<$<PLATFORM_ID:Darwin>:-framework Accelerate>)
 endif()

@@ -186,6 +186,20 @@ void SampleLibrary::reload (int m)
         }
         StringArray newCache;
         bool cacheDirty = false;
+        // Belt: key analysis cache "<file>\t<size>\t<key data>" (Groovulation analysis)
+        const auto keyCacheFile = folder.getChildFile (".dualbox_key.txt");
+        std::map<String, std::pair<String, String>> keyCache;
+        if (m == tie)
+        {
+            StringArray lines; lines.addLines (keyCacheFile.loadFileAsString());
+            for (auto& l : lines)
+            {
+                StringArray t; t.addTokens (l, "\t", {});
+                if (t.size() == 3) keyCache[t[0]] = { t[1], t[2] };
+            }
+        }
+        StringArray newKeyCache;
+        bool keyCacheDirty = false;
         for (auto& f : audioFilesIn (folder))
         {
             if (auto s = loadFile (fm, f))
@@ -196,6 +210,22 @@ void SampleLibrary::reload (int m)
                     auto it = cache.find (f.getFileName());
                     if (it != cache.end() && it->second.first == sizeKey) { ms->pitch = it->second.second.first; ms->pitchConf = it->second.second.second; }
                     else { ms->pitch = detectPitch (*ms, ms->pitchConf); cacheDirty = true; }
+                    if (m == tie)
+                    {
+                        auto kit = keyCache.find (f.getFileName());
+                        keyanalysis::Result kr;
+                        if (! (kit != keyCache.end() && kit->second.first == sizeKey && keyanalysis::fromString (kit->second.second, kr)))
+                        {
+                            kr = keyanalysis::analyse (ms->L, ms->R, ms->sourceRate, ms->name);
+                            keyCacheDirty = true;
+                        }
+                        int nr; bool nm;
+                        if (keyanalysis::keyFromName (ms->name, nr, nm)) { kr.nameRoot = nr; kr.nameMinor = nm; }
+                        ms->key = kr; ms->hasKey = kr.ok;
+                        newKeyCache.add (f.getFileName() + "\t" + sizeKey + "\t" + keyanalysis::toString (kr));
+                        // the fundamental of the Groovulation analysis is shown as the "audio" note
+                        ms->pitch = (kr.f0 > 0.0f && kr.voiced >= 0.3f) ? 69.0f + 12.0f * std::log2 (kr.f0 / 440.0f) : -1.0f;
+                    }
                     ms->namePitch = pitchFromName (ms->name, ms->pitch);
                     newCache.add (f.getFileName() + "\t" + sizeKey + "\t" + String (ms->pitch, 3) + "\t" + String (ms->pitchConf, 3));
                 }
@@ -211,6 +241,7 @@ void SampleLibrary::reload (int m)
             }
         }
         if (cacheDirty) cacheFile.replaceWithText (newCache.joinIntoString ("\n"));   // silently ignored if read-only
+        if (keyCacheDirty) keyCacheFile.replaceWithText (newKeyCache.joinIntoString ("\n"));
         set->offsets = std::vector<std::atomic<float>> ((size_t) set->size());
         bool current;
         {

@@ -771,7 +771,8 @@ LimeModulePanel::LimeModulePanel (TwinboxProcessor& p, int v, bool b2) : Control
     {
         scaleBtn = std::make_unique<Toggle> ("SCALE", theme::accentB);
         scaleBtn->attach (p.apvts, b (v, lv::scale));
-        scaleBtn->setTooltip ("SCALE on: every sample is re-pitched to the shared Root / Scale (from its detected pitch). Off = MANUAL per-sample pitch");
+        scaleBtn->setTooltip (v == tie ? "SCALE on: every sample is transposed into the shared Root / Scale from its detected key (high-quality pitch shift, same length). Off = MANUAL per-sample pitch"
+                                       : "SCALE on: every sample is re-pitched to the shared Root / Scale (from its detected pitch). Off = MANUAL per-sample pitch");
         addAndMakeVisible (*scaleBtn);
         nameBtn = std::make_unique<Toggle> ("NAME", theme::accentB);
         nameBtn->attach (p.apvts, b (v, lv::nameKey));
@@ -877,6 +878,21 @@ void PitchWindowContent::Row::paint (Graphics& g)
     g.drawText (smp->name, 78, 0, getWidth() - 78 - 370, getHeight(), Justification::centredLeft);
     // detected pitch: audio analysis and file-name key; the one in use is highlighted
     const bool nameOn = owner.proc.apvts.getRawParameterValue (b (owner.module, lv::nameKey))->load() > 0.5f;
+    if (smp->hasKey)
+    {
+        // Belt: key analysis (key + mode, tuning in cents) and key from the file name
+        const auto& K = smp->key;
+        const bool usingName = nameOn && K.nameRoot >= 0;
+        const int cents = roundToInt (K.tuneCents);
+        g.setFont (theme::font (12.0f, ! usingName));
+        g.setColour (K.keyRoot >= 0 ? (usingName ? theme::textDim : theme::accentB) : theme::textDim);
+        g.drawText ("audio " + (K.keyRoot >= 0 ? keyanalysis::keyName (K.keyRoot, K.minor) + (cents != 0 ? (cents > 0 ? " +" : " ") + String (cents) + "c" : String())
+                                              : String ("no key")), getWidth() - 372, 0, 122, getHeight(), Justification::centredLeft);
+        g.setFont (theme::font (12.0f, usingName));
+        g.setColour (usingName ? theme::accentB : theme::textDim);
+        g.drawText ("name " + keyanalysis::keyName (K.nameRoot, K.nameMinor), getWidth() - 248, 0, 84, getHeight(), Justification::centredLeft);
+        return;
+    }
     const bool usingName = nameOn && smp->namePitch >= 0;
     g.setFont (theme::font (12.0f, ! usingName));
     g.setColour (smp->pitch >= 0 ? (usingName ? theme::textDim : theme::accentB) : theme::textDim);
