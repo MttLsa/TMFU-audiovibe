@@ -6,8 +6,8 @@ using namespace juce;
 
 Typeface::Ptr theme::uiTypeface (bool bold)
 {
-    static const Typeface::Ptr regular = Typeface::createSystemTypefaceFor (BinaryData::UrbanistLight_ttf, BinaryData::UrbanistLight_ttfSize);
-    static const Typeface::Ptr heavy   = Typeface::createSystemTypefaceFor (BinaryData::UrbanistSemiBold_ttf, BinaryData::UrbanistSemiBold_ttfSize);
+    static const Typeface::Ptr regular = Typeface::createSystemTypefaceFor (BinaryData::InterRegular_ttf, BinaryData::InterRegular_ttfSize);
+    static const Typeface::Ptr heavy   = Typeface::createSystemTypefaceFor (BinaryData::InterSemiBold_ttf, BinaryData::InterSemiBold_ttfSize);
     return bold ? heavy : regular;
 }
 

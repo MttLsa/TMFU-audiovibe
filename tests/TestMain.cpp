@@ -1,5 +1,6 @@
 // Offline test harness: renders audio through the processor, checks presets / FX / Legacy import, snapshots the GUI.
 #include "dsp/BeltStretch.h"
+#include "PatternImport.h"
 #include "../Source/PluginProcessor.h"
 #include "../Source/PluginEditor.h"
 #include "../Source/Presets.h"
@@ -880,6 +881,80 @@ int main (int argc, char** argv)
         setP (p, params::gRun, 1); setP (p, params::gXfade, 100);
         auto st = render (p, 6.0, outDir.getChildFile ("render_B_legacy.wav"));
         report ("render with Legacy samples", st.nans == 0 && st.peak > 0.01f, "peak " + String (Decibels::gainToDecibels (st.peak), 1) + " dBFS");
+    }
+
+    // ---------------------------------------------------------------- IMPORT PATTERN (Section A)
+    {
+        TwinboxProcessor p;
+        const String preset = R"TXT(/* drum preset */
+Tempo: 124bpm
+Swing: 18%
+DrumPatches: {
+	1: {
+		Name: "BD Test"
+		OscWave: Sine
+		OscFreq: 52.0Hz
+		OscDcy: 0.35s
+		ModMode: Decay
+		ModRate: 100.00ms
+		ModAmt: +24.00sm
+		NFilMode: HP
+		NFilFrq: 2.5kHz
+		NFilQ: 1.50
+		NStereo: On
+		NEnvMode: Linear
+		NEnvAtk: 0.00ms
+		NEnvDcy: 40.00ms
+		Mix: 80.00/20.00
+		DistAmt: 25.00
+		EQFreq: 632.46Hz
+		EQGain: +3.00dB
+		Level: -2.00dB
+		Pan: -20.00
+		OscVel: 50.00%
+		NVel: 120.00%
+		ModVel: 10.00%
+	}
+	2: {
+		Name: "SD Test"
+		OscWave: Triangle
+		OscFreq: 190Hz
+		Mix: 40/60
+	}
+}
+Patterns: {
+	a: {
+		Length: 16
+		1: { Triggers: "#---#---#---#---"  Accents: "#-------#-------"  Fills: "--------------#-" }
+		2: { Triggers: "----#-------#---" }
+	}
+	c: {
+		Length: 12
+		1: { Triggers: "#--#--#--#--" }
+	}
+}
+)TXT";
+        const auto r1 = PatternImport::runText (p, preset, 0, 0);
+        auto val = [&] (const String& id) { return p.apvts.getRawParameterValue (id)->load(); };
+        auto& A = p.micro.pattern (0); auto& C = p.micro.pattern (2);
+        const bool okPatch = std::abs (val (params::a (0, params::mt::oscFreq)) - 52.0f) < 0.6f && std::abs (val (params::a (0, params::mt::oscDcy)) - 350.0f) < 5.0f
+                          && (int) val (params::a (0, params::mt::nMode)) == 2 && std::abs (val (params::a (0, params::mt::nFreq)) - 2500.0f) < 30.0f
+                          && (int) val (params::a (0, params::mt::nEnv)) == 1 && std::abs (val (params::a (0, params::mt::mix)) - 20.0f) < 0.6f
+                          && std::abs (val (params::a (0, params::mt::pmRate)) - 50.0f) < 0.6f && std::abs (val (params::a (0, params::mt::pan)) + 20.0f) < 0.6f
+                          && (int) val (params::a (1, params::mt::oscWave)) == 1 && std::abs (val (params::a (1, params::mt::mix)) - 60.0f) < 0.6f
+                          && p.channelName (0) == "BD Test" && p.channelName (1) == "SD Test";
+        const bool okPat = A.length.load() == 16 && C.length.load() == 12
+                        && A.steps[0][0].load() == (MicroEngine::trig | MicroEngine::accent) && A.steps[0][4].load() == MicroEngine::trig
+                        && (A.steps[0][14].load() & MicroEngine::fill) && A.steps[1][4].load() == MicroEngine::trig && A.steps[1][0].load() == 0
+                        && C.steps[0][3].load() == MicroEngine::trig && std::abs (val (params::aSwing) - 18.0f) < 0.6f;
+        // single pattern file into slot E, single drum into channel 4
+        const auto r2 = PatternImport::runText (p, "Pattern: {\n Length: 8\n 3: { Triggers: \"x-x-x-x-\" }\n}\n", 4, 0);
+        const auto r3 = PatternImport::runText (p, "Name: \"Perc\"\nOscFreq: 330Hz\nOscWave: Saw\n", 0, 3);
+        const auto r4 = PatternImport::runText (p, "nothing useful here", 0, 0);
+        const bool okSingle = r2.patterns == 1 && p.micro.pattern (4).length.load() == 8 && p.micro.pattern (4).steps[2][2].load() == MicroEngine::trig
+                           && r3.patches == 1 && std::abs (val (params::a (3, params::mt::oscFreq)) - 330.0f) < 3.0f && p.channelName (3) == "Perc" && ! r4.ok;
+        report ("IMPORT PATTERN (preset / pattern / drum)", r1.ok && r1.patches == 2 && r1.patterns == 2 && okPatch && okPat && okSingle,
+                r1.message + " " + r2.message + " " + r3.message + (okPatch ? "" : " [patch values wrong]") + (okPat ? "" : " [pattern wrong]") + (okSingle ? "" : " [single files wrong]"));
     }
 
     // ---------------------------------------------------------------- GUI snapshots

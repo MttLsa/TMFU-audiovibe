@@ -1,5 +1,6 @@
 #include "MicroSection.h"
 #include "LimeSection.h"   // SampleSelector (shared with the Section B modules)
+#include "../PatternImport.h"
 
 using namespace juce;
 using namespace params;
@@ -512,12 +513,33 @@ MicroSection::MicroSection (TwinboxProcessor& p) : proc (p), patch (p), grid (p,
     browserBtn.setTooltip ("Genre preset browser (128 kits + patterns)");
     browserBtn.onClick = [this] { if (onOpenBrowser) onOpenBrowser(); };
     addAndMakeVisible (browserBtn);
+    importBtn.setTooltip ("Import a drum preset / pattern / drum file from your computer (.mtpreset: 8 sounds + patterns A-L; "
+                          ".mtpattern: into the current pattern; .mtdrum: into the selected channel)");
+    importBtn.onClick = [this] { importPattern(); };
+    addAndMakeVisible (importBtn);
 
     selectChannel (0);
     startTimerHz (30);
 }
 
 MicroSection::~MicroSection() { stopTimer(); }
+
+void MicroSection::importPattern()
+{
+    importChooser = std::make_unique<FileChooser> ("Import pattern", File::getSpecialLocation (File::userDocumentsDirectory), PatternImport::fileFilter());
+    importChooser->launchAsync (FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles, [this] (const FileChooser& fc)
+    {
+        const auto f = fc.getResult();
+        if (! f.existsAsFile()) return;
+        const int slot = (int) proc.apvts.getRawParameterValue (aPattern)->load();
+        const auto r = PatternImport::run (proc, f, slot, selected);
+        importStatus = r.message;
+        selectChannel (selected);       // refresh name field, patch editor and grid
+        refreshPatternControls();
+        repaint();
+        Timer::callAfterDelay (5000, [safe = Component::SafePointer<MicroSection> (this)] { if (safe != nullptr) { safe->importStatus.clear(); safe->repaint(); } });
+    });
+}
 
 void MicroSection::selectChannel (int ch)
 {
@@ -602,6 +624,12 @@ void MicroSection::paint (Graphics& g)
     g.drawText ("8-channel synthetic drums", 40, 26, 160, 14, Justification::centredLeft);
     g.drawText ("PATTERN", 200, 4, 80, 12, Justification::centredLeft);
     g.drawText ("MORPH", storeL.getX(), 4, 80, 12, Justification::centredLeft);
+    if (importStatus.isNotEmpty())
+    {
+        g.setColour (theme::accentA);
+        g.setFont (theme::font (11.0f));
+        g.drawText (importStatus, importBtn.getRight() + 10, importBtn.getY(), jmax (10, storeL.getX() - importBtn.getRight() - 20), importBtn.getHeight(), Justification::centredLeft);
+    }
     // level meter
     drawMeter (g, Rectangle<float> ((float) getWidth() - 16.0f, 10.0f, 6.0f, 30.0f), proc.meter (0), theme::accentA);
 }
@@ -615,6 +643,8 @@ void MicroSection::resized()
     for (auto* b : patternButtons) b->setBounds (pats.removeFromLeft (30).reduced (1, 2));
     header.removeFromLeft (14);
     browserBtn.setBounds (header.removeFromLeft (90).withTrimmedTop (12).reduced (1, 2));
+    header.removeFromLeft (6);
+    importBtn.setBounds (header.removeFromLeft (128).withTrimmedTop (12).reduced (1, 2));
     header.removeFromRight (16);
     level.setBounds (header.removeFromRight (64).expanded (0, 4));
     header.removeFromRight (10);
