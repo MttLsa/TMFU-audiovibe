@@ -74,8 +74,7 @@ target_compile_definitions(AutoNormalizer PUBLIC
 
 juce_add_binary_data(AutoNormalizerFonts SOURCES
   resources/Inter-Regular.ttf
-  resources/Inter-SemiBold.ttf
-  resources/Comfortaa-Bold.ttf)
+  resources/Inter-SemiBold.ttf)
 set_target_properties(AutoNormalizerFonts PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_link_libraries(AutoNormalizer

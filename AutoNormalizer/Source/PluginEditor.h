@@ -9,14 +9,13 @@
 // Inter (SIL Open Font License; Regular + SemiBold) for every text in the plugin. It is installed as the
 // default look-and-feel while an editor is open, so every Font without an explicit
 // typeface (labels, sliders, buttons, menus, painted text) resolves to Inter.
-// Only the plug-in name in the header keeps Comfortaa Bold (nameFont).
-struct ComfortaaLookAndFeel : public juce::LookAndFeel_V4
+struct InterLookAndFeel : public juce::LookAndFeel_V4
 {
-    ComfortaaLookAndFeel()
+    InterLookAndFeel()
     {
         juce::LookAndFeel::setDefaultLookAndFeel (this);
     }
-    ~ComfortaaLookAndFeel() override
+    ~InterLookAndFeel() override
     {
         if (&juce::LookAndFeel::getDefaultLookAndFeel() == this)
             juce::LookAndFeel::setDefaultLookAndFeel (nullptr);
@@ -26,14 +25,10 @@ struct ComfortaaLookAndFeel : public juce::LookAndFeel_V4
         return f.isBold() ? bold : regular;
     }
 
-    juce::Font nameFont (float h) const { return juce::Font (juce::FontOptions (name).withHeight (h)); }
-
     juce::Typeface::Ptr regular = juce::Typeface::createSystemTypefaceFor (BinaryData::InterRegular_ttf,
                                                                           (size_t) BinaryData::InterRegular_ttfSize);
     juce::Typeface::Ptr bold = juce::Typeface::createSystemTypefaceFor (BinaryData::InterSemiBold_ttf,
                                                                        (size_t) BinaryData::InterSemiBold_ttfSize);
-    juce::Typeface::Ptr name = juce::Typeface::createSystemTypefaceFor (BinaryData::ComfortaaBold_ttf,
-                                                                       (size_t) BinaryData::ComfortaaBold_ttfSize);
 };
 
 class AutoNormalizerEditor : public juce::AudioProcessorEditor, private juce::Timer
@@ -59,8 +54,8 @@ private:
                       const juce::String& paramId, const juce::String& text);
 
     AutoNormalizerProcessor& proc;
-    juce::SharedResourcePointer<ComfortaaLookAndFeel> lnfShared;
-    ComfortaaLookAndFeel& lnf = *lnfShared;
+    juce::SharedResourcePointer<InterLookAndFeel> lnfShared;
+    InterLookAndFeel& lnf = *lnfShared;
 
     Knob target, measure, gate, sens, maxBoost;
     juce::Label ceilingLabel;

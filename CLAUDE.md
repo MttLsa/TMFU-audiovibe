@@ -21,6 +21,6 @@
   `setDefaultSansSerifTypeface`/`getTypefaceForFont` nel LookAndFeel, così anche menu, popup e tooltip lo usano.
   Modello: `Microvibe/Source/PluginEditor.cpp` (`ui::typeface`).
 - Logo e nome del plugin nell'intestazione restano col loro font originale (es. Microvibe Urbanist SemiBold,
-  Groovulation Urbanist Light, AutoNormalizer Comfortaa Bold, SynthZilla Rostex Outline): font separato solo per quelle scritte.
+  Groovulation Urbanist Light, SynthZilla Rostex Outline): font separato solo per quelle scritte.
 - Nomi di moduli, parametri, pulsanti e titoli dei pannelli in **inglese**; restano in italiano solo menu contestuali,
   tooltip, suggerimenti e testi di aiuto.
