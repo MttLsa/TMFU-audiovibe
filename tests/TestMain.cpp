@@ -964,6 +964,32 @@ Patterns: {
         const auto r4 = PatternImport::runText (p, "nothing useful here", 0, 0);
         const bool okSingle = r2.patterns == 1 && p.micro.pattern (4).length.load() == 8 && p.micro.pattern (4).steps[2][2].load() == MicroEngine::trig
                            && r3.patches == 1 && std::abs (val (params::a (3, params::mt::oscFreq)) - 330.0f) < 3.0f && p.channelName (3) == "Perc" && ! r4.ok;
+        // real example files (tests/data): a preset with 8 patches + 12 patterns and a single drum file
+        {
+            TwinboxProcessor q;
+            auto val2 = [&] (const String& id) { return q.apvts.getRawParameterValue (id)->load(); };
+            const auto dataDir = File (__FILE__).getParentDirectory().getChildFile ("data");
+            const auto rp = PatternImport::run (q, dataDir.getChildFile ("example.mtpreset"), 0, 0);
+            auto& PA = q.micro.pattern (0); auto& PB = q.micro.pattern (1);
+            using M = MicroEngine;
+            const bool okP = rp.patches == 8 && rp.patterns == 12 && q.channelName (0) == "AC BD Back1" && q.channelName (6) == "AC HH Back"
+                && std::abs (val2 (params::a (0, params::mt::oscFreq)) - 84.34f) < 0.5f && std::abs (val2 (params::a (0, params::mt::oscDcy)) - 829.1f) < 5.0f
+                && (int) val2 (params::a (6, params::mt::nMode)) == 2 && (int) val2 (params::a (1, params::mt::nEnv)) == 2
+                && std::abs (val2 (params::a (1, params::mt::mix)) - 5.0f) < 0.6f && std::abs (val2 (params::a (2, params::mt::pmAmt)) + 48.0f) < 0.5f
+                && (int) val2 (params::a (2, params::mt::oscWave)) == 2 && (int) val2 (params::a (2, params::mt::pmMode)) == 1
+                && std::abs (val2 (params::a (6, params::mt::pan)) + 24.96f) < 0.5f && val2 (params::a (4, params::mt::nStereo)) > 0.5f
+                && val2 (params::a (7, params::mt::mute)) > 0.5f && val2 (params::a (0, params::mt::mute)) < 0.5f
+                && (int) val2 (params::aPattern) == 1 && (int) val2 (params::aFillRate) == 1 && std::abs (val2 (params::aSwing) - 20.2f) < 0.6f
+                && PA.length.load() == 16 && PA.steps[0][0].load() == (M::trig | M::accent) && PA.steps[0][3].load() == M::trig
+                && PA.steps[0][1].load() == 0 && PA.steps[0][10].load() == (M::trig | M::accent) && PA.steps[6][4].load() == 0
+                && PA.steps[6][5].load() == (M::trig | M::accent) && PA.steps[4][15].load() == 0 && PB.steps[2][7].load() == M::trig;
+            const auto rd = PatternImport::run (q, dataDir.getChildFile ("example.mtdrum"), 0, 3);
+            const bool okD = rd.patches == 1 && rd.patterns == 0 && q.channelName (3) == "AC BD Back1"
+                && std::abs (val2 (params::a (3, params::mt::oscFreq)) - 84.34f) < 0.5f && std::abs (val2 (params::a (3, params::mt::eqGain)) - 22.5f) < 0.3f
+                && std::abs (val2 (params::a (3, params::mt::velNoise)) - 29.8f) < 0.3f;
+            report ("IMPORT PATTERN (real preset + drum files)", okP && okD, rp.message + " / " + rd.message
+                    + (okP ? "" : " [preset values wrong]") + (okD ? "" : " [drum values wrong]"));
+        }
         report ("IMPORT PATTERN (preset / pattern / drum)", r1.ok && r1.patches == 2 && r1.patterns == 2 && okPatch && okPat && okSingle,
                 r1.message + " " + r2.message + " " + r3.message + (okPatch ? "" : " [patch values wrong]") + (okPat ? "" : " [pattern wrong]") + (okSingle ? "" : " [single files wrong]"));
     }

@@ -1,0 +1,27 @@
+DrumPatchV1={
+	Name="AC BD Back1"
+	Modified=true
+	OscWave=Sine
+	OscFreq=84.33929779Hz
+	OscDcy=829.09571760ms
+	ModMode=Decay
+	ModRate=353.33333333ms
+	ModAmt=+2.10343788sm
+	NFilMod=LP
+	NFilFrq=447.74419084Hz
+	NFilQ=0.70710683
+	NStereo=Off
+	NEnvMod=Exp
+	NEnvAtk=0.00000000ms
+	NEnvDcy=316.22776602ms
+	Mix=50.00000000/50.00000000
+	DistAmt=0.00000000
+	EQFreq=79.62143575Hz
+	EQGain=+22.50778198dB
+	Level=-2.61936694dB
+	Pan=0.00000000
+	Output=A
+	OscVel=33.33333433%
+	NVel=29.80470955%
+	ModVel=0.00000000%
+}

@@ -24,7 +24,7 @@ namespace
             {
                 while (! done() && (CharacterFunctions::isWhitespace (peek()) || peek() == ',' || peek() == ';')) ++i;
                 if (t.substring (i, i + 2) == "/*") { const int e = t.indexOf (i + 2, "*/"); i = e < 0 ? t.length() : e + 2; continue; }
-                if (t.substring (i, i + 2) == "//" || peek() == '#') { while (! done() && peek() != '\n') ++i; continue; }
+                if (t.substring (i, i + 2) == "//") { while (! done() && peek() != '\n') ++i; continue; }
                 break;
             }
         }
@@ -39,12 +39,20 @@ namespace
             if (r.peek() == '}') { ++r.i; return; }
             // key (up to ':' on the same line); a line without ':' is skipped
             const int lineEnd = [&] { const int e = r.t.indexOf (r.i, "\n"); return e < 0 ? r.t.length() : e; }();
-            const int colon = r.t.indexOf (r.i, ":");
-            if (colon < 0 || colon > lineEnd)
+            // key separator: ':' ("Key: value") or '=' ("Key=value"), whichever comes first on the line
+            int colon = -1;
+            for (int k = r.i; k < lineEnd; ++k) if (r.t[k] == ':' || r.t[k] == '=') { colon = k; break; } else if (r.t[k] == '"' || r.t[k] == '{' || r.t[k] == '}') break;
+            if (colon < 0)
             {
-                // a lone '{' opens an anonymous block, anything else is ignored
+                // a lone '{' opens an anonymous block; a list ("Off, Off, On }") is stored as values; '}' closes the block
                 if (r.peek() == '{') { ++r.i; auto* n = into.children.add (new PatternImport::Node()); if (depth < 16) parseBlock (r, *n, depth + 1); continue; }
-                r.i = lineEnd; continue;
+                int e = r.i;
+                while (e < lineEnd && r.t[e] != '}' && r.t[e] != ',') ++e;
+                if (e > r.i) { auto* v = into.children.add (new PatternImport::Node()); v->value = r.t.substring (r.i, e).trim(); }
+                r.i = e;
+                if (r.i < r.t.length() && r.t[r.i] == '}') { ++r.i; return; }
+                if (r.i < r.t.length() && r.t[r.i] == ',') ++r.i;
+                continue;
             }
             auto* n = into.children.add (new PatternImport::Node());
             n->key = r.t.substring (r.i, colon).trim().unquoted();
@@ -90,7 +98,7 @@ namespace
 
     bool isPatch (const PatternImport::Node& n)
     {
-        for (auto* k : { "OscFreq", "OscWave", "OscDcy", "NFilFrq", "NEnvDcy", "ModMode", "Mix" }) if (n.child (k) != nullptr) return true;
+        for (auto* k : { "OscFreq", "OscWave", "OscDcy", "NFilFrq", "NEnvDcy", "ModMode" }) if (n.child (k) != nullptr) return true;
         return false;
     }
     const PatternImport::Node* channelRows (const PatternImport::Node& n, int ch)   // channel block 1..8 of a pattern
@@ -142,11 +150,15 @@ namespace
             }
             return (float) jlimit (0.0, 100.0, r * 100.0);
         });
-        set ("NFilMode", mt::nMode, [] (const String& v) { return (float) choice (v, { "LP", "BP", "HP" }, 0); });
+        auto filt = [] (const String& v) { return (float) choice (v, { "LP", "BP", "HP" }, 0); };
+        set ("NFilMode", mt::nMode, filt);
+        set ("NFilMod",  mt::nMode, filt);
         set ("NFilFrq",  mt::nFreq, [] (const String& v) { return (float) hz (v); });
         set ("NFilQ",    mt::nQ,    [] (const String& v) { return (float) num (v); });
         set ("NStereo",  mt::nStereo, [] (const String& v) { return onOff (v) ? 1.0f : 0.0f; });
-        set ("NEnvMode", mt::nEnv,  [] (const String& v) { return (float) choice (v, { "Exp", "Lin", "Mod" }, 0); });
+        auto env = [] (const String& v) { return (float) choice (v, { "Exp", "Lin", "Mod" }, 0); };
+        set ("NEnvMode", mt::nEnv, env);
+        set ("NEnvMod",  mt::nEnv, env);
         set ("NEnvAtk",  mt::nAtk,  [] (const String& v) { return (float) ms (v); });
         set ("NEnvDcy",  mt::nDcy,  [] (const String& v) { return (float) ms (v); });
         // Mix "osc/noise" (e.g. 82.00/18.00) -> noise share 0..100
@@ -269,7 +281,24 @@ PatternImport::Result PatternImport::runText (TwinboxProcessor& p, const String&
     else if (auto* one = top->child ("Pattern"); one != nullptr && isPattern (*one)) { applyPattern (p, *one, targetPattern); res.patterns = 1; }
     else if (isPattern (*top)) { applyPattern (p, *top, targetPattern); res.patterns = 1; }
 
-    if (auto sw = top->get ("Swing"); sw.isNotEmpty() && res.patterns > 0) setNatural (p.apvts, aSwing, (float) num (sw));
+    if (res.patterns > 1)   // preset: swing, fill rate, selected pattern
+    {
+        if (auto sw = top->get ("Swing"); sw.isNotEmpty()) setNatural (p.apvts, aSwing, (float) num (sw));
+        if (auto fr = top->get ("FillRate"); fr.isNotEmpty())
+        {
+            const int x = (int) std::lround (num (fr));
+            setNatural (p.apvts, aFillRate, (float) (x >= 2 && x <= 8 ? x - 1 : 0));   // Manual, 2 .. 8
+        }
+        if (auto* pn = top->child ("Pattern"); pn != nullptr && pn->children.isEmpty())
+        {
+            const int slot = patternSlot (pn->value, -1);
+            if (slot >= 0) setNatural (p.apvts, aPattern, (float) slot);
+        }
+    }
+    if (res.patches > 1)
+        if (auto* mutes = top->child ("Mutes"))
+            for (int ch = 0; ch < jmin (MicroEngine::NC, mutes->children.size()); ++ch)
+                setNatural (p.apvts, a (ch, mt::mute), onOff (mutes->children[ch]->value) ? 1.0f : 0.0f);
 
     res.ok = res.patterns > 0 || res.patches > 0;
     res.message = res.ok ? "Imported " + String (res.patterns) + " pattern(s) and " + String (res.patches) + " drum patch(es)."
