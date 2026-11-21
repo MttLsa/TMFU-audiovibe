@@ -2,50 +2,71 @@
 #include "DspCommon.h"
 
 // =====================================================================================================
-//  TB-303 VCF model
-//  The 303 filter is a 4-pole *diode* ladder: its stages are not buffered from each other, so they do not
-//  share one cutoff. Following the published analyses (Open303 TeeBeeFilter, Pirkle's TPT diode ladder and
-//  the "first pole an octave higher" observation used by JC-303), it is modelled as:
-//   * 4 TPT one-pole lowpass stages, first pole one octave above the others  -> the typical 18..24 dB slope
-//   * a high-pass (~150 Hz) inside the resonance feedback path  -> resonance thins the bass instead of
-//     boosting it, the "squelch" of the original
-//   * tanh saturation at the ladder input (transistor/diode non-linearity) + resonance gain compensation
-//  solved with zero-delay feedback, run 2x oversampled by the caller.
+//  TB-303 VCF model: coupled 4-pole diode ladder
+//  In the 303 the four diode-pair stages are NOT buffered: every capacitor is loaded by its neighbours. Linearised,
+//  this gives the "diode ladder" equations (Zavalishin, The Art of VA Filter Design; Pirkle, AN-6 Diode Ladder
+//  Filter), solved here per sample with zero-delay feedback (TPT one-poles with the inter-stage coupling terms).
+//  Behaviour of the circuit that follows from it:
+//   * soft knee and a resonance peak that sits below the stage cutoff (the internal cutoff is scaled so the peak
+//     lands on the Cut Off Freq knob),
+//   * the passband (bass) drops as resonance rises, and the loop self-oscillates at K ~ 17,
+//   * a high-pass (~150 Hz) inside the resonance feedback path, as in the original circuit,
+//   * tanh saturation of the transistor pair that drives the ladder.
+//  Run 2x oversampled by the caller.
 // =====================================================================================================
 namespace dsp
 {
     struct Diode303
     {
-        float s[4] {}, fbLp = 0;
-        void reset() { s[0] = s[1] = s[2] = s[3] = 0; fbLp = 0; }
+        struct Pole
+        {
+            float z1 = 0, alpha = 1, beta = 0, gamma = 1, delta = 0, eps = 0, a0 = 1, fb = 0;
+            inline float fbOut() const { return beta * (z1 + fb * delta); }
+            inline float run (float x)
+            {
+                x = x * gamma + fb + eps * fbOut();
+                const float v = (a0 * x - z1) * alpha, o = v + z1;
+                z1 = v + o;
+                return o;
+            }
+        };
+        Pole p[4];
+        float fbLp = 0, Gamma = 0, SG[4] {}, lastFc = -1, lastSr = -1;
+        void reset() { for (auto& q : p) q.z1 = 0; fbLp = 0; }
 
-        // fc in Hz, sr = (oversampled) sample rate, res 0..1, drive >= 1
+        void setCutoff (float fc, float sr)
+        {
+            if (fc == lastFc && sr == lastSr) return;
+            lastFc = fc; lastSr = sr;
+            const float g = std::tan (pi * std::min (fc, sr * 0.45f) / sr);
+            const float G4 = 0.5f * g / (1.0f + g);
+            const float G3 = 0.5f * g / (1.0f + g - 0.5f * g * G4);
+            const float G2 = 0.5f * g / (1.0f + g - 0.5f * g * G3);
+            const float G1 = g / (1.0f + g - g * G2);
+            Gamma = G4 * G3 * G2 * G1;
+            SG[0] = G4 * G3 * G2; SG[1] = G4 * G3; SG[2] = G4; SG[3] = 1.0f;
+            const float a = g / (1.0f + g);
+            for (auto& q : p) { q.alpha = a; q.delta = g; }
+            p[0].beta = 1.0f / (1.0f + g - g * G2);        p[0].gamma = 1.0f + G1 * G2; p[0].eps = G2; p[0].a0 = 1.0f;
+            p[1].beta = 1.0f / (1.0f + g - 0.5f * g * G3); p[1].gamma = 1.0f + G2 * G3; p[1].eps = G3; p[1].a0 = 0.5f;
+            p[2].beta = 1.0f / (1.0f + g - 0.5f * g * G4); p[2].gamma = 1.0f + G3 * G4; p[2].eps = G4; p[2].a0 = 0.5f;
+            p[3].beta = 1.0f / (1.0f + g);                 p[3].gamma = 1.0f;           p[3].eps = 0.0f; p[3].a0 = 0.5f;
+        }
+
+        // fc in Hz (where the resonance peak sits), sr = (oversampled) sample rate, res 0..1, drive >= 1
         inline float process (float in, float fc, float sr, float res, float drive)
         {
-            const float g1 = std::tan (pi * std::min (fc * 2.0f, sr * 0.45f) / sr);
-            const float g  = std::tan (pi * std::min (fc, sr * 0.45f) / sr);
-            const float G1 = g1 / (1.0f + g1), G = g / (1.0f + g);
-            const float k = res * res * 5.2f + res * 1.6f;               // self-oscillates near res = 1
-            const float c1 = (1.0f - G1) * s[0], c2 = (1.0f - G) * s[1], c3 = (1.0f - G) * s[2], c4 = (1.0f - G) * s[3];
-            const float Gp = G1 * G * G * G;
-            const float S = G * G * G * c1 + G * G * c2 + G * c3 + c4;
+            setCutoff (fc * 1.42f, sr);                    // the coupled ladder resonates at ~0.7 x its stage cutoff
+            const float K = 16.8f * res;                   // ~17 = self-oscillation of the loop
+            p[3].fb = 0.0f; p[2].fb = p[3].fbOut(); p[1].fb = p[2].fbOut(); p[0].fb = p[1].fbOut();
+            const float sigma = SG[0] * p[0].fbOut() + SG[1] * p[1].fbOut() + SG[2] * p[2].fbOut() + SG[3] * p[3].fbOut();
             const float x = in * drive;
-            // feedback = y4 - LP150(y4)  (high-pass in the loop); fbLp from the previous sample
-            const float yEst = (Gp * (x + k * fbLp) + S) / (1.0f + k * Gp);
-            const float u = fastTanh (x - k * (yEst - fbLp));
-            float y = u;
-            const float Gs[4] = { G1, G, G, G };
-            for (int i = 0; i < 4; ++i)
-            {
-                const float v = (y - s[i]) * Gs[i];
-                const float o = v + s[i];
-                s[i] = o + v;
-                y = o;
-            }
-            const float a = 1.0f - std::exp (-twoPi * 150.0f / sr);
-            fbLp += (y - fbLp) * a;
+            // resonance path high-passed (~150 Hz): fbLp is the low-passed feedback from the previous sample
+            const float u = fastTanh ((x - K * (sigma - fbLp)) / (1.0f + K * Gamma));
+            const float y = p[3].run (p[2].run (p[1].run (p[0].run (u))));
+            fbLp += (y - fbLp) * (1.0f - std::exp (-twoPi * 150.0f / sr));
             if (! std::isfinite (y)) { reset(); return 0.0f; }
-            return y * (1.0f + 0.45f * k) / std::sqrt (drive);
+            return y * (1.0f + 0.06f * K) * 1.6f / std::sqrt (drive);
         }
     };
 

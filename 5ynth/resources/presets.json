@@ -2604,7 +2604,7 @@
     "g_mode": "Legato",
     "g_glide": 60,
     "g_vel": 0.35,
-    "g_trim": -0.6
+    "g_trim": 2.75
    }
   },
   {
@@ -4058,7 +4058,7 @@
     "g_mode": "Legato",
     "g_glide": 70,
     "g_vel": 0.35,
-    "g_trim": -1.82
+    "g_trim": 3.5
    }
   },
   {
@@ -4602,7 +4602,7 @@
     "g_mode": "Legato",
     "g_glide": 70,
     "g_vel": 0.35,
-    "g_trim": -1.27
+    "g_trim": 3.1
    }
   },
   {
@@ -5654,7 +5654,7 @@
     "g_mode": "Legato",
     "g_glide": 70,
     "g_vel": 0.35,
-    "g_trim": -1.36
+    "g_trim": -2.11
    }
   },
   {
@@ -5991,7 +5991,7 @@
     "g_mode": "Legato",
     "g_glide": 70,
     "g_vel": 0.35,
-    "g_trim": -2.71
+    "g_trim": 2.06
    }
   },
   {
@@ -6282,7 +6282,7 @@
     "g_mode": "Legato",
     "g_glide": 70,
     "g_vel": 0.35,
-    "g_trim": -1.09
+    "g_trim": 0.5
    }
   },
   {
@@ -6716,7 +6716,7 @@
     "g_mode": "Legato",
     "g_glide": 50,
     "g_vel": 0.35,
-    "g_trim": -0.12
+    "g_trim": 2.71
    }
   },
   {
