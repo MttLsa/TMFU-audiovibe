@@ -1,4 +1,4 @@
-// SYNTHZILLA offline harness
+// 5ynth (ex SynthZilla) offline harness
 //   SynthZillaTest <outDir> check            render every preset: no NaN, not silent, report peak / loudness
 //   SynthZillaTest <outDir> levels           write <outDir>/levels.json: g_trim so that every preset peaks at -1 dBFS
 //   SynthZillaTest <outDir> wav <substring>  render matching presets to WAV
@@ -187,17 +187,6 @@ int main (int argc, char** argv)
             if (w) w->writeFromAudioSampleBuffer (b, 0, b.getNumSamples());
             std::printf ("%s  peak %.2f\n", f.getFileName().toRawUTF8(), st.peak);
         }
-    }
-    else if (mode == "logo")   // header close-up at 2x (retina / 200 %)
-    {
-        SynthZillaProcessor proc; proc.loadPreset (findPreset (argc > 3 ? String (argv[3]) : String ("Organ 2")));
-        std::unique_ptr<AudioProcessorEditor> ed (proc.createEditor());
-        ed->setSize (1400, 900);
-        MessageManager::getInstance()->runDispatchLoopUntil (80);
-        auto img = ed->createComponentSnapshot ({ 0, 0, 1400, 140 }, true, 2.0f);
-        PNGImageFormat png; FileOutputStream os (outDir.getChildFile ("logo_header.png")); os.setPosition (0); os.truncate(); png.writeImageToStream (img, os);
-        auto full = ed->createComponentSnapshot (ed->getLocalBounds(), true, 1.0f);
-        FileOutputStream os2 (outDir.getChildFile ("logo_window.png")); os2.setPosition (0); os2.truncate(); png.writeImageToStream (full, os2);
     }
     else if (mode == "gui")
     {

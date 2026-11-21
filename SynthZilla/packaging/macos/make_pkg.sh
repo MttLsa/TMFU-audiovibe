@@ -1,13 +1,14 @@
 #!/bin/bash
-# Builds an (unsigned) macOS installer: SynthZilla-<version>-macOS.pkg  (TMFU audiovibe)
+# Builds an (unsigned) macOS installer: 5ynth-<version>-macOS.pkg  (TMFU audiovibe; formerly SynthZilla)
 # Contains: AU (/Library/Audio/Plug-Ins/Components), VST3 (/Library/Audio/Plug-Ins/VST3), Standalone app (/Applications).
 # Universal binaries: Intel x86_64 + Apple Silicon arm64 (checked below).
-# Run from the SynthZilla folder after a Release build:  ./packaging/macos/make_pkg.sh 2.0.0
+# Run from the SynthZilla folder after a Release build:  ./packaging/macos/make_pkg.sh 2.1.0
 set -euo pipefail
-VERSION="${1:-2.0.0}"
-NAME="SynthZilla"
-ID="com.tmfuaudiovibe.synthzilla"
-ART="build/${NAME}_artefacts/Release"
+VERSION="${1:-2.1.0}"
+NAME="5ynth"                       # product name (bundles, AU name)
+TARGET="Fivesynth"                 # CMake target (artefacts folder)
+ID="com.tmfuaudiovibe.5ynth"
+ART="build/${TARGET}_artefacts/Release"
 OUT="build/installer"
 rm -rf "$OUT" && mkdir -p "$OUT/au/Library/Audio/Plug-Ins/Components" "$OUT/vst3/Library/Audio/Plug-Ins/VST3" "$OUT/app/Applications"
 
@@ -91,7 +92,7 @@ pkgutil --payload-files "$OUT/${NAME}-AU.pkg"   | grep -q "Components/${NAME}.co
 pkgutil --payload-files "$OUT/${NAME}-VST3.pkg" | grep -q "VST3/${NAME}.vst3/Contents/MacOS/${NAME}"        || { echo "ERROR: VST3 payload"; exit 1; }
 pkgutil --payload-files "$OUT/${NAME}-App.pkg"  | grep -q "Applications/${NAME}.app/Contents/MacOS/${NAME}"  || { echo "ERROR: app payload"; exit 1; }
 if grep -q "<relocate>" "$CHECK/${NAME}-AU.pkg/PackageInfo"; then echo "ERROR: AU package is relocatable"; exit 1; fi
-# the AU must present itself as "TMFU audiovibe: SynthZilla"
+# the AU must present itself as "TMFU audiovibe: 5ynth"
 /usr/libexec/PlistBuddy -c "Print :AudioComponents:0:name" "$OUT/au/Library/Audio/Plug-Ins/Components/${NAME}.component/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Print :AudioComponents:0:name" "$OUT/au/Library/Audio/Plug-Ins/Components/${NAME}.component/Contents/Info.plist" | grep -q "^TMFU audiovibe: ${NAME}$" \
   || { echo "ERROR: AU manufacturer name is not TMFU audiovibe"; exit 1; }

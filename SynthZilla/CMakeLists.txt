@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum macOS version")
 set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "macOS architectures")
 
-project(SYNTHZILLA VERSION 2.0.0 LANGUAGES C CXX)
+project(FIVESYNTH VERSION 2.1.0 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -24,14 +24,14 @@ if(APPLE)
   list(APPEND SZ_FORMATS AU)
 endif()
 
-juce_add_plugin(SynthZilla
+juce_add_plugin(Fivesynth
   COMPANY_NAME "TMFU audiovibe"
   COMPANY_WEBSITE ""
-  BUNDLE_ID "com.tmfuaudiovibe.synthzilla"
+  BUNDLE_ID "com.tmfuaudiovibe.5ynth"
   PLUGIN_MANUFACTURER_CODE Tmfu
-  PLUGIN_CODE Szla
+  PLUGIN_CODE Szla                 # kept from SynthZilla so saved DAW projects still find the plug-in
   FORMATS ${SZ_FORMATS}
-  PRODUCT_NAME "SynthZilla"
+  PRODUCT_NAME "5ynth"
   IS_SYNTH TRUE
   NEEDS_MIDI_INPUT TRUE
   NEEDS_MIDI_OUTPUT FALSE
@@ -40,21 +40,21 @@ juce_add_plugin(SynthZilla
   COPY_PLUGIN_AFTER_BUILD FALSE
   VST3_CATEGORIES Instrument Synth
   AU_MAIN_TYPE kAudioUnitType_MusicDevice
-  DESCRIPTION "Up to 5 analog / digital synth modules with famous sounds 1960s-2020s")
+  DESCRIPTION "5-in-1 synthesizer: up to 5 analog / digital synth modules with famous sounds 1960s-2020s")
 
 set(TS_SOURCES
   Source/PluginProcessor.cpp Source/PluginEditor.cpp Source/Params.cpp Source/Presets.cpp
   Source/dsp/SynthEngine.cpp Source/dsp/Wavetables.cpp)
-target_sources(SynthZilla PRIVATE ${TS_SOURCES})
-target_include_directories(SynthZilla PRIVATE Source)
+target_sources(Fivesynth PRIVATE ${TS_SOURCES})
+target_include_directories(Fivesynth PRIVATE Source)
 
 juce_add_binary_data(SynthZillaData SOURCES resources/presets.json resources/fonts/Inter-Regular.ttf resources/fonts/Inter-SemiBold.ttf
-  resources/fonts/Urbanist-Light.ttf resources/logo/logo_mark.png resources/logo/logo_word.png resources/logo/logo_full.png)
+  resources/fonts/Michroma-Regular.ttf)
 set_target_properties(SynthZillaData PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 set(TS_DEFS JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0 JUCE_DISPLAY_SPLASH_SCREEN=0)
-target_compile_definitions(SynthZilla PUBLIC ${TS_DEFS})
-target_link_libraries(SynthZilla
+target_compile_definitions(Fivesynth PUBLIC ${TS_DEFS})
+target_link_libraries(Fivesynth
   PRIVATE juce::juce_audio_utils juce::juce_dsp SynthZillaData
   PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
 
@@ -64,6 +64,6 @@ if(SYNTHZILLA_BUILD_TESTS)
   juce_add_console_app(SynthZillaTest PRODUCT_NAME "SynthZillaTest")
   target_sources(SynthZillaTest PRIVATE tests/TestMain.cpp ${TS_SOURCES})
   target_include_directories(SynthZillaTest PRIVATE Source)
-  target_compile_definitions(SynthZillaTest PRIVATE ${TS_DEFS} JucePlugin_Name="SynthZilla" JucePlugin_VersionString="2.0.0" JUCE_STANDALONE_APPLICATION=0 JUCE_MODAL_LOOPS_PERMITTED=1)
+  target_compile_definitions(SynthZillaTest PRIVATE ${TS_DEFS} JucePlugin_Name="5ynth" JucePlugin_VersionString="2.1.0" JUCE_STANDALONE_APPLICATION=0 JUCE_MODAL_LOOPS_PERMITTED=1)
   target_link_libraries(SynthZillaTest PRIVATE juce::juce_audio_utils juce::juce_dsp SynthZillaData juce::juce_recommended_config_flags)
 endif()

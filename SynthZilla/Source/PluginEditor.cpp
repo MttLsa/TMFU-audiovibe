@@ -18,19 +18,13 @@ juce::Font ui::font (float h, bool bold) { return juce::Font (juce::FontOptions 
 // =====================================================================================================
 //  5ynth logo
 // =====================================================================================================
-const juce::Image& logo::mark() { static auto im = juce::ImageCache::getFromMemory (BinaryData::logo_mark_png, BinaryData::logo_mark_pngSize); return im; }
-const juce::Image& logo::word() { static auto im = juce::ImageCache::getFromMemory (BinaryData::logo_word_png, BinaryData::logo_word_pngSize); return im; }
-const juce::Image& logo::full() { static auto im = juce::ImageCache::getFromMemory (BinaryData::logo_full_png, BinaryData::logo_full_pngSize); return im; }
-
-void logo::drawMark (juce::Graphics& g, juce::Rectangle<float> r, bool metal)
+void logo::drawMark (juce::Graphics& g, juce::Rectangle<float> r)
 {
     using namespace juce;
-    // flat white emblem in a 340 x 350 box: "5" whose middle is four bars, mini keyboard, pulse line, power symbol
     const float s = jmin (r.getWidth() / 340.0f, r.getHeight() / 350.0f);
     const auto o = r.getCentre() - Point<float> (170.0f, 175.0f) * s;
     const auto T = AffineTransform::scale (s).translated (o);
-    const Colour ink (0xffeeeeee);
-    auto steel = [&] (const Path& q)   // brushed metal: diagonal light / dark gradient + thin dark edge
+    auto steel = [&] (const Path& q)   // brushed metal: diagonal light / dark gradient
     {
         const auto b = q.getBounds();
         ColourGradient gr (Colour (0xffe8e8e8), b.getX(), b.getY(), Colour (0xff8a8a8a), b.getRight(), b.getBottom(), false);
@@ -41,7 +35,7 @@ void logo::drawMark (juce::Graphics& g, juce::Rectangle<float> r, bool metal)
     p.addRectangle (25, 52, 177, 46);                         // top bar of the 5
     p.addQuadrilateral (25, 52, 76, 52, 58, 213, 7, 213);     // slanted stem
     const float bx[4] = { 77, 70, 66, 63 }, by[4] = { 133, 156, 178, 200 };
-    for (int i = 0; i < 4; ++i) (metal ? bars : p).addRectangle (bx[i], by[i], 333 - bx[i], 13);   // the four bars
+    for (int i = 0; i < 4; ++i) bars.addRectangle (bx[i], by[i], 333 - bx[i], 13);   // the four bars
     Path bowl;                                                // lower bowl of the 5
     const float cx = 120, cy = 232, a0 = MathConstants<float>::halfPi - 0.12f, a1 = 1.5f * MathConstants<float>::pi;
     bowl.addCentredArc (cx, cy, 113, 113, 0, a0, a1, true);
@@ -50,18 +44,14 @@ void logo::drawMark (juce::Graphics& g, juce::Rectangle<float> r, bool metal)
     p.addPath (bowl);
     for (int k = 0; k < 6; ++k) p.addRectangle (220.0f + k * 19.0f, 53, 17, 69);   // white keys
     p.applyTransform (T);
-    if (metal)
-    {
-        steel (p);
-        bars.applyTransform (T);
-        for (float rad : { 24.0f, 9.0f })   // glow
-            DropShadow (Colour (0xffd8f0ff).withAlpha (rad > 15 ? 0.4f : 0.6f), jmax (1, (int) (rad * s)), {}).drawForPath (g, bars);
-        const auto bb = bars.getBounds();
-        ColourGradient gb (Colour (0xffd4dee6), bb.getX(), 0, Colour (0xffd4dee6), bb.getRight(), 0, false);
-        gb.addColour (0.35, Colours::white); gb.addColour (0.75, Colour (0xfff2f6f8));
-        g.setGradientFill (gb); g.fillPath (bars);
-    }
-    else { g.setColour (ink); g.fillPath (p); }
+    steel (p);
+    bars.applyTransform (T);
+    for (float rad : { 24.0f, 9.0f })   // glow
+        DropShadow (Colour (0xffd8f0ff).withAlpha (rad > 15 ? 0.4f : 0.6f), jmax (1, (int) (rad * s)), {}).drawForPath (g, bars);
+    const auto bb = bars.getBounds();
+    ColourGradient gb (Colour (0xffd4dee6), bb.getX(), 0, Colour (0xffd4dee6), bb.getRight(), 0, false);
+    gb.addColour (0.35, Colours::white); gb.addColour (0.75, Colour (0xfff2f6f8));
+    g.setGradientFill (gb); g.fillPath (bars);
     g.setColour (Colour (0xff141414));                        // black keys
     for (int k : { 1, 2, 4, 5 }) g.fillRect (Rectangle<float> (220.0f + k * 19.0f - 5.0f, 53, 8, 40).transformedBy (T));
     Path pulse;                                               // pulse line
@@ -69,7 +59,7 @@ void logo::drawMark (juce::Graphics& g, juce::Rectangle<float> r, bool metal)
     pulse.startNewSubPath (pts[0][0], pts[0][1]);
     for (auto& q : pts) pulse.lineTo (q[0], q[1]);
     pulse.applyTransform (T);
-    g.setColour (metal ? Colour (0xffb0b0b0) : ink);
+    g.setColour (Colour (0xffb0b0b0));
     g.strokePath (pulse, PathStrokeType (jmax (0.8f, 2.2f * s), PathStrokeType::mitered, PathStrokeType::butt));
     Path pw;                                                  // power symbol
     pw.addCentredArc (315, 27, 13, 13, 0, 0.6f, MathConstants<float>::twoPi - 0.6f, true);
@@ -80,32 +70,27 @@ void logo::drawMark (juce::Graphics& g, juce::Rectangle<float> r, bool metal)
 
 void logo::drawWord (juce::Graphics& g, juce::Rectangle<float> r, juce::Justification j)
 {
-    static juce::Typeface::Ptr light = juce::Typeface::createSystemTypefaceFor (BinaryData::UrbanistLight_ttf, BinaryData::UrbanistLight_ttfSize);
+    // Michroma (wide, low letters), made slightly bolder by stroking the glyph outlines
+    static juce::Typeface::Ptr tf = juce::Typeface::createSystemTypefaceFor (BinaryData::MichromaRegular_ttf, BinaryData::MichromaRegular_ttfSize);
+    const juce::Font f (juce::FontOptions (tf).withHeight (r.getHeight()));
+    juce::GlyphArrangement ga;
+    ga.addFittedText (f, "5YNTH", r.getX(), r.getY(), r.getWidth(), r.getHeight(), j, 1, 1.0f);
+    juce::Path p;
+    ga.createPath (p);
     g.setColour (juce::Colour (0xffeeeeee));
-    g.setFont (juce::Font (juce::FontOptions (light).withHeight (r.getHeight() * 1.28f)).withExtraKerningFactor (0.04f));
-    g.drawText ("5YNTH", r, j, false);
-}
-
-void logo::draw (juce::Graphics& g, const juce::Image& im, juce::Rectangle<float> r, juce::RectanglePlacement place)
-{
-    g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
-    g.setOpacity (1.0f);
-    g.drawImage (im, r, place);
+    g.fillPath (p);
+    const float bold = juce::SystemStats::getEnvironmentVariable ("WORD_BOLD", "0.035").getFloatValue();   // TEMP: mock-ups
+    g.strokePath (p, juce::PathStrokeType (r.getHeight() * bold, juce::PathStrokeType::mitered));
 }
 
 void LogoSplash::paint (juce::Graphics& g)
 {
     g.fillAll (juce::Colours::black.withAlpha (0.92f));
-    auto r = getLocalBounds().toFloat().withSizeKeepingCentre (560.0f, 560.0f);
-    if (juce::SystemStats::getEnvironmentVariable ("LOGO_VARIANT", "1").getIntValue() == 1)   // TEMP: mock-ups
-        logo::draw (g, logo::full(), r.removeFromTop (480.0f).reduced (50.0f, 20.0f));
-    else
-    {
-        logo::drawMark (g, r.removeFromTop (340.0f).reduced (10.0f), juce::SystemStats::getEnvironmentVariable ("LOGO_VARIANT", "1").getIntValue() == 3);
-        r.removeFromTop (20.0f);
-        logo::drawWord (g, r.removeFromTop (110.0f).reduced (0, 10), juce::Justification::centred);
-        r.removeFromTop (20.0f);
-    }
+    auto r = getLocalBounds().toFloat().withSizeKeepingCentre (640.0f, 600.0f);
+    logo::drawMark (g, r.removeFromTop (330.0f).reduced (10.0f));
+    r.removeFromTop (14.0f);
+    logo::drawWord (g, r.removeFromTop (110.0f).reduced (20.0f, 0), juce::Justification::centred);   // wider than the emblem, as in the artwork
+    r.removeFromTop (20.0f);
     g.setColour (ui::dim); g.setFont (ui::font (13.0f));
     g.drawText ("TMFU audiovibe  v" + juce::String (JucePlugin_VersionString), r.removeFromTop (24.0f), juce::Justification::centred);
 }
@@ -1320,24 +1305,13 @@ void SynthZillaEditor::paint (juce::Graphics& g)
     if (overlay != nullptr) { g.setColour (juce::Colours::black.withAlpha (0.6f)); g.fillRect (0, 64, W, H - 64); }
 }
 
-// header logo: keyboard stack + "5ynth" wordmark + "5-IN-1 SYNTHESIZER" (images from the attached artwork)
+// header logo: emblem + wordmark
 void SynthZillaEditor::drawLogo (juce::Graphics& g)
 {
-    const int v = juce::SystemStats::getEnvironmentVariable ("LOGO_VARIANT", "1").getIntValue();   // TEMP: mock-ups
-    const auto left = juce::RectanglePlacement::xLeft | juce::RectanglePlacement::yMid;
     auto r = logoArea;
-    if (v == 1)        // images cut from the artwork: emblem + wordmark
-    {
-        logo::draw (g, logo::mark(), r.removeFromLeft (60.0f));
-        r.removeFromLeft (12.0f);
-        logo::draw (g, logo::word(), r.withSizeKeepingCentre (r.getWidth(), 34.0f), left);
-    }
-    else               // vector: 2 = flat white (from the white artwork), 3 = brushed metal + glowing bars
-    {
-        logo::drawMark (g, r.removeFromLeft (60.0f), v == 3);
-        r.removeFromLeft (12.0f);
-        logo::drawWord (g, r.withSizeKeepingCentre (r.getWidth(), 32.0f));
-    }
+    logo::drawMark (g, r.removeFromLeft (60.0f));
+    r.removeFromLeft (12.0f);
+    logo::drawWord (g, r.withSizeKeepingCentre (r.getWidth(), 34.0f));   // wordmark wider than the emblem, as in the artwork
 }
 
 void SynthZillaEditor::mouseDown (const juce::MouseEvent& e)

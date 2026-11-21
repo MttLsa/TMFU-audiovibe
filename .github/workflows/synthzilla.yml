@@ -1,4 +1,4 @@
-name: synthzilla
+name: 5ynth
 
 on:
   push:
@@ -23,20 +23,20 @@ jobs:
       - name: Validate AU
         run: |
           mkdir -p ~/Library/Audio/Plug-Ins/Components
-          cp -R build/SynthZilla_artefacts/Release/AU/SynthZilla.component ~/Library/Audio/Plug-Ins/Components/
+          cp -R build/Fivesynth_artefacts/Release/AU/5ynth.component ~/Library/Audio/Plug-Ins/Components/
           killall -9 AudioComponentRegistrar || true
           auval -v aumu Szla Tmfu
       - name: Build installer (.pkg, Intel + Apple Silicon)
-        run: ./packaging/macos/make_pkg.sh 2.0.0
+        run: ./packaging/macos/make_pkg.sh 2.1.0
       - name: Upload installer
         uses: actions/upload-artifact@v5
         with:
-          name: SynthZilla-2.0.0-macOS-Installer
-          path: SynthZilla/build/installer/SynthZilla-2.0.0-macOS.pkg
+          name: 5ynth-2.1.0-macOS-Installer
+          path: SynthZilla/build/installer/5ynth-2.1.0-macOS.pkg
       - uses: actions/upload-artifact@v5
         with:
-          name: SynthZilla-macOS
+          name: 5ynth-macOS
           path: |
-            SynthZilla/build/SynthZilla_artefacts/Release/VST3
-            SynthZilla/build/SynthZilla_artefacts/Release/AU
-            SynthZilla/build/SynthZilla_artefacts/Release/Standalone
+            SynthZilla/build/Fivesynth_artefacts/Release/VST3
+            SynthZilla/build/Fivesynth_artefacts/Release/AU
+            SynthZilla/build/Fivesynth_artefacts/Release/Standalone

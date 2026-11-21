@@ -190,17 +190,12 @@ private:
     juce::Label info;
 };
 
-// 5ynth logo (resources/logo, cut from the artwork by tools/make_logo.py)
+// 5ynth logo, drawn as vectors (sharp at any size): brushed-metal "5" whose middle is four glowing bars,
+// mini keyboard, pulse line and power symbol; wordmark "5YNTH" in Urbanist Light
 namespace logo
 {
-    const juce::Image& mark();      // emblem: metallic "5", glowing bars, mini keyboard, power symbol
-    const juce::Image& word();      // "5YNTH" wordmark
-    const juce::Image& full();      // whole logo
-    // vector redraw of the same logo (sharp at any size): emblem in a 340 x 350 box, wordmark in Urbanist Light
-    void drawMark (juce::Graphics& g, juce::Rectangle<float> r, bool metal = false);   // flat white, or brushed metal + glowing bars
+    void drawMark (juce::Graphics& g, juce::Rectangle<float> r);   // emblem fitted in r (340 x 350 design box)
     void drawWord (juce::Graphics& g, juce::Rectangle<float> r, juce::Justification j = juce::Justification::centredLeft);
-    void draw (juce::Graphics& g, const juce::Image& im, juce::Rectangle<float> r,                   // fitted, high quality
-               juce::RectanglePlacement place = juce::RectanglePlacement::centred);
 }
 
 // full-size logo shown over the editor (click on the header logo); any click closes it
