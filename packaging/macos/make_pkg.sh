@@ -17,8 +17,10 @@ cp -R "$ART/VST3/DUALBOX.vst3"    "$OUT/vst3/Library/Audio/Plug-Ins/VST3/"
 # third-party licence notices (texts read from the sources of this build): inside both plug-in bundles and next to
 # the factory samples (/Users/Shared/Dualbox/THIRD_PARTY_NOTICES.txt)
 python3 tools/make_notices.py build/_deps/juce-src "$OUT/THIRD_PARTY_NOTICES.txt"
-cp "$OUT/THIRD_PARTY_NOTICES.txt" "$OUT/au/Library/Audio/Plug-Ins/Components/DUALBOX.component/Contents/Resources/"
-cp "$OUT/THIRD_PARTY_NOTICES.txt" "$OUT/vst3/Library/Audio/Plug-Ins/VST3/DUALBOX.vst3/Contents/Resources/"
+for BUNDLE in "$OUT/au/Library/Audio/Plug-Ins/Components/DUALBOX.component" "$OUT/vst3/Library/Audio/Plug-Ins/VST3/DUALBOX.vst3"; do
+  mkdir -p "$BUNDLE/Contents/Resources"
+  cp "$OUT/THIRD_PARTY_NOTICES.txt" "$BUNDLE/Contents/Resources/"
+done
 cp "$OUT/THIRD_PARTY_NOTICES.txt" "$OUT/samples/Users/Shared/Dualbox/"
 
 # ad-hoc code signature (needed on recent macOS for unsigned plug-ins to load)
