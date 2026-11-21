@@ -3,9 +3,9 @@ name: 5ynth
 on:
   push:
     branches: [ main ]
-    paths: [ "SynthZilla/**", ".github/workflows/synthzilla.yml" ]
+    paths: [ "5ynth/**", ".github/workflows/5ynth.yml" ]
   pull_request:
-    paths: [ "SynthZilla/**", ".github/workflows/synthzilla.yml" ]
+    paths: [ "5ynth/**", ".github/workflows/5ynth.yml" ]
   workflow_dispatch:
 
 jobs:
@@ -13,7 +13,7 @@ jobs:
     runs-on: macos-15-intel    # AU + VST3 + Standalone, universal binary (Intel + Apple Silicon); arm64 runners unavailable
     defaults:
       run:
-        working-directory: SynthZilla
+        working-directory: 5ynth
     steps:
       - uses: actions/checkout@v5
       - name: Configure
@@ -32,11 +32,11 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: 5ynth-2.1.0-macOS-Installer
-          path: SynthZilla/build/installer/5ynth-2.1.0-macOS.pkg
+          path: 5ynth/build/installer/5ynth-2.1.0-macOS.pkg
       - uses: actions/upload-artifact@v5
         with:
           name: 5ynth-macOS
           path: |
-            SynthZilla/build/Fivesynth_artefacts/Release/VST3
-            SynthZilla/build/Fivesynth_artefacts/Release/AU
-            SynthZilla/build/Fivesynth_artefacts/Release/Standalone
+            5ynth/build/Fivesynth_artefacts/Release/VST3
+            5ynth/build/Fivesynth_artefacts/Release/AU
+            5ynth/build/Fivesynth_artefacts/Release/Standalone

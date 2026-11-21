@@ -2,7 +2,7 @@
 # Builds an (unsigned) macOS installer: 5ynth-<version>-macOS.pkg  (TMFU audiovibe; formerly SynthZilla)
 # Contains: AU (/Library/Audio/Plug-Ins/Components), VST3 (/Library/Audio/Plug-Ins/VST3), Standalone app (/Applications).
 # Universal binaries: Intel x86_64 + Apple Silicon arm64 (checked below).
-# Run from the SynthZilla folder after a Release build:  ./packaging/macos/make_pkg.sh 2.1.0
+# Run from the 5ynth folder after a Release build:  ./packaging/macos/make_pkg.sh 2.1.0
 set -euo pipefail
 VERSION="${1:-2.1.0}"
 NAME="5ynth"                       # product name (bundles, AU name)

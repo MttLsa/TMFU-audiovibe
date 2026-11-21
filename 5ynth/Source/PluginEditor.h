@@ -22,10 +22,10 @@ namespace ui
     void relief (juce::Graphics& g, juce::Rectangle<float> r, juce::Colour base, float corner, bool raised = true);
 }
 
-class ZillaLook : public juce::LookAndFeel_V4
+class FivesynthLook : public juce::LookAndFeel_V4
 {
 public:
-    ZillaLook();
+    FivesynthLook();
     void setSkin (const skins::Skin& s);
     const skins::Skin* skin = nullptr;
     juce::Typeface::Ptr getTypefaceForFont (const juce::Font&) override;
@@ -95,7 +95,7 @@ private:
 class ModulePanel : public juce::Component, private juce::AudioProcessorValueTreeState::Listener, private juce::AsyncUpdater
 {
 public:
-    ModulePanel (SynthZillaProcessor&, int module);
+    ModulePanel (FivesynthProcessor&, int module);
     ~ModulePanel() override;
     void paint (juce::Graphics&) override;
     void paintOverChildren (juce::Graphics&) override;
@@ -108,9 +108,9 @@ private:
     void handleAsyncUpdate() override { refreshSkin(); }
     void applyFmMode();
     int layoutGroups (int width, bool apply);
-    SynthZillaProcessor& proc;
+    FivesynthProcessor& proc;
     int module;
-    ZillaLook look;
+    FivesynthLook look;
     const skins::Skin* skin = nullptr;
     std::vector<GroupDef> groups;
     std::vector<std::vector<std::unique_ptr<Control>>> controls;
@@ -125,7 +125,7 @@ private:
 class EqView : public juce::Component, private juce::Timer
 {
 public:
-    explicit EqView (SynthZillaProcessor&);
+    explicit EqView (FivesynthProcessor&);
     ~EqView() override { setLookAndFeel (nullptr); }
     void makeBig();
     void resized() override;
@@ -140,37 +140,37 @@ private:
     void timerCallback() override { repaint(); }
     float xToF (float x) const; float fToX (float f) const; float gToY (float db) const; float yToG (float y) const;
     juce::Rectangle<float> plot() const;
-    SynthZillaProcessor& proc;
+    FivesynthProcessor& proc;
     int dragBand = -1;
     float range = 18.0f;
-    ZillaLook look;
+    FivesynthLook look;
     std::vector<std::unique_ptr<Control>> bandCtl;
 };
 
 class LfoPanel : public juce::Component, private juce::Timer
 {
 public:
-    LfoPanel (SynthZillaProcessor&, bool showAll);
+    LfoPanel (FivesynthProcessor&, bool showAll);
     void resized() override;
     void paint (juce::Graphics&) override;
     std::function<void()> onExpand;
 private:
     void timerCallback() override { repaint(); }
     void select (int l);
-    SynthZillaProcessor& proc;
+    FivesynthProcessor& proc;
     bool all;
     int sel = 0;
     juce::TextButton tabs[params::numLfos], expand { "+" };
     struct Row { std::unique_ptr<juce::ComboBox> target; std::unique_ptr<Control> shape, rate, sync, div, depth, phase;
                  std::unique_ptr<juce::ParameterAttachment> tAtt; };
     std::vector<Row> rows;
-    ZillaLook look;
+    FivesynthLook look;
 };
 
 class PresetBrowser : public juce::Component, private juce::ListBoxModel
 {
 public:
-    explicit PresetBrowser (SynthZillaProcessor&);
+    explicit PresetBrowser (FivesynthProcessor&);
     void paint (juce::Graphics&) override;
     void resized() override;
     void refresh();
@@ -181,7 +181,7 @@ private:
     void listBoxItemClicked (int row, const juce::MouseEvent&) override;
     void listBoxItemDoubleClicked (int, const juce::MouseEvent&) override { if (onClose) onClose(); }
     void apply();
-    SynthZillaProcessor& proc;
+    FivesynthProcessor& proc;
     juce::ListBox list { "presets", this };
     juce::TextEditor search;
     juce::TextButton close { "CLOSE" };
@@ -206,11 +206,11 @@ public:
     void mouseDown (const juce::MouseEvent&) override { setVisible (false); }
 };
 
-class SynthZillaEditor : public juce::AudioProcessorEditor, private juce::Timer
+class FivesynthEditor : public juce::AudioProcessorEditor, private juce::Timer
 {
 public:
-    explicit SynthZillaEditor (SynthZillaProcessor&);
-    ~SynthZillaEditor() override;
+    explicit FivesynthEditor (FivesynthProcessor&);
+    ~FivesynthEditor() override;
     void paint (juce::Graphics&) override;
     void resized() override;
     void mouseDown (const juce::MouseEvent&) override;
@@ -221,8 +221,8 @@ private:
     void selectModule (int m);
     void layoutSlots();
     void showOverlay (juce::Component* c);
-    SynthZillaProcessor& proc;
-    ZillaLook look;
+    FivesynthProcessor& proc;
+    FivesynthLook look;
     juce::Component content;
     std::unique_ptr<ModulePanel> panels[params::numModules];
     juce::Viewport moduleView;

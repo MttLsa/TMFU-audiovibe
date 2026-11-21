@@ -216,11 +216,11 @@ void ui::relief (juce::Graphics& g, juce::Rectangle<float> r, juce::Colour base,
 // =====================================================================================================
 //  LookAndFeel
 // =====================================================================================================
-ZillaLook::ZillaLook() { setSkin (skins::find ("neutral-g", false)); }
+FivesynthLook::FivesynthLook() { setSkin (skins::find ("neutral-g", false)); }
 
-juce::Typeface::Ptr ZillaLook::getTypefaceForFont (const juce::Font& f) { return ui::typeface (f.isBold()); }
+juce::Typeface::Ptr FivesynthLook::getTypefaceForFont (const juce::Font& f) { return ui::typeface (f.isBold()); }
 
-void ZillaLook::setSkin (const Skin& s)
+void FivesynthLook::setSkin (const Skin& s)
 {
     skin = &s;
     setColour (juce::ComboBox::textColourId, s.text);
@@ -241,7 +241,7 @@ void ZillaLook::setSkin (const Skin& s)
     setColour (juce::TooltipWindow::textColourId, ui::text);
 }
 
-void ZillaLook::drawRotarySlider (juce::Graphics& g, int x, int y, int w, int h, float pos, float a0, float a1, juce::Slider& sl)
+void FivesynthLook::drawRotarySlider (juce::Graphics& g, int x, int y, int w, int h, float pos, float a0, float a1, juce::Slider& sl)
 {
     const auto& s = *skin;
     const float size = (float) juce::jmin (w, h) - 4.0f;
@@ -329,7 +329,7 @@ void ZillaLook::drawRotarySlider (juce::Graphics& g, int x, int y, int w, int h,
     }
 }
 
-void ZillaLook::drawLinearSlider (juce::Graphics& g, int x, int y, int w, int h, float pos, float, float, juce::Slider::SliderStyle, juce::Slider& sl)
+void FivesynthLook::drawLinearSlider (juce::Graphics& g, int x, int y, int w, int h, float pos, float, float, juce::Slider::SliderStyle, juce::Slider& sl)
 {
     const auto& s = *skin;
     const float cx = (float) x + (float) w * 0.5f;
@@ -344,7 +344,7 @@ void ZillaLook::drawLinearSlider (juce::Graphics& g, int x, int y, int w, int h,
     g.setColour (s.stripes[idx]); g.fillRect (cap.reduced (2.0f, 5.5f));
 }
 
-void ZillaLook::drawButtonBackground (juce::Graphics& g, juce::Button& b, const juce::Colour&, bool over, bool down)
+void FivesynthLook::drawButtonBackground (juce::Graphics& g, juce::Button& b, const juce::Colour&, bool over, bool down)
 {
     const auto& s = *skin;
     auto r = b.getLocalBounds().toFloat().reduced (0.5f);
@@ -352,14 +352,14 @@ void ZillaLook::drawButtonBackground (juce::Graphics& g, juce::Button& b, const 
     ui::relief (g, r, on ? s.accent : s.body2.brighter (over ? 0.08f : 0.0f).darker (down ? 0.2f : 0.0f), 3.0f, ! down);
 }
 
-void ZillaLook::drawButtonText (juce::Graphics& g, juce::TextButton& b, bool, bool)
+void FivesynthLook::drawButtonText (juce::Graphics& g, juce::TextButton& b, bool, bool)
 {
     g.setFont (getTextButtonFont (b, b.getHeight()));
     g.setColour (b.findColour (b.getToggleState() ? juce::TextButton::textColourOnId : juce::TextButton::textColourOffId));
     g.drawFittedText (b.getButtonText(), b.getLocalBounds().reduced (3, 1), juce::Justification::centred, 1, 0.8f);
 }
 
-void ZillaLook::drawComboBox (juce::Graphics& g, int w, int h, bool, int, int, int, int, juce::ComboBox& cb)
+void FivesynthLook::drawComboBox (juce::Graphics& g, int w, int h, bool, int, int, int, int, juce::ComboBox& cb)
 {
     const auto& s = *skin;
     auto r = juce::Rectangle<float> (0, 0, (float) w, (float) h).reduced (0.5f);
@@ -448,7 +448,7 @@ void Control::resized()
 void Control::paint (juce::Graphics& g)
 {
     if (toggle.isVisible()) return;
-    auto* lf = dynamic_cast<ZillaLook*> (&getLookAndFeel());
+    auto* lf = dynamic_cast<FivesynthLook*> (&getLookAndFeel());
     g.setColour (lf && lf->skin ? lf->skin->label : ui::dim);
     g.setFont (ui::font (10.0f, true));
     g.drawFittedText (caption.toUpperCase(), getLocalBounds().removeFromBottom (15), juce::Justification::centred, 1, 0.8f);
@@ -505,7 +505,7 @@ void AlgDiagram::paint (juce::Graphics& g)
 // =====================================================================================================
 static constexpr int cellW = 52, knobH = 62, faderH = 128, grpHead = 16, panelHead = 52;
 
-ModulePanel::ModulePanel (SynthZillaProcessor& p, int m) : proc (p), module (m)
+ModulePanel::ModulePanel (FivesynthProcessor& p, int m) : proc (p), module (m)
 {
     setLookAndFeel (&look);
     auto M = [m] (int s) { return mod (m, s); };
@@ -785,7 +785,7 @@ void ModulePanel::paintOverChildren (juce::Graphics& g)
 // =====================================================================================================
 //  EQ view
 // =====================================================================================================
-EqView::EqView (SynthZillaProcessor& p) : proc (p) { startTimerHz (20); }
+EqView::EqView (FivesynthProcessor& p) : proc (p) { startTimerHz (20); }
 
 void EqView::makeBig()
 {
@@ -931,7 +931,7 @@ void EqView::mouseDoubleClick (const juce::MouseEvent& e)
 // =====================================================================================================
 //  LFO panel (8 LFOs, any parameter as target)
 // =====================================================================================================
-LfoPanel::LfoPanel (SynthZillaProcessor& p, bool showAll) : proc (p), all (showAll)
+LfoPanel::LfoPanel (FivesynthProcessor& p, bool showAll) : proc (p), all (showAll)
 {
     setLookAndFeel (&look);
     look.setSkin (skins::find ("neutral-g", false));
@@ -1069,7 +1069,7 @@ void LfoPanel::paint (juce::Graphics& g)
 // =====================================================================================================
 //  Preset browser: one list ordered by year, "Preset (Genre - Song)"
 // =====================================================================================================
-PresetBrowser::PresetBrowser (SynthZillaProcessor& p) : proc (p)
+PresetBrowser::PresetBrowser (FivesynthProcessor& p) : proc (p)
 {
     list.setRowHeight (24);
     list.setColour (juce::ListBox::backgroundColourId, ui::panel);
@@ -1178,7 +1178,7 @@ void PresetBrowser::listBoxItemClicked (int row, const juce::MouseEvent&)
 // =====================================================================================================
 //  Editor
 // =====================================================================================================
-SynthZillaEditor::SynthZillaEditor (SynthZillaProcessor& p)
+FivesynthEditor::FivesynthEditor (FivesynthProcessor& p)
     : AudioProcessorEditor (p), proc (p), eqSmall (p), eqBig (p), lfoSmall (p, false), lfoBig (p, true),
       keys (p.keyboard, juce::MidiKeyboardComponent::horizontalKeyboard), browser (p)
 {
@@ -1279,13 +1279,13 @@ SynthZillaEditor::SynthZillaEditor (SynthZillaProcessor& p)
     updateHeader();
 }
 
-SynthZillaEditor::~SynthZillaEditor()
+FivesynthEditor::~FivesynthEditor()
 {
     moduleView.setViewedComponent (nullptr, false);
     setLookAndFeel (nullptr);
 }
 
-void SynthZillaEditor::selectModule (int m)
+void FivesynthEditor::selectModule (int m)
 {
     selected = m;
     moduleView.setViewedComponent (panels[m].get(), false);
@@ -1296,7 +1296,7 @@ void SynthZillaEditor::selectModule (int m)
     repaint();
 }
 
-void SynthZillaEditor::showOverlay (juce::Component* c)
+void FivesynthEditor::showOverlay (juce::Component* c)
 {
     for (auto* o : { (juce::Component*) &eqBig, (juce::Component*) &lfoBig }) o->setVisible (o == c);
     overlay = c;
@@ -1304,7 +1304,7 @@ void SynthZillaEditor::showOverlay (juce::Component* c)
     if (c != nullptr) { c->toFront (false); overlayClose.toFront (false); }
 }
 
-void SynthZillaEditor::layoutSlots()
+void FivesynthEditor::layoutSlots()
 {
     const int slots = (int) proc.apvts.getRawParameterValue (def (layout().gSlots).id)->load();
     shownSlots = slots;
@@ -1327,7 +1327,7 @@ void SynthZillaEditor::layoutSlots()
     custom.setBounds (W - 8 - 124, 76, 124, 44);
 }
 
-void SynthZillaEditor::resized()
+void FivesynthEditor::resized()
 {
     const float s = (float) getWidth() / (float) W;
     content.setTransform (juce::AffineTransform::scale (s));
@@ -1377,7 +1377,7 @@ void SynthZillaEditor::resized()
     if (panels[selected]) selectModule (selected);
 }
 
-void SynthZillaEditor::paint (juce::Graphics& g)
+void FivesynthEditor::paint (juce::Graphics& g)
 {
     g.fillAll (ui::bg);
     g.addTransform (juce::AffineTransform::scale ((float) getWidth() / (float) W));
@@ -1413,18 +1413,18 @@ void SynthZillaEditor::paint (juce::Graphics& g)
 }
 
 // header logo: the framed 5YNTH wordmark
-void SynthZillaEditor::drawLogo (juce::Graphics& g)
+void FivesynthEditor::drawLogo (juce::Graphics& g)
 {
     logo::drawWordmark (g, logoArea, juce::RectanglePlacement::xLeft | juce::RectanglePlacement::yMid);
 }
 
-void SynthZillaEditor::mouseDown (const juce::MouseEvent& e)
+void FivesynthEditor::mouseDown (const juce::MouseEvent& e)
 {
     const float s = (float) getWidth() / (float) W;
     if (logoArea.contains (e.position / s)) { splash.setVisible (true); splash.toFront (false); }
 }
 
-void SynthZillaEditor::updateHeader()
+void FivesynthEditor::updateHeader()
 {
     const auto& all = PresetLibrary::get().all();
     const int idx = proc.presetIndex();
@@ -1439,7 +1439,7 @@ void SynthZillaEditor::updateHeader()
     if (browser.isVisible()) browser.refresh();
 }
 
-void SynthZillaEditor::timerCallback()
+void FivesynthEditor::timerCallback()
 {
     if (proc.presetIndex() != shownPreset) updateHeader();
     const int slots = (int) proc.apvts.getRawParameterValue (def (layout().gSlots).id)->load();

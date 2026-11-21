@@ -7,13 +7,13 @@
 #include "dsp/SynthEngine.h"
 #include "dsp/Effects.h"
 
-class SynthZillaProcessor : public juce::AudioProcessor,
+class FivesynthProcessor : public juce::AudioProcessor,
                             private juce::AudioProcessorValueTreeState::Listener,
                             private juce::AsyncUpdater
 {
 public:
-    SynthZillaProcessor();
-    ~SynthZillaProcessor() override;
+    FivesynthProcessor();
+    ~FivesynthProcessor() override;
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
@@ -82,5 +82,5 @@ private:
     double sr = 48000.0, internalPpq = 0;
     float gainSm = 1.0f;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SynthZillaProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FivesynthProcessor)
 };

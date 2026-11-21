@@ -48,21 +48,21 @@ set(TS_SOURCES
 target_sources(Fivesynth PRIVATE ${TS_SOURCES})
 target_include_directories(Fivesynth PRIVATE Source)
 
-juce_add_binary_data(SynthZillaData SOURCES resources/presets.json resources/fonts/Inter-Regular.ttf resources/fonts/Inter-SemiBold.ttf)
-set_target_properties(SynthZillaData PROPERTIES POSITION_INDEPENDENT_CODE ON)
+juce_add_binary_data(FivesynthData SOURCES resources/presets.json resources/fonts/Inter-Regular.ttf resources/fonts/Inter-SemiBold.ttf)
+set_target_properties(FivesynthData PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 set(TS_DEFS JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0 JUCE_DISPLAY_SPLASH_SCREEN=0)
 target_compile_definitions(Fivesynth PUBLIC ${TS_DEFS})
 target_link_libraries(Fivesynth
-  PRIVATE juce::juce_audio_utils juce::juce_dsp SynthZillaData
+  PRIVATE juce::juce_audio_utils juce::juce_dsp FivesynthData
   PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
 
 # offline render / preset calibration / GUI snapshot test
-option(SYNTHZILLA_BUILD_TESTS "Build the offline test harness" OFF)
-if(SYNTHZILLA_BUILD_TESTS)
-  juce_add_console_app(SynthZillaTest PRODUCT_NAME "SynthZillaTest")
-  target_sources(SynthZillaTest PRIVATE tests/TestMain.cpp ${TS_SOURCES})
-  target_include_directories(SynthZillaTest PRIVATE Source)
-  target_compile_definitions(SynthZillaTest PRIVATE ${TS_DEFS} JucePlugin_Name="5ynth" JucePlugin_VersionString="2.1.0" JUCE_STANDALONE_APPLICATION=0 JUCE_MODAL_LOOPS_PERMITTED=1)
-  target_link_libraries(SynthZillaTest PRIVATE juce::juce_audio_utils juce::juce_dsp SynthZillaData juce::juce_recommended_config_flags)
+option(FIVESYNTH_BUILD_TESTS "Build the offline test harness" OFF)
+if(FIVESYNTH_BUILD_TESTS)
+  juce_add_console_app(FivesynthTest PRODUCT_NAME "FivesynthTest")
+  target_sources(FivesynthTest PRIVATE tests/TestMain.cpp ${TS_SOURCES})
+  target_include_directories(FivesynthTest PRIVATE Source)
+  target_compile_definitions(FivesynthTest PRIVATE ${TS_DEFS} JucePlugin_Name="5ynth" JucePlugin_VersionString="2.1.0" JUCE_STANDALONE_APPLICATION=0 JUCE_MODAL_LOOPS_PERMITTED=1)
+  target_link_libraries(FivesynthTest PRIVATE juce::juce_audio_utils juce::juce_dsp FivesynthData juce::juce_recommended_config_flags)
 endif()

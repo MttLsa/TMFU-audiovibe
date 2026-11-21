@@ -1,10 +1,10 @@
 // 5ynth (ex SynthZilla) offline harness
-//   SynthZillaTest <outDir> check            render every preset: no NaN, not silent, report peak / loudness
-//   SynthZillaTest <outDir> levels           write <outDir>/levels.json: g_trim so that every preset peaks at -1 dBFS
-//   SynthZillaTest <outDir> wav <substring>  render matching presets to WAV
-//   SynthZillaTest <outDir> gui              GUI snapshots (PNG)
-//   SynthZillaTest <outDir> logo             logo_5ynth.png (wordmark on black)
-//   SynthZillaTest <outDir> units            unit checks (5 modules, LFO modulation, EQ, output filters, model change, FM 6-op)
+//   FivesynthTest <outDir> check            render every preset: no NaN, not silent, report peak / loudness
+//   FivesynthTest <outDir> levels           write <outDir>/levels.json: g_trim so that every preset peaks at -1 dBFS
+//   FivesynthTest <outDir> wav <substring>  render matching presets to WAV
+//   FivesynthTest <outDir> gui              GUI snapshots (PNG)
+//   FivesynthTest <outDir> logo             logo_5ynth.png (wordmark on black)
+//   FivesynthTest <outDir> units            unit checks (5 modules, LFO modulation, EQ, output filters, model change, FM 6-op)
 #include "../Source/PluginProcessor.h"
 #include "../Source/PluginEditor.h"
 #include <juce_audio_formats/juce_audio_formats.h>
@@ -20,9 +20,9 @@ static bool isPoly (const Preset& p)
     return false;
 }
 
-static void setP (SynthZillaProcessor& p, int i, float v) { auto* pr = p.apvts.getParameter (def (i).id); pr->setValueNotifyingHost (pr->convertTo0to1 (v)); }
+static void setP (FivesynthProcessor& p, int i, float v) { auto* pr = p.apvts.getParameter (def (i).id); pr->setValueNotifyingHost (pr->convertTo0to1 (v)); }
 
-static Stats render (SynthZillaProcessor& proc, const Preset* pr, double seconds, AudioBuffer<float>* keep = nullptr, int fixedNote = -1)
+static Stats render (FivesynthProcessor& proc, const Preset* pr, double seconds, AudioBuffer<float>* keep = nullptr, int fixedNote = -1)
 {
     const double sr = 48000.0; const int bs = 256;
     proc.setPlayConfigDetails (0, 2, sr, bs);
@@ -95,7 +95,7 @@ int main (int argc, char** argv)
         float minP = 10, maxP = -200;
         for (int i = 0; i < (int) all.size(); ++i)
         {
-            SynthZillaProcessor proc;
+            FivesynthProcessor proc;
             proc.loadPreset (i);
             const auto st = render (proc, &all[(size_t) i], 4.0);
             const float pkDb = Decibels::gainToDecibels (proc.prePeak(), -200.0f);
@@ -112,7 +112,7 @@ int main (int argc, char** argv)
     {
         const auto& L = layout();
         {   // 5 modules: turning on C, D, E adds sound
-            SynthZillaProcessor p; p.loadPreset (findPreset ("Acid Tracks"));
+            FivesynthProcessor p; p.loadPreset (findPreset ("Acid Tracks"));
             const auto a = render (p, nullptr, 1.0, nullptr, 48);
             setP (p, L.gSlots, 5);
             for (int m = 2; m < 5; ++m) { setP (p, mod (m, mOn), 1); setP (p, mod (m, mModel), 0); }
@@ -121,7 +121,7 @@ int main (int argc, char** argv)
             expect (b.nans == 0, "5 modules finite");
         }
         {   // model change loads the signature patch of that instrument
-            SynthZillaProcessor p; p.loadPreset (findPreset ("Acid Tracks"));
+            FivesynthProcessor p; p.loadPreset (findPreset ("Acid Tracks"));
             const int dx = PresetLibrary::get().modelIndex ("Yamaha DX7");
             p.loadModelPatch (0, dx);
             expect ((int) p.apvts.getRawParameterValue ("A_engine")->load() == 1, "change synth -> DX7 loads FM engine");
@@ -129,7 +129,7 @@ int main (int argc, char** argv)
             expect (st.loud > -50 && st.nans == 0, "DX7 patch plays");
         }
         {   // LFO modulates a parameter
-            SynthZillaProcessor p; p.loadPreset (findPreset ("Can You Feel It Pad"));
+            FivesynthProcessor p; p.loadPreset (findPreset ("Can You Feel It Pad"));
             const auto a = render (p, nullptr, 2.0, nullptr, 60);
             setP (p, L.lfoBase[0] + lTarget, (float) (mod (0, mLevel) + 1));
             setP (p, L.lfoBase[0] + lDepth, 1.0f); setP (p, L.lfoBase[0] + lRate, 4.0f); setP (p, L.lfoBase[0] + lShape, 4);
@@ -137,7 +137,7 @@ int main (int argc, char** argv)
             expect (std::abs (b.loud - a.loud) > 0.5, "LFO 1 -> A level changes the output");
         }
         {   // output filters + EQ
-            SynthZillaProcessor p; p.loadPreset (findPreset ("Jump Brass"));
+            FivesynthProcessor p; p.loadPreset (findPreset ("Jump Brass"));
             const auto a = render (p, nullptr, 1.5, nullptr, 60);
             setP (p, L.ofLpOn, 1); setP (p, L.ofLpCut, 200);
             const auto b = render (p, nullptr, 1.5, nullptr, 60);
@@ -148,13 +148,13 @@ int main (int argc, char** argv)
             expect (c.loud > a.loud + 2, "EQ band 3 +15 dB boosts");
         }
         {   // FM 6-op: every algorithm renders
-            SynthZillaProcessor p; p.loadPreset (findPreset ("E.PIANO 1"));
+            FivesynthProcessor p; p.loadPreset (findPreset ("E.PIANO 1"));
             bool fine = true;
             for (int a = 0; a < 32; ++a) { setP (p, mod (0, mAlg), (float) a); const auto st = render (p, nullptr, 0.4, nullptr, 60); fine &= st.nans == 0 && st.loud > -70; }
             expect (fine, "all 32 FM algorithms produce sound");
         }
         {   // 303 filter self-oscillation stays finite, RAT drive raises level
-            SynthZillaProcessor p; p.loadPreset (findPreset ("Acid Tracks"));
+            FivesynthProcessor p; p.loadPreset (findPreset ("Acid Tracks"));
             setP (p, mod (0, mRes), 1.0f);
             const auto a = render (p, nullptr, 1.0, nullptr, 36);
             expect (a.nans == 0, "303 filter at max resonance is stable");
@@ -165,7 +165,7 @@ int main (int argc, char** argv)
             expect (c.nans == 0 && c.loud > b.loud, "RAT pedal drives the 303");
         }
         {   // module delay
-            SynthZillaProcessor p; p.loadPreset (findPreset ("Popcorn Pluck"));
+            FivesynthProcessor p; p.loadPreset (findPreset ("Popcorn Pluck"));
             const auto a = render (p, nullptr, 2.0, nullptr, 60);
             setP (p, mod (0, mDlyMix), 0.8f); setP (p, mod (0, mDlyFb), 0.6f);
             const auto b = render (p, nullptr, 2.0, nullptr, 60);
@@ -178,7 +178,7 @@ int main (int argc, char** argv)
         for (int i = 0; i < (int) all.size(); ++i)
         {
             if (q.isNotEmpty() && ! all[(size_t) i].name.toLowerCase().contains (q)) continue;
-            SynthZillaProcessor proc; proc.loadPreset (i);
+            FivesynthProcessor proc; proc.loadPreset (i);
             AudioBuffer<float> b;
             const auto st = render (proc, &all[(size_t) i], 4.0, &b);
             WavAudioFormat wav;
@@ -210,13 +210,13 @@ int main (int argc, char** argv)
         {
             const int idx = findPreset (n);
             if (idx < 0) { std::printf ("missing %s\n", n.toRawUTF8()); continue; }
-            SynthZillaProcessor proc; proc.loadPreset (idx);
+            FivesynthProcessor proc; proc.loadPreset (idx);
             std::unique_ptr<AudioProcessorEditor> ed (proc.createEditor());
             ed->setSize (1400, 900);
             snap (*ed, "gui_" + File::createLegalFileName (n).replaceCharacter (' ', '_') + ".png");
         }
         {   // modern FM view, 5 modules, browser, EQ overlay
-            SynthZillaProcessor proc; proc.loadPreset (findPreset ("E.PIANO 1"));
+            FivesynthProcessor proc; proc.loadPreset (findPreset ("E.PIANO 1"));
             setP (proc, mod (0, mFmModern), 1);
             setP (proc, layout().gSlots, 5);
             std::unique_ptr<AudioProcessorEditor> ed (proc.createEditor());

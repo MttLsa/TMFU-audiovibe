@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Builds docs/5ynth_Manuale_v<version>.pdf (Italian user manual) with reportlab.
-Inputs: resources/presets.json, docs/logo_5ynth.png (SynthZillaTest <dir> logo), docs/gui_*.png (SynthZillaTest <dir> gui)
+Inputs: resources/presets.json, docs/logo_5ynth.png (FivesynthTest <dir> logo), docs/gui_*.png (FivesynthTest <dir> gui)
 Usage:  python3 tools/make_manual.py [version]
 """
 import json, os, sys

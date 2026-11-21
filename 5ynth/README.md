@@ -99,20 +99,19 @@ Elenco completo: [docs/PRESETS.md](docs/PRESETS.md).
 ## Compilazione e installazione
 
 ```bash
-cmake -S SynthZilla -B SynthZilla/build -DCMAKE_BUILD_TYPE=Release
+cmake -S 5ynth -B 5ynth/build -DCMAKE_BUILD_TYPE=Release
 ```
 
 ```bash
-cmake --build SynthZilla/build --config Release --parallel
+cmake --build 5ynth/build --config Release --parallel
 ```
 
-Su macOS la CI (`.github/workflows/synthzilla.yml`, runner Intel) produce l'installer universale
+Su macOS la CI (`.github/workflows/5ynth.yml`, runner Intel) produce l'installer universale
 **5ynth-2.1.0-macOS.pkg** (Intel + Apple Silicon: AU, VST3, app Standalone). Nella DAW compare sotto **TMFU audiovibe**
-come **5ynth** (AU `aumu Szla Tmfu`: codici invariati, i progetti salvati con SynthZilla ritrovano il plugin).
-La cartella del codice e i nomi interni restano `SynthZilla`.
+come **5ynth** (AU `aumu Szla Tmfu`: codici e stato dei parametri invariati, i progetti salvati con SynthZilla ritrovano il plugin).
 
-Strumenti: `tools/gen_presets.py` (libreria + `docs/PRESETS.md`); test con `-DSYNTHZILLA_BUILD_TESTS=ON`:
-`SynthZillaTest <dir> units | check | levels | wav <nome> | gui | logo`; manuale: `python3 tools/make_manual.py 2.1.0`.
+Strumenti: `tools/gen_presets.py` (libreria + `docs/PRESETS.md`); test con `-DFIVESYNTH_BUILD_TESTS=ON`:
+`FivesynthTest <dir> units | check | levels | wav <nome> | gui | logo`; manuale: `python3 tools/make_manual.py 2.1.0`.
 
 > Marchi e nomi degli strumenti appartengono ai rispettivi proprietari e sono usati solo per indicare lo strumento di
 > riferimento. Font: vedi `resources/fonts/FONTS-LICENSE.txt`.

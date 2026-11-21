@@ -18,9 +18,9 @@ namespace
     }
 }
 
-SynthZillaProcessor::SynthZillaProcessor()
+FivesynthProcessor::FivesynthProcessor()
     : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
-      apvts (*this, nullptr, "SYNTHZILLA", makeLayout())
+      apvts (*this, nullptr, "SYNTHZILLA", makeLayout())   // state tag kept from SynthZilla: saved projects reload
 {
     const int n = numParams();
     raw.resize ((size_t) n); prm.resize ((size_t) n); snap.assign ((size_t) n, 0.0f);
@@ -36,17 +36,17 @@ SynthZillaProcessor::SynthZillaProcessor()
     if (! all.empty()) loadPreset (start);
 }
 
-SynthZillaProcessor::~SynthZillaProcessor()
+FivesynthProcessor::~FivesynthProcessor()
 {
     for (int m = 0; m < numModules; ++m) apvts.removeParameterListener (def (mod (m, mModel)).id, this);
 }
 
-bool SynthZillaProcessor::isBusesLayoutSupported (const BusesLayout& l) const
+bool FivesynthProcessor::isBusesLayoutSupported (const BusesLayout& l) const
 {
     return l.getMainOutputChannelSet() == juce::AudioChannelSet::stereo();
 }
 
-void SynthZillaProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void FivesynthProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     sr = sampleRate;
     engine.prepare (sampleRate, juce::jmax (32, samplesPerBlock));
@@ -62,19 +62,19 @@ void SynthZillaProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     keyboard.reset();
 }
 
-const juce::String SynthZillaProcessor::getProgramName (int i)
+const juce::String FivesynthProcessor::getProgramName (int i)
 {
     const auto& all = PresetLibrary::get().all();
     return juce::isPositiveAndBelow (i, (int) all.size()) ? all[(size_t) i].name : juce::String ("Init");
 }
 
-void SynthZillaProcessor::setParam (int i, float value)
+void FivesynthProcessor::setParam (int i, float value)
 {
     auto* p = prm[(size_t) i];
     p->setValueNotifyingHost (p->convertTo0to1 (juce::jlimit (def (i).mn, def (i).mx, value)));
 }
 
-void SynthZillaProcessor::applyModuleValues (int slot, const PresetModule& pm)
+void FivesynthProcessor::applyModuleValues (int slot, const PresetModule& pm)
 {
     for (int s = 0; s < numModSuffix; ++s)
     {
@@ -92,7 +92,7 @@ void SynthZillaProcessor::applyModuleValues (int slot, const PresetModule& pm)
     }
 }
 
-void SynthZillaProcessor::loadPreset (int index)
+void FivesynthProcessor::loadPreset (int index)
 {
     const auto& all = PresetLibrary::get().all();
     if (! juce::isPositiveAndBelow (index, (int) all.size())) return;
@@ -126,7 +126,7 @@ void SynthZillaProcessor::loadPreset (int index)
 }
 
 // "Change synth" of a module: copy the module of the first preset that uses that instrument (its signature sound)
-void SynthZillaProcessor::loadModelPatch (int module, int modelIndex)
+void FivesynthProcessor::loadModelPatch (int module, int modelIndex)
 {
     const auto* md = PresetLibrary::get().model (modelIndex);
     if (md == nullptr) return;
@@ -145,7 +145,7 @@ void SynthZillaProcessor::loadModelPatch (int module, int modelIndex)
     loading = false;
 }
 
-void SynthZillaProcessor::parameterChanged (const juce::String& id, float)
+void FivesynthProcessor::parameterChanged (const juce::String& id, float)
 {
     if (loading) return;
     for (int m = 0; m < numModules; ++m)
@@ -153,14 +153,14 @@ void SynthZillaProcessor::parameterChanged (const juce::String& id, float)
     triggerAsyncUpdate();
 }
 
-void SynthZillaProcessor::handleAsyncUpdate()
+void FivesynthProcessor::handleAsyncUpdate()
 {
     const int mask = pendingModel.exchange (0);
     for (int m = 0; m < numModules; ++m)
         if (mask & (1 << m)) loadModelPatch (m, (int) raw[(size_t) mod (m, mModel)]->load());
 }
 
-void SynthZillaProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
+void FivesynthProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
     juce::ScopedNoDenormals noDenormals;
     const int n = buffer.getNumSamples();
@@ -193,7 +193,7 @@ void SynthZillaProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     internalPpq = ppq + (double) n / sr * bpm / 60.0;
 }
 
-void SynthZillaProcessor::renderChunk (float* L, float* R, int n, const juce::MidiBuffer& midi, double bpm, double ppq, bool playing)
+void FivesynthProcessor::renderChunk (float* L, float* R, int n, const juce::MidiBuffer& midi, double bpm, double ppq, bool playing)
 {
     const auto& lay = layout();
     const int np = numParams();
@@ -293,9 +293,9 @@ void SynthZillaProcessor::renderChunk (float* L, float* R, int n, const juce::Mi
     outMeter.store (juce::jmax (pk, outMeter.load() * 0.97f));
 }
 
-juce::AudioProcessorEditor* SynthZillaProcessor::createEditor() { return new SynthZillaEditor (*this); }
+juce::AudioProcessorEditor* FivesynthProcessor::createEditor() { return new FivesynthEditor (*this); }
 
-void SynthZillaProcessor::getStateInformation (juce::MemoryBlock& destData)
+void FivesynthProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     auto state = apvts.copyState();
     state.setProperty ("preset", currentPreset.load(), nullptr);
@@ -304,7 +304,7 @@ void SynthZillaProcessor::getStateInformation (juce::MemoryBlock& destData)
     if (auto xml = state.createXml()) copyXmlToBinary (*xml, destData);
 }
 
-void SynthZillaProcessor::setStateInformation (const void* data, int sizeInBytes)
+void FivesynthProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     if (auto xml = getXmlFromBinary (data, sizeInBytes))
         if (xml->hasTagName (apvts.state.getType()))
@@ -319,4 +319,4 @@ void SynthZillaProcessor::setStateInformation (const void* data, int sizeInBytes
         }
 }
 
-juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new SynthZillaProcessor(); }
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new FivesynthProcessor(); }

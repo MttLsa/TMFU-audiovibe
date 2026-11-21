@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SYNTHZILLA factory library generator  ->  resources/presets.json  +  docs/PRESETS.md
+5ynth factory library generator  ->  resources/presets.json  +  docs/PRESETS.md
 
 Every preset recreates by synthesis (no samples) a famous synth sound and is tied to the most famous song that used it.
 The library is ordered only by year. A preset is made of 1..5 modules (A..E); each module names the instrument it
@@ -9,7 +9,7 @@ recreates:
   * digital original (FM, wavetable, ROM/PCM, VA, software) -> module with a digital engine
   * analog + digital combination (hybrid synth, or two instruments layered on the record) -> two modules in layer
 `original` = the real factory preset name when the sound is a documented factory preset.
-Levels: tools/levels.json (written by `SynthZillaTest <dir> levels`) -> g_trim so every preset peaks at -1 dBFS.
+Levels: tools/levels.json (written by `FivesynthTest <dir> levels`) -> g_trim so every preset peaks at -1 dBFS.
 """
 import json, os
 

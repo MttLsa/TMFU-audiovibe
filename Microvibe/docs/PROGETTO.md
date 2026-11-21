@@ -1,7 +1,7 @@
 # MICROVIBE — progetto (bozza da approvare prima della build)
 
 Plugin glitch / FX / generatore per minimal e microhouse.
-Produttore **TMFU audiovibe**, JUCE 8, C++17, VST3 + AU + Standalone, `.pkg` universale macOS come SynthZilla (ex Twinsynth).
+Produttore **TMFU audiovibe**, JUCE 8, C++17, VST3 + AU + Standalone, `.pkg` universale macOS come 5ynth (ex SynthZilla / Twinsynth).
 
 | Campo `juce_add_plugin` | Valore proposto |
 |---|---|
@@ -213,7 +213,7 @@ Categorie: Microhouse Glitch · Minimal Perc · Textures & Beds · Tape & Vinyl 
 
 ```
 Microvibe/
-  CMakeLists.txt               (stesso schema di SynthZilla)
+  CMakeLists.txt               (stesso schema di 5ynth)
   Source/
     PluginProcessor.*  Params.*  Presets.*  PluginEditor.*
     dsp/
@@ -225,7 +225,7 @@ Microvibe/
       TextureGen.*  ModalPerc.*  Shepard.*
       fx/ Tape.h Vinyl.h Wobble.h Delay.h Reverb.h Filter.h Resonator.h ...
       DelayLine.h          interpolazione frazionaria comune
-  packaging/macos/make_pkg.sh  (modello: SynthZilla)
+  packaging/macos/make_pkg.sh  (modello: 5ynth)
   tests/                       test offline del DSP (render, NaN/denormali, CPU)
 ```
 - Parametri in `AudioProcessorValueTreeState`; le destinazioni di modulazione sono un *offset* separato dal valore del parametro (l'automazione della DAW resta pulita).
