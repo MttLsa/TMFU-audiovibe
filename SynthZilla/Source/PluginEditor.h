@@ -196,8 +196,8 @@ namespace logo
 {
     void drawMark (juce::Graphics& g, juce::Rectangle<float> r);   // emblem fitted in r (340 x 350 design box)
     void drawWord (juce::Graphics& g, juce::Rectangle<float> r, juce::Justification j = juce::Justification::centredLeft);
-    // "5YNTH" whose "5" is the emblem itself; style 1 = YNTH drawn like the 5 (metal, same stroke and slant),
-    // style 2 = YNTH in Bruno Ace. Fitted in r with the given horizontal placement.
+    // "5YNTH" whose "5" is the emblem itself (upright), YNTH drawn with the 5's elements; style 2 adds a contour frame
+    // (TEMP style switch for mock-ups). Fitted in r with the given placement.
     void drawWordmark (juce::Graphics& g, juce::Rectangle<float> r, int style, juce::RectanglePlacement place = juce::RectanglePlacement::centred);
 }
 

@@ -27,27 +27,41 @@ static void fillSteel (juce::Graphics& g, const juce::Path& q)   // brushed meta
     g.setGradientFill (gr); g.fillPath (q);
 }
 
-void logo::drawMark (juce::Graphics& g, juce::Rectangle<float> r)
+// emblem geometry in design units (340 x 350 box): metal body (5 + white keys), the four bars, thin parts (pulse, power)
+struct MarkGeometry
+{
+    juce::Path metal, bars, pulse, power;
+    explicit MarkGeometry (bool upright)
+    {
+        using namespace juce;
+        if (upright) { metal.addRectangle (7, 52, 195, 46); metal.addRectangle (7, 52, 51, 161); }           // top bar + straight stem
+        else { metal.addRectangle (25, 52, 177, 46); metal.addQuadrilateral (25, 52, 76, 52, 58, 213, 7, 213); }   // slanted stem
+        const float bx[4] = { 77, 70, 66, 63 }, by[4] = { 133, 156, 178, 200 };
+        for (int i = 0; i < 4; ++i) bars.addRectangle (upright ? 66.0f : bx[i], by[i], 333 - (upright ? 66.0f : bx[i]), 13);
+        Path bowl;                                            // lower bowl of the 5
+        const float cx = 120, cy = 232, a0 = MathConstants<float>::halfPi - 0.12f, a1 = 1.5f * MathConstants<float>::pi;
+        bowl.addCentredArc (cx, cy, 113, 113, 0, a0, a1, true);
+        bowl.addCentredArc (cx, cy, 64, 60, 0, a1, a0, false);
+        bowl.closeSubPath();
+        metal.addPath (bowl);
+        for (int k = 0; k < 6; ++k) metal.addRectangle (220.0f + k * 19.0f, 53, 17, 69);   // white keys
+        const float pts[][2] = { { 222, 27 }, { 240, 27 }, { 244, 20 }, { 248, 33 }, { 252, 10 }, { 256, 41 }, { 260, 21 }, { 264, 27 }, { 270, 24 }, { 274, 27 }, { 290, 27 } };
+        pulse.startNewSubPath (pts[0][0], pts[0][1]);
+        for (auto& q : pts) pulse.lineTo (q[0], q[1]);
+        power.addCentredArc (315, 27, 13, 13, 0, 0.6f, MathConstants<float>::twoPi - 0.6f, true);
+        power.startNewSubPath (315, 9); power.lineTo (315, 26);
+    }
+    static constexpr float pulseW = 2.2f, powerW = 3.2f;
+};
+
+static void drawMarkT (juce::Graphics& g, const juce::AffineTransform& T, bool upright)
 {
     using namespace juce;
-    const float s = jmin (r.getWidth() / 340.0f, r.getHeight() / 350.0f);
-    const auto o = r.getCentre() - Point<float> (170.0f, 175.0f) * s;
-    const auto T = AffineTransform::scale (s).translated (o);
-    Path p, bars;
-    p.addRectangle (25, 52, 177, 46);                         // top bar of the 5
-    p.addQuadrilateral (25, 52, 76, 52, 58, 213, 7, 213);     // slanted stem
-    const float bx[4] = { 77, 70, 66, 63 }, by[4] = { 133, 156, 178, 200 };
-    for (int i = 0; i < 4; ++i) bars.addRectangle (bx[i], by[i], 333 - bx[i], 13);   // the four bars
-    Path bowl;                                                // lower bowl of the 5
-    const float cx = 120, cy = 232, a0 = MathConstants<float>::halfPi - 0.12f, a1 = 1.5f * MathConstants<float>::pi;
-    bowl.addCentredArc (cx, cy, 113, 113, 0, a0, a1, true);
-    bowl.addCentredArc (cx, cy, 64, 60, 0, a1, a0, false);
-    bowl.closeSubPath();
-    p.addPath (bowl);
-    for (int k = 0; k < 6; ++k) p.addRectangle (220.0f + k * 19.0f, 53, 17, 69);   // white keys
-    p.applyTransform (T);
+    const float s = std::sqrt (std::abs (T.getDeterminant()));
+    MarkGeometry m (upright);
+    auto p = m.metal; p.applyTransform (T);
     fillSteel (g, p);
-    bars.applyTransform (T);
+    auto bars = m.bars; bars.applyTransform (T);
     for (float rad : { 24.0f, 9.0f })   // glow
         DropShadow (Colour (0xffd8f0ff).withAlpha (rad > 15 ? 0.4f : 0.6f), jmax (1, (int) (rad * s)), {}).drawForPath (g, bars);
     const auto bb = bars.getBounds();
@@ -56,88 +70,149 @@ void logo::drawMark (juce::Graphics& g, juce::Rectangle<float> r)
     g.setGradientFill (gb); g.fillPath (bars);
     g.setColour (Colour (0xff141414));                        // black keys
     for (int k : { 1, 2, 4, 5 }) g.fillRect (Rectangle<float> (220.0f + k * 19.0f - 5.0f, 53, 8, 40).transformedBy (T));
-    Path pulse;                                               // pulse line
-    const float pts[][2] = { { 222, 27 }, { 240, 27 }, { 244, 20 }, { 248, 33 }, { 252, 10 }, { 256, 41 }, { 260, 21 }, { 264, 27 }, { 270, 24 }, { 274, 27 }, { 290, 27 } };
-    pulse.startNewSubPath (pts[0][0], pts[0][1]);
-    for (auto& q : pts) pulse.lineTo (q[0], q[1]);
-    pulse.applyTransform (T);
+    auto pulse = m.pulse; pulse.applyTransform (T);
     g.setColour (Colour (0xffb0b0b0));
-    g.strokePath (pulse, PathStrokeType (jmax (0.8f, 2.2f * s), PathStrokeType::mitered, PathStrokeType::butt));
-    Path pw;                                                  // power symbol
-    pw.addCentredArc (315, 27, 13, 13, 0, 0.6f, MathConstants<float>::twoPi - 0.6f, true);
-    pw.startNewSubPath (315, 9); pw.lineTo (315, 26);
-    pw.applyTransform (T);
-    g.strokePath (pw, PathStrokeType (jmax (0.8f, 3.2f * s), PathStrokeType::curved, PathStrokeType::rounded));
+    g.strokePath (pulse, PathStrokeType (jmax (0.8f, MarkGeometry::pulseW * s), PathStrokeType::mitered, PathStrokeType::butt));
+    auto pw = m.power; pw.applyTransform (T);
+    g.strokePath (pw, PathStrokeType (jmax (0.8f, MarkGeometry::powerW * s), PathStrokeType::curved, PathStrokeType::rounded));
+}
+
+void logo::drawMark (juce::Graphics& g, juce::Rectangle<float> r)
+{
+    const float s = juce::jmin (r.getWidth() / 340.0f, r.getHeight() / 350.0f);
+    const auto o = r.getCentre() - juce::Point<float> (170.0f, 175.0f) * s;
+    drawMarkT (g, juce::AffineTransform::scale (s).translated (o), false);
+}
+
+// "5YNTH" letters drawn with the elements of the 5: straight bars of the same thickness, round bowls with the same
+// inner / outer proportion; upright, on the 5's cap band (y 52..345)
+// proportions: cap height 293 (the 5), stroke 46 (the 5's bars), letter width ~0.62 x cap height (golden ratio);
+// optical spacing: more room next to closed / round forms, less around the open sides of T
+static std::vector<juce::Path> wordLetters (float x0)
+{
+    using namespace juce;
+    constexpr float top = 52, bot = 345, t = 46, w = 182;
+    const float advance[4] = { 0, w + 38, w + 30, w + 30 + 12 };   // Y->N, N->T, T->H (T is 12 wider)
+    std::vector<Path> out;
+    float x = x0;
+    for (int k = 0; k < 4; ++k)
+    {
+        x += advance[k];
+        const float mid = x + w * 0.5f;
+        Path p;
+        if (k == 0)        // Y: a cup like the bowl of the 5, on a straight stem
+        {
+            const float ro = w * 0.5f, ri = ro - t, cy = 150;
+            p.addRectangle (x, top, t, cy - top);
+            p.addRectangle (x + w - t, top, t, cy - top);
+            Path cup;
+            cup.addCentredArc (mid, cy, ro, ro, 0, MathConstants<float>::halfPi, 1.5f * MathConstants<float>::pi, true);
+            cup.addCentredArc (mid, cy, ri, ri, 0, 1.5f * MathConstants<float>::pi, MathConstants<float>::halfPi, false);
+            cup.closeSubPath();
+            p.addPath (cup);
+            p.addRectangle (mid - t * 0.5f, cy + ri + 2, t, bot - cy - ri - 2);
+        }
+        else if (k == 1)   // N
+        {
+            p.addRectangle (x, top, t, bot - top);
+            p.addRectangle (x + w - t, top, t, bot - top);
+            p.addQuadrilateral (x, top, x + 1.10f * t, top, x + w, bot, x + w - 1.10f * t, bot);
+        }
+        else if (k == 2)   // T (a little wider: its bar carries the letter)
+        {
+            p.addRectangle (x, top, w + 12, t);
+            p.addRectangle (x + (w + 12 - t) * 0.5f, top, t, bot - top);
+        }
+        else               // H: crossbar centred on the 5's group of bars (y 133..213)
+        {
+            p.addRectangle (x, top, t, bot - top);
+            p.addRectangle (x + w - t, top, t, bot - top);
+            p.addRectangle (x + t * 0.5f, 173 - t * 0.5f, w - t, t);
+        }
+        out.push_back (p);
+    }
+    return out;
+}
+
+// frame that follows the outer contour of a shape at a distance `gap` (holes ignored), `line` thick;
+// rendered as an alpha mask at the device resolution and cached
+static void drawContourFrame (juce::Graphics& g, const juce::Path& shape, const juce::AffineTransform& T, float gap, float line)
+{
+    using namespace juce;
+    const auto area = shape.getBounds().expanded (gap + line + 4).transformedBy (T).getSmallestIntegerContainer().toFloat();
+    const float ps = jmax (1.0f, g.getInternalContext().getPhysicalPixelScaleFactor());
+    const int w = (int) std::ceil (area.getWidth() * ps), h = (int) std::ceil (area.getHeight() * ps);
+    struct Cache { int w = 0, h = 0; float gap = 0, line = 0; Image img; };
+    static Cache cache;
+    if (cache.w != w || cache.h != h || cache.gap != gap || cache.line != line)
+    {
+        const auto M = T.translated (-area.getX(), -area.getY()).scaled (ps);
+        // filled dilation of the shape by d, with the enclosed holes filled (flood fill of the outside from the border)
+        auto filled = [&] (float d)
+        {
+            Path st; PathStrokeType (2 * d, PathStrokeType::curved, PathStrokeType::rounded).createStrokedPath (st, shape);
+            st.addPath (shape); st.setUsingNonZeroWinding (true); st.applyTransform (M);
+            Image im (Image::SingleChannel, w, h, true);
+            { Graphics mg (im); mg.setColour (Colours::white); mg.fillPath (st); }
+            Image::BitmapData bd (im, Image::BitmapData::readWrite);
+            std::vector<uint8_t> out ((size_t) (w * h), 0);
+            std::vector<int> stack;
+            auto px = [&] (int x, int y) -> uint8& { return *bd.getPixelPointer (x, y); };
+            for (int x = 0; x < w; ++x) { stack.push_back (x); stack.push_back ((h - 1) * w + x); }
+            for (int y = 0; y < h; ++y) { stack.push_back (y * w); stack.push_back (y * w + w - 1); }
+            while (! stack.empty())
+            {
+                const int i = stack.back(); stack.pop_back();
+                if (out[(size_t) i]) continue;
+                const int x = i % w, y = i / w;
+                if (px (x, y) >= 128) continue;
+                out[(size_t) i] = 1;
+                if (x > 0) stack.push_back (i - 1);
+                if (x < w - 1) stack.push_back (i + 1);
+                if (y > 0) stack.push_back (i - w);
+                if (y < h - 1) stack.push_back (i + w);
+            }
+            std::vector<uint8_t> a ((size_t) (w * h));
+            for (int y = 0; y < h; ++y)
+                for (int x = 0; x < w; ++x)
+                {
+                    // inside or a hole: opaque; outside region: keep the antialiased edge
+                    const uint8 v = px (x, y);
+                    a[(size_t) (y * w + x)] = out[(size_t) (y * w + x)] ? v : (uint8) 255;
+                }
+            return a;
+        };
+        const auto inner = filled (gap), outer = filled (gap + line);
+        Image img (Image::SingleChannel, w, h, true);
+        Image::BitmapData bd (img, Image::BitmapData::writeOnly);
+        for (int y = 0; y < h; ++y)
+            for (int x = 0; x < w; ++x)
+                *bd.getPixelPointer (x, y) = (uint8) jmax (0, (int) outer[(size_t) (y * w + x)] - (int) inner[(size_t) (y * w + x)]);
+        cache = { w, h, gap, line, img };
+    }
+    ColourGradient gr (Colour (0xffaaaaaa), area.getX(), area.getY(), Colour (0xff5c5c5c), area.getRight(), area.getBottom(), false);
+    gr.addColour (0.5, Colour (0xff8e8e8e));
+    g.setGradientFill (gr);
+    g.drawImage (cache.img, area, RectanglePlacement::stretchToFit, true);
 }
 
 void logo::drawWordmark (juce::Graphics& g, juce::Rectangle<float> r, int style, juce::RectanglePlacement place)
 {
     using namespace juce;
-    // design units: emblem in x 0..340, letters on the 5's cap band y 52..345 (stroke 46, stem slant 0.11 as in the 5)
-    constexpr float top = 52, bot = 345, t = 46, slant = 0.11f, x0 = 372;
-    std::vector<Path> letters;
-    if (style == 1)
-    {
-        constexpr float w = 196, gap = 34;
-        for (int k = 0; k < 4; ++k)
-        {
-            const float x = x0 + k * (w + gap), mid = x + w * 0.5f;
-            Path p;
-            if (k == 0)        // Y: two arms meeting at the middle, stem down
-            {
-                const float jy = 200;
-                p.addQuadrilateral (x, top, x + 1.2f * t, top, mid + 0.5f * t, jy, mid - 0.5f * t, jy);
-                p.addQuadrilateral (x + w - 1.2f * t, top, x + w, top, mid + 0.5f * t, jy, mid - 0.5f * t, jy);
-                p.addRectangle (mid - t * 0.5f, jy - 1, t, bot - jy + 1);
-            }
-            else if (k == 1)   // N
-            {
-                p.addRectangle (x, top, t, bot - top);
-                p.addRectangle (x + w - t, top, t, bot - top);
-                p.addQuadrilateral (x, top, x + 1.11f * t, top, x + w, bot, x + w - 1.11f * t, bot);
-            }
-            else if (k == 2)   // T
-            {
-                p.addRectangle (x - 6, top, w + 12, t);
-                p.addRectangle (mid - t * 0.5f, top, t, bot - top);
-            }
-            else               // H: crossbar at the height of the 5's bars
-            {
-                p.addRectangle (x, top, t, bot - top);
-                p.addRectangle (x + w - t, top, t, bot - top);
-                p.addRectangle (x + t * 0.5f, 172, w - t, t * 0.8f);
-            }
-            letters.push_back (p);
-        }
-    }
-    else
-    {
-        static Typeface::Ptr tf = Typeface::createSystemTypefaceFor (BinaryData::BrunoAceRegular_ttf, BinaryData::BrunoAceRegular_ttfSize);
-        GlyphArrangement ga;
-        ga.addLineOfText (Font (FontOptions (tf).withHeight (100.0f)), "YNTH", 0, 0);
-        Path p; ga.createPath (p);
-        // Bruno Ace stems are ~14 % of the cap height: embolden the outline so they match the 5's stroke (46-50 units)
-        constexpr float extra = 16;
-        const auto b = p.getBounds();
-        const float k = (bot - top - extra) / b.getHeight();
-        p.applyTransform (AffineTransform::translation (-b.getX(), -b.getY()).scaled (k).translated (x0 + extra * 0.5f, top + extra * 0.5f));
-        Path bold;
-        PathStrokeType (extra, PathStrokeType::mitered).createStrokedPath (bold, p);
-        bold.addPath (p);
-        bold.setUsingNonZeroWinding (true);
-        letters.push_back (bold);
-    }
-    // the letters lean like the stem of the 5
-    Rectangle<float> lb;
-    for (auto& p : letters)
-    {
-        p.applyTransform (AffineTransform (1.0f, -slant, slant * bot, 0.0f, 1.0f, 0.0f));
-        lb = lb.isEmpty() ? p.getBounds() : lb.getUnion (p.getBounds());
-    }
-    const Rectangle<float> box (0, 0, jmax (340.0f, lb.getRight()) + 4, 350);
+    constexpr float x0 = 333 + 44, gap = 30, line = 5;   // Y starts 44 after the bars (the Y is open at the top)
+    const bool frame = style >= 2;
+    auto letters = wordLetters (x0);
+    MarkGeometry m (true);
+    Path shape (m.metal);                 // everything the frame goes around
+    shape.addPath (m.bars);
+    for (auto& l : letters) shape.addPath (l);
+    for (auto [pp, pw] : { std::pair<const Path*, float> { &m.pulse, MarkGeometry::pulseW }, { &m.power, MarkGeometry::powerW } })
+    { Path st; PathStrokeType (pw * 2.0f, PathStrokeType::curved, PathStrokeType::rounded).createStrokedPath (st, *pp); shape.addPath (st); }
+    const auto box = shape.getBounds().expanded (frame ? gap + line + 2 : 2);
     const auto T = place.getTransformToFit (box, r);
-    drawMark (g, box.withWidth (340).transformedBy (T));
-    for (auto& p : letters) { p.applyTransform (T); fillSteel (g, p); }
+    if (frame) drawContourFrame (g, shape, T, gap, line);
+    drawMarkT (g, T, true);
+    for (auto& l : letters) { l.applyTransform (T); fillSteel (g, l); }   // each letter lit like the 5
 }
 
 void logo::drawWord (juce::Graphics& g, juce::Rectangle<float> r, juce::Justification j)
