@@ -3,6 +3,7 @@
 //   SynthZillaTest <outDir> levels           write <outDir>/levels.json: g_trim so that every preset peaks at -1 dBFS
 //   SynthZillaTest <outDir> wav <substring>  render matching presets to WAV
 //   SynthZillaTest <outDir> gui              GUI snapshots (PNG)
+//   SynthZillaTest <outDir> logo             logo_5ynth.png (wordmark on black)
 //   SynthZillaTest <outDir> units            unit checks (5 modules, LFO modulation, EQ, output filters, model change, FM 6-op)
 #include "../Source/PluginProcessor.h"
 #include "../Source/PluginEditor.h"
@@ -187,6 +188,12 @@ int main (int argc, char** argv)
             if (w) w->writeFromAudioSampleBuffer (b, 0, b.getNumSamples());
             std::printf ("%s  peak %.2f\n", f.getFileName().toRawUTF8(), st.peak);
         }
+    }
+    else if (mode == "logo")   // logo_5ynth.png: the wordmark on black, for README and manual
+    {
+        Image img (Image::ARGB, 1800, 560, true);
+        { Graphics g (img); g.fillAll (Colour (0xff0b0b0b)); logo::drawWordmark (g, { 60.0f, 60.0f, 1680.0f, 440.0f }); }
+        PNGImageFormat png; FileOutputStream os (outDir.getChildFile ("logo_5ynth.png")); os.setPosition (0); os.truncate(); png.writeImageToStream (img, os);
     }
     else if (mode == "gui")
     {

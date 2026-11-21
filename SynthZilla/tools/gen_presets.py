@@ -566,7 +566,7 @@ models = [dict(name=n, kind=k, skin=s, maker=mk, year=y) for (n, k, s, mk, y) in
 decades = sorted({o["decade"] for o in out})
 json.dump(dict(version=2, genres=GENRES, decades=decades, models=models, presets=out), open(OUT, "w"), indent=1, ensure_ascii=False)
 
-md = ["# SynthZilla - libreria dei preset (%d)\n" % len(out),
+md = ["# 5ynth - libreria dei preset (%d)\n" % len(out),
       "Ordinata per anno. Ogni preset: nome (genere - brano più famoso che ha usato quel suono), strumento originale, moduli usati. ",
       "**Nome di fabbrica** = nome reale del preset sullo strumento, quando il suono è un preset di fabbrica documentato.\n",
       "| Anno | Preset | Genere | Brano | Artista | Strumento | Moduli | Nome di fabbrica | Note |", "|---|---|---|---|---|---|---|---|---|"]

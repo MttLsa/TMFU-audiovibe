@@ -1,4 +1,4 @@
-# SynthZilla - libreria dei preset (151)
+# 5ynth - libreria dei preset (151)
 
 Ordinata per anno. Ogni preset: nome (genere - brano più famoso che ha usato quel suono), strumento originale, moduli usati. 
 **Nome di fabbrica** = nome reale del preset sullo strumento, quando il suono è un preset di fabbrica documentato.

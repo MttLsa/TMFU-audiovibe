@@ -1,9 +1,13 @@
-# SynthZilla — fino a 5 synth (analogici / digitali) con i suoni famosi 1960–2020 (VST3 / AU / Standalone)
+# 5ynth — 5-in-1 synthesizer: fino a 5 synth (analogici / digitali) con i suoni famosi 1960–2020 (VST3 / AU / Standalone)
 
-SynthZilla (TMFU audiovibe, JUCE 8 / C++17) ricrea **per sintesi** — senza campioni — i suoni di synth più famosi della
+![5ynth](docs/logo_5ynth.png)
+
+**5ynth** (ex SynthZilla; TMFU audiovibe, JUCE 8 / C++17) ricrea **per sintesi** — senza campioni — i suoni di synth più famosi della
 storia, ognuno legato al **brano più famoso che l'ha usato**. La libreria è ordinata **per anno**.
 
-![SynthZilla](docs/gui_Organ_2.png)
+![5ynth](docs/gui_Organ_2.png)
+
+Manuale d'uso: [docs/5ynth_Manuale_v2.1.0.pdf](docs/5ynth_Manuale_v2.1.0.pdf).
 
 ## Moduli synth A–E
 
@@ -53,8 +57,9 @@ fase. Il **+** apre la vista con tutti gli 8 LFO. LFO, EQ e filtri d'uscita non 
 - **Fader più lunghi** sugli strumenti che hanno fader. Risoluzione fine: le manopole si muovono a passi di **0,01**, i fader di
   **0,001**; dopo un clic le frecce muovono di 1 % (fader 0,1 %), Shift = 10× più fine; doppio clic = valore di default.
 - Finestra **ridimensionabile** (dal 50 % al 200 %, la dimensione viene ricordata), con EQ e LFO espandibili.
-- Logo: **SynthZilla** in TeX Gyre Adventor (equivalente libero dell'ITC Avant Garde Gothic, che è commerciale e non si
-  può incorporare) e un piccolo kaiju viola animato, con due occhi rossi, che suona una tastiera.
+- Logo **5YNTH**, disegnato in vettoriale (nitido a ogni dimensione): lettere in metallo spazzolato; il "5" ha la barra
+  superiore a forma di tastiera stilizzata e **cinque barre luminose** (i 5 synth); una cornice segue il contorno della
+  scritta. Clic sul logo nella testata = logo grande (clic per chiuderlo).
 
 ## Preset
 151 preset dal 1963 al 2023, **ordinati per anno**. Nel browser ogni riga è:
@@ -102,11 +107,12 @@ cmake --build SynthZilla/build --config Release --parallel
 ```
 
 Su macOS la CI (`.github/workflows/synthzilla.yml`, runner Intel) produce l'installer universale
-**SynthZilla-2.0.0-macOS.pkg** (Intel + Apple Silicon: AU, VST3, app Standalone). Nella DAW compare sotto **TMFU audiovibe**
-(AU `aumu Szla Tmfu`).
+**5ynth-2.1.0-macOS.pkg** (Intel + Apple Silicon: AU, VST3, app Standalone). Nella DAW compare sotto **TMFU audiovibe**
+come **5ynth** (AU `aumu Szla Tmfu`: codici invariati, i progetti salvati con SynthZilla ritrovano il plugin).
+La cartella del codice e i nomi interni restano `SynthZilla`.
 
 Strumenti: `tools/gen_presets.py` (libreria + `docs/PRESETS.md`); test con `-DSYNTHZILLA_BUILD_TESTS=ON`:
-`SynthZillaTest <dir> units | check | levels | wav <nome> | gui`.
+`SynthZillaTest <dir> units | check | levels | wav <nome> | gui | logo`; manuale: `python3 tools/make_manual.py 2.1.0`.
 
 > Marchi e nomi degli strumenti appartengono ai rispettivi proprietari e sono usati solo per indicare lo strumento di
-> riferimento. Il kaiju del logo è un personaggio generico stilizzato. Font: vedi `resources/fonts/FONTS-LICENSE.txt`.
+> riferimento. Font: vedi `resources/fonts/FONTS-LICENSE.txt`.
