@@ -187,7 +187,7 @@ void ModulePart::start (float velocity, bool hard, const ModCtx& c, float note, 
         opEnv[o].set (v[opSuffix (o, opAtk)], v[opSuffix (o, opDec)], v[opSuffix (o, opSus)], v[opSuffix (o, opRel)], c.sr);
         if (hard) opEnv[o].gateOn (fresh);
     }
-    if (fresh) for (int ch = 0; ch < 2; ++ch) { lad[ch].reset(); moog[ch].reset(); d303[ch].reset(); svf[ch][0].reset(); svf[ch][1].reset(); dist[ch].reset(); prevIn[ch] = 0; }
+    if (fresh) for (int ch = 0; ch < 2; ++ch) { lad[ch].reset(); moog[ch].reset(); ota[ch].reset(); d303[ch].reset(); svf[ch][0].reset(); svf[ch][1].reset(); dist[ch].reset(); prevIn[ch] = 0; }
 }
 
 void ModulePart::render (float* L, float* R, int n, const float* notes, const ModCtx& c)
@@ -215,7 +215,8 @@ void ModulePart::render (float* L, float* R, int n, const float* notes, const Mo
     const float lfoPitch = v[mLfoPitch], lfoCut = v[mLfoCut], lfoTim = v[mLfoTim];
     const float pitchCoef = std::exp (-1.0f / (std::max (1.0f, v[mPdec]) * 0.001f * sr / 4.6f));
     const float fInc = fadeInc (v[mLfoDelay], sr);
-    const float driftAmt = engine == 0 ? v[mDrift] * 0.12f : 0.0f;
+    // DCO instruments (Juno, JX-8P, Alpha Juno) have digitally clocked, perfectly stable oscillators: no drift
+    const float driftAmt = engine == 0 && c.circuit != dsp::Circuit::RolandDCO ? v[mDrift] * 0.12f : 0.0f;
     const float glide5 = 1.0f - std::exp (-1.0f / (0.005f * sr));   // one-pole, ~5 ms
     const float glide1 = 1.0f - std::exp (-1.0f / (0.0015f * sr));  // one-pole, ~1.5 ms (smooths the 32-sample parameter steps)
     const float velAmp = 1.0f - g[lay.gVel] + g[lay.gVel] * vel;
@@ -431,6 +432,10 @@ void ModulePart::render (float* L, float* R, int n, const float* notes, const Mo
         else if (ft == 0 && (c.circuit == dsp::Circuit::Moog || c.circuit == dsp::Circuit::Minimoog))   // Moog transistor ladder (per-stage saturation)
         {
             yl = moog[0].process (sl, fc, sr, res, fdrive); yr = moog[1].process (sr2, fc, sr, res, fdrive);
+        }
+        else if (ft == 0 && (c.circuit == dsp::Circuit::RolandVCO || c.circuit == dsp::Circuit::RolandDCO))   // Roland IR3109 OTA
+        {
+            yl = ota[0].process (sl, fc, sr, res, fdrive); yr = ota[1].process (sr2, fc, sr, res, fdrive);
         }
         else if (ft == 0)
         {

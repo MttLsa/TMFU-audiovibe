@@ -136,6 +136,7 @@ int main (int argc, char** argv)
         }
         {   // LFO modulates a parameter
             FivesynthProcessor p; p.loadPreset (findPreset ("Can You Feel It Pad"));
+            setP (p, mod (0, mLevel), 0.3f);   // low base level: a symmetric square LFO then changes the mean loudness
             const auto a = render (p, nullptr, 2.0, nullptr, 60);
             setP (p, L.lfoBase[0] + lTarget, (float) (mod (0, mLevel) + 1));
             setP (p, L.lfoBase[0] + lDepth, 1.0f); setP (p, L.lfoBase[0] + lRate, 4.0f); setP (p, L.lfoBase[0] + lShape, 4);

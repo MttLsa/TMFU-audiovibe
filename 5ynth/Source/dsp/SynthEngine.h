@@ -56,6 +56,7 @@ struct ModulePart
     dsp::Ladder lad[2];
     dsp::Diode303 d303[2];
     dsp::MoogLadder moog[2];
+    dsp::RolandOta ota[2];
     dsp::Svf svf[2][2];
     dsp::PedalDist dist[2];
     float prevIn[2] {};

@@ -35,6 +35,9 @@ FivesynthProcessor::FivesynthProcessor()
     for (int i = 0; i < (int) models.size(); ++i)
         if (models[(size_t) i].name == "Moog Minimoog Model D") engine.setModelCircuit (i, dsp::Circuit::Minimoog);
         else if (models[(size_t) i].name.startsWith ("Moog") || models[(size_t) i].name == "Polymoog") engine.setModelCircuit (i, dsp::Circuit::Moog);
+        else if (models[(size_t) i].name == "Roland Jupiter-8" || models[(size_t) i].name == "Roland SH-101") engine.setModelCircuit (i, dsp::Circuit::RolandVCO);
+        else if (models[(size_t) i].name.startsWith ("Roland Juno") || models[(size_t) i].name == "Roland JX-8P" || models[(size_t) i].name == "Roland Alpha Juno-2")
+            engine.setModelCircuit (i, dsp::Circuit::RolandDCO);
     const auto& all = PresetLibrary::get().all();
     int start = 0;
     for (int i = 0; i < (int) all.size(); ++i) if (all[(size_t) i].name == "Organ 2") start = i;

@@ -630,6 +630,8 @@ void ModulePanel::buildGroups()
         for (int s : cand)
         {
             if (shown.count (s) || ((engine == 3 || engine == 5) && (s == mUni || s == mDetune))) continue;
+            const bool dco = md->name.startsWith ("Roland Juno") || md->name == "Roland JX-8P" || md->name == "Roland Alpha Juno-2";
+            if (dco && s == mDrift) continue;   // DCOs do not drift: the engine ignores it for them
             const auto& d = def (M (s));
             if (std::abs (proc.apvts.getRawParameterValue (d.id)->load() - d.def) > 1.0e-4f)
                 extra.items.push_back ({ M (s), d.name.fromFirstOccurrenceOf (" ", false, false) });   // "A Drift" -> "Drift"
