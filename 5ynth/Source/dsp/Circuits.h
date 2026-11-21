@@ -12,8 +12,25 @@ namespace dsp
         Moog, Minimoog,         // Moog transistor ladder (Minimoog also: 3-stage contours + DECAY switch)
         RolandVCO, RolandDCO,   // Roland IR3109 OTA filter; VCO = analog oscillators (drift), DCO = stable digital clocks
         OberheimSEM,            // Oberheim OB-X: 2-pole state-variable filter (SEM style), no self-oscillation
-        Cem3320                 // Curtis CEM3320 4-pole (Oberheim OB-Xa, Sequential Prophet-5 rev 3)
+        Cem3320,                // Curtis CEM3320 4-pole (Oberheim OB-Xa, Sequential Prophet-5 rev 3)
+        Korg35,                 // Korg MS-20 2-pole with diode-clipped, self-oscillating resonance
+        YamahaCS,               // Yamaha CS-80 12 dB/oct state-variable VCF (no self-oscillation)
+        Arp,                    // ARP 4072 / 4012 4-pole transistor ladder (2500, 2600, Odyssey)
+        Ems,                    // EMS VCS3 / Synthi diode ladder
+        Ppg,                    // PPG Wave 2.3: 8-bit wavetables stepped wave by wave + SSM2044 4-pole VCF
+        YamahaFM                // DX7 / TX-816 / DX21 / TX81Z: floating-point 12-bit DAC
     };
+
+    // Yamaha DX output DAC: 12-bit mantissa scaled by a 3-bit exponent (analog gain switch) -> quantisation noise that
+    // follows the signal level, the slight grit of the original
+    inline float dxDac (float x)
+    {
+        const float a = std::abs (x);
+        if (a < 1.0e-6f) return 0.0f;
+        const float range = std::exp2 (std::min (0.0f, std::ceil (std::log2 (a))));   // 1, 1/2, 1/4 ... (3-bit exponent)
+        const float step = std::max (range, 1.0f / 128.0f) / 2048.0f;
+        return std::round (x / step) * step;
+    }
 
     // Moog transistor ladder (Minimoog, modular 904A, Polymoog, Source, Sub 37), Huovilainen's non-linear model
     // (DAFx 2004): every stage is a differential transistor pair -> its own tanh; run 2x oversampled inside, with
@@ -117,6 +134,31 @@ namespace dsp
             {
                 const float v3 = x - ic2, v1 = a1 * ic1 + a2 * v3, v2 = ic2 + a2 * ic1 + a3 * v3;
                 ic1 = fastTanh (2.0f * v1 - ic1);
+                ic2 = 2.0f * v2 - ic2;
+                y = v2;
+            }
+            if (! std::isfinite (y)) { reset(); return 0.0f; }
+            return y / std::sqrt (drive);
+        }
+    };
+
+    // Korg MS-20 (Korg35, second version: OTA): 2-pole low-pass whose resonance can go past self-oscillation; the
+    // resonance loop is limited by diodes (soft clip of the band-pass state) -> the screaming, gritty MS-20 peak.
+    struct Korg35
+    {
+        float ic1 = 0, ic2 = 0;
+        void reset() { ic1 = ic2 = 0; }
+        inline float process (float in, float cutoff, float sr, float res, float drive)
+        {
+            const float g = std::tan (pi * std::min (cutoff, sr * 0.9f) / (2.0f * sr));
+            const float k = 2.0f - 2.1f * res;                       // below 0 at the top: self-oscillation
+            const float a1 = 1.0f / (1.0f + g * (g + k)), a2 = g * a1, a3 = g * a2;
+            const float x = fastTanh (in * drive);
+            float y = 0;
+            for (int j = 0; j < 2; ++j)
+            {
+                const float v3 = x - ic2, v1 = a1 * ic1 + a2 * v3, v2 = ic2 + a2 * ic1 + a3 * v3;
+                ic1 = 1.2f * fastTanh ((2.0f * v1 - ic1) * (1.0f / 1.2f));   // diode limiter in the loop
                 ic2 = 2.0f * v2 - ic2;
                 y = v2;
             }

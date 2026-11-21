@@ -37,6 +37,18 @@ celle a membrana con LCD.
   leggermente asimmetrici, tone stack LP/HP), sovracampionati 2×.
 - Riferimenti: Open303 (TeeBeeFilter), analisi TPT del diode ladder di Will Pirkle e JC-303, analisi ElectroSmash del ProCo RAT.
 
+## Circuiti degli strumenti originali
+Il circuito del filtro (e, dove conta, degli oscillatori e del convertitore) segue lo strumento scelto in Synth Model:
+- **Moog** (Minimoog, modular, Polymoog, Source, Sub 37) e **ARP** (2500, 2600, Odyssey): ladder a transistor non lineare
+  (modello di Huovilainen, saturazione per stadio, auto-oscillazione). Minimoog: forme d'onda originali (triangle, shark
+  tooth, sawtooth, square, wide / narrow rectangle) e contorni Attack / Decay / Sustain con l'interruttore **DECAY**.
+- **Roland** (Juno-60/106, Jupiter-8, SH-101, JX-8P, Alpha Juno): IR3109 a 4 OTA; i DCO (Juno, JX-8P, Alpha Juno) non derivano.
+- **TB-303**: diode ladder accoppiato a 4 poli con il passa-alto nell'anello di risonanza.
+- **Oberheim OB-X**: filtro SEM a 2 poli (12 dB/ott, nessuna auto-oscillazione); **OB-Xa** e **Prophet-5**: CEM3320 a 4 poli.
+- **Korg MS-20**: 2 poli con risonanza limitata da diodi che arriva all'auto-oscillazione; **Yamaha CS-80**: VCF a 12 dB.
+- **EMS VCS3**: diode ladder; **PPG Wave 2.3**: wavetable a 8 bit che cambiano onda a scatti + filtro SSM2044.
+- **Yamaha DX7 / TX-816 / DX21 / TX81Z**: DAC a 12 bit con esponente (rumore di quantizzazione che segue il livello).
+
 ## Uscita
 **Drive**, **Chorus** (I / II / I+II stile Juno, Ensemble), **Reverb**, **EQ grafico a 5 bande** (statico; nodi trascinabili:
 frequenza/guadagno, rotella = Q, doppio clic = on/off; il pulsante **+** apre la finestra grande con tipo, frequenza,

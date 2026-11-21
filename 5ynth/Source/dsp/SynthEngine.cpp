@@ -187,7 +187,7 @@ void ModulePart::start (float velocity, bool hard, const ModCtx& c, float note, 
         opEnv[o].set (v[opSuffix (o, opAtk)], v[opSuffix (o, opDec)], v[opSuffix (o, opSus)], v[opSuffix (o, opRel)], c.sr);
         if (hard) opEnv[o].gateOn (fresh);
     }
-    if (fresh) for (int ch = 0; ch < 2; ++ch) { lad[ch].reset(); moog[ch].reset(); ota[ch].reset(); cem[ch].reset(); sem[ch].reset(); d303[ch].reset(); svf[ch][0].reset(); svf[ch][1].reset(); dist[ch].reset(); prevIn[ch] = 0; }
+    if (fresh) for (int ch = 0; ch < 2; ++ch) { lad[ch].reset(); moog[ch].reset(); ota[ch].reset(); cem[ch].reset(); sem[ch].reset(); k35[ch].reset(); ssm[ch].reset(); d303[ch].reset(); svf[ch][0].reset(); svf[ch][1].reset(); dist[ch].reset(); prevIn[ch] = 0; }
 }
 
 void ModulePart::render (float* L, float* R, int n, const float* notes, const ModCtx& c)
@@ -330,16 +330,24 @@ void ModulePart::render (float* L, float* R, int n, const float* notes, const Mo
                     sl += mix * gl[u]; sr2 += mix * gr[u];
                 }
                 sl *= uniNorm; sr2 *= uniNorm;
+                if (c.circuit == dsp::Circuit::YamahaFM) { sl = dsp::dxDac (sl); sr2 = dsp::dxDac (sr2); }
                 break;
             }
             case 2:   // ------------------------------------------------ Wavetable
             {
-                const float pos = glide (wposSm, v[mWPos], glide1) + v[mWEnv] * fe + (v[mWLfo] + lfoTim) * lfo * 0.5f;
+                float pos = glide (wposSm, v[mWPos], glide1) + v[mWEnv] * fe + (v[mWLfo] + lfoTim) * lfo * 0.5f;
+                const bool ppg = c.circuit == dsp::Circuit::Ppg;
+                if (ppg)   // PPG: the wave number is an integer (no morphing between waves) and the samples are 8-bit
+                {
+                    constexpr int nf = WavetableBank::numFrames - 1;
+                    pos = std::round (std::clamp (pos, 0.0f, 1.0f) * (float) nf) / (float) nf;
+                }
                 for (int u = 0; u < nu; ++u)
                 {
                     const float inc = std::min (0.45f, base * det[u]);
                     ph1[u] += inc; ph1[u] -= std::floor (ph1[u]);
-                    const float s = wt.read (table, pos, ph1[u], inc);
+                    float s = wt.read (table, pos, ph1[u], inc);
+                    if (ppg) s = std::round (s * 127.0f) * (1.0f / 127.0f);
                     sl += s * gl[u]; sr2 += s * gr[u];
                 }
                 sl *= uniNorm * 0.8f; sr2 *= uniNorm * 0.8f;
@@ -432,6 +440,34 @@ void ModulePart::render (float* L, float* R, int n, const float* notes, const Mo
         else if (ft == 0 && (c.circuit == dsp::Circuit::Moog || c.circuit == dsp::Circuit::Minimoog))   // Moog transistor ladder (per-stage saturation)
         {
             yl = moog[0].process (sl, fc, sr, res, fdrive); yr = moog[1].process (sr2, fc, sr, res, fdrive);
+        }
+        else if ((ft == 0 || ft == 2 || ft == 5) && c.circuit == dsp::Circuit::Korg35)   // MS-20
+        {
+            yl = k35[0].process (sl, fc, sr, res, fdrive); yr = k35[1].process (sr2, fc, sr, res, fdrive);
+        }
+        else if ((ft == 0 || ft == 2 || ft == 5) && c.circuit == dsp::Circuit::YamahaCS)   // CS-80 12 dB VCF
+        {
+            yl = sem[0].process (sl, fc, sr, res * 0.9f, fdrive); yr = sem[1].process (sr2, fc, sr, res * 0.9f, fdrive);
+        }
+        else if (ft == 0 && c.circuit == dsp::Circuit::Arp)   // ARP 4-pole transistor ladder
+        {
+            yl = moog[0].process (sl, fc, sr, res, fdrive); yr = moog[1].process (sr2, fc, sr, res, fdrive);
+        }
+        else if ((ft == 0 || ft == 2) && c.circuit == dsp::Circuit::Ems)   // VCS3 diode ladder (2x oversampled)
+        {
+            const float sr2x = sr * 2.0f;
+            float in2[2] = { sl, sr2 }, out2[2];
+            for (int ch = 0; ch < 2; ++ch)
+            {
+                const float mid = 0.5f * (prevIn[ch] + in2[ch]);
+                out2[ch] = 0.5f * (d303[ch].process (mid, fc, sr2x, res, fdrive) + d303[ch].process (in2[ch], fc, sr2x, res, fdrive));
+                prevIn[ch] = in2[ch];
+            }
+            yl = out2[0]; yr = out2[1];
+        }
+        else if ((ft == 0 || ft == 5) && c.circuit == dsp::Circuit::Ppg)   // PPG: SSM2044 4-pole
+        {
+            yl = ssm[0].process (sl, fc, sr, res, fdrive); yr = ssm[1].process (sr2, fc, sr, res, fdrive);
         }
         else if ((ft == 0 || ft == 2 || ft == 5) && c.circuit == dsp::Circuit::OberheimSEM)   // OB-X: 2-pole SEM low-pass only
         {

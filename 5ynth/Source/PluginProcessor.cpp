@@ -40,6 +40,13 @@ FivesynthProcessor::FivesynthProcessor()
             engine.setModelCircuit (i, dsp::Circuit::RolandDCO);
         else if (models[(size_t) i].name == "Oberheim OB-X") engine.setModelCircuit (i, dsp::Circuit::OberheimSEM);
         else if (models[(size_t) i].name == "Oberheim OB-Xa" || models[(size_t) i].name == "Sequential Prophet-5") engine.setModelCircuit (i, dsp::Circuit::Cem3320);
+        else if (models[(size_t) i].name == "Korg MS-20") engine.setModelCircuit (i, dsp::Circuit::Korg35);
+        else if (models[(size_t) i].name == "Yamaha CS-80") engine.setModelCircuit (i, dsp::Circuit::YamahaCS);
+        else if (models[(size_t) i].name.startsWith ("ARP 2") || models[(size_t) i].name == "ARP Odyssey") engine.setModelCircuit (i, dsp::Circuit::Arp);
+        else if (models[(size_t) i].name == "EMS VCS3 / Synthi AKS") engine.setModelCircuit (i, dsp::Circuit::Ems);
+        else if (models[(size_t) i].name == "PPG Wave 2.3") engine.setModelCircuit (i, dsp::Circuit::Ppg);
+        else if (models[(size_t) i].name == "Yamaha DX7" || models[(size_t) i].name == "Yamaha TX-816"
+                 || models[(size_t) i].name == "Yamaha DX21" || models[(size_t) i].name == "Yamaha TX81Z") engine.setModelCircuit (i, dsp::Circuit::YamahaFM);
     const auto& all = PresetLibrary::get().all();
     int start = 0;
     for (int i = 0; i < (int) all.size(); ++i) if (all[(size_t) i].name == "Organ 2") start = i;

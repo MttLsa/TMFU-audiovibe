@@ -156,6 +156,21 @@ p("<b>Pannelli come gli originali.</b> Ogni strumento mostra le sezioni e i nomi
 p("Strumento originale analogico → motore <b>Analog</b>; digitale → uno dei motori digitali. Gli strumenti ibridi o i "
   "brani con più synth sovrapposti usano più moduli in layer. Il motore fa parte dello strumento: il riquadro <b>Engine</b> nel "
   "pannello mostra quello in uso ma non si cambia a mano, così ogni synth resta coerente con l'originale.")
+h2("Circuiti degli strumenti originali")
+p("Il filtro (e dove conta gli oscillatori e il convertitore) segue il circuito dello strumento scelto in Synth Model.")
+table([
+    ["Strumenti", "Circuito"],
+    ["Minimoog, Moog modular, Polymoog, Source, Sub 37; ARP 2500, 2600, Odyssey", "Ladder a transistor a 4 poli non lineare (saturazione per stadio, auto-oscillazione con la risonanza al massimo). Minimoog: forme d'onda originali e contorni Attack / Decay / Sustain con l'interruttore DECAY."],
+    ["Roland Juno-60 / 106, Jupiter-8, SH-101, JX-8P, Alpha Juno", "IR3109: 4 stadi OTA che saturano uno per uno, la risonanza toglie pochi bassi. Juno, JX-8P e Alpha Juno: DCO stabili, senza deriva."],
+    ["Roland TB-303", "Diode ladder a 4 stadi accoppiati, passa-alto da ~150 Hz nell'anello di risonanza, picco sulla manopola Cut Off Freq."],
+    ["Oberheim OB-X", "Filtro SEM a 2 poli (12 dB/ottava): bassi intatti, la risonanza non arriva all'auto-oscillazione."],
+    ["Oberheim OB-Xa, Sequential Prophet-5", "Curtis CEM3320 a 4 poli."],
+    ["Korg MS-20", "2 poli con la risonanza limitata da diodi, che arriva a urlare e ad auto-oscillare."],
+    ["Yamaha CS-80", "VCF a 12 dB/ottava."],
+    ["EMS VCS3 / Synthi AKS", "Diode ladder."],
+    ["PPG Wave 2.3", "Wavetable a 8 bit che cambiano onda a scatti (come l'originale) + filtro SSM2044 a 4 poli."],
+    ["Yamaha DX7, TX-816, DX21, TX81Z", "DAC a 12 bit con esponente: il leggero rumore di quantizzazione dell'originale."],
+], [60, 110])
 h2("Motori (Engine)")
 table([
     ["Engine", "Sintesi", "Strumenti tipici"],

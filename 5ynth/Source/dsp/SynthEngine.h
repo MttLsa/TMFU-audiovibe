@@ -59,6 +59,9 @@ struct ModulePart
     dsp::RolandOta ota[2];
     dsp::RolandOta cem[2] { cemSetup(), cemSetup() };
     dsp::SemSvf sem[2];
+    dsp::Korg35 k35[2];
+    dsp::RolandOta ssm[2] { ssmSetup(), ssmSetup() };
+    static dsp::RolandOta ssmSetup() { dsp::RolandOta f; f.comp = 0.3f; f.headroom = 0.8f; return f; }
     static dsp::RolandOta cemSetup() { dsp::RolandOta f; f.comp = 0.25f; f.headroom = 0.7f; return f; }
     dsp::Svf svf[2][2];
     dsp::PedalDist dist[2];
