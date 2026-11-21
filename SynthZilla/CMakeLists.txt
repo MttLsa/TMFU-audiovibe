@@ -49,7 +49,7 @@ target_sources(SynthZilla PRIVATE ${TS_SOURCES})
 target_include_directories(SynthZilla PRIVATE Source)
 
 juce_add_binary_data(SynthZillaData SOURCES resources/presets.json resources/fonts/Inter-Regular.ttf resources/fonts/Inter-SemiBold.ttf
-  resources/logo/logo_stack.png resources/logo/logo_word.png resources/logo/logo_tagline.png resources/logo/logo_full.png)
+  resources/fonts/Urbanist-Light.ttf resources/logo/logo_mark.png resources/logo/logo_word.png resources/logo/logo_full.png)
 set_target_properties(SynthZillaData PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 set(TS_DEFS JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0 JUCE_DISPLAY_SPLASH_SCREEN=0)

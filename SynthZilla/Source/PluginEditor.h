@@ -193,10 +193,12 @@ private:
 // 5ynth logo (resources/logo, cut from the artwork by tools/make_logo.py)
 namespace logo
 {
-    const juce::Image& stack();     // the five stacked keyboards
-    const juce::Image& word();      // "5ynth" wordmark
-    const juce::Image& tagline();   // "5-IN-1 SYNTHESIZER"
+    const juce::Image& mark();      // emblem: metallic "5", glowing bars, mini keyboard, power symbol
+    const juce::Image& word();      // "5YNTH" wordmark
     const juce::Image& full();      // whole logo
+    // vector redraw of the same logo (sharp at any size): emblem in a 340 x 350 box, wordmark in Urbanist Light
+    void drawMark (juce::Graphics& g, juce::Rectangle<float> r, bool metal = false);   // flat white, or brushed metal + glowing bars
+    void drawWord (juce::Graphics& g, juce::Rectangle<float> r, juce::Justification j = juce::Justification::centredLeft);
     void draw (juce::Graphics& g, const juce::Image& im, juce::Rectangle<float> r,                   // fitted, high quality
                juce::RectanglePlacement place = juce::RectanglePlacement::centred);
 }
