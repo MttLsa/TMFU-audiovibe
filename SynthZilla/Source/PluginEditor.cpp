@@ -77,6 +77,7 @@ void logo::drawWord (juce::Graphics& g, juce::Rectangle<float> r, juce::Justific
     ga.addFittedText (f, "5YNTH", r.getX(), r.getY(), r.getWidth(), r.getHeight(), j, 1, 1.0f);
     juce::Path p;
     ga.createPath (p);
+    if (juce::SystemStats::getEnvironmentVariable ("WORD_HIDE", "0") == "1") return;   // TEMP: font mock-ups
     g.setColour (juce::Colour (0xffeeeeee));
     g.fillPath (p);
     const float bold = juce::SystemStats::getEnvironmentVariable ("WORD_BOLD", "0.035").getFloatValue();   // TEMP: mock-ups
@@ -87,7 +88,8 @@ void LogoSplash::paint (juce::Graphics& g)
 {
     g.fillAll (juce::Colours::black.withAlpha (0.92f));
     auto r = getLocalBounds().toFloat().withSizeKeepingCentre (640.0f, 600.0f);
-    logo::drawMark (g, r.removeFromTop (330.0f).reduced (10.0f));
+    // the emblem's mass sits left of its box (the "5"), so it is nudged right to look centred over the wordmark
+    logo::drawMark (g, r.removeFromTop (330.0f).reduced (10.0f).translated (12.0f, 0.0f));
     r.removeFromTop (14.0f);
     logo::drawWord (g, r.removeFromTop (110.0f).reduced (20.0f, 0), juce::Justification::centred);   // wider than the emblem, as in the artwork
     r.removeFromTop (20.0f);
@@ -1311,7 +1313,8 @@ void SynthZillaEditor::drawLogo (juce::Graphics& g)
     auto r = logoArea;
     logo::drawMark (g, r.removeFromLeft (60.0f));
     r.removeFromLeft (12.0f);
-    logo::drawWord (g, r.withSizeKeepingCentre (r.getWidth(), 34.0f));   // wordmark wider than the emblem, as in the artwork
+    // wordmark centred on the body of the "5" (below the pulse line), wider than the emblem as in the artwork
+    logo::drawWord (g, r.withSizeKeepingCentre (r.getWidth(), 34.0f).translated (0.0f, 3.0f));
 }
 
 void SynthZillaEditor::mouseDown (const juce::MouseEvent& e)
