@@ -190,15 +190,11 @@ private:
     juce::Label info;
 };
 
-// 5ynth logo, drawn as vectors (sharp at any size): brushed-metal "5" whose middle is four glowing bars,
-// mini keyboard, pulse line and power symbol; wordmark "5YNTH" in Urbanist Light
+// 5ynth logo, drawn as vectors (sharp at any size): "5YNTH" in brushed metal whose "5" carries a stylised keyboard
+// and five glowing bars, inside a frame that follows the letters' outline
 namespace logo
 {
-    void drawMark (juce::Graphics& g, juce::Rectangle<float> r);   // emblem fitted in r (340 x 350 design box)
-    void drawWord (juce::Graphics& g, juce::Rectangle<float> r, juce::Justification j = juce::Justification::centredLeft);
-    // "5YNTH" whose "5" is the emblem itself (upright), YNTH drawn with the 5's elements; style 2 adds a contour frame
-    // (TEMP style switch for mock-ups). Fitted in r with the given placement.
-    void drawWordmark (juce::Graphics& g, juce::Rectangle<float> r, int style, juce::RectanglePlacement place = juce::RectanglePlacement::centred);
+    void drawWordmark (juce::Graphics& g, juce::Rectangle<float> r, juce::RectanglePlacement place = juce::RectanglePlacement::centred);
 }
 
 // full-size logo shown over the editor (click on the header logo); any click closes it

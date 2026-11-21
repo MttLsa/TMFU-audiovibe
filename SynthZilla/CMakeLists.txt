@@ -48,8 +48,7 @@ set(TS_SOURCES
 target_sources(Fivesynth PRIVATE ${TS_SOURCES})
 target_include_directories(Fivesynth PRIVATE Source)
 
-juce_add_binary_data(SynthZillaData SOURCES resources/presets.json resources/fonts/Inter-Regular.ttf resources/fonts/Inter-SemiBold.ttf
-  resources/fonts/Michroma-Regular.ttf resources/fonts/BrunoAce-Regular.ttf)
+juce_add_binary_data(SynthZillaData SOURCES resources/presets.json resources/fonts/Inter-Regular.ttf resources/fonts/Inter-SemiBold.ttf)
 set_target_properties(SynthZillaData PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 set(TS_DEFS JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0 JUCE_DISPLAY_SPLASH_SCREEN=0)

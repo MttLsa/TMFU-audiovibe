@@ -2,4 +2,6 @@ Inter (Inter-Regular.ttf, Inter-SemiBold.ttf) - SIL Open Font License 1.1, see I
   Used for all interface text: the closest freely licensed match for Ableton Live's interface font (Ableton Sans is proprietary).
 
 Urbanist (Urbanist-Light.ttf, Urbanist-SemiBold.ttf) - (c) The Urbanist Project Authors, SIL Open Font License 1.1, see OFL.txt.
-  Urbanist Light: the "5YNTH" wordmark of the logo (embedded). Urbanist Light + SemiBold: the PDF manual.
+  Used for the PDF manual (not embedded in the plug-in).
+
+The 5YNTH logo is drawn with vector paths in Source/PluginEditor.cpp (no font).

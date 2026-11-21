@@ -27,96 +27,54 @@ static void fillSteel (juce::Graphics& g, const juce::Path& q)   // brushed meta
     g.setGradientFill (gr); g.fillPath (q);
 }
 
-// emblem geometry in design units (340 x 350 box): metal body (5 + white keys), the four bars, thin parts (pulse, power)
-struct MarkGeometry
+// The "5" in design units (cap band y 52..345, stroke 46): top bar drawn as a stylised keyboard, straight stem,
+// five glowing bars (5 synths) cut flush with the bowl, round bowl with horizontal ends
+struct FiveGeometry
 {
-    juce::Path metal, bars, pulse, power, keyMarks;   // keyMarks: dark details (black keys / key gaps) drawn over the metal
-    // synthBar: bars cut flush with the bowl, no mini keyboard / pulse / power, top bar of the 5 drawn as a stylised keyboard
-    explicit MarkGeometry (bool upright, bool synthBar = false)
+    juce::Path metal, bars, keyMarks;   // keyMarks: dark black keys / key gaps over the top bar
+    FiveGeometry()
     {
         using namespace juce;
-        if (synthBar)
-        {
-            metal.addRectangle (7, 52, 195, 46);                 // top bar = keyboard (shorter than the bowl, so it still reads as a 5)
-            metal.addRectangle (7, 52, 51, 161);
-            for (int i = 0; i < 4; ++i) bars.addRectangle (66, 133.0f + i * 22.5f, 233 - 66, 13);
-            Path bowl;
-            const float cx = 120, cy = 232, a0 = MathConstants<float>::halfPi - 0.12f, a1 = 1.5f * MathConstants<float>::pi;
-            bowl.addCentredArc (cx, cy, 113, 113, 0, a0, a1, true);
-            bowl.addCentredArc (cx, cy, 64, 60, 0, a1, a0, false);
-            bowl.closeSubPath();
-            metal.addPath (bowl);
-            // stylised keyboard on the top bar: 10 white keys, black keys in groups of 2 and 3
-            constexpr float kx = 7, kw = 195.0f / 10.0f;
-            for (int k = 1; k < 10; ++k) keyMarks.addRectangle (kx + k * kw - 1.2f, 52, 2.4f, 46);
-            for (int k : { 1, 2, 4, 5, 6, 8, 9 }) keyMarks.addRectangle (kx + k * kw - kw * 0.28f, 52, kw * 0.56f, 27);
-            return;
-        }
-        if (upright) { metal.addRectangle (7, 52, 195, 46); metal.addRectangle (7, 52, 51, 161); }           // top bar + straight stem
-        else { metal.addRectangle (25, 52, 177, 46); metal.addQuadrilateral (25, 52, 76, 52, 58, 213, 7, 213); }   // slanted stem
-        const float bx[4] = { 77, 70, 66, 63 }, by[4] = { 133, 156, 178, 200 };
-        for (int i = 0; i < 4; ++i) bars.addRectangle (upright ? 66.0f : bx[i], by[i], 333 - (upright ? 66.0f : bx[i]), 13);
-        Path bowl;                                            // lower bowl of the 5
-        const float cx = 120, cy = 232, a0 = MathConstants<float>::halfPi - 0.12f, a1 = 1.5f * MathConstants<float>::pi;
+        metal.addRectangle (7, 52, 226, 46);    // top bar = keyboard, flush with the end of the bars
+        metal.addRectangle (7, 52, 51, 161);    // stem
+        for (int i = 0; i < 5; ++i) bars.addRectangle (66, 120.0f + i * 19.5f, 233 - 66, 12);
+        Path bowl;
+        const float cx = 120, cy = 232, a0 = MathConstants<float>::halfPi, a1 = 1.5f * MathConstants<float>::pi;
         bowl.addCentredArc (cx, cy, 113, 113, 0, a0, a1, true);
         bowl.addCentredArc (cx, cy, 64, 60, 0, a1, a0, false);
         bowl.closeSubPath();
         metal.addPath (bowl);
-        for (int k = 0; k < 6; ++k) metal.addRectangle (220.0f + k * 19.0f, 53, 17, 69);   // white keys
-        const float pts[][2] = { { 222, 27 }, { 240, 27 }, { 244, 20 }, { 248, 33 }, { 252, 10 }, { 256, 41 }, { 260, 21 }, { 264, 27 }, { 270, 24 }, { 274, 27 }, { 290, 27 } };
-        pulse.startNewSubPath (pts[0][0], pts[0][1]);
-        for (auto& q : pts) pulse.lineTo (q[0], q[1]);
-        power.addCentredArc (315, 27, 13, 13, 0, 0.6f, MathConstants<float>::twoPi - 0.6f, true);
-        power.startNewSubPath (315, 9); power.lineTo (315, 26);
+        constexpr float kx = 7, kw = 226.0f / 11.0f;   // 11 white keys, black keys in groups of 2 and 3
+        for (int k = 1; k < 11; ++k) keyMarks.addRectangle (kx + k * kw - 1.2f, 52, 2.4f, 46);
+        for (int k : { 1, 2, 4, 5, 6, 8, 9 }) keyMarks.addRectangle (kx + k * kw - kw * 0.28f, 52, kw * 0.56f, 27);
     }
-    static constexpr float pulseW = 2.2f, powerW = 3.2f;
 };
 
-static void drawMarkT (juce::Graphics& g, const juce::AffineTransform& T, bool upright, bool synthBar = false)
+static void drawFive (juce::Graphics& g, const FiveGeometry& f, const juce::AffineTransform& T)
 {
     using namespace juce;
     const float s = std::sqrt (std::abs (T.getDeterminant()));
-    MarkGeometry m (upright, synthBar);
-    auto p = m.metal; p.applyTransform (T);
+    auto p = f.metal; p.applyTransform (T);
     fillSteel (g, p);
-    auto bars = m.bars; bars.applyTransform (T);
+    auto km = f.keyMarks; km.applyTransform (T);
+    g.setColour (Colour (0xff1c1c1c)); g.fillPath (km);
+    auto bars = f.bars; bars.applyTransform (T);
     for (float rad : { 24.0f, 9.0f })   // glow
         DropShadow (Colour (0xffd8f0ff).withAlpha (rad > 15 ? 0.4f : 0.6f), jmax (1, (int) (rad * s)), {}).drawForPath (g, bars);
     const auto bb = bars.getBounds();
     ColourGradient gb (Colour (0xffd4dee6), bb.getX(), 0, Colour (0xffd4dee6), bb.getRight(), 0, false);
     gb.addColour (0.35, Colours::white); gb.addColour (0.75, Colour (0xfff2f6f8));
     g.setGradientFill (gb); g.fillPath (bars);
-    if (synthBar)
-    {
-        auto km = m.keyMarks; km.applyTransform (T);
-        g.setColour (Colour (0xff1c1c1c)); g.fillPath (km);
-        return;
-    }
-    g.setColour (Colour (0xff141414));                        // black keys
-    for (int k : { 1, 2, 4, 5 }) g.fillRect (Rectangle<float> (220.0f + k * 19.0f - 5.0f, 53, 8, 40).transformedBy (T));
-    auto pulse = m.pulse; pulse.applyTransform (T);
-    g.setColour (Colour (0xffb0b0b0));
-    g.strokePath (pulse, PathStrokeType (jmax (0.8f, MarkGeometry::pulseW * s), PathStrokeType::mitered, PathStrokeType::butt));
-    auto pw = m.power; pw.applyTransform (T);
-    g.strokePath (pw, PathStrokeType (jmax (0.8f, MarkGeometry::powerW * s), PathStrokeType::curved, PathStrokeType::rounded));
 }
 
-void logo::drawMark (juce::Graphics& g, juce::Rectangle<float> r)
-{
-    const float s = juce::jmin (r.getWidth() / 340.0f, r.getHeight() / 350.0f);
-    const auto o = r.getCentre() - juce::Point<float> (170.0f, 175.0f) * s;
-    drawMarkT (g, juce::AffineTransform::scale (s).translated (o), false);
-}
-
-// "5YNTH" letters drawn with the elements of the 5: straight bars of the same thickness, round bowls with the same
-// inner / outer proportion; upright, on the 5's cap band (y 52..345)
-// proportions: cap height 293 (the 5), stroke 46 (the 5's bars), letter width ~0.62 x cap height (golden ratio);
+// "YNTH" drawn with the elements of the 5: straight bars of the same thickness, a round cup like its bowl;
+// upright, on the 5's cap band (y 52..345). Proportions: cap height 293 (the 5), stroke 46 (the 5's bars), every letter as wide and tall as the 5 (226 x 293);
 // optical spacing: more room next to closed / round forms, less around the open sides of T
 static std::vector<juce::Path> wordLetters (float x0, float w)
 {
     using namespace juce;
     constexpr float top = 52, bot = 345, t = 46;
-    const float advance[4] = { 0, w + 38, w + 30, w + 30 + 12 };   // Y->N, N->T, T->H (T is 12 wider)
+    const float advance[4] = { 0, w + 38, w + 30, w + 30 };   // Y->N, N->T, T->H
     std::vector<Path> out;
     float x = x0;
     for (int k = 0; k < 4; ++k)
@@ -142,10 +100,10 @@ static std::vector<juce::Path> wordLetters (float x0, float w)
             p.addRectangle (x + w - t, top, t, bot - top);
             p.addQuadrilateral (x, top, x + 1.10f * t, top, x + w, bot, x + w - 1.10f * t, bot);
         }
-        else if (k == 2)   // T (a little wider: its bar carries the letter)
+        else if (k == 2)   // T
         {
-            p.addRectangle (x, top, w + 12, t);
-            p.addRectangle (x + (w + 12 - t) * 0.5f, top, t, bot - top);
+            p.addRectangle (x, top, w, t);
+            p.addRectangle (mid - t * 0.5f, top, t, bot - top);
         }
         else               // H: crossbar centred on the 5's group of bars (y 133..213)
         {
@@ -220,62 +178,28 @@ static void drawContourFrame (juce::Graphics& g, const juce::Path& shape, const 
     g.drawImage (cache.img, area, RectanglePlacement::stretchToFit, true);
 }
 
-void logo::drawWordmark (juce::Graphics& g, juce::Rectangle<float> r, int style, juce::RectanglePlacement place)
+void logo::drawWordmark (juce::Graphics& g, juce::Rectangle<float> r, juce::RectanglePlacement place)
 {
     using namespace juce;
-    // TEMP styles for mock-ups: 1 = no frame, 2 = frame, 3 = frame + wider letters, 4 = 3 + synth-bar 5
-    const bool frame = style >= 2, synthBar = style >= 4;
-    constexpr float gap = 30, line = 8;
-    const float x0 = (synthBar ? 233.0f : 333.0f) + 44;   // Y starts 44 after the 5 (the Y is open at the top)
-    auto letters = wordLetters (x0, style >= 3 ? 212.0f : 182.0f);
-    MarkGeometry m (true, synthBar);
-    Path shape (m.metal);                 // everything the frame goes around
-    shape.addPath (m.bars);
+    constexpr float gap = 30, line = 8;                    // contour frame: distance from the letters, thickness
+    FiveGeometry five;
+    auto letters = wordLetters (233 + 44, 226);           // letters as wide as the 5; Y starts 44 after it (open at the top)
+    Path shape (five.metal);                               // everything the frame goes around
+    shape.addPath (five.bars);
     for (auto& l : letters) shape.addPath (l);
-    for (auto [pp, pw] : { std::pair<const Path*, float> { &m.pulse, MarkGeometry::pulseW }, { &m.power, MarkGeometry::powerW } })
-    { Path st; PathStrokeType (pw * 2.0f, PathStrokeType::curved, PathStrokeType::rounded).createStrokedPath (st, *pp); shape.addPath (st); }
-    const auto box = shape.getBounds().expanded (frame ? gap + line + 2 : 2);
-    const auto T = place.getTransformToFit (box, r);
-    if (frame) drawContourFrame (g, shape, T, gap, line);
-    drawMarkT (g, T, true, synthBar);
+    const auto T = place.getTransformToFit (shape.getBounds().expanded (gap + line + 2), r);
+    drawContourFrame (g, shape, T, gap, line);
+    drawFive (g, five, T);
     for (auto& l : letters) { l.applyTransform (T); fillSteel (g, l); }   // each letter lit like the 5
-}
-
-void logo::drawWord (juce::Graphics& g, juce::Rectangle<float> r, juce::Justification j)
-{
-    // Michroma (wide, low letters), made slightly bolder by stroking the glyph outlines
-    static juce::Typeface::Ptr tf = juce::Typeface::createSystemTypefaceFor (BinaryData::MichromaRegular_ttf, BinaryData::MichromaRegular_ttfSize);
-    const juce::Font f (juce::FontOptions (tf).withHeight (r.getHeight()));
-    juce::GlyphArrangement ga;
-    ga.addFittedText (f, "5YNTH", r.getX(), r.getY(), r.getWidth(), r.getHeight(), j, 1, 1.0f);
-    juce::Path p;
-    ga.createPath (p);
-    if (juce::SystemStats::getEnvironmentVariable ("WORD_HIDE", "0") == "1") return;   // TEMP: font mock-ups
-    g.setColour (juce::Colour (0xffeeeeee));
-    g.fillPath (p);
-    const float bold = juce::SystemStats::getEnvironmentVariable ("WORD_BOLD", "0.035").getFloatValue();   // TEMP: mock-ups
-    g.strokePath (p, juce::PathStrokeType (r.getHeight() * bold, juce::PathStrokeType::mitered));
 }
 
 void LogoSplash::paint (juce::Graphics& g)
 {
     g.fillAll (juce::Colours::black.withAlpha (0.92f));
-    auto r = getLocalBounds().toFloat().withSizeKeepingCentre (640.0f, 600.0f);
-    // the emblem's mass sits left of its box (the "5"), so it is nudged right to look centred over the wordmark
-    if (const int st = juce::SystemStats::getEnvironmentVariable ("WORDMARK", "0").getIntValue(); st > 0)   // TEMP: mock-ups
-    {
-        logo::drawWordmark (g, r.removeFromTop (440.0f).withSizeKeepingCentre (640.0f, 200.0f).translated (0, 60), st);
-        r.removeFromTop (20.0f);
-    }
-    else
-    {
-    logo::drawMark (g, r.removeFromTop (330.0f).reduced (10.0f).translated (12.0f, 0.0f));
-    r.removeFromTop (14.0f);
-    logo::drawWord (g, r.removeFromTop (110.0f).reduced (20.0f, 0), juce::Justification::centred);   // wider than the emblem, as in the artwork
-    r.removeFromTop (20.0f);
-    }
+    auto r = getLocalBounds().toFloat().withSizeKeepingCentre (760.0f, 300.0f);
+    logo::drawWordmark (g, r.removeFromTop (250.0f));
     g.setColour (ui::dim); g.setFont (ui::font (13.0f));
-    g.drawText ("TMFU audiovibe  v" + juce::String (JucePlugin_VersionString), r.removeFromTop (24.0f), juce::Justification::centred);
+    g.drawText ("TMFU audiovibe  v" + juce::String (JucePlugin_VersionString), r.removeFromTop (30.0f), juce::Justification::centred);
 }
 
 void ui::relief (juce::Graphics& g, juce::Rectangle<float> r, juce::Colour base, float corner, bool raised)
@@ -1488,19 +1412,10 @@ void SynthZillaEditor::paint (juce::Graphics& g)
     if (overlay != nullptr) { g.setColour (juce::Colours::black.withAlpha (0.6f)); g.fillRect (0, 64, W, H - 64); }
 }
 
-// header logo: emblem + wordmark
+// header logo: the framed 5YNTH wordmark
 void SynthZillaEditor::drawLogo (juce::Graphics& g)
 {
-    auto r = logoArea;
-    if (const int st = juce::SystemStats::getEnvironmentVariable ("WORDMARK", "0").getIntValue(); st > 0)   // TEMP: mock-ups
-    {
-        logo::drawWordmark (g, r.withTrimmedTop (1.0f), st, juce::RectanglePlacement::xLeft | juce::RectanglePlacement::yMid);
-        return;
-    }
-    logo::drawMark (g, r.removeFromLeft (60.0f));
-    r.removeFromLeft (12.0f);
-    // wordmark centred on the body of the "5" (below the pulse line), wider than the emblem as in the artwork
-    logo::drawWord (g, r.withSizeKeepingCentre (r.getWidth(), 34.0f).translated (0.0f, 3.0f));
+    logo::drawWordmark (g, logoArea, juce::RectanglePlacement::xLeft | juce::RectanglePlacement::yMid);
 }
 
 void SynthZillaEditor::mouseDown (const juce::MouseEvent& e)
