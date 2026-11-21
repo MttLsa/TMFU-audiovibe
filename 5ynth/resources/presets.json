@@ -1964,7 +1964,7 @@
    ],
    "g": {
     "g_mode": "Mono",
-    "g_trim": 7.87
+    "g_trim": 9.62
    }
   },
   {
@@ -2012,7 +2012,7 @@
    "g": {
     "g_mode": "Mono",
     "g_glide": 30,
-    "g_trim": 7.79
+    "g_trim": 9.22
    }
   },
   {
@@ -2526,7 +2526,7 @@
     "g_chomix": 0.7,
     "g_revmix": 0.4,
     "g_revsize": 0.7,
-    "g_trim": -1.98
+    "g_trim": -0.56
    }
   },
   {
@@ -2572,7 +2572,7 @@
    "g": {
     "g_chomode": "Off",
     "g_chomix": 0.55,
-    "g_trim": 1.02
+    "g_trim": 2.85
    }
   },
   {
@@ -2623,7 +2623,7 @@
     "g_chomix": 0.7,
     "g_revmix": 0.35,
     "g_revsize": 0.7,
-    "g_trim": -2.2
+    "g_trim": -0.62
    }
   },
   {
@@ -2742,7 +2742,7 @@
    "g": {
     "g_mode": "Mono",
     "g_glide": 150,
-    "g_trim": 4.34
+    "g_trim": -2.12
    }
   },
   {
@@ -2790,7 +2790,7 @@
    "g": {
     "g_chomode": "Off",
     "g_chomix": 0.55,
-    "g_trim": -0.95
+    "g_trim": -0.15
    }
   },
   {
@@ -3362,7 +3362,7 @@
    "g": {
     "g_chomode": "I",
     "g_chomix": 0.55,
-    "g_trim": 0.61
+    "g_trim": 1.92
    }
   },
   {
@@ -3530,7 +3530,7 @@
    "g": {
     "g_chomode": "I",
     "g_chomix": 0.3,
-    "g_trim": -3.83
+    "g_trim": -3.88
    }
   },
   {
@@ -3663,7 +3663,7 @@
    ],
    "g": {
     "g_revmix": 0.12,
-    "g_trim": 6.27
+    "g_trim": 4.24
    }
   },
   {
@@ -7892,7 +7892,7 @@
    "g": {
     "g_chomode": "I",
     "g_revmix": 0.25,
-    "g_trim": 0.86
+    "g_trim": 1.87
    }
   },
   {
@@ -9648,7 +9648,7 @@
    ],
    "g": {
     "g_revmix": 0.35,
-    "g_trim": 6.25
+    "g_trim": 8.26
    }
   },
   {

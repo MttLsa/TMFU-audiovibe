@@ -10,7 +10,9 @@ namespace dsp
     {
         Generic = 0,
         Moog, Minimoog,         // Moog transistor ladder (Minimoog also: 3-stage contours + DECAY switch)
-        RolandVCO, RolandDCO    // Roland IR3109 OTA filter; VCO = analog oscillators (drift), DCO = stable digital clocks
+        RolandVCO, RolandDCO,   // Roland IR3109 OTA filter; VCO = analog oscillators (drift), DCO = stable digital clocks
+        OberheimSEM,            // Oberheim OB-X: 2-pole state-variable filter (SEM style), no self-oscillation
+        Cem3320                 // Curtis CEM3320 4-pole (Oberheim OB-Xa, Sequential Prophet-5 rev 3)
     };
 
     // Moog transistor ladder (Minimoog, modular 904A, Polymoog, Source, Sub 37), Huovilainen's non-linear model
@@ -67,6 +69,7 @@ namespace dsp
     {
         float y[4] {}, d4 = 0, out = 0;
         float tune = 0, k = 0, lastFc = -1, lastRes = -1, lastSr = -1;
+        float comp = 0.5f, headroom = 1.0f;   // IR3109: 0.5 / 1.0;  CEM3320: less bass compensation, more input headroom
         void reset() { for (auto& v : y) v = 0; d4 = out = 0; }
         void set (float cutoff, float sr, float res)
         {
@@ -81,7 +84,7 @@ namespace dsp
         inline float process (float in, float cutoff, float sr, float res, float drive)
         {
             set (cutoff, sr, res);
-            const float x = in * drive * (1.0f + 0.5f * k);
+            const float x = in * drive * (1.0f + comp * k) * headroom;
             for (int j = 0; j < 2; ++j)
             {
                 const float u = fastTanh (x - k * out);
@@ -92,7 +95,33 @@ namespace dsp
                 out = (y[3] + d4) * 0.5f; d4 = y[3];
             }
             if (! std::isfinite (out)) { reset(); return 0.0f; }
-            return out / std::sqrt (drive);
+            return out / (std::sqrt (drive) * headroom);
+        }
+    };
+
+    // Oberheim SEM-style 2-pole state-variable filter (OB-X): 12 dB/oct, the bass stays put when resonance rises,
+    // resonance peaks up to ~ +16 dB but never self-oscillates (the SEM's damping never reaches zero); the band-pass
+    // integrator saturates softly (OTA). TPT / zero-delay feedback, 2x oversampled.
+    struct SemSvf
+    {
+        float ic1 = 0, ic2 = 0;
+        void reset() { ic1 = ic2 = 0; }
+        inline float process (float in, float cutoff, float sr, float res, float drive)
+        {
+            const float g = std::tan (pi * std::min (cutoff, sr * 0.9f) / (2.0f * sr));
+            const float k = 2.0f - 1.85f * res;
+            const float a1 = 1.0f / (1.0f + g * (g + k)), a2 = g * a1, a3 = g * a2;
+            const float x = in * drive;
+            float y = 0;
+            for (int j = 0; j < 2; ++j)
+            {
+                const float v3 = x - ic2, v1 = a1 * ic1 + a2 * v3, v2 = ic2 + a2 * ic1 + a3 * v3;
+                ic1 = fastTanh (2.0f * v1 - ic1);
+                ic2 = 2.0f * v2 - ic2;
+                y = v2;
+            }
+            if (! std::isfinite (y)) { reset(); return 0.0f; }
+            return y / std::sqrt (drive);
         }
     };
 }

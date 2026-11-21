@@ -57,6 +57,9 @@ struct ModulePart
     dsp::Diode303 d303[2];
     dsp::MoogLadder moog[2];
     dsp::RolandOta ota[2];
+    dsp::RolandOta cem[2] { cemSetup(), cemSetup() };
+    dsp::SemSvf sem[2];
+    static dsp::RolandOta cemSetup() { dsp::RolandOta f; f.comp = 0.25f; f.headroom = 0.7f; return f; }
     dsp::Svf svf[2][2];
     dsp::PedalDist dist[2];
     float prevIn[2] {};
