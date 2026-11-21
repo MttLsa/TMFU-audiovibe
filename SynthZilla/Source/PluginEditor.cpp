@@ -1,5 +1,4 @@
 #include "PluginEditor.h"
-#include "Kaiju.h"
 #include "BinaryData.h"
 
 using namespace params;
@@ -16,11 +15,28 @@ juce::Typeface::Ptr ui::typeface (bool bold)
 }
 juce::Font ui::font (float h, bool bold) { return juce::Font (juce::FontOptions (typeface (bold)).withHeight (h)); }
 
-// Logo font: TeX Gyre Adventor (GUST Font License), a free equivalent of ITC Avant Garde Gothic
-juce::Font ui::logoFont (float h)
+// =====================================================================================================
+//  5ynth logo
+// =====================================================================================================
+const juce::Image& logo::stack()   { static auto im = juce::ImageCache::getFromMemory (BinaryData::logo_stack_png, BinaryData::logo_stack_pngSize); return im; }
+const juce::Image& logo::word()    { static auto im = juce::ImageCache::getFromMemory (BinaryData::logo_word_png, BinaryData::logo_word_pngSize); return im; }
+const juce::Image& logo::tagline() { static auto im = juce::ImageCache::getFromMemory (BinaryData::logo_tagline_png, BinaryData::logo_tagline_pngSize); return im; }
+const juce::Image& logo::full()    { static auto im = juce::ImageCache::getFromMemory (BinaryData::logo_full_png, BinaryData::logo_full_pngSize); return im; }
+
+void logo::draw (juce::Graphics& g, const juce::Image& im, juce::Rectangle<float> r, juce::RectanglePlacement place)
 {
-    static juce::Typeface::Ptr tf = juce::Typeface::createSystemTypefaceFor (BinaryData::TeXGyreAdventorBold_otf, BinaryData::TeXGyreAdventorBold_otfSize);
-    return juce::Font (juce::FontOptions (tf).withHeight (h));
+    g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
+    g.setOpacity (1.0f);
+    g.drawImage (im, r, place);
+}
+
+void LogoSplash::paint (juce::Graphics& g)
+{
+    g.fillAll (juce::Colours::black.withAlpha (0.88f));
+    auto r = getLocalBounds().toFloat().withSizeKeepingCentre (400.0f, 600.0f);   // about the artwork's own size
+    logo::draw (g, logo::full(), r.withTrimmedBottom (40.0f));
+    g.setColour (ui::dim); g.setFont (ui::font (13.0f));
+    g.drawText ("TMFU audiovibe  v" + juce::String (JucePlugin_VersionString), r.removeFromBottom (24.0f), juce::Justification::centred);
 }
 
 void ui::relief (juce::Graphics& g, juce::Rectangle<float> r, juce::Colour base, float corner, bool raised)
@@ -1087,6 +1103,8 @@ SynthZillaEditor::SynthZillaEditor (SynthZillaProcessor& p)
     keys.setColour (juce::MidiKeyboardComponent::keyDownOverlayColourId, ui::colA.withAlpha (0.6f));
     content.addAndMakeVisible (keys);
 
+    content.addChildComponent (splash);
+    content.setInterceptsMouseClicks (false, true);   // clicks on the header logo reach the editor
     content.setBounds (0, 0, W, H);
     setResizable (true, true);
     setResizeLimits (W / 2, H / 2, W * 2, H * 2);
@@ -1152,7 +1170,8 @@ void SynthZillaEditor::resized()
     content.setTransform (juce::AffineTransform::scale (s));
     proc.uiState.setProperty ("scale", (double) s, nullptr);
     // header
-    logoArea = { 0, -4, 100, 72 };
+    logoArea = { 8, 3, 252, 58 };
+    splash.setBounds (0, 0, W, H);
     presetName.setBounds (272, 6, 640, 28);
     presetInfo.setBounds (272, 34, 790, 22);
     prev.setBounds (W - 420, 16, 34, 34); next.setBounds (W - 382, 16, 34, 34); browse.setBounds (W - 344, 16, 110, 34);
@@ -1200,11 +1219,7 @@ void SynthZillaEditor::paint (juce::Graphics& g)
     g.fillAll (ui::bg);
     g.addTransform (juce::AffineTransform::scale ((float) getWidth() / (float) W));
     ui::relief (g, juce::Rectangle<float> (0, 0, (float) W, 64), ui::panel, 0.0f, true);
-    drawKaiju (g, logoArea, animT, juce::jlimit (0.0f, 1.0f, proc.meter() * 1.5f));
-    g.setColour (ui::text); g.setFont (ui::logoFont (29.0f));
-    g.drawText ("SynthZilla", 100, 6, 160, 34, juce::Justification::left);
-    g.setColour (ui::dim); g.setFont (ui::font (11.0f));
-    g.drawText ("TMFU audiovibe  v" + juce::String (JucePlugin_VersionString), 102, 40, 160, 16, juce::Justification::left);
+    drawLogo (g);
     // output meter
     const float m = juce::jlimit (0.0f, 1.0f, proc.meter());
     ui::relief (g, juce::Rectangle<float> ((float) W - 100, 24, 84, 10), ui::panel2, 3.0f, false);
@@ -1234,6 +1249,40 @@ void SynthZillaEditor::paint (juce::Graphics& g)
     if (overlay != nullptr) { g.setColour (juce::Colours::black.withAlpha (0.6f)); g.fillRect (0, 64, W, H - 64); }
 }
 
+// header logo: keyboard stack + "5ynth" wordmark + "5-IN-1 SYNTHESIZER" (images from the attached artwork)
+void SynthZillaEditor::drawLogo (juce::Graphics& g)
+{
+    const int v = juce::SystemStats::getEnvironmentVariable ("LOGO_VARIANT", "1").getIntValue();   // TEMP: mock-ups
+    const auto left = juce::RectanglePlacement::xLeft | juce::RectanglePlacement::yMid;
+    auto r = logoArea;
+    if (v == 1)        // stack + wordmark + tagline
+    {
+        logo::draw (g, logo::stack(), r.removeFromLeft (42.0f));
+        r.removeFromLeft (12.0f);
+        logo::draw (g, logo::word(), r.removeFromTop (42.0f).withTrimmedTop (1.0f), left);
+        logo::draw (g, logo::tagline(), r.removeFromTop (13.0f).withTrimmedTop (2.0f).withWidth (132.0f).translated (2.0f, 0.0f), left);
+    }
+    else if (v == 2)   // stack + big wordmark, maker line in text
+    {
+        logo::draw (g, logo::stack(), r.removeFromLeft (42.0f));
+        r.removeFromLeft (12.0f);
+        logo::draw (g, logo::word(), r.removeFromTop (46.0f).translated (0.0f, -1.0f), left);
+        g.setColour (ui::dim); g.setFont (ui::font (10.5f));
+        g.drawText ("TMFU audiovibe  v" + juce::String (JucePlugin_VersionString), r.translated (3.0f, -1.0f), juce::Justification::centredLeft);
+    }
+    else               // wordmark + tagline only
+    {
+        logo::draw (g, logo::word(), r.removeFromTop (44.0f), left);
+        logo::draw (g, logo::tagline(), r.removeFromTop (13.0f).withTrimmedTop (2.0f).withWidth (140.0f).translated (2.0f, 0.0f), left);
+    }
+}
+
+void SynthZillaEditor::mouseDown (const juce::MouseEvent& e)
+{
+    const float s = (float) getWidth() / (float) W;
+    if (logoArea.contains (e.position / s)) { splash.setVisible (true); splash.toFront (false); }
+}
+
 void SynthZillaEditor::updateHeader()
 {
     const auto& all = PresetLibrary::get().all();
@@ -1251,12 +1300,10 @@ void SynthZillaEditor::updateHeader()
 
 void SynthZillaEditor::timerCallback()
 {
-    animT += 1.0f / 30.0f;
     if (proc.presetIndex() != shownPreset) updateHeader();
     const int slots = (int) proc.apvts.getRawParameterValue (def (layout().gSlots).id)->load();
     if (slots != shownSlots) { layoutSlots(); if (selected >= slots) selectModule (0); }
     const float s = (float) getWidth() / (float) W;
-    repaint (logoArea.transformedBy (juce::AffineTransform::scale (s)).toNearestInt().expanded (2));
     repaint ((int) ((W - 104) * s), 0, (int) (104 * s), (int) (60 * s));
     repaint (0, (int) (70 * s), getWidth(), (int) (60 * s));
 }

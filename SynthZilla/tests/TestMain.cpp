@@ -188,6 +188,17 @@ int main (int argc, char** argv)
             std::printf ("%s  peak %.2f\n", f.getFileName().toRawUTF8(), st.peak);
         }
     }
+    else if (mode == "logo")   // header close-up at 2x (retina / 200 %)
+    {
+        SynthZillaProcessor proc; proc.loadPreset (findPreset (argc > 3 ? String (argv[3]) : String ("Organ 2")));
+        std::unique_ptr<AudioProcessorEditor> ed (proc.createEditor());
+        ed->setSize (1400, 900);
+        MessageManager::getInstance()->runDispatchLoopUntil (80);
+        auto img = ed->createComponentSnapshot ({ 0, 0, 1400, 140 }, true, 2.0f);
+        PNGImageFormat png; FileOutputStream os (outDir.getChildFile ("logo_header.png")); os.setPosition (0); os.truncate(); png.writeImageToStream (img, os);
+        auto full = ed->createComponentSnapshot (ed->getLocalBounds(), true, 1.0f);
+        FileOutputStream os2 (outDir.getChildFile ("logo_window.png")); os2.setPosition (0); os2.truncate(); png.writeImageToStream (full, os2);
+    }
     else if (mode == "gui")
     {
         const StringArray names { "Organ 2", "Acid Tracks", "E.PIANO 1", "What The", "Final Countdown Brass", "PPG Wave Pad", "Jump Brass",
@@ -225,6 +236,9 @@ int main (int argc, char** argv)
             click ("browse");
             click ("eqExpand");
             snap (*ed, "gui_eq.png");
+            click ("overlayClose");
+            if (auto* sp = find (ed.get(), "logoSplash")) { sp->setVisible (true); sp->toFront (false); }
+            snap (*ed, "gui_logo.png");
         }
     }
     std::printf (ok ? "OK\n" : "FAILURES\n");

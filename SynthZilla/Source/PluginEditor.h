@@ -18,7 +18,6 @@ namespace ui
     const juce::Colour colD   { 0xff35d0ff };   // digital engine
     const juce::Colour colG   { 0xffeeeeee };
     juce::Font font (float h, bool bold = false);
-    juce::Font logoFont (float h);
     juce::Typeface::Ptr typeface (bool bold);
     void relief (juce::Graphics& g, juce::Rectangle<float> r, juce::Colour base, float corner, bool raised = true);
 }
@@ -191,6 +190,26 @@ private:
     juce::Label info;
 };
 
+// 5ynth logo (resources/logo, cut from the artwork by tools/make_logo.py)
+namespace logo
+{
+    const juce::Image& stack();     // the five stacked keyboards
+    const juce::Image& word();      // "5ynth" wordmark
+    const juce::Image& tagline();   // "5-IN-1 SYNTHESIZER"
+    const juce::Image& full();      // whole logo
+    void draw (juce::Graphics& g, const juce::Image& im, juce::Rectangle<float> r,                   // fitted, high quality
+               juce::RectanglePlacement place = juce::RectanglePlacement::centred);
+}
+
+// full-size logo shown over the editor (click on the header logo); any click closes it
+class LogoSplash : public juce::Component
+{
+public:
+    LogoSplash() { setInterceptsMouseClicks (true, false); setComponentID ("logoSplash"); }
+    void paint (juce::Graphics&) override;
+    void mouseDown (const juce::MouseEvent&) override { setVisible (false); }
+};
+
 class SynthZillaEditor : public juce::AudioProcessorEditor, private juce::Timer
 {
 public:
@@ -198,9 +217,11 @@ public:
     ~SynthZillaEditor() override;
     void paint (juce::Graphics&) override;
     void resized() override;
+    void mouseDown (const juce::MouseEvent&) override;
 private:
     void timerCallback() override;
     void updateHeader();
+    void drawLogo (juce::Graphics&);
     void selectModule (int m);
     void layoutSlots();
     void showOverlay (juce::Component* c);
@@ -226,7 +247,7 @@ private:
     juce::TextButton prev { "<" }, next { ">" }, browse { "BROWSER" }, custom { "+ CUSTOM" };
     juce::Label presetName, presetInfo;
     int shownPreset = -2, selected = 0, shownSlots = -1;
-    float animT = 0;
     juce::Rectangle<float> logoArea;
+    LogoSplash splash;
     static constexpr int W = 1400, H = 900;
 };
