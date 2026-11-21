@@ -776,7 +776,7 @@ LimeModulePanel::LimeModulePanel (TwinboxProcessor& p, int v, bool b2) : Control
         addAndMakeVisible (*scaleBtn);
         nameBtn = std::make_unique<Toggle> ("NAME", theme::accentB);
         nameBtn->attach (p.apvts, b (v, lv::nameKey));
-        nameBtn->setTooltip ("NAME on: the sample key is read from the file name (e.g. 'pad chord Db', 'Rhodes Cm9', 'Bass F#2'); "
+        nameBtn->setTooltip ("NAME on: the sample key is read from the file name (e.g. 'pad chord Db', 'Keys Cm9', 'Bass F#2'); "
                              "if the name has no key the audio analysis is used. Off: audio analysis only");
         addAndMakeVisible (*nameBtn);
         noteBtn.setTooltip ("Per-sample pitch window: detected notes, play and -32..+32 st knobs (MANUAL mode)");

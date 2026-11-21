@@ -19,6 +19,13 @@ DUALBOX è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in 
 ![Interfaccia principale](docs/gui_main.png)
 
 
+## Licenze di terze parti
+
+I testi delle licenze dei componenti usati (JUCE, VST 3 SDK, Audio Unit SDK, Signalsmith Stretch, font Inter, codec, …) sono
+raccolti in `THIRD_PARTY_NOTICES.txt`, generato da `tools/make_notices.py` durante la creazione dell'installer e installato
+in `/Users/Shared/Dualbox` e dentro i bundle AU / VST3. I crediti dei campioni sono in
+[`resources/SAMPLE_CREDITS.md`](resources/SAMPLE_CREDITS.md).
+
 ## Novità 2.16.1
 
 - Volumi: con i pattern di default la Sezione A ha lo stesso volume della B (prima era circa 8 dB più forte). Ogni sezione è
@@ -37,7 +44,7 @@ DUALBOX è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in 
 
 ## Novità 2.14
 
-- Modulo **CLICK** nella Sezione A (sotto la lista dei canali): un campione di transiente suonato in layer con il **Kick** (canale 1). Cartella di fabbrica *Dualbox Click* con 12 click (beater, 909 attack, wood tick, felt thump, tape click...) oppure una tua cartella (📁). Controlli ON, scelta del campione, Gain, Tune, Decay, HP.
+- Modulo **CLICK** nella Sezione A (sotto la lista dei canali): un campione di transiente suonato in layer con il **Kick** (canale 1). Cartella di fabbrica *Dualbox Click* con 12 click (beater, classic attack, wood tick, felt thump, tape click...) oppure una tua cartella (📁). Controlli ON, scelta del campione, Gain, Tune, Decay, HP.
 
 ## Novità 2.13
 
@@ -136,7 +143,7 @@ Ogni sezione ha **fino a 8 LFO** (3 di default): i pulsanti **+** / **−** del 
 - **SCALE** nell'intestazione della sezione B: Root e Scala, condivisi da Belt e Capsule. Le scale sono le stesse del dispositivo Scale di Ableton Live.
 - **Tastiera**: clicca una colonna BELT, CAPSULE o MOD e usa le frecce. ↑ e ↓ cambiano il valore (con VEL = wav un campione alla volta, con ascolto e nome del campione); ← e → passano allo step precedente o successivo; Canc spegne lo step; Shift fa passi più grandi.
 - **Selezione del campione con l'altezza della colonna** (Belt e Capsule con VEL = **wav**): ogni tacca della colonna BELT/CAPSULE corrisponde a un campione della lista, indipendentemente dal knob WAV. La prima tacca dal basso è l'ultimo campione della lista, quella più in alto è il primo. Con le altre impostazioni di VEL l'altezza resta la velocity (V>A). Ogni modulo usa al massimo 128 campioni per cartella.
-- Il pulsante **NAME** di Belt e Capsule (presente anche nella finestra ♪) legge la tonalità **dal nome del file**. Esempi: "pad chord Db" → D♭, "Rhodes Cm9" → C, "Bass F#2" → F#2, "La minore" → A; sono riconosciuti C#/Db, sharp/flat, i nomi solfeggio Do…Si e l'ottava (C3 = 60). Serve per accordi e suoni che l'analisi audio non riesce a intonare. Se il nome non contiene una tonalità si usa l'analisi audio. Con NAME spento vale solo l'analisi audio.
+- Il pulsante **NAME** di Belt e Capsule (presente anche nella finestra ♪) legge la tonalità **dal nome del file**. Esempi: "pad chord Db" → D♭, "Keys Cm9" → C, "Bass F#2" → F#2, "La minore" → A; sono riconosciuti C#/Db, sharp/flat, i nomi solfeggio Do…Si e l'ottava (C3 = 60). Serve per accordi e suoni che l'analisi audio non riesce a intonare. Se il nome non contiene una tonalità si usa l'analisi audio. Con NAME spento vale solo l'analisi audio.
 - Il pulsante **SCALE** di Belt e Capsule porta ogni campione intonato sulla nota della scala più vicina. Con VEL = tune, le melodie delle corsie si muovono per gradi della scala.
 - Con SCALE spento si è in **modalità MANUAL**. L'icona **♪** apre la finestra con tutti i campioni della cartella: per ognuno ci sono la nota rilevata, un pulsante ▶ e un knob da −32 a +32 semitoni, indipendente dal Tune del modulo. Il knob agisce in tempo reale anche durante la riproduzione, e le impostazioni vengono salvate nel progetto.
 
@@ -146,7 +153,7 @@ Ogni sampler (Kick, Snare, Hat, Belt, Capsule) ha la manopola **WAV** e un menu 
 
 | Pulsante | Cartella |
 |---|---|
-| **DBX** | `Dualbox Kick`, `Dualbox Snare`, … (libreria di fabbrica v5: 48 kick puliti, 48 snare e clap morbidi, 32 coppie di hat, 46 Belt con **solo bassi e accordi, tutti in Do** (bassi accordati su Do, accordi della famiglia Do minore), 66 Capsule con **tom 808 e 909 Hi/Mid/Low, conga 808 Hi/Mid/Low**, conga, bongo, tom, darbuka, cajon, claves, log drum, snare morbide e dissonant hit; una parte dei campioni viene da librerie gratuite CC0 / Public Domain, vedi [`resources/SAMPLE_CREDITS.md`](resources/SAMPLE_CREDITS.md); installata al primo avvio e aggiornata automaticamente quando esce una nuova libreria, senza toccare i file tuoi) |
+| **DBX** | `Dualbox Kick`, `Dualbox Snare`, … (libreria di fabbrica v5: 48 kick puliti, 48 snare e clap morbidi, 32 coppie di hat, 46 Belt con **solo bassi e accordi, tutti in Do** (bassi accordati su Do, accordi della famiglia Do minore), 66 Capsule con **tom analogici e classici Hi/Mid/Low, conga analogiche Hi/Mid/Low**, conga, bongo, tom, darbuka, cajon, claves, log drum, snare morbide e dissonant hit; una parte dei campioni viene da librerie gratuite CC0 / Public Domain, vedi [`resources/SAMPLE_CREDITS.md`](resources/SAMPLE_CREDITS.md); installata al primo avvio e aggiornata automaticamente quando esce una nuova libreria, senza toccare i file tuoi) |
 | **LEG** | `Legacy Kick`, `Legacy Snare`, … (campioni importati con IMPORT LEGACY, vedi sotto) |
 | **📁** | una cartella a tua scelta, impostabile per ogni modulo e salvata col progetto |
 

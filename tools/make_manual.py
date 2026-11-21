@@ -207,7 +207,7 @@ bullets([
     "piccolo display in millisecondi con le frecce ▲▼ per anticipare (valori negativi) o ritardare (valori positivi) la "
     "traccia fino a ±50 ms, senza aggiungere latenza.",
     "<b>Novità 2.7</b>: il modulo <b>Belt</b> contiene solo <b>bassi e accordi, tutti in Do</b>; il modulo <b>Capsule</b> "
-    "contiene <b>tom 808 e 909 Hi/Mid/Low, conga 808 Hi/Mid/Low</b> e percussioni non metalliche (conga, bongo, tom, "
+    "contiene <b>tom analogici e classici Hi/Mid/Low, conga analogiche Hi/Mid/Low</b> e percussioni non metalliche (conga, bongo, tom, "
     "darbuka, cajon, claves, log drum, snare morbide), più alcuni dissonant hit morbidi. Parte dei campioni viene da "
     "librerie gratuite CC0 / Public Domain: crediti e licenze in SAMPLE_CREDITS.md.",
     "<b>Novità 2.6</b>: <b>velocity per step</b> su BELT e CAPSULE (tacca bianca, Alt/Option + trascina o Alt + frecce), "
@@ -361,7 +361,7 @@ p("Sotto la lista dei canali c'è il modulo CLICK: aggiunge al Kick (canale 1) u
   "click, tick...) suonato insieme a ogni colpo del Kick (sequencer, MIDI o ▶).")
 table([["Controllo", "Funzione"],
        ["ON", "Accende / spegne il layer (spento di default)."],
-       ["DBX · cartella", "Cartella dei campioni: DBX = Dualbox Click (12 click di fabbrica: Beater Hard / Soft, 909 "
+       ["DBX · cartella", "Cartella dei campioni: DBX = Dualbox Click (12 click di fabbrica: Beater Hard / Soft, Classic "
         "Attack, Wood Tick, Tick Short, Knock, Felt Thump, Tape Click, Air Snap, Plastic Pop, Mid Punch, Dusty Click); "
         "icona cartella = una tua cartella di transienti (WAV, AIFF, FLAC, OGG; max 128 file)."],
        ["Menu · ▶", "Scelta del campione e ascolto (Kick + click)."],
@@ -577,7 +577,7 @@ bullets([
 ])
 table([["Nome del file", "Tonalità letta", "Note"],
        ["pad chord Db", "D♭ maggiore", "bemolle con 'b', anche minuscolo ('pad chord db')"],
-       ["Rhodes Cm9 · Am7 stab · 120bpm Ebmaj7", "C min · A min · E♭ magg.", "le estensioni degli accordi (7, 9, sus, add, "
+       ["Keys Cm9 · Am7 stab · 120bpm Ebmaj7", "C min · A min · E♭ magg.", "le estensioni degli accordi (7, 9, sus, add, "
         "dim, aug) vengono ignorate"],
        ["Bass_F#2 · Kick C1", "F# · C", "un numero subito dopo la nota è l'ottava"],
        ["La minore · Sol# lead · Re", "A min · G# · D", "nomi solfeggio Do, Re, Mi, Fa, Sol, La, Si"],
@@ -715,7 +715,7 @@ p("Ogni modulo sample della Sezione B legge una cartella: il menu e il knob Wav 
 table([["Cartella", "Contenuto"],
        ["Dualbox Kick / Snare / Hat / Belt / Capsule / Click", "Libreria di fabbrica: 48 kick puliti, 48 snare e clap "
         "morbidi, 32 hat (con i rispettivi aperti in open/), 46 Belt con solo bassi e accordi in Do, 66 Capsule con tom "
-        "808/909, conga 808 e percussioni non metalliche, 12 click. Alcuni campioni vengono da librerie gratuite CC0 / "
+        "analogici e classici, conga analogiche e percussioni non metalliche, 12 click. Alcuni campioni vengono da librerie gratuite CC0 / "
         "Public Domain: crediti nel file SAMPLE_CREDITS.md dentro la cartella dei campioni. Quando una nuova versione "
         "porta una libreria aggiornata, i file di fabbrica vengono sostituiti automaticamente; i file aggiunti da te, "
         "le cartelle Legacy e le cartelle utente non vengono toccati."],
@@ -758,10 +758,10 @@ table([["Genere", "Carattere dei kit"],
        ["Minimal", "click &amp; cut, kick piccoli, contrabbasso e rhodes granulari, vinile"],
        ["Microhouse", "percussioni organiche, sub rotondi, voci processate, groove lunghi"],
        ["Rominimal", "kick tondi, rimshot, basso con portamento, swing marcato"],
-       ["House", "909 caldi, clap, organo e rhodes, swing garage"],
-       ["Tech House", "707/808/909, bassline, archi in stile Detroit, acid solo in 2 preset"],
+       ["House", "kick caldi, clap, organo e piano elettrico, swing garage"],
+       ["Tech House", "drum machine classiche, bassline, archi in stile Detroit, acid solo in 2 preset"],
        ["Deep House", "suoni polverosi, accordi dub, bassi funky, dettagli giocosi"],
-       ["Breakbeat", "electro: 808 lunghi, snare 808 morbide, tom 808, bassi robotici"]], [32, 138])
+       ["Breakbeat", "electro: kick analogici lunghi, snare analogiche morbide, tom analogici, bassi robotici"]], [32, 138])
 table([["", "Sezione A", "Sezione B"],
        ["Cosa contiene un preset", "Kit di 8 drum patch con i nomi dei canali, un pattern (fino a 64 step), swing e "
         "fill rate", "Snapshot completo: campioni, parametri delle voci, effetti, lunghezze, swing, remix e i pattern A–D"],
@@ -877,6 +877,27 @@ p("<font size=7.5 color='#6b6b6b'>DUALBOX è un prodotto TMFU audiovibe, costrui
   "SAMPLE_CREDITS.md). L'interfaccia usa il font Inter (SIL Open Font License 1.1). Il pitch-shift del Belt usa Signalsmith Stretch (licenza MIT). I nomi di DAW e di sistemi "
   "operativi citati in questo manuale appartengono ai rispettivi proprietari e sono usati solo per indicare la "
   "compatibilità.</font>")
+
+# ---------------------------------------------------------------------------------------------- 13
+h1("13. Licenze di terze parti")
+p("DUALBOX usa i componenti elencati qui sotto, ognuno con la propria licenza. I testi completi delle licenze sono nel "
+  "file <font face='DV-M'>THIRD_PARTY_NOTICES.txt</font>, installato in <font face='DV-M'>/Users/Shared/Dualbox</font> e "
+  "dentro i plugin (<font face='DV-M'>DUALBOX.component</font> e <font face='DV-M'>DUALBOX.vst3</font>, cartella "
+  "Contents/Resources). I crediti dei campioni di fabbrica sono nel file <font face='DV-M'>SAMPLE_CREDITS.md</font> "
+  "nella cartella dei campioni.")
+table([["Componente", "Uso", "Licenza"],
+       ["JUCE", "framework del plugin", "JUCE 8 (licenza JUCE / AGPLv3)"],
+       ["VST 3 SDK", "formato VST3", "Steinberg VST3 License / GPLv3"],
+       ["Audio Unit SDK", "formato AU", "Apache 2.0"],
+       ["Signalsmith Stretch, Signalsmith Linear", "pitch-shift del Belt", "MIT"],
+       ["Inter", "font dell'interfaccia", "SIL Open Font License 1.1"],
+       ["FLAC, Ogg Vorbis", "lettura dei file audio", "BSD"],
+       ["zlib, libpng, jpeglib (IJG)", "archivio dei campioni, immagini", "zlib / libpng / IJG"],
+       ["HarfBuzz, SheenBidi", "testo", "Old MIT / Apache 2.0"],
+       ["Campioni di fabbrica", "libreria Dualbox", "sintetizzati da DUALBOX, CC0 1.0 e Public Domain (vedi SAMPLE_CREDITS.md)"]],
+      [52, 48, 70])
+p("<font size=7.5 color='#6b6b6b'>VST è un marchio registrato di Steinberg Media Technologies GmbH. Audio Unit è un "
+  "marchio di Apple Inc. Questo software si basa in parte sul lavoro dell'Independent JPEG Group.</font>")
 
 doc.multiBuild(story)
 print("written", OUT)

@@ -39,7 +39,7 @@ NAMES = {
               "Soft Pressure", "Golden Hour Jam", "Back To Basics"],
     "techhouse": ["Bassline Theory", "Rubber Floor", "Afterhours Shuffle", "Neon Chevrons", "Steel Toe", "Pivot", "Low Slung",
                   "Tilt Shift", "Dry Martini", "Hook Line", "Off The Grid", "Club Sandwich", "Two Step Theory", "Tinted", "Bounce Cut", "Swagger"],
-    "deephouse": ["Soft Focus", "Late Bloom", "Velvet Hour", "Warm Static", "Tidal Room", "Slow Glow", "Rhodes Less Travelled",
+    "deephouse": ["Soft Focus", "Late Bloom", "Velvet Hour", "Warm Static", "Tidal Room", "Slow Glow", "Keys Less Travelled",
                   "Amber Lights", "Night Bus Home", "Pale Blue", "Honey Dust", "Moss", "Low Tide", "Kept Secret", "Satin Sky", "Slow Burn"],
     "breakbeat": ["Broken Arrow", "Snare Rush", "Electro Glide", "Funk Debris", "Zap Grid", "Uprock", "Hard Edit", "Scratch Theory",
                   "Ghost Break", "Breakdown 99", "Tape Splice", "Breaker Box", "Skippy", "Crowbar", "Jungle Gym", "Rewind Rifle"],
@@ -221,7 +221,7 @@ AVOID = {"minimal": {"Kick": ["Click", "Micro", "Tight"], "Hat": ["Tick", "Micro
                      "Belt": ["Stab", "Glowly", "Voxy", "Muted", "Short"]}}
 ROUND = {"Capsule": ["Conga", "Tumba", "Quinto", "Tom", "Log Drum", "Frame Drum Low", "Cajon Bass", "Bongo Low"],
          "Kick": ["Soft", "Felt", "Round", "Deep", "Sub", "Warm"], "Snare": ["Soft", "Room", "Felt", "Warm", "Velvet"],
-         "Belt": ["Bass", "Rhodes", "Pad", "Piano"], "Hat": ["Soft", "Shaker", "Brushy", "Dark", "Lofi"]}
+         "Belt": ["Bass", "Keys", "Pad", "Piano"], "Hat": ["Soft", "Shaker", "Brushy", "Dark", "Lofi"]}
 
 def pick(module, genre, r, prefer=None, acid=False):
     items = manifest["modules"][module]

@@ -759,7 +759,7 @@ int main (int argc, char** argv)
         // 3b) key from file name: parser + measured effect
         {
             struct C { const char* name; float expect; };
-            const C cases[] { { "pad chord Db", 61 }, { "T09 Rhodes Cm9", 60 }, { "Bass_F#2", 54 }, { "Kick C1", 36 }, { "La minore", 57 },
+            const C cases[] { { "pad chord Db", 61 }, { "T09 Keys Cm9", 60 }, { "Bass_F#2", 54 }, { "Kick C1", 36 }, { "La minore", 57 },
                               { "Sol# lead", 56 }, { "Am7 stab", 57 }, { "120bpm Ebmaj7", 63 }, { "loop_Bb", 58 }, { "pad chord db", 61 },
                               { "Kick", -1 }, { "T05 Dub Chord m7", -1 }, { "Cello", -1 }, { "Glass Bell", -1 }, { "Sub Bass", -1 }, { "Remix", -1 } };
             String fails;

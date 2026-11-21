@@ -14,6 +14,13 @@ ditto -x -k resources/factory_samples.zip "$OUT/samples/Users/Shared/Dualbox/Sam
 cp -R "$ART/AU/DUALBOX.component" "$OUT/au/Library/Audio/Plug-Ins/Components/"
 cp -R "$ART/VST3/DUALBOX.vst3"    "$OUT/vst3/Library/Audio/Plug-Ins/VST3/"
 
+# third-party licence notices (texts read from the sources of this build): inside both plug-in bundles and next to
+# the factory samples (/Users/Shared/Dualbox/THIRD_PARTY_NOTICES.txt)
+python3 tools/make_notices.py build/_deps/juce-src "$OUT/THIRD_PARTY_NOTICES.txt"
+cp "$OUT/THIRD_PARTY_NOTICES.txt" "$OUT/au/Library/Audio/Plug-Ins/Components/DUALBOX.component/Contents/Resources/"
+cp "$OUT/THIRD_PARTY_NOTICES.txt" "$OUT/vst3/Library/Audio/Plug-Ins/VST3/DUALBOX.vst3/Contents/Resources/"
+cp "$OUT/THIRD_PARTY_NOTICES.txt" "$OUT/samples/Users/Shared/Dualbox/"
+
 # ad-hoc code signature (needed on recent macOS for unsigned plug-ins to load)
 codesign --force --deep --sign - "$OUT/au/Library/Audio/Plug-Ins/Components/DUALBOX.component"
 codesign --force --deep --sign - "$OUT/vst3/Library/Audio/Plug-Ins/VST3/DUALBOX.vst3"
@@ -122,6 +129,8 @@ VSTFILES="$(pkgutil --payload-files "$OUT/DUALBOX-VST3.pkg")"
 echo "$AUFILES" | grep -q "Library/Audio/Plug-Ins/Components/DUALBOX.component/Contents/MacOS/DUALBOX" || { echo "ERROR: AU binary missing from the payload"; exit 1; }
 echo "$VSTFILES" | grep -q "Library/Audio/Plug-Ins/VST3/DUALBOX.vst3/Contents/MacOS/DUALBOX" || { echo "ERROR: VST3 binary missing from the payload"; exit 1; }
 pkgutil --payload-files "$OUT/DUALBOX-Samples.pkg" | grep -q "Users/Shared/Dualbox/Samples/Dualbox Kick/" || { echo "ERROR: factory samples missing from the payload"; exit 1; }
+pkgutil --payload-files "$OUT/DUALBOX-Samples.pkg" | grep -q "Users/Shared/Dualbox/THIRD_PARTY_NOTICES.txt" || { echo "ERROR: third-party notices missing"; exit 1; }
+echo "$AUFILES" | grep -q "DUALBOX.component/Contents/Resources/THIRD_PARTY_NOTICES.txt" || { echo "ERROR: notices missing from the AU bundle"; exit 1; }
 if grep -q "<relocate>" "$CHECK/DUALBOX-AU.pkg/PackageInfo"; then echo "ERROR: AU package is relocatable"; exit 1; fi
 echo "Installer contents OK: AU -> /Library/Audio/Plug-Ins/Components, VST3 -> /Library/Audio/Plug-Ins/VST3, samples -> /Users/Shared/Dualbox/Samples"
 cat "$CHECK/DUALBOX-AU.pkg/PackageInfo"

@@ -84,7 +84,7 @@ public:
     // pitch detection (YIN); returns MIDI note or -1 when the sample has no clear pitch
     static float detectPitch (const Sample& s, float& confidence);
     static juce::String noteName (float midi);   // "C#3 +12c"
-    // key from a file name ("pad chord Db", "Rhodes Cm9", "Bass_F#2", "La minore"); returns MIDI note or -1.
+    // key from a file name ("pad chord Db", "Keys Cm9", "Bass_F#2", "La minore"); returns MIDI note or -1.
     // Without an octave in the name the note is placed in the octave closest to 'nearPitch' (or around C3 = 60).
     static float pitchFromName (const juce::String& name, float nearPitch = -1.0f);
 
