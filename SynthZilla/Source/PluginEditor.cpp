@@ -18,19 +18,21 @@ juce::Font ui::font (float h, bool bold) { return juce::Font (juce::FontOptions 
 // =====================================================================================================
 //  5ynth logo
 // =====================================================================================================
+static void fillSteel (juce::Graphics& g, const juce::Path& q)   // brushed metal: diagonal light / dark gradient
+{
+    using namespace juce;
+    const auto b = q.getBounds();
+    ColourGradient gr (Colour (0xffe8e8e8), b.getX(), b.getY(), Colour (0xff8a8a8a), b.getRight(), b.getBottom(), false);
+    gr.addColour (0.45, Colour (0xffbcbcbc)); gr.addColour (0.7, Colour (0xffd4d4d4));
+    g.setGradientFill (gr); g.fillPath (q);
+}
+
 void logo::drawMark (juce::Graphics& g, juce::Rectangle<float> r)
 {
     using namespace juce;
     const float s = jmin (r.getWidth() / 340.0f, r.getHeight() / 350.0f);
     const auto o = r.getCentre() - Point<float> (170.0f, 175.0f) * s;
     const auto T = AffineTransform::scale (s).translated (o);
-    auto steel = [&] (const Path& q)   // brushed metal: diagonal light / dark gradient
-    {
-        const auto b = q.getBounds();
-        ColourGradient gr (Colour (0xffe8e8e8), b.getX(), b.getY(), Colour (0xff8a8a8a), b.getRight(), b.getBottom(), false);
-        gr.addColour (0.45, Colour (0xffbcbcbc)); gr.addColour (0.7, Colour (0xffd4d4d4));
-        g.setGradientFill (gr); g.fillPath (q);
-    };
     Path p, bars;
     p.addRectangle (25, 52, 177, 46);                         // top bar of the 5
     p.addQuadrilateral (25, 52, 76, 52, 58, 213, 7, 213);     // slanted stem
@@ -44,7 +46,7 @@ void logo::drawMark (juce::Graphics& g, juce::Rectangle<float> r)
     p.addPath (bowl);
     for (int k = 0; k < 6; ++k) p.addRectangle (220.0f + k * 19.0f, 53, 17, 69);   // white keys
     p.applyTransform (T);
-    steel (p);
+    fillSteel (g, p);
     bars.applyTransform (T);
     for (float rad : { 24.0f, 9.0f })   // glow
         DropShadow (Colour (0xffd8f0ff).withAlpha (rad > 15 ? 0.4f : 0.6f), jmax (1, (int) (rad * s)), {}).drawForPath (g, bars);
@@ -68,6 +70,76 @@ void logo::drawMark (juce::Graphics& g, juce::Rectangle<float> r)
     g.strokePath (pw, PathStrokeType (jmax (0.8f, 3.2f * s), PathStrokeType::curved, PathStrokeType::rounded));
 }
 
+void logo::drawWordmark (juce::Graphics& g, juce::Rectangle<float> r, int style, juce::RectanglePlacement place)
+{
+    using namespace juce;
+    // design units: emblem in x 0..340, letters on the 5's cap band y 52..345 (stroke 46, stem slant 0.11 as in the 5)
+    constexpr float top = 52, bot = 345, t = 46, slant = 0.11f, x0 = 372;
+    std::vector<Path> letters;
+    if (style == 1)
+    {
+        constexpr float w = 196, gap = 34;
+        for (int k = 0; k < 4; ++k)
+        {
+            const float x = x0 + k * (w + gap), mid = x + w * 0.5f;
+            Path p;
+            if (k == 0)        // Y: two arms meeting at the middle, stem down
+            {
+                const float jy = 200;
+                p.addQuadrilateral (x, top, x + 1.2f * t, top, mid + 0.5f * t, jy, mid - 0.5f * t, jy);
+                p.addQuadrilateral (x + w - 1.2f * t, top, x + w, top, mid + 0.5f * t, jy, mid - 0.5f * t, jy);
+                p.addRectangle (mid - t * 0.5f, jy - 1, t, bot - jy + 1);
+            }
+            else if (k == 1)   // N
+            {
+                p.addRectangle (x, top, t, bot - top);
+                p.addRectangle (x + w - t, top, t, bot - top);
+                p.addQuadrilateral (x, top, x + 1.11f * t, top, x + w, bot, x + w - 1.11f * t, bot);
+            }
+            else if (k == 2)   // T
+            {
+                p.addRectangle (x - 6, top, w + 12, t);
+                p.addRectangle (mid - t * 0.5f, top, t, bot - top);
+            }
+            else               // H: crossbar at the height of the 5's bars
+            {
+                p.addRectangle (x, top, t, bot - top);
+                p.addRectangle (x + w - t, top, t, bot - top);
+                p.addRectangle (x + t * 0.5f, 172, w - t, t * 0.8f);
+            }
+            letters.push_back (p);
+        }
+    }
+    else
+    {
+        static Typeface::Ptr tf = Typeface::createSystemTypefaceFor (BinaryData::BrunoAceRegular_ttf, BinaryData::BrunoAceRegular_ttfSize);
+        GlyphArrangement ga;
+        ga.addLineOfText (Font (FontOptions (tf).withHeight (100.0f)), "YNTH", 0, 0);
+        Path p; ga.createPath (p);
+        // Bruno Ace stems are ~14 % of the cap height: embolden the outline so they match the 5's stroke (46-50 units)
+        constexpr float extra = 16;
+        const auto b = p.getBounds();
+        const float k = (bot - top - extra) / b.getHeight();
+        p.applyTransform (AffineTransform::translation (-b.getX(), -b.getY()).scaled (k).translated (x0 + extra * 0.5f, top + extra * 0.5f));
+        Path bold;
+        PathStrokeType (extra, PathStrokeType::mitered).createStrokedPath (bold, p);
+        bold.addPath (p);
+        bold.setUsingNonZeroWinding (true);
+        letters.push_back (bold);
+    }
+    // the letters lean like the stem of the 5
+    Rectangle<float> lb;
+    for (auto& p : letters)
+    {
+        p.applyTransform (AffineTransform (1.0f, -slant, slant * bot, 0.0f, 1.0f, 0.0f));
+        lb = lb.isEmpty() ? p.getBounds() : lb.getUnion (p.getBounds());
+    }
+    const Rectangle<float> box (0, 0, jmax (340.0f, lb.getRight()) + 4, 350);
+    const auto T = place.getTransformToFit (box, r);
+    drawMark (g, box.withWidth (340).transformedBy (T));
+    for (auto& p : letters) { p.applyTransform (T); fillSteel (g, p); }
+}
+
 void logo::drawWord (juce::Graphics& g, juce::Rectangle<float> r, juce::Justification j)
 {
     // Michroma (wide, low letters), made slightly bolder by stroking the glyph outlines
@@ -89,10 +161,18 @@ void LogoSplash::paint (juce::Graphics& g)
     g.fillAll (juce::Colours::black.withAlpha (0.92f));
     auto r = getLocalBounds().toFloat().withSizeKeepingCentre (640.0f, 600.0f);
     // the emblem's mass sits left of its box (the "5"), so it is nudged right to look centred over the wordmark
+    if (const int st = juce::SystemStats::getEnvironmentVariable ("WORDMARK", "0").getIntValue(); st > 0)   // TEMP: mock-ups
+    {
+        logo::drawWordmark (g, r.removeFromTop (440.0f).withSizeKeepingCentre (640.0f, 200.0f).translated (0, 60), st);
+        r.removeFromTop (20.0f);
+    }
+    else
+    {
     logo::drawMark (g, r.removeFromTop (330.0f).reduced (10.0f).translated (12.0f, 0.0f));
     r.removeFromTop (14.0f);
     logo::drawWord (g, r.removeFromTop (110.0f).reduced (20.0f, 0), juce::Justification::centred);   // wider than the emblem, as in the artwork
     r.removeFromTop (20.0f);
+    }
     g.setColour (ui::dim); g.setFont (ui::font (13.0f));
     g.drawText ("TMFU audiovibe  v" + juce::String (JucePlugin_VersionString), r.removeFromTop (24.0f), juce::Justification::centred);
 }
@@ -1311,6 +1391,11 @@ void SynthZillaEditor::paint (juce::Graphics& g)
 void SynthZillaEditor::drawLogo (juce::Graphics& g)
 {
     auto r = logoArea;
+    if (const int st = juce::SystemStats::getEnvironmentVariable ("WORDMARK", "0").getIntValue(); st > 0)   // TEMP: mock-ups
+    {
+        logo::drawWordmark (g, r.withTrimmedTop (1.0f), st, juce::RectanglePlacement::xLeft | juce::RectanglePlacement::yMid);
+        return;
+    }
     logo::drawMark (g, r.removeFromLeft (60.0f));
     r.removeFromLeft (12.0f);
     // wordmark centred on the body of the "5" (below the pulse line), wider than the emblem as in the artwork
