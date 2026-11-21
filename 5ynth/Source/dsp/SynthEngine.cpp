@@ -171,7 +171,7 @@ void ModulePart::start (float velocity, bool hard, const ModCtx& c, float note, 
         opEnv[o].set (v[opSuffix (o, opAtk)], v[opSuffix (o, opDec)], v[opSuffix (o, opSus)], v[opSuffix (o, opRel)], c.sr);
         if (hard) opEnv[o].gateOn (fresh);
     }
-    if (fresh) for (int ch = 0; ch < 2; ++ch) { lad[ch].reset(); d303[ch].reset(); svf[ch][0].reset(); svf[ch][1].reset(); dist[ch].reset(); prevIn[ch] = 0; }
+    if (fresh) for (int ch = 0; ch < 2; ++ch) { lad[ch].reset(); moog[ch].reset(); d303[ch].reset(); svf[ch][0].reset(); svf[ch][1].reset(); dist[ch].reset(); prevIn[ch] = 0; }
 }
 
 void ModulePart::render (float* L, float* R, int n, const float* notes, const ModCtx& c)
@@ -412,6 +412,10 @@ void ModulePart::render (float* L, float* R, int n, const float* notes, const Mo
             }
             yl = out[0]; yr = out[1];
         }
+        else if (ft == 0 && c.circuit == dsp::Circuit::Moog)   // Moog transistor ladder (per-stage saturation)
+        {
+            yl = moog[0].process (sl, fc, sr, res, fdrive); yr = moog[1].process (sr2, fc, sr, res, fdrive);
+        }
         else if (ft == 0)
         {
             const float gg = cutoffG (fc, sr);
@@ -601,6 +605,7 @@ void SynthEngine::renderVoices (int start, int n, const float* v)
         {
             if (! vc.use[m] || ! vc.part[m].active()) continue;
             ModCtx c; c.v = v + lay.moduleBase[m]; c.g = v; c.sr = sr; c.bend = bend * v[lay.gBend]; c.mw = mw;
+            c.circuit = modelCircuit[(size_t) std::clamp ((int) c.v[mModel], 0, (int) modelCircuit.size() - 1)];
             c.lfo = lfoBuf[m].data(); c.vib = vibBuf.data();
             vc.part[m].render (bus[m][0].data() + start, bus[m][1].data() + start, n, noteBuf.data(), c);
         }

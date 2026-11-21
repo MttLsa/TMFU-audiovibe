@@ -4,6 +4,7 @@
 #include <array>
 #include "DspCommon.h"
 #include "Analog303.h"
+#include "Circuits.h"
 #include "Wavetables.h"
 #include "../Params.h"
 
@@ -23,6 +24,7 @@ struct ModCtx
     float bend = 0, mw = 0;
     const float* lfo = nullptr; // per-sample module LFO
     const float* vib = nullptr;
+    dsp::Circuit circuit = dsp::Circuit::Generic;   // filter circuit of the module's synth model
 };
 
 struct FmAlgorithms
@@ -53,6 +55,7 @@ struct ModulePart
     // filters / drive
     dsp::Ladder lad[2];
     dsp::Diode303 d303[2];
+    dsp::MoogLadder moog[2];
     dsp::Svf svf[2][2];
     dsp::PedalDist dist[2];
     float prevIn[2] {};
@@ -92,6 +95,8 @@ public:
     void allNotesOff();
     int activeVoices() const;
     float moduleLevel (int m) const { return modMeter[(size_t) m]; }
+    // which circuit models each synth model (index of the Synth Model menu) uses
+    void setModelCircuit (int modelIndex, dsp::Circuit c) { if (juce::isPositiveAndBelow (modelIndex, (int) modelCircuit.size())) modelCircuit[(size_t) modelIndex] = c; }
 
 private:
     void handleMidi (const juce::MidiMessage& m, const float* v);
@@ -103,6 +108,7 @@ private:
 
     float sr = 48000.0f;
     Voice voices[numVoices];
+    std::array<dsp::Circuit, 128> modelCircuit {};
     uint64_t counter = 0;
     std::vector<int> held;
     bool sustainPedal = false;
