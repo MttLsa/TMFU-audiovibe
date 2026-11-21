@@ -755,7 +755,7 @@ p("Ogni sezione ha 128 preset: 16 per ognuno degli 8 generi Techno, Minimal, Mic
   "effetti e Remix): l'etichetta è accanto al nome.")
 table([["Genere", "Carattere dei kit"],
        ["Techno", "kick con coda rumble pulita, basso rumble, pad scuri, tom e conga ipnotici"],
-       ["Minimal", "click &amp; cut, kick piccoli, contrabbasso e rhodes granulari, vinile"],
+       ["Minimal", "click &amp; cut, kick piccoli, contrabbasso e piano elettrico granulari, vinile"],
        ["Microhouse", "percussioni organiche, sub rotondi, voci processate, groove lunghi"],
        ["Rominimal", "kick tondi, rimshot, basso con portamento, swing marcato"],
        ["House", "kick caldi, clap, organo e piano elettrico, swing garage"],
