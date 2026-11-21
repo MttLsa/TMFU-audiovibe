@@ -133,6 +133,8 @@ void FivesynthProcessor::loadPreset (int index)
     }
     setParam (layout().gSlots, (float) (maxSlot + 1));   // only the modules the patch uses (no empty extra module)
     currentPreset.store (index);
+    currentUser = {};
+    ++presetCounter;
     resetPending.store (true);
     loading = false;
 }
@@ -323,9 +325,64 @@ void FivesynthProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     auto state = apvts.copyState();
     state.setProperty ("preset", currentPreset.load(), nullptr);
+    state.setProperty ("userPreset", currentUser, nullptr);
     state.removeChild (state.getChildWithName ("UI"), nullptr);
     state.appendChild (uiState.createCopy(), nullptr);
     if (auto xml = state.createXml()) copyXmlToBinary (*xml, destData);
+}
+
+juce::File FivesynthProcessor::userPresetFolder()
+{
+   #if JUCE_MAC
+    auto dir = juce::File::getSpecialLocation (juce::File::userHomeDirectory).getChildFile ("Library/Audio/Presets/TMFU audiovibe/5ynth");
+   #else
+    auto dir = juce::File::getSpecialLocation (juce::File::userDocumentsDirectory).getChildFile ("TMFU audiovibe/5ynth Presets");
+   #endif
+    return dir;
+}
+
+juce::Array<juce::File> FivesynthProcessor::userPresets() const
+{
+    auto files = userPresetFolder().findChildFiles (juce::File::findFiles, false, "*.5ynth");
+    std::sort (files.begin(), files.end(), [] (const juce::File& a, const juce::File& b) { return a.getFileNameWithoutExtension().compareNatural (b.getFileNameWithoutExtension()) < 0; });
+    return files;
+}
+
+bool FivesynthProcessor::saveUserPreset (const juce::String& rawName)
+{
+    const auto name = juce::File::createLegalFileName (rawName.trim());
+    if (name.isEmpty()) return false;
+    auto dir = userPresetFolder();
+    if (! dir.createDirectory()) return false;
+    auto state = apvts.copyState();
+    state.removeChild (state.getChildWithName ("UI"), nullptr);
+    state.removeProperty ("preset", nullptr);
+    juce::XmlElement root ("FIVESYNTH_PRESET");
+    root.setAttribute ("name", rawName.trim());
+    root.setAttribute ("version", JucePlugin_VersionString);
+    if (auto xml = state.createXml()) root.addChildElement (xml.release());
+    if (! dir.getChildFile (name + ".5ynth").replaceWithText (root.toString())) return false;
+    currentUser = rawName.trim();
+    ++presetCounter;
+    return true;
+}
+
+bool FivesynthProcessor::loadUserPreset (const juce::File& file)
+{
+    auto root = juce::XmlDocument::parse (file);
+    if (root == nullptr || ! root->hasTagName ("FIVESYNTH_PRESET")) return false;
+    auto* xml = root->getChildByName (apvts.state.getType());
+    if (xml == nullptr) return false;
+    auto vt = juce::ValueTree::fromXml (*xml);
+    loading = true;
+    smoothReset = true;
+    apvts.replaceState (vt);
+    loading = false;
+    currentPreset.store (-1);
+    currentUser = root->getStringAttribute ("name", file.getFileNameWithoutExtension());
+    ++presetCounter;
+    resetPending.store (true);
+    return true;
 }
 
 void FivesynthProcessor::setStateInformation (const void* data, int sizeInBytes)
@@ -337,6 +394,9 @@ void FivesynthProcessor::setStateInformation (const void* data, int sizeInBytes)
             loading = true;
             smoothReset = true;
             currentPreset.store ((int) vt.getProperty ("preset", -1));
+            currentUser = vt.getProperty ("userPreset", "").toString();
+            vt.removeProperty ("userPreset", nullptr);
+            ++presetCounter;
             auto ui = vt.getChildWithName ("UI");
             if (ui.isValid()) { uiState.copyPropertiesFrom (ui, nullptr); vt.removeChild (ui, nullptr); }
             apvts.replaceState (vt);

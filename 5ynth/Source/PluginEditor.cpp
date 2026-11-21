@@ -687,7 +687,7 @@ void ModulePanel::buildGroups()
         }
     }
     builtModel = mi;
-    builtPreset = proc.presetIndex();
+    builtPreset = proc.presetSerial();
 }
 
 void ModulePanel::refreshSkin()
@@ -695,7 +695,7 @@ void ModulePanel::refreshSkin()
     const int mi = (int) proc.apvts.getRawParameterValue (def (mod (module, mModel)).id)->load();
     const auto* md = PresetLibrary::get().model (mi);
     const int engine = (int) proc.apvts.getRawParameterValue (def (mod (module, mEngine)).id)->load();
-    const bool rebuild = mi != builtModel || proc.presetIndex() != builtPreset;
+    const bool rebuild = mi != builtModel || proc.presetSerial() != builtPreset;
     if (rebuild) buildGroups();
     digitalLook = engine != 0;
     const juce::String key = md != nullptr ? md->skin : juce::String (digitalLook ? "neutral-d" : "neutral-a");
@@ -841,7 +841,8 @@ void ModulePanel::paint (juce::Graphics& g)
     {
         const auto& all = PresetLibrary::get().all();
         const int pi = proc.presetIndex();
-        juce::String txt = juce::isPositiveAndBelow (pi, (int) all.size()) ? (all[(size_t) pi].original.isNotEmpty() ? all[(size_t) pi].original : all[(size_t) pi].name) : juce::String ("INIT");
+        juce::String txt = juce::isPositiveAndBelow (pi, (int) all.size()) ? (all[(size_t) pi].original.isNotEmpty() ? all[(size_t) pi].original : all[(size_t) pi].name)
+                                                                        : (proc.userPresetName().isNotEmpty() ? proc.userPresetName() : juce::String ("INIT"));
         auto lcd = juce::Rectangle<float> (r.getWidth() * 0.36f, 10.0f, 230.0f, 30.0f);
         ui::relief (g, lcd.expanded (2.0f), juce::Colours::black, 3.0f, false);
         g.setColour (s.lcdBg); g.fillRoundedRectangle (lcd, 2.0f);
@@ -1177,6 +1178,15 @@ PresetBrowser::PresetBrowser (FivesynthProcessor& p) : proc (p)
                 if (all[(size_t) rows[(size_t) r]].decade == d) { list.scrollToEnsureRowIsOnscreen (juce::jmin ((int) rows.size() - 1, r + 18)); list.scrollToEnsureRowIsOnscreen (r); break; } };
         addAndMakeVisible (b);
     }
+    sortBox.addItemList ({ "Sort: Year", "Sort: Song", "Sort: Preset", "Sort: Artist" }, 1);
+    sortBox.setSelectedId (1, juce::dontSendNotification);
+    sortBox.setTooltip ("ordine dei preset: anno, titolo della canzone, nome del preset, artista");
+    sortBox.onChange = [this] { apply(); resized(); };
+    addAndMakeVisible (sortBox);
+    userBtn.setClickingTogglesState (true);
+    userBtn.setTooltip ("i tuoi preset (salvati con SAVE); tasto destro su un preset: elimina / mostra nella cartella");
+    userBtn.onClick = [this] { search.setText ({}, juce::dontSendNotification); apply(); };
+    addAndMakeVisible (userBtn);
     info.setFont (ui::font (13.0f));
     info.setColour (juce::Label::textColourId, ui::text);
     info.setJustificationType (juce::Justification::topLeft);
@@ -1188,7 +1198,8 @@ void PresetBrowser::paint (juce::Graphics& g)
 {
     g.fillAll (ui::bg);
     g.setColour (ui::dim); g.setFont (ui::font (11.0f));
-    g.drawText (juce::String ((int) rows.size()) + " presets, ordered by year", getLocalBounds().reduced (10).removeFromTop (28).withTrimmedRight (90),
+    g.drawText (userMode() ? juce::String ((int) rows.size()) + " user presets  -  " + FivesynthProcessor::userPresetFolder().getFullPathName()
+                           : juce::String ((int) rows.size()) + " presets, ordered by " + juce::String (sortBox.getSelectedId() == 2 ? "song" : sortBox.getSelectedId() == 3 ? "preset name" : sortBox.getSelectedId() == 4 ? "artist" : "year"), getLocalBounds().reduced (10).removeFromTop (28).withTrimmedRight (90),
                 juce::Justification::centredRight);
 }
 
@@ -1200,7 +1211,11 @@ void PresetBrowser::resized()
     top.removeFromRight (180);
     search.setBounds (top.removeFromLeft (340));
     top.removeFromLeft (10);
-    for (auto* b : decadeBtns) { b->setBounds (top.removeFromLeft (64)); top.removeFromLeft (3); }
+    userBtn.setBounds (top.removeFromLeft (70)); top.removeFromLeft (10);
+    sortBox.setBounds (top.removeFromLeft (130)); top.removeFromLeft (10);
+    sortBox.setVisible (! userMode());
+    const bool byYear = sortBox.getSelectedId() <= 1;
+    for (auto* b : decadeBtns) { b->setBounds (top.removeFromLeft (64)); top.removeFromLeft (3); b->setVisible (! userMode() && byYear); }
     r.removeFromTop (6);
     info.setBounds (r.removeFromBottom (58));
     list.setBounds (r);
@@ -1208,15 +1223,34 @@ void PresetBrowser::resized()
 
 void PresetBrowser::apply()
 {
+    const juce::ScopedValueSetter<bool> guard (syncing, true);   // rebuilding the list must not load a preset
     const auto& all = PresetLibrary::get().all();
     rows.clear();
     const auto q = search.getText().trim().toLowerCase();
+    for (auto* b : decadeBtns) b->setVisible (! userMode() && sortBox.getSelectedId() <= 1);
+    sortBox.setVisible (! userMode());
+    if (userMode())
+    {
+        userFiles = proc.userPresets();
+        for (int i = 0; i < userFiles.size(); ++i)
+            if (q.isEmpty() || userFiles[i].getFileNameWithoutExtension().toLowerCase().contains (q)) rows.push_back (i);
+        list.updateContent(); list.repaint(); repaint(); refresh();
+        return;
+    }
     for (int i = 0; i < (int) all.size(); ++i)
     {
         const auto& p = all[(size_t) i];
         if (q.isNotEmpty() && ! (p.name + " " + p.song + " " + p.artist + " " + p.synth + " " + p.genre + " " + p.original + " " + juce::String (p.year)).toLowerCase().contains (q)) continue;
         rows.push_back (i);
     }
+    // the library is stored by year; other orders: song title, preset name, artist (A-Z, natural order)
+    const int sortBy = sortBox.getSelectedId();
+    if (sortBy > 1)
+        std::stable_sort (rows.begin(), rows.end(), [&] (int a, int b) {
+            const auto& pa = all[(size_t) a]; const auto& pb = all[(size_t) b];
+            const auto& ka = sortBy == 2 ? pa.song : sortBy == 3 ? pa.name : pa.artist;
+            const auto& kb = sortBy == 2 ? pb.song : sortBy == 3 ? pb.name : pb.artist;
+            return ka.compareNatural (kb) < 0; });
     list.updateContent();
     list.repaint();
     repaint();
@@ -1225,6 +1259,15 @@ void PresetBrowser::apply()
 
 void PresetBrowser::refresh()
 {
+    const juce::ScopedValueSetter<bool> guard (syncing, true);
+    if (userMode())
+    {
+        list.deselectAllRows();
+        for (int i = 0; i < (int) rows.size(); ++i)
+            if (userFiles[rows[(size_t) i]].getFileNameWithoutExtension() == juce::File::createLegalFileName (proc.userPresetName())) { list.selectRow (i, false, true); break; }
+        info.setText (proc.userPresetName().isNotEmpty() ? proc.userPresetName() + "   |   user preset" : juce::String ("Click a preset to load it."), juce::dontSendNotification);
+        return;
+    }
     const int cur = proc.presetIndex();
     for (int i = 0; i < (int) rows.size(); ++i)
         if (rows[(size_t) i] == cur) { list.selectRow (i, false, true); list.scrollToEnsureRowIsOnscreen (i); break; }
@@ -1242,6 +1285,16 @@ void PresetBrowser::refresh()
 void PresetBrowser::paintListBoxItem (int row, juce::Graphics& g, int w, int h, bool selected)
 {
     if (! juce::isPositiveAndBelow (row, (int) rows.size())) return;
+    if (userMode())
+    {
+        const auto& f = userFiles[rows[(size_t) row]];
+        g.fillAll (selected ? ui::header.brighter (0.15f) : (row % 2 ? ui::panel : ui::panel.brighter (0.03f)));
+        g.setColour (ui::text); g.setFont (ui::font (13.0f, true));
+        g.drawText (f.getFileNameWithoutExtension(), 12, 0, w - 220, h, juce::Justification::centredLeft, true);
+        g.setColour (ui::dim); g.setFont (ui::font (12.5f));
+        g.drawText (f.getLastModificationTime().formatted ("%d/%m/%Y %H:%M"), w - 200, 0, 190, h, juce::Justification::centredRight);
+        return;
+    }
     const auto& p = PresetLibrary::get().all()[(size_t) rows[(size_t) row]];
     g.fillAll (selected ? ui::header.brighter (0.15f) : (row % 2 ? ui::panel : ui::panel.brighter (0.03f)));
     g.setColour (ui::dim); g.setFont (ui::font (12.5f));
@@ -1257,11 +1310,121 @@ void PresetBrowser::paintListBoxItem (int row, juce::Graphics& g, int w, int h, 
     g.drawText (p.sections(), w - 62, 0, 56, h, juce::Justification::centredLeft);
 }
 
-void PresetBrowser::listBoxItemClicked (int row, const juce::MouseEvent&)
+void PresetBrowser::selectedRowsChanged (int row)
+{
+    if (! syncing && row >= 0) loadRow (row);
+}
+
+void PresetBrowser::loadRow (int row)
 {
     if (! juce::isPositiveAndBelow (row, (int) rows.size())) return;
-    proc.loadPreset (rows[(size_t) row]);
+    if (userMode()) proc.loadUserPreset (userFiles[rows[(size_t) row]]);
+    else if (proc.presetIndex() != rows[(size_t) row]) proc.loadPreset (rows[(size_t) row]);
     refresh();
+}
+
+void PresetBrowser::listBoxItemClicked (int row, const juce::MouseEvent& e)
+{
+    if (! juce::isPositiveAndBelow (row, (int) rows.size())) return;
+    list.grabKeyboardFocus();   // from now on the up / down arrows move through the presets
+    if (userMode())
+    {
+        const auto f = userFiles[rows[(size_t) row]];
+        if (e.mods.isPopupMenu())
+        {
+            juce::PopupMenu m;
+            m.addItem (1, "Elimina il preset \"" + f.getFileNameWithoutExtension() + "\"");
+            m.addItem (2, "Mostra nella cartella");
+            m.showMenuAsync (juce::PopupMenu::Options(), [this, f] (int r) {
+                if (r == 1) { f.moveToTrash(); apply(); }
+                else if (r == 2) f.revealToUser(); });
+            return;
+        }
+        return;   // loading is done by selectedRowsChanged (mouse or arrow keys)
+    }
+}
+
+// =====================================================================================================
+//  Save preset window
+// =====================================================================================================
+SavePresetWindow::SavePresetWindow (FivesynthProcessor& p) : proc (p)
+{
+    name.setFont (ui::font (15.0f));
+    name.setTextToShowWhenEmpty ("preset name", ui::dim);
+    name.onReturnKey = [this] { save(); };
+    name.onEscapeKey = [this] { if (onDone) onDone(); };
+    name.onTextChange = [this] {
+        const bool exists = FivesynthProcessor::userPresetFolder().getChildFile (juce::File::createLegalFileName (name.getText().trim()) + ".5ynth").existsAsFile();
+        status.setText (exists ? "esiste già: SAVE lo sovrascrive" : juce::String(), juce::dontSendNotification); };
+    addAndMakeVisible (name);
+    list.setRowHeight (24);
+    list.setColour (juce::ListBox::backgroundColourId, ui::panel);
+    addAndMakeVisible (list);
+    saveBtn.onClick = [this] { save(); };
+    cancelBtn.onClick = [this] { if (onDone) onDone(); };
+    addAndMakeVisible (saveBtn); addAndMakeVisible (cancelBtn);
+    status.setFont (ui::font (12.5f));
+    status.setColour (juce::Label::textColourId, ui::colA);
+    addAndMakeVisible (status);
+}
+
+void SavePresetWindow::open()
+{
+    files = proc.userPresets();
+    list.updateContent();
+    const auto& all = PresetLibrary::get().all();
+    const int idx = proc.presetIndex();
+    name.setText (proc.userPresetName().isNotEmpty() ? proc.userPresetName()
+                  : juce::isPositiveAndBelow (idx, (int) all.size()) ? all[(size_t) idx].name + " (user)" : juce::String ("My preset"), juce::sendNotification);
+    setVisible (true);
+    toFront (true);
+    name.grabKeyboardFocus();
+    name.selectAll();
+}
+
+void SavePresetWindow::paint (juce::Graphics& g)
+{
+    ui::relief (g, getLocalBounds().toFloat(), ui::panel2, 8.0f, true);
+    g.setColour (ui::colG); g.setFont (ui::font (15.0f, true));
+    g.drawText ("SAVE PRESET", 16, 10, 300, 22, juce::Justification::centredLeft);
+    g.setColour (ui::dim); g.setFont (ui::font (12.0f));
+    g.drawText ("Existing user presets (click one to overwrite it)", 16, 84, getWidth() - 32, 18, juce::Justification::centredLeft);
+    g.drawText (FivesynthProcessor::userPresetFolder().getFullPathName(), 16, getHeight() - 30, getWidth() - 220, 18, juce::Justification::centredLeft, true);
+}
+
+void SavePresetWindow::resized()
+{
+    auto r = getLocalBounds().reduced (16);
+    r.removeFromTop (28);
+    name.setBounds (r.removeFromTop (30));
+    status.setBounds (r.removeFromTop (22));
+    r.removeFromTop (20);
+    auto bottom = r.removeFromBottom (34);
+    cancelBtn.setBounds (bottom.removeFromRight (90));
+    bottom.removeFromRight (8);
+    saveBtn.setBounds (bottom.removeFromRight (90));
+    r.removeFromBottom (24);
+    list.setBounds (r);
+}
+
+void SavePresetWindow::paintListBoxItem (int row, juce::Graphics& g, int w, int h, bool selected)
+{
+    if (! juce::isPositiveAndBelow (row, files.size())) return;
+    g.fillAll (selected ? ui::header.brighter (0.15f) : (row % 2 ? ui::panel : ui::panel.brighter (0.03f)));
+    g.setColour (ui::text); g.setFont (ui::font (13.0f));
+    g.drawText (files[row].getFileNameWithoutExtension(), 10, 0, w - 20, h, juce::Justification::centredLeft, true);
+}
+
+void SavePresetWindow::listBoxItemClicked (int row, const juce::MouseEvent&)
+{
+    if (juce::isPositiveAndBelow (row, files.size())) name.setText (files[row].getFileNameWithoutExtension(), juce::sendNotification);
+}
+
+void SavePresetWindow::save()
+{
+    if (name.getText().trim().isEmpty()) { status.setText ("scrivi un nome per il preset", juce::dontSendNotification); return; }
+    if (! proc.saveUserPreset (name.getText())) { status.setText ("impossibile salvare nella cartella dei preset", juce::dontSendNotification); return; }
+    if (onDone) onDone();
 }
 
 // =====================================================================================================
@@ -1269,7 +1432,7 @@ void PresetBrowser::listBoxItemClicked (int row, const juce::MouseEvent&)
 // =====================================================================================================
 FivesynthEditor::FivesynthEditor (FivesynthProcessor& p)
     : AudioProcessorEditor (p), proc (p), eqSmall (p), eqBig (p), lfoSmall (p, false), lfoBig (p, true),
-      keys (p.keyboard, juce::MidiKeyboardComponent::horizontalKeyboard), browser (p)
+      keys (p.keyboard, juce::MidiKeyboardComponent::horizontalKeyboard), browser (p), saveWindow (p)
 {
     setLookAndFeel (&look);
     addAndMakeVisible (content);
@@ -1331,7 +1494,12 @@ FivesynthEditor::FivesynthEditor (FivesynthProcessor& p)
     overlayClose.onClick = [this] { showOverlay (nullptr); };
     content.addChildComponent (overlayClose);
     // header
-    for (auto* b : { &prev, &next, &browse, &custom }) content.addAndMakeVisible (b);
+    for (auto* b : { &prev, &next, &browse, &custom, &savePreset }) content.addAndMakeVisible (b);
+    savePreset.setComponentID ("savePreset");
+    savePreset.setTooltip ("salva il suono attuale come preset utente");
+    savePreset.onClick = [this] { saveWindow.open(); };
+    saveWindow.onDone = [this] { saveWindow.setVisible (false); if (browser.isVisible()) browser.refresh(); };
+    content.addChildComponent (saveWindow);
     prev.onClick = [this] { const int n = (int) PresetLibrary::get().all().size(); proc.loadPreset (((proc.presetIndex() - 1) % n + n) % n); };
     next.onClick = [this] { const int n = (int) PresetLibrary::get().all().size(); proc.loadPreset ((proc.presetIndex() + 1) % n); };
     browse.setClickingTogglesState (true);
@@ -1440,6 +1608,8 @@ void FivesynthEditor::resized()
     presetName.setBounds (272, 6, W - 420 - 12 - 272, 28);
     presetInfo.setBounds (272, 34, W - 420 - 12 - 272, 22);
     prev.setBounds (W - 420, 16, 34, 34); next.setBounds (W - 382, 16, 34, 34); browse.setBounds (W - 344, 16, 110, 34);
+    savePreset.setBounds (W - 226, 16, 80, 34);
+    saveWindow.setBounds (W / 2 - 260, 120, 520, 480);
     layoutSlots();
     moduleView.setBounds (8, 132, W - 16, 486 + dh);
     browser.setBounds (8, 66, W - 16, 552 + dh);
@@ -1531,8 +1701,17 @@ void FivesynthEditor::updateHeader()
 {
     const auto& all = PresetLibrary::get().all();
     const int idx = proc.presetIndex();
-    shownPreset = idx;
-    if (! juce::isPositiveAndBelow (idx, (int) all.size())) { presetName.setText ("Init", juce::dontSendNotification); presetInfo.setText ({}, juce::dontSendNotification); return; }
+    shownPreset = proc.presetSerial();
+    if (! juce::isPositiveAndBelow (idx, (int) all.size()))
+    {
+        const auto user = proc.userPresetName();
+        presetName.setText (user.isNotEmpty() ? user : juce::String ("Init"), juce::dontSendNotification);
+        presetInfo.setText (user.isNotEmpty() ? juce::String ("User preset") : juce::String(), juce::dontSendNotification);
+        for (auto& pn : panels) pn->refreshSkin();
+        selectModule (0);
+        if (browser.isVisible()) browser.refresh();
+        return;
+    }
     const auto& p = all[(size_t) idx];
     presetName.setText (p.name + "  (" + p.genre + " - " + p.song + ")", juce::dontSendNotification);
     presetInfo.setText (juce::String (p.year) + "  -  " + p.artist + "  -  " + p.synth + "  -  modules " + p.sections()
@@ -1544,7 +1723,7 @@ void FivesynthEditor::updateHeader()
 
 void FivesynthEditor::timerCallback()
 {
-    if (proc.presetIndex() != shownPreset) updateHeader();
+    if (proc.presetSerial() != shownPreset) updateHeader();
     const int slots = (int) proc.apvts.getRawParameterValue (def (layout().gSlots).id)->load();
     if (slots != shownSlots) { layoutSlots(); if (selected >= slots) selectModule (0); }
     const float s = uiScale;

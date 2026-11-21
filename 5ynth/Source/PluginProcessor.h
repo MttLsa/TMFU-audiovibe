@@ -41,6 +41,14 @@ public:
     void loadPreset (int index);                       // message thread
     void loadModelPatch (int module, int modelIndex);  // the "change synth" action of a module
     int  presetIndex() const { return currentPreset.load(); }
+    // changes on every preset load (factory or user): the editor refreshes header and panels from it
+    int  presetSerial() const { return presetCounter.load(); }
+    // ---------------------------------------------------------------- user presets (.5ynth files)
+    static juce::File userPresetFolder();                 // ~/Library/Audio/Presets/TMFU audiovibe/5ynth on macOS
+    juce::Array<juce::File> userPresets() const;          // sorted by name
+    bool saveUserPreset (const juce::String& name);       // overwrites a preset with the same name
+    bool loadUserPreset (const juce::File& file);
+    juce::String userPresetName() const { return currentUser; }
 
     juce::AudioProcessorValueTreeState apvts;
     juce::MidiKeyboardState keyboard;
@@ -73,7 +81,8 @@ private:
     dsp::Svf outF[3][2];
     juce::AudioBuffer<float> revBuf;
     juce::MidiBuffer chunkMidi;
-    std::atomic<int> currentPreset { -1 };
+    std::atomic<int> currentPreset { -1 }, presetCounter { 0 };
+    juce::String currentUser;   // name of the loaded user preset ("" = factory preset)
     std::atomic<bool> resetPending { false }, loading { false };
     std::atomic<int> pendingModel { 0 };
     std::atomic<float> outMeter { 0.0f }, peakPre { 0.0f };

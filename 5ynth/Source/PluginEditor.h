@@ -186,7 +186,15 @@ private:
     void paintListBoxItem (int row, juce::Graphics&, int w, int h, bool selected) override;
     void listBoxItemClicked (int row, const juce::MouseEvent&) override;
     void listBoxItemDoubleClicked (int, const juce::MouseEvent&) override { if (onClose) onClose(); }
+    void selectedRowsChanged (int lastRowSelected) override;   // arrow keys in the list load the preset too
+    void returnKeyPressed (int) override { if (onClose) onClose(); }
+    void loadRow (int row);
+    bool syncing = false;   // refresh() selecting the current preset: do not reload it
     void apply();
+    bool userMode() const { return userBtn.getToggleState(); }
+    juce::TextButton userBtn { "USER" };
+    juce::ComboBox sortBox;   // Year / Song / Preset / Artist
+    juce::Array<juce::File> userFiles;
     FivesynthProcessor& proc;
     juce::ListBox list { "presets", this };
     juce::TextEditor search;
@@ -194,6 +202,28 @@ private:
     juce::OwnedArray<juce::TextButton> decadeBtns;
     std::vector<int> rows;
     juce::Label info;
+};
+
+// "SAVE PRESET" window: name of the user preset + the existing ones (click one to overwrite it)
+class SavePresetWindow : public juce::Component, private juce::ListBoxModel
+{
+public:
+    explicit SavePresetWindow (FivesynthProcessor&);
+    void open();
+    void paint (juce::Graphics&) override;
+    void resized() override;
+    std::function<void()> onDone;
+private:
+    int getNumRows() override { return files.size(); }
+    void paintListBoxItem (int row, juce::Graphics&, int w, int h, bool selected) override;
+    void listBoxItemClicked (int row, const juce::MouseEvent&) override;
+    void save();
+    FivesynthProcessor& proc;
+    juce::TextEditor name;
+    juce::ListBox list { "user presets", this };
+    juce::TextButton saveBtn { "SAVE" }, cancelBtn { "CANCEL" };
+    juce::Label status;
+    juce::Array<juce::File> files;
 };
 
 // 5ynth logo, drawn as vectors (sharp at any size): "5YNTH" in brushed metal whose "5" carries a stylised keyboard
@@ -246,7 +276,8 @@ private:
     juce::Component* overlay = nullptr;
     juce::MidiKeyboardComponent keys;
     PresetBrowser browser;
-    juce::TextButton prev { "<" }, next { ">" }, browse { "BROWSER" }, custom { "+ CUSTOM" };
+    juce::TextButton prev { "<" }, next { ">" }, browse { "BROWSER" }, custom { "+ CUSTOM" }, savePreset { "SAVE" };
+    SavePresetWindow saveWindow;
     juce::Label presetName, presetInfo;
     int shownPreset = -2, selected = 0, shownSlots = -1;
     juce::Rectangle<float> logoArea;
