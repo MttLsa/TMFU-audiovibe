@@ -135,6 +135,7 @@ namespace params
         add ("dlyfb", "Delay Feedback", F, 0, 0.95f, 0.35f);
         add ("dlymix", "Delay Mix", F, 0, 1, 0);
         add ("dlyping", "Delay Ping-Pong", B, 0, 1, 1);
+        add ("relsw", "Decay Switch", B, 0, 1, 1);
         jassert ((int) b.d.size() - base == numModSuffix);
         for (int i = base; i < (int) b.d.size(); ++i) b.d[(size_t) i].suffix = i - base;
     }

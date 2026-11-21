@@ -564,6 +564,9 @@ for pr in P:
                     pw = mp.pop(pk, 0.5)
                     mp[wk] = "Square" if pw >= 0.4 else ("Wide Rectangle" if pw >= 0.22 else "Narrow Rectangle")
                 elif w == "Sine": mp[wk] = "Triangle"
+            # DECAY switch: on when the release was meant to follow the decay, off for staccato sounds
+            ad, ar = mp.get("ad", 500), mp.get("ar", 250)
+            mp["relsw"] = 1 if ar >= 0.5 * ad else 0
         models_used.add(model)
         mods.append(dict(slot=slot, model=model, p=mp))
     if pr["name"] in levels: glob["g_trim"] = round(max(-36.0, min(36.0, levels[pr["name"]])), 2)

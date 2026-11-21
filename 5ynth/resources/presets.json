@@ -1005,14 +1005,15 @@
       "fdrive": 0.35,
       "key": 0.35,
       "velf": 0.25,
-      "drift": 0.25
+      "drift": 0.25,
+      "relsw": 0
      }
     }
    ],
    "g": {
     "g_mode": "Mono",
     "g_glide": 0,
-    "g_trim": 7.47
+    "g_trim": 6.42
    }
   },
   {
@@ -1054,14 +1055,15 @@
       "lfodelay": 350,
       "drift": 0.2,
       "fdrive": 0.3,
-      "dlymix": 0.12
+      "dlymix": 0.12,
+      "relsw": 0
      }
     }
    ],
    "g": {
     "g_mode": "Mono",
     "g_glide": 90,
-    "g_trim": 3.65
+    "g_trim": 4.37
    }
   },
   {
@@ -1103,7 +1105,8 @@
       "lfodelay": 350,
       "drift": 0.2,
       "fdrive": 0.3,
-      "dlymix": 0.2
+      "dlymix": 0.2,
+      "relsw": 0
      }
     }
    ],
@@ -1111,7 +1114,7 @@
     "g_mode": "Mono",
     "g_glide": 120,
     "g_revmix": 0.3,
-    "g_trim": 5.43
+    "g_trim": 6.73
    }
   },
   {
@@ -1339,14 +1342,15 @@
       "fdrive": 0.35,
       "key": 0.35,
       "velf": 0.25,
-      "drift": 0.25
+      "drift": 0.25,
+      "relsw": 0
      }
     }
    ],
    "g": {
     "g_mode": "Mono",
     "g_glide": 35,
-    "g_trim": 9.59
+    "g_trim": 7.45
    }
   },
   {
@@ -1539,13 +1543,14 @@
       "velf": 0.4,
       "key": 0.6,
       "dlymix": 0.18,
-      "dlydiv": "1/8D"
+      "dlydiv": "1/8D",
+      "relsw": 0
      }
     }
    ],
    "g": {
     "g_revmix": 0.12,
-    "g_trim": 11.81
+    "g_trim": 11.82
    }
   },
   {
@@ -1633,7 +1638,8 @@
       "drift": 0.2,
       "fdrive": 0.3,
       "dlymix": 0.12,
-      "o2oct": -1
+      "o2oct": -1,
+      "relsw": 0
      }
     }
    ],
@@ -5696,7 +5702,8 @@
       "lfodelay": 350,
       "drift": 0.2,
       "fdrive": 0.0,
-      "dlymix": 0.12
+      "dlymix": 0.12,
+      "relsw": 0
      }
     }
    ],
@@ -5704,7 +5711,7 @@
     "g_mode": "Mono",
     "g_glide": 140,
     "g_revmix": 0.2,
-    "g_trim": 6.67
+    "g_trim": 7.7
    }
   },
   {
@@ -6988,14 +6995,15 @@
       "fdrive": 0.35,
       "key": 0.35,
       "velf": 0.25,
-      "drift": 0.25
+      "drift": 0.25,
+      "relsw": 0
      }
     }
    ],
    "g": {
     "g_mode": "Mono",
     "g_glide": 0,
-    "g_trim": 5.55
+    "g_trim": 6.07
    }
   },
   {

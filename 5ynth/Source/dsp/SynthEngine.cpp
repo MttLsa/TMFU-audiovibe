@@ -133,6 +133,14 @@ void ModulePart::setupAdditive (const ModCtx& c, float note)
     for (int i = 0; i < numP; ++i) pAmp[i] *= norm;
 }
 
+// Minimoog contours have Attack / Decay / Sustain only: the DECAY switch makes the release follow the decay time,
+// otherwise the note stops in a few ms. The other instruments have a real release control.
+float ModulePart::releaseOf (const ModCtx& c, float decayMs, float releaseMs)
+{
+    if (c.circuit != dsp::Circuit::Minimoog) return releaseMs;
+    return c.v[mRelSw] > 0.5f ? decayMs : 8.0f;
+}
+
 void ModulePart::start (float velocity, bool hard, const ModCtx& c, float note, uint32_t seed)
 {
     const float* v = c.v;
@@ -170,8 +178,8 @@ void ModulePart::start (float velocity, bool hard, const ModCtx& c, float note, 
     accent = v[mAccent] * std::max (0.0f, (velocity - 0.75f) / 0.25f);
     if (acc) accSweep = std::min (1.6f, accSweep * 0.6f + 1.0f);        // 303 accent sweep capacitor builds up
     const bool is303 = (int) v[mFlt] == 1;
-    fenv.set (v[mFA], (is303 && acc) ? 200.0f : v[mFD], v[mFS], v[mFR], c.sr);
-    aenv.set (std::max (2.0f, v[mAA]), v[mAD], v[mAS], v[mAR], c.sr);   // 2 ms minimum attack: no click at the start of a note
+    fenv.set (v[mFA], (is303 && acc) ? 200.0f : v[mFD], v[mFS], releaseOf (c, v[mFD], v[mFR]), c.sr);
+    aenv.set (std::max (2.0f, v[mAA]), v[mAD], v[mAS], releaseOf (c, v[mAD], v[mAR]), c.sr);   // 2 ms minimum attack: no click at the start of a note
     fenv.gateOn (fresh);
     aenv.gateOn (fresh);
     for (int o = 0; o < 6; ++o)
@@ -215,7 +223,7 @@ void ModulePart::render (float* L, float* R, int n, const float* notes, const Mo
     const float mwCut = c.mw * g[lay.gMwCut] * 4.0f;
     const bool is303 = ft == 1;
     const float accDecay = std::exp (-1.0f / (0.2f * sr));
-    aenv.set (std::max (2.0f, v[mAA]), v[mAD], v[mAS], v[mAR], sr);
+    aenv.set (std::max (2.0f, v[mAA]), v[mAD], v[mAS], releaseOf (c, v[mAD], v[mAR]), sr);
 
     // FM setup
     const auto& alg = FmAlgorithms::get().a[std::clamp ((int) v[mAlg], 0, 31)];
@@ -420,7 +428,7 @@ void ModulePart::render (float* L, float* R, int n, const float* notes, const Mo
             }
             yl = out[0]; yr = out[1];
         }
-        else if (ft == 0 && c.circuit == dsp::Circuit::Moog)   // Moog transistor ladder (per-stage saturation)
+        else if (ft == 0 && (c.circuit == dsp::Circuit::Moog || c.circuit == dsp::Circuit::Minimoog))   // Moog transistor ladder (per-stage saturation)
         {
             yl = moog[0].process (sl, fc, sr, res, fdrive); yr = moog[1].process (sr2, fc, sr, res, fdrive);
         }
@@ -504,6 +512,7 @@ void SynthEngine::startVoice (Voice& vc, int note, float vel, bool hard, const f
         vc.use[m] = moduleUsed (m, v);
         if (! vc.use[m]) { vc.part[m].kill(); continue; }
         ModCtx c; c.v = v + layout().moduleBase[m]; c.g = v; c.sr = sr;
+        c.circuit = modelCircuit[(size_t) std::clamp ((int) c.v[mModel], 0, (int) modelCircuit.size() - 1)];
         vc.part[m].start (vel, hard, c, (float) note, seed + (uint32_t) m * 977u);
     }
     lastNote = (float) note;

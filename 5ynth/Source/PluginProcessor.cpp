@@ -33,7 +33,8 @@ FivesynthProcessor::FivesynthProcessor()
     // filter circuits of the real instruments
     const auto& models = PresetLibrary::get().models();
     for (int i = 0; i < (int) models.size(); ++i)
-        if (models[(size_t) i].name.startsWith ("Moog") || models[(size_t) i].name == "Polymoog") engine.setModelCircuit (i, dsp::Circuit::Moog);
+        if (models[(size_t) i].name == "Moog Minimoog Model D") engine.setModelCircuit (i, dsp::Circuit::Minimoog);
+        else if (models[(size_t) i].name.startsWith ("Moog") || models[(size_t) i].name == "Polymoog") engine.setModelCircuit (i, dsp::Circuit::Moog);
     const auto& all = PresetLibrary::get().all();
     int start = 0;
     for (int i = 0; i < (int) all.size(); ++i) if (all[(size_t) i].name == "Organ 2") start = i;

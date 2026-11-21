@@ -51,6 +51,7 @@ namespace panels
                 { "MODIFIERS - FILTER", { { mCut, "Cutoff Frequency" }, { mRes, "Emphasis" }, { mEnv, "Amount of Contour" }, { mKey, "Keyboard Control" } } },
                 { "FILTER CONTOUR", { { mFA, "Attack Time" }, { mFD, "Decay Time" }, { mFS, "Sustain Level" } } },
                 { "LOUDNESS CONTOUR", { { mAA, "Attack Time" }, { mAD, "Decay Time" }, { mAS, "Sustain Level" } } },
+                { "DECAY", { { mRelSw, "Decay" } } },
             };
             m["Polymoog"] = {
                 { "OSCILLATORS", { { mO1Wave, "Waveform", { Saw, Pulse } }, { mO1Pw, "Pulse Width" }, { mO2Wave, "Osc 2 Wave", { Saw, Pulse } }, { mO2Fine, "Osc 2 Tune" }, { mO2Lvl, "Osc 2 Level" }, { mSub, "Sub Octave" } } },

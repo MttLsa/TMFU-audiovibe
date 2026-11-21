@@ -6,7 +6,7 @@
 // =====================================================================================================
 namespace dsp
 {
-    enum class Circuit : int { Generic = 0, Moog };
+    enum class Circuit : int { Generic = 0, Moog, Minimoog };   // Minimoog = Moog ladder + its 3-stage contours
 
     // Moog transistor ladder (Minimoog, modular 904A, Polymoog, Source, Sub 37), Huovilainen's non-linear model
     // (DAFx 2004): every stage is a differential transistor pair -> its own tanh; run 2x oversampled inside, with

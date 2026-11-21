@@ -66,6 +66,7 @@ struct ModulePart
     int driftCount = 0;
     bool active() const { return aenv.active(); }
     void start (float velocity, bool hard, const ModCtx& c, float note, uint32_t seed);
+    static float releaseOf (const ModCtx& c, float decayMs, float releaseMs);
     void release() { fenv.gateOff(); aenv.gateOff(); for (auto& e : opEnv) e.gateOff(); }
     void kill() { fenv.kill(); aenv.kill(); for (auto& e : opEnv) e.kill(); }
     void render (float* L, float* R, int n, const float* notes, const ModCtx& c);

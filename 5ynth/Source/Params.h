@@ -45,6 +45,7 @@ namespace params
         mLfoShape, mLfoRate, mLfoDelay, mLfoPitch, mLfoCut, mLfoTim,
         mPenv, mPdec, mAccent, mBits, mSrr,
         mDlyDiv, mDlyFb, mDlyMix, mDlyPing,
+        mRelSw,                                    // Minimoog DECAY switch: release = decay time (on) or ~8 ms (off)
         numModSuffix
     };
     enum OpParam { opCrs, opFin, opLvl, opAtk, opDec, opSus, opRel, numOpParams };
