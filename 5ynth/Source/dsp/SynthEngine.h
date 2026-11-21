@@ -44,6 +44,12 @@ struct ModulePart
     float ssPh[7] {}, ssLp = 0;
     float pRatio[numPartials] {}, pAmp[numPartials] {}, pSus[numPartials] {}, pDyn[numPartials] {}, pCoef[numPartials] {}, pPh[numPartials] {};
     int numP = 0;
+    // anti-click glides at note changes of a sounding voice: partial gains (additive), FM index scale (key / velocity)
+    float pSusSm[numPartials] {}, pAmpSm[numPartials] {}, fmIdx = -1.0f;
+    // per-sample glides of parameters that act on the waveform itself (FM levels / feedback, wavetable position,
+    // phase-distortion amount): the parameter snapshot changes every 32 samples, which made small steps audible
+    float lvlSm[6] { -1, -1, -1, -1, -1, -1 }, fbSm = -1.0f, wposSm = -1.0f, pdSm = -1.0f;
+    static float glide (float& state, float target, float k) { state = state < -0.5f ? target : state + (target - state) * k; return state; }
     // filters / drive
     dsp::Ladder lad[2];
     dsp::Diode303 d303[2];

@@ -11,8 +11,8 @@ storia, ognuno legato al **brano più famoso che l'ha usato**. La libreria è or
 
 ## Moduli synth A–E
 
-- Ci sono 2 moduli all'avvio (A, B); il pulsante **+ CUSTOM** ne aggiunge altri 3 (C, D, E); la **x** sulla scheda toglie l'ultimo.
-- Ogni modulo ha un menu **Synth Model**: scegli uno qualsiasi degli strumenti presenti nei preset (Minimoog, TB-303, DX7,
+- Un preset mostra solo i moduli che usa (un synth = una scheda); il pulsante **+ CUSTOM** aggiunge moduli fino a 5 (A–E); la **x** sulla scheda toglie l'ultimo. Un clic sulla scheda seleziona il modulo.
+- Ogni modulo ha un menu **Synth Model** (il motore di sintesi segue lo strumento e non si cambia a mano): scegli uno qualsiasi degli strumenti presenti nei preset (Minimoog, TB-303, DX7,
   M1, D-50, Juno, Jupiter-8, CS-80, PPG, Fairlight, Virus, Sylenth1, Serum…). Il modulo carica il suono caratteristico di
   quello strumento e ne prende l'aspetto grafico.
 - Strumento originale analogico → motore **Analog**; digitale → motore digitale (**FM 6-op**, **Wavetable**, **Supersaw**,
@@ -52,8 +52,8 @@ fase. Il **+** apre la vista con tutti gli 8 LFO. LFO, EQ e filtri d'uscita non 
   il testo dell'interfaccia. Tutte le scritte di moduli, parametri e preset sono in inglese.
 - Ogni modulo prende l'aspetto dello strumento scelto (34 skin: legno Moog/Prophet, fader Juno/CS-80/Alpha Juno, TB-303
   argento, LCD e membrane DX7/M1, PPG blu, Virus/Nord rossi, CRT Fairlight…), senza loghi o grafiche originali.
-- **Fader più lunghi** sugli strumenti che hanno fader. Risoluzione fine: le manopole si muovono a passi di **0,01**, i fader di
-  **0,001**; dopo un clic le frecce muovono di 1 % (fader 0,1 %), Shift = 10× più fine; doppio clic = valore di default.
+- **Fader più lunghi** sugli strumenti che hanno fader. Risoluzione fine: **1000 passi** sulla corsa delle manopole, **10000** sui
+  fader, e il suono segue i controlli senza scalini né click (valori smussati in pochi ms); dopo un clic le frecce muovono di 1 % (fader 0,1 %), Shift = 10× più fine; doppio clic = valore di default.
 - Finestra **ridimensionabile** liberamente (la dimensione viene ricordata): ingrandita o a schermo intero occupa tutto lo
   schermo, lo spazio in più va ai moduli. EQ e LFO espandibili.
 - Logo **5YNTH**, disegnato in vettoriale (nitido a ogni dimensione): lettere in metallo spazzolato; il "5" ha la barra

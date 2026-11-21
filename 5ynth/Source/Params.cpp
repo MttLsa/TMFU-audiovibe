@@ -160,7 +160,7 @@ namespace params
         L.gRevDamp = b.add ("g_revdamp", "Reverb Damp", F, 0, 1, 0.5f);
         L.gRevMix  = b.add ("g_revmix", "Reverb Mix", F, 0, 1, 0);
         L.gBpm     = b.add ("g_bpm", "Tempo (no host)", F, 60, 200, 124, 0, "bpm");
-        L.gSlots   = b.add ("g_slots", "Modules", I, 2, 5, 2);
+        L.gSlots   = b.add ("g_slots", "Modules", I, 1, 5, 1);   // a patch shows only the modules it uses; + CUSTOM adds more
         L.ofLpOn  = b.add ("of_lpon", "Out LP On", B, 0, 1, 0);
         L.ofLpCut = b.add ("of_lpcut", "Out LP Cutoff", F, 20, 20000, 20000, 1000, "Hz");
         L.ofLpRes = b.add ("of_lpres", "Out LP Reso", F, 0, 1, 0.1f);

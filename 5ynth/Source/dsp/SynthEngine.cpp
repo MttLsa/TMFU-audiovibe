@@ -143,7 +143,8 @@ void ModulePart::start (float velocity, bool hard, const ModCtx& c, float note, 
         for (int k = 0; k < 7; ++k) ssPh[k] = rng.uni();
         phSub = ph1[0];
         lfoFade = v[mLfoDelay] < 1.0f ? 1.0f : 0.0f; drift = rng.bip() * 0.5f; driftTarget = rng.bip();
-        if (engine == 5) setupAdditive (c, note);
+        if (engine == 5) { setupAdditive (c, note); for (int k = 0; k < numPartials; ++k) { pAmpSm[k] = pAmp[k]; pSusSm[k] = pAmp[k] * pSus[k]; } }
+        fmIdx = -1.0f; fbSm = wposSm = pdSm = -1.0f; for (auto& l : lvlSm) l = -1.0f;
     }
     else if (hard && engine == 5)
     {
@@ -154,6 +155,7 @@ void ModulePart::start (float velocity, bool hard, const ModCtx& c, float note, 
         std::copy (pPh, pPh + numPartials, ph); std::copy (pDyn, pDyn + numPartials, dyn);
         setupAdditive (c, note);
         for (int k = 0; k < std::min (oldN, numP); ++k) { pPh[k] = ph[k]; pDyn[k] = dyn[k]; }
+        for (int k = oldN; k < numP; ++k) { pAmpSm[k] = 0.0f; pSusSm[k] = 0.0f; }   // new partials fade in
     }
     penv = v[mPenv];
     const bool acc = velocity > 0.75f;
@@ -161,7 +163,7 @@ void ModulePart::start (float velocity, bool hard, const ModCtx& c, float note, 
     if (acc) accSweep = std::min (1.6f, accSweep * 0.6f + 1.0f);        // 303 accent sweep capacitor builds up
     const bool is303 = (int) v[mFlt] == 1;
     fenv.set (v[mFA], (is303 && acc) ? 200.0f : v[mFD], v[mFS], v[mFR], c.sr);
-    aenv.set (v[mAA], v[mAD], v[mAS], v[mAR], c.sr);
+    aenv.set (std::max (2.0f, v[mAA]), v[mAD], v[mAS], v[mAR], c.sr);   // 2 ms minimum attack: no click at the start of a note
     fenv.gateOn (fresh);
     aenv.gateOn (fresh);
     for (int o = 0; o < 6; ++o)
@@ -198,12 +200,14 @@ void ModulePart::render (float* L, float* R, int n, const float* notes, const Mo
     const float pitchCoef = std::exp (-1.0f / (std::max (1.0f, v[mPdec]) * 0.001f * sr / 4.6f));
     const float fInc = fadeInc (v[mLfoDelay], sr);
     const float driftAmt = engine == 0 ? v[mDrift] * 0.12f : 0.0f;
+    const float glide5 = 1.0f - std::exp (-1.0f / (0.005f * sr));   // one-pole, ~5 ms
+    const float glide1 = 1.0f - std::exp (-1.0f / (0.0015f * sr));  // one-pole, ~1.5 ms (smooths the 32-sample parameter steps)
     const float velAmp = 1.0f - g[lay.gVel] + g[lay.gVel] * vel;
     const float accentAmp = 1.0f + accent * 0.45f, accentEnv = accent * 0.35f;
     const float mwCut = c.mw * g[lay.gMwCut] * 4.0f;
     const bool is303 = ft == 1;
     const float accDecay = std::exp (-1.0f / (0.2f * sr));
-    aenv.set (v[mAA], v[mAD], v[mAS], v[mAR], sr);
+    aenv.set (std::max (2.0f, v[mAA]), v[mAD], v[mAS], v[mAR], sr);
 
     // FM setup
     const auto& alg = FmAlgorithms::get().a[std::clamp ((int) v[mAlg], 0, 31)];
@@ -276,11 +280,17 @@ void ModulePart::render (float* L, float* R, int n, const float* notes, const Mo
             {
                 float env[6], mScale[6], cScale[6];
                 const float ks = std::clamp (std::pow (261.6f / f0, 0.3f), 0.35f, 1.5f);
+                // the index scale (key scaling, velocity) glides ~5 ms: a sudden change of the modulation index is a jump
+                // of the carrier's phase, i.e. a click at every note change of a sounding voice
+                const float idxTarget = fmVel * ks;
+                fmIdx = fmIdx < 0.0f ? idxTarget : fmIdx + (idxTarget - fmIdx) * glide5;
+                const float fbS = glide (fbSm, fb, glide1);
                 for (int o = 0; o < 6; ++o)
                 {
                     env[o] = opEnv[o].next();
-                    mScale[o] = lvl[o] * lvl[o] * (13.0f / twoPi) * fmVel * ks * env[o];
-                    cScale[o] = lvl[o] * env[o];
+                    const float lv = glide (lvlSm[o], lvl[o], glide1);
+                    mScale[o] = lv * lv * (13.0f / twoPi) * fmIdx * env[o];
+                    cScale[o] = lv * env[o];
                 }
                 for (int u = 0; u < nu; ++u)
                 {
@@ -293,7 +303,7 @@ void ModulePart::render (float* L, float* R, int n, const float* notes, const Mo
                     {
                         float in = 0.0f;
                         for (int m = 0; m < 6; ++m) if ((alg.mods[o] >> m) & 1) in += out[m];
-                        if (o == alg.fb) in += fb * (fbHist[u][0] + fbHist[u][1]);
+                        if (o == alg.fb) in += fbS * (fbHist[u][0] + fbHist[u][1]);
                         const float r = sine (p[o] + in);
                         if (o == alg.fb) { fbHist[u][1] = fbHist[u][0]; fbHist[u][0] = r * env[o]; }
                         out[o] = r * mScale[o];
@@ -307,7 +317,7 @@ void ModulePart::render (float* L, float* R, int n, const float* notes, const Mo
             }
             case 2:   // ------------------------------------------------ Wavetable
             {
-                const float pos = v[mWPos] + v[mWEnv] * fe + (v[mWLfo] + lfoTim) * lfo * 0.5f;
+                const float pos = glide (wposSm, v[mWPos], glide1) + v[mWEnv] * fe + (v[mWLfo] + lfoTim) * lfo * 0.5f;
                 for (int u = 0; u < nu; ++u)
                 {
                     const float inc = std::min (0.45f, base * det[u]);
@@ -337,7 +347,7 @@ void ModulePart::render (float* L, float* R, int n, const float* notes, const Mo
             }
             case 4:   // ------------------------------------------------ Phase distortion
             {
-                const float amt = std::clamp (v[mPdAmt] + v[mPdEnv] * fe + lfoTim * lfo * 0.5f, 0.0f, 1.0f);
+                const float amt = std::clamp (glide (pdSm, v[mPdAmt], glide1) + v[mPdEnv] * fe + lfoTim * lfo * 0.5f, 0.0f, 1.0f);
                 for (int u = 0; u < nu; ++u)
                 {
                     const float inc = std::min (0.45f, base * det[u]);
@@ -370,7 +380,10 @@ void ModulePart::render (float* L, float* R, int n, const float* notes, const Mo
                 for (int k = 0; k < numP; ++k)
                 {
                     pPh[k] += std::min (0.49f, base * pRatio[k]); pPh[k] -= std::floor (pPh[k]);
-                    s += sine (pPh[k]) * pAmp[k] * (pSus[k] + pDyn[k]);
+                    // gains glide (~5 ms) to the new note's values instead of jumping (click on mono note changes)
+                    pAmpSm[k] += (pAmp[k] - pAmpSm[k]) * glide5;
+                    pSusSm[k] += (pAmp[k] * pSus[k] - pSusSm[k]) * glide5;
+                    s += sine (pPh[k]) * (pSusSm[k] + pAmpSm[k] * pDyn[k]);
                     pDyn[k] *= pCoef[k];
                 }
                 sl = sr2 = s * 0.9f;
@@ -498,7 +511,8 @@ void SynthEngine::noteOn (int note, float vel, const float* v)
             for (auto& vc : voices) if (! vc.gate && vc.age < oldest) { oldest = vc.age; best = &vc; }
             if (! best) for (auto& vc : voices) if (vc.age < oldest) { oldest = vc.age; best = &vc; }
         }
-        if (best->active()) for (auto& p : best->part) p.kill();
+        // a voice that is still sounding (same note again, or the oldest one stolen) is not cut to zero: it restarts
+        // like a mono note change (oscillators keep running, envelopes rise from their current level) -> no click
         startVoice (*best, note, vel, true, v, true);
         return;
     }

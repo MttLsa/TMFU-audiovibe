@@ -396,6 +396,7 @@ bool FineSlider::keyPressed (const juce::KeyPress& k)
 
 Control::Control (juce::AudioProcessorValueTreeState& st, int p, const juce::String& label) : pid (p), caption (label)
 {
+    setInterceptsMouseClicks (false, true);   // only the knob / menu / button takes clicks: the empty rest of the cell passes them on
     const auto& d = def (p);
     if (d.kind == C)
     {
@@ -1199,12 +1200,17 @@ FivesynthEditor::FivesynthEditor (FivesynthProcessor& p)
         cardPan[m] = std::make_unique<Control> (p.apvts, mod (m, mPan), "Pan");
         for (auto* ctl : { cardOn[m].get(), cardModel[m].get(), cardLevel[m].get(), cardPan[m].get() }) { c.addAndMakeVisible (ctl); ctl->setSkin (*look.skin); }
         cardModel[m]->combo.onChange = [this, m] { selectModule (m); };
+        // the letter button selects the module (its lit state shows whether the module is on; ON in the panel switches it)
+        cardOn[m]->toggle.setClickingTogglesState (false);
+        cardOn[m]->toggle.onClick = [this, m] { selectModule (m); };
+        cardOn[m]->toggle.setTooltip ("seleziona il modulo (acceso / spento: pulsante ON nel pannello)");
+        c.addMouseListener (&c, true);   // a click anywhere on the card (menu, Lvl, Pan too) selects its module
         cardRemove[m].setButtonText ("x");
-        cardRemove[m].setTooltip ("remove this module");
+        cardRemove[m].setTooltip ("togli questo modulo");
         cardRemove[m].onClick = [this, m] {
             auto* sl = proc.apvts.getParameter (def (layout().gSlots).id);
             const int slots = (int) proc.apvts.getRawParameterValue (def (layout().gSlots).id)->load();
-            if (m == slots - 1 && slots > 2) { sl->setValueNotifyingHost (sl->convertTo0to1 ((float) (slots - 1))); if (selected >= slots - 1) selectModule (0); } };
+            if (m == slots - 1 && slots > 1) { sl->setValueNotifyingHost (sl->convertTo0to1 ((float) (slots - 1))); if (selected >= slots - 1) selectModule (0); } };
         c.addChildComponent (cardRemove[m]);
     }
     moduleView.setScrollBarsShown (true, false);
@@ -1245,7 +1251,7 @@ FivesynthEditor::FivesynthEditor (FivesynthProcessor& p)
     browse.onClick = [this] { browser.setVisible (browse.getToggleState()); if (browser.isVisible()) { browser.toFront (false); browser.refresh(); } };
     browser.onClose = [this] { browse.setToggleState (false, juce::sendNotification); };
     content.addChildComponent (browser);
-    custom.setTooltip ("add a synth module (up to C, D, E)");
+    custom.setTooltip ("aggiungi un modulo synth (fino a 5: A-E)");
     custom.onClick = [this] {
         auto* sl = proc.apvts.getParameter (def (layout().gSlots).id);
         const int slots = (int) proc.apvts.getRawParameterValue (def (layout().gSlots).id)->load();
@@ -1320,7 +1326,7 @@ void FivesynthEditor::layoutSlots()
         auto r = c.getLocalBounds().reduced (6, 4);
         cardOn[m]->setBounds (r.removeFromLeft (34).withSizeKeepingCentre (34, 24));
         r.removeFromLeft (4);
-        cardRemove[m].setVisible (m >= 2 && m == slots - 1);
+        cardRemove[m].setVisible (m >= 1 && m == slots - 1);
         if (cardRemove[m].isVisible()) cardRemove[m].setBounds (r.removeFromRight (20).withSizeKeepingCentre (20, 20));
         cardPan[m]->setBounds (r.removeFromRight (40));
         cardLevel[m]->setBounds (r.removeFromRight (40));

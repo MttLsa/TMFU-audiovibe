@@ -5,6 +5,8 @@
 //   FivesynthTest <outDir> gui              GUI snapshots (PNG)
 //   FivesynthTest <outDir> logo             logo_5ynth.png (wordmark on black)
 //   FivesynthTest <outDir> params           <outDir>/params.json: every parameter (for tools/make_manual.py)
+//   FivesynthTest <outDir> clicks           note changes in Mono / Legato / Poly: report presets with a discontinuity
+//   FivesynthTest <outDir> smooth           a parameter jumps on a sustained note: the sound must not click
 //   FivesynthTest <outDir> units            unit checks (5 modules, LFO modulation, EQ, output filters, model change, FM 6-op)
 #include "../Source/PluginProcessor.h"
 #include "../Source/PluginEditor.h"
@@ -230,6 +232,81 @@ int main (int argc, char** argv)
             if (w) w->writeFromAudioSampleBuffer (b, 0, b.getNumSamples());
             std::printf ("%s  peak %.2f\n", f.getFileName().toRawUTF8(), st.peak);
         }
+    }
+    else if (mode == "smooth")   // a sustained note; at 0.5 s a parameter jumps (worst-case knob flick): no click allowed
+    {
+        struct Case { const char* preset; int param; float from, to; const char* what; };
+        const Case cases[] = {
+            { "Oxygene Strings", mod (0, mCut), 300, 6000, "Cutoff" },   { "Oxygene Strings", mod (0, mRes), 0.0f, 0.9f, "Resonance" },
+            { "Oxygene Strings", mod (0, mLevel), 0.1f, 1.0f, "Level" }, { "Oxygene Strings", mod (0, mPan), -1, 1, "Pan" },
+            { "Oxygene Strings", layout().gMaster, -24, 0, "Master" },   { "Oxygene Strings", mod (0, mO1Lvl), 0.1f, 1.0f, "Osc1 Level" },
+            { "Synclavier Strings", mod (0, opSuffix (0, opLvl)), 0.1f, 1.0f, "FM op level" }, { "Organ 2", mod (0, mBright), 0.0f, 1.0f, "Brightness" },
+            { "Acid Tracks", mod (0, mCut), 200, 3000, "303 Cutoff" },   { "Oxygene Strings", layout().gRevMix, 0, 1, "Reverb Mix" },
+            { "Oxygene Strings", layout().gDrive, 0, 1, "Drive" },       { "Oxygene Strings", mod (0, mDetune), 0, 1, "Detune" } };
+        for (auto& c : cases)
+        {
+            FivesynthProcessor proc; proc.loadPreset (findPreset (c.preset));
+            setP (proc, c.param, c.from);
+            const double sr = 48000.0; const int bs = 256;
+            proc.setPlayConfigDetails (0, 2, sr, bs); proc.prepareToPlay (sr, bs);
+            AudioBuffer<float> buf (2, bs), all2 (2, 48000);
+            MidiBuffer midi;
+            for (int pos = 0; pos + bs <= 48000; pos += bs)
+            {
+                midi.clear();
+                if (pos == 0) midi.addEvent (MidiMessage::noteOn (1, 57, (uint8) 100), 10);
+                if (pos == 24064) setP (proc, c.param, c.to);
+                proc.processBlock (buf, midi);
+                for (int ch = 0; ch < 2; ++ch) all2.copyFrom (ch, pos, buf, ch, 0, bs);
+            }
+            const float* x = all2.getReadPointer (0);
+            auto d3 = [&] (int k) { return std::abs (x[k] - 3 * x[k - 1] + 3 * x[k - 2] - x[k - 3]); };
+            float at = 0, around = 0;
+            for (int k = 24064; k < 24064 + 2400; ++k) at = jmax (at, d3 (k));
+            for (int k = 14000; k < 23000; ++k) around = jmax (around, d3 (k));
+            for (int k = 30000; k < 40000; ++k) around = jmax (around, d3 (k));
+            std::printf ("%-12s %-16s jump: %.4f  around: %.4f  -> %s\n", c.what, c.preset, at, around, at <= around * 1.5f ? "smooth" : "STEP");
+            ok &= at <= around * 1.5f;
+        }
+    }
+    else if (mode == "clicks")   // mono / legato note changes: discontinuity at each change vs. the signal around it
+    {
+        const double sr = 48000.0;
+        NoteList nl;
+        const int seq[] = { 0, 7, 3, 12, 5, 10, 0, 7 };
+        for (int i = 0; i < 8; ++i) nl.push_back ({ 0.1 + i * 0.15, 48 + seq[i], 100, 0.2 });    // overlapping notes
+        for (int i = 0; i < 8; ++i) nl.push_back ({ 1.5 + i * 0.2, 48 + seq[i], 100, 0.17 });   // detached, next note in the release
+        std::vector<int> evs;
+        for (size_t i = 0; i < nl.size(); ++i) if (i != 0 && i != 8) evs.push_back ((int) (std::get<0> (nl[i]) * sr));
+        // poly: the same note repeated while it still sounds, then more held notes than voices (voice stealing);
+        // events at the same times as the mono list
+        NoteList polyNl;
+        for (int i = 0; i < 8; ++i) polyNl.push_back ({ 0.1 + i * 0.15, 48, 100, 0.2 });
+        for (int i = 0; i < 8; ++i) polyNl.push_back ({ 1.5 + i * 0.2, 36 + i * 5, 100, 1.9 - i * 0.2 });
+        for (int i = 0; i < 12; ++i) polyNl.push_back ({ 1.45 - 0.004 * i, 40 + i * 3, 90, 1.9 });
+        int bad = 0;
+        for (int i = 0; i < (int) all.size(); ++i)
+            for (int md : { 1, 2, 0 })
+            {
+                FivesynthProcessor proc; proc.loadPreset (i);
+                setP (proc, layout().gMode, (float) md);
+                AudioBuffer<float> b;
+                render (proc, &all[(size_t) i], 3.4, &b, -1, md == 0 ? &polyNl : &nl);
+                const float* x = b.getReadPointer (0);
+                auto d3 = [&] (int k) { return std::abs (x[k] - 3 * x[k - 1] + 3 * x[k - 2] - x[k - 3]); };
+                double worst = 0;
+                for (int e0 : evs)
+                {
+                    const int e = e0 + proc.getLatencySamples();
+                    float at = 0, around = 0;
+                    for (int k = e - 8; k < e + 64; ++k) at = jmax (at, d3 (k));
+                    for (int k = e - 1400; k < e - 200; ++k) around = jmax (around, d3 (k));
+                    for (int k = e + 400; k < e + 1600 && k < b.getNumSamples(); ++k) around = jmax (around, d3 (k));
+                    if (around > 1.0e-4f) worst = jmax (worst, (double) at / around);
+                }
+                if (worst > 2.0) { ++bad; std::printf ("CLICK %5.1fx  %s  %s\n", worst, md == 1 ? "Mono  " : md == 2 ? "Legato" : "Poly  ", all[(size_t) i].name.toRawUTF8()); }
+            }
+        std::printf ("%d preset/mode combinations with a click at note changes\n", bad);
     }
     else if (mode == "logo")   // logo_5ynth.png: the wordmark on black, for README and manual
     {

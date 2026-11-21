@@ -56,6 +56,7 @@ void FivesynthProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     reverb.setSampleRate (sampleRate);
     reverb.reset();
     limiter.prepare (sampleRate);
+    setLatencySamples (fx::Limiter::D);   // the safety limiter looks ahead
     revBuf.setSize (2, juce::jmax (32, samplesPerBlock));
     chunkMidi.ensureSize (2048);
     for (auto& b : eq) for (auto& q : b) q.reset();
@@ -104,7 +105,7 @@ void FivesynthProcessor::loadPreset (int index)
     for (int i = 0; i < numParams(); ++i)
         if (presetControlled (i)) setParam (i, def (i).def);
     for (int m = 0; m < numModules; ++m) setParam (mod (m, mOn), 0.0f);
-    int maxSlot = 1;
+    int maxSlot = 0;
     for (auto& pm : pr.modules)
     {
         setParam (mod (pm.slot, mOn), 1.0f);
@@ -122,7 +123,7 @@ void FivesynthProcessor::loadPreset (int index)
         else value = (float) (double) nv.value;
         setParam (i, value);
     }
-    setParam (layout().gSlots, (float) juce::jmax ((int) raw[(size_t) layout().gSlots]->load(), maxSlot + 1, 2));
+    setParam (layout().gSlots, (float) (maxSlot + 1));   // only the modules the patch uses (no empty extra module)
     currentPreset.store (index);
     resetPending.store (true);
     loading = false;

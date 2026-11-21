@@ -81,10 +81,21 @@ namespace fx
         }
     };
 
+    // safety limiter with 1.3 ms look-ahead: the gain glides down before a peak arrives instead of jumping
+    // (an instant gain step was audible as a click when a loud chord or a new note pushed the sum over the ceiling)
     struct Limiter
     {
-        float g = 1.0f, rel = 0.9995f;
-        void prepare (double sr) { rel = std::exp (-1.0f / ((float) sr * 0.12f)); g = 1.0f; }
+        static constexpr int D = 64;   // look-ahead / latency in samples
+        float bufL[D] {}, bufR[D] {};
+        int w = 0, holdN = 0;
+        float g = 1.0f, hold = 1.0f, att = 0.1f, rel = 0.9995f;
+        void prepare (double sr)
+        {
+            rel = std::exp (-1.0f / ((float) sr * 0.12f));
+            att = 1.0f - std::exp (-1.0f / ((float) D * 0.22f));   // reaches the target within the look-ahead
+            g = hold = 1.0f; holdN = 0; w = 0;
+            std::fill (bufL, bufL + D, 0.0f); std::fill (bufR, bufR + D, 0.0f);
+        }
         void process (float* L, float* R, int n)
         {
             constexpr float ceiling = 0.966f;   // -0.3 dBFS
@@ -92,9 +103,14 @@ namespace fx
             {
                 const float pk = std::max (std::abs (L[i]), std::abs (R[i]));
                 const float target = pk > ceiling ? ceiling / pk : 1.0f;
-                g = target < g ? target : rel * g + (1.0f - rel) * target;
-                L[i] = std::clamp (L[i] * g, -ceiling, ceiling);
-                R[i] = std::clamp (R[i] * g, -ceiling, ceiling);
+                if (target <= hold) { hold = target; holdN = D; }
+                else if (--holdN <= 0) hold = target;
+                g = hold < g ? g + (hold - g) * att : rel * g + (1.0f - rel) * hold;
+                const float dl = bufL[w], dr = bufR[w];
+                bufL[w] = L[i]; bufR[w] = R[i];
+                w = (w + 1) % D;
+                L[i] = std::clamp (dl * g, -ceiling, ceiling);
+                R[i] = std::clamp (dr * g, -ceiling, ceiling);
             }
         }
     };

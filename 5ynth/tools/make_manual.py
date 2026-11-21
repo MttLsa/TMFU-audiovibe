@@ -116,9 +116,11 @@ bullets([
 ])
 h2("Schede dei moduli")
 bullets([
-    "Ogni scheda (A–E) ha: pulsante con la lettera (selezione), menu <b>Synth Model</b>, <b>LVL</b> (livello) e <b>PAN</b>. "
-    "La barra colorata in basso mostra il livello del modulo (arancione = analogico, azzurro = digitale).",
-    "<b>+ CUSTOM</b> aggiunge un modulo (fino a 5); la <b>x</b> sull'ultima scheda lo toglie (minimo 2 schede).",
+    "Ogni scheda (A–E) ha: pulsante con la lettera, menu <b>Synth Model</b>, <b>LVL</b> (livello) e <b>PAN</b>. Un clic in un punto "
+    "qualsiasi della scheda (lettera compresa) seleziona il modulo e ne mostra il pannello; la lettera illuminata indica che il "
+    "modulo è acceso. La barra colorata in basso mostra il livello del modulo (arancione = analogico, azzurro = digitale).",
+    "Un preset mostra solo i moduli che usa: un suono fatto con un solo synth ha una sola scheda. <b>+ CUSTOM</b> aggiunge un "
+    "modulo (fino a 5); la <b>x</b> sull'ultima scheda lo toglie (minimo 1 scheda).",
     "Il pulsante <b>ON</b> nel pannello accende o spegne il modulo: un modulo spento non suona.",
 ])
 h2("Finestra")
@@ -132,6 +134,8 @@ h2("Manopole, fader e menu")
 bullets([
     "Trascina in verticale per cambiare il valore; <b>Shift</b> mentre trascini = movimento più fine.",
     "Dopo un clic, le <b>frecce</b> della tastiera muovono di 1 % (fader 0,1 %); con Shift 10 volte più fine.",
+    "Il suono segue manopole e fader in modo continuo, senza scalini né click: i valori scorrono in pochi millisecondi "
+    "anche quando un controllo viene mosso di scatto o da un'automazione.",
     "<b>Doppio clic</b> = valore di default. La risoluzione è di 0,01 sulle manopole e di 0,001 sui fader.",
     "Gli strumenti che sul pannello originale hanno fader (Juno, CS-80, Alpha Juno, SH-101…) li mostrano anche qui, più lunghi.",
 ])
@@ -144,7 +148,8 @@ p("Il menu <b>Synth Model</b> di una scheda elenca tutti gli strumenti presenti 
   "34 skin ispirate ai pannelli originali (legno Moog/Prophet, fader Juno, TB-303 argento, membrane e LCD DX7/M1, PPG blu, "
   "Virus e Nord rossi, CRT Fairlight…), senza loghi o grafiche originali.")
 p("Strumento originale analogico → motore <b>Analog</b>; digitale → uno dei motori digitali. Gli strumenti ibridi o i "
-  "brani con più synth sovrapposti usano più moduli in layer.")
+  "brani con più synth sovrapposti usano più moduli in layer. Il motore fa parte dello strumento: il riquadro <b>Engine</b> nel "
+  "pannello mostra quello in uso ma non si cambia a mano, così ogni synth resta coerente con l'originale.")
 h2("Motori (Engine)")
 table([
     ["Engine", "Sintesi", "Strumenti tipici"],

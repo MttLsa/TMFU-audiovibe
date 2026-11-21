@@ -111,7 +111,8 @@ namespace dsp
     {
         enum Stage { Idle, Attack, Decay, Sustain, Release };
         Stage stage = Idle;
-        float level = 0.0f, ca = 1, cd = 1, cr = 1, sus = 1;
+        float level = 0.0f, ca = 1, cd = 1, cr = 1, sus = 1, caSoft = 1;
+        bool soft = false;   // retriggered while still sounding (mono / legato note change): attack of at least 4 ms, no click
 
         static float coef (float ms, float sr, float k)
         {
@@ -121,8 +122,9 @@ namespace dsp
         void set (float aMs, float dMs, float s, float rMs, float sr)
         {
             ca = coef (aMs, sr, 1.466f); cd = coef (dMs, sr, 4.6f); cr = coef (rMs, sr, 4.6f); sus = s;
+            caSoft = coef (std::max (aMs, 4.0f), sr, 1.466f);
         }
-        void gateOn (bool hardReset) { if (hardReset) level = 0.0f; stage = Attack; }
+        void gateOn (bool hardReset) { soft = ! hardReset && level > 1.0e-3f; if (hardReset) level = 0.0f; stage = Attack; }
         void gateOff() { if (stage != Idle) stage = Release; }
         void kill() { stage = Idle; level = 0.0f; }
         bool active() const { return stage != Idle; }
@@ -130,7 +132,7 @@ namespace dsp
         {
             switch (stage)
             {
-                case Attack:  level += (1.3f - level) * ca; if (level >= 1.0f) { level = 1.0f; stage = Decay; } break;
+                case Attack:  level += (1.3f - level) * (soft ? caSoft : ca); if (level >= 1.0f) { level = 1.0f; stage = Decay; soft = false; } break;
                 case Decay:   level += (sus - level) * cd; if (std::abs (level - sus) < 1.0e-4f) { level = sus; stage = Sustain; } break;
                 case Sustain: level = sus; break;
                 case Release: level -= level * cr; if (level < 1.0e-5f) { level = 0.0f; stage = Idle; } break;
