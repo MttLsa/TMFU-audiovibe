@@ -30,10 +30,28 @@ static void fillSteel (juce::Graphics& g, const juce::Path& q)   // brushed meta
 // emblem geometry in design units (340 x 350 box): metal body (5 + white keys), the four bars, thin parts (pulse, power)
 struct MarkGeometry
 {
-    juce::Path metal, bars, pulse, power;
-    explicit MarkGeometry (bool upright)
+    juce::Path metal, bars, pulse, power, keyMarks;   // keyMarks: dark details (black keys / key gaps) drawn over the metal
+    // synthBar: bars cut flush with the bowl, no mini keyboard / pulse / power, top bar of the 5 drawn as a stylised keyboard
+    explicit MarkGeometry (bool upright, bool synthBar = false)
     {
         using namespace juce;
+        if (synthBar)
+        {
+            metal.addRectangle (7, 52, 195, 46);                 // top bar = keyboard (shorter than the bowl, so it still reads as a 5)
+            metal.addRectangle (7, 52, 51, 161);
+            for (int i = 0; i < 4; ++i) bars.addRectangle (66, 133.0f + i * 22.5f, 233 - 66, 13);
+            Path bowl;
+            const float cx = 120, cy = 232, a0 = MathConstants<float>::halfPi - 0.12f, a1 = 1.5f * MathConstants<float>::pi;
+            bowl.addCentredArc (cx, cy, 113, 113, 0, a0, a1, true);
+            bowl.addCentredArc (cx, cy, 64, 60, 0, a1, a0, false);
+            bowl.closeSubPath();
+            metal.addPath (bowl);
+            // stylised keyboard on the top bar: 10 white keys, black keys in groups of 2 and 3
+            constexpr float kx = 7, kw = 195.0f / 10.0f;
+            for (int k = 1; k < 10; ++k) keyMarks.addRectangle (kx + k * kw - 1.2f, 52, 2.4f, 46);
+            for (int k : { 1, 2, 4, 5, 6, 8, 9 }) keyMarks.addRectangle (kx + k * kw - kw * 0.28f, 52, kw * 0.56f, 27);
+            return;
+        }
         if (upright) { metal.addRectangle (7, 52, 195, 46); metal.addRectangle (7, 52, 51, 161); }           // top bar + straight stem
         else { metal.addRectangle (25, 52, 177, 46); metal.addQuadrilateral (25, 52, 76, 52, 58, 213, 7, 213); }   // slanted stem
         const float bx[4] = { 77, 70, 66, 63 }, by[4] = { 133, 156, 178, 200 };
@@ -54,11 +72,11 @@ struct MarkGeometry
     static constexpr float pulseW = 2.2f, powerW = 3.2f;
 };
 
-static void drawMarkT (juce::Graphics& g, const juce::AffineTransform& T, bool upright)
+static void drawMarkT (juce::Graphics& g, const juce::AffineTransform& T, bool upright, bool synthBar = false)
 {
     using namespace juce;
     const float s = std::sqrt (std::abs (T.getDeterminant()));
-    MarkGeometry m (upright);
+    MarkGeometry m (upright, synthBar);
     auto p = m.metal; p.applyTransform (T);
     fillSteel (g, p);
     auto bars = m.bars; bars.applyTransform (T);
@@ -68,6 +86,12 @@ static void drawMarkT (juce::Graphics& g, const juce::AffineTransform& T, bool u
     ColourGradient gb (Colour (0xffd4dee6), bb.getX(), 0, Colour (0xffd4dee6), bb.getRight(), 0, false);
     gb.addColour (0.35, Colours::white); gb.addColour (0.75, Colour (0xfff2f6f8));
     g.setGradientFill (gb); g.fillPath (bars);
+    if (synthBar)
+    {
+        auto km = m.keyMarks; km.applyTransform (T);
+        g.setColour (Colour (0xff1c1c1c)); g.fillPath (km);
+        return;
+    }
     g.setColour (Colour (0xff141414));                        // black keys
     for (int k : { 1, 2, 4, 5 }) g.fillRect (Rectangle<float> (220.0f + k * 19.0f - 5.0f, 53, 8, 40).transformedBy (T));
     auto pulse = m.pulse; pulse.applyTransform (T);
@@ -88,10 +112,10 @@ void logo::drawMark (juce::Graphics& g, juce::Rectangle<float> r)
 // inner / outer proportion; upright, on the 5's cap band (y 52..345)
 // proportions: cap height 293 (the 5), stroke 46 (the 5's bars), letter width ~0.62 x cap height (golden ratio);
 // optical spacing: more room next to closed / round forms, less around the open sides of T
-static std::vector<juce::Path> wordLetters (float x0)
+static std::vector<juce::Path> wordLetters (float x0, float w)
 {
     using namespace juce;
-    constexpr float top = 52, bot = 345, t = 46, w = 182;
+    constexpr float top = 52, bot = 345, t = 46;
     const float advance[4] = { 0, w + 38, w + 30, w + 30 + 12 };   // Y->N, N->T, T->H (T is 12 wider)
     std::vector<Path> out;
     float x = x0;
@@ -199,10 +223,12 @@ static void drawContourFrame (juce::Graphics& g, const juce::Path& shape, const 
 void logo::drawWordmark (juce::Graphics& g, juce::Rectangle<float> r, int style, juce::RectanglePlacement place)
 {
     using namespace juce;
-    constexpr float x0 = 333 + 44, gap = 30, line = 5;   // Y starts 44 after the bars (the Y is open at the top)
-    const bool frame = style >= 2;
-    auto letters = wordLetters (x0);
-    MarkGeometry m (true);
+    // TEMP styles for mock-ups: 1 = no frame, 2 = frame, 3 = frame + wider letters, 4 = 3 + synth-bar 5
+    const bool frame = style >= 2, synthBar = style >= 4;
+    constexpr float gap = 30, line = 8;
+    const float x0 = (synthBar ? 233.0f : 333.0f) + 44;   // Y starts 44 after the 5 (the Y is open at the top)
+    auto letters = wordLetters (x0, style >= 3 ? 212.0f : 182.0f);
+    MarkGeometry m (true, synthBar);
     Path shape (m.metal);                 // everything the frame goes around
     shape.addPath (m.bars);
     for (auto& l : letters) shape.addPath (l);
@@ -211,7 +237,7 @@ void logo::drawWordmark (juce::Graphics& g, juce::Rectangle<float> r, int style,
     const auto box = shape.getBounds().expanded (frame ? gap + line + 2 : 2);
     const auto T = place.getTransformToFit (box, r);
     if (frame) drawContourFrame (g, shape, T, gap, line);
-    drawMarkT (g, T, true);
+    drawMarkT (g, T, true, synthBar);
     for (auto& l : letters) { l.applyTransform (T); fillSteel (g, l); }   // each letter lit like the 5
 }
 
