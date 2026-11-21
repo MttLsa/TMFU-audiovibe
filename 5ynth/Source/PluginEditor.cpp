@@ -1,5 +1,7 @@
 #include "PluginEditor.h"
 #include "BinaryData.h"
+#include "ModelPanels.h"
+#include <set>
 
 using namespace params;
 using skins::Skin;
@@ -454,7 +456,7 @@ void Control::paint (juce::Graphics& g)
     auto* lf = dynamic_cast<FivesynthLook*> (&getLookAndFeel());
     g.setColour (lf && lf->skin ? lf->skin->label : ui::dim);
     g.setFont (ui::font (10.0f, true));
-    g.drawFittedText (caption.toUpperCase(), getLocalBounds().removeFromBottom (15), juce::Justification::centred, 1, 0.8f);
+    g.drawFittedText (caption.toUpperCase(), getLocalBounds().removeFromBottom (15).reduced (1, 0), juce::Justification::centred, 1, 0.55f);   // long original names shrink to fit their cell
 }
 
 // =====================================================================================================
@@ -512,49 +514,7 @@ ModulePanel::ModulePanel (FivesynthProcessor& p, int m) : proc (p), module (m)
 {
     setLookAndFeel (&look);
     auto M = [m] (int s) { return mod (m, s); };
-    groups = {
-        { "PITCH", { { M (mOct), "Oct" }, { M (mSemi), "Semi" }, { M (mFine), "Fine" } } },
-        // analog page (engine 0)
-        { "OSC 1", { { M (mO1Wave), "Wave" }, { M (mO1Pw), "PW" }, { M (mO1Lvl), "Level" } }, 0, 0 },
-        { "OSC 2", { { M (mO2Wave), "Wave" }, { M (mO2Oct), "Oct" }, { M (mO2Semi), "Semi" }, { M (mO2Fine), "Fine" }, { M (mO2Pw), "PW" }, { M (mO2Lvl), "Level" } }, 0, 0 },
-        { "MIXER / MOD", { { M (mSub), "Sub" }, { M (mNoise), "Noise" }, { M (mSync), "Sync" }, { M (mXmod), "X-Mod" }, { M (mRing), "Ring" }, { M (mPwm), "PWM" } }, 0, 0 },
-        // FM page (engine 1): built as a 6 x 7 grid
-        { "FM OPERATORS", {}, 7, 1, 1 },
-        { "WAVETABLE", { { M (mWt), "Table" }, { M (mWPos), "Position" }, { M (mWEnv), "Env>Pos" }, { M (mWLfo), "LFO>Pos" } }, 0, 2 },
-        { "SUPERSAW", { { M (mSsDet), "Detune" }, { M (mSsMix), "Mix" } }, 0, 3 },
-        { "PHASE DISTORTION", { { M (mPdW), "Wave" }, { M (mPdAmt), "DCW" }, { M (mPdEnv), "Env>DCW" } }, 0, 4 },
-        { "ADDITIVE", { { M (mAddM), "Model" }, { M (mBright), "Bright" }, { M (mTilt), "Dec.Tilt" }, { M (mInh), "Inharm" }, { M (mEven), "Even" } }, 0, 5 },
-        { "UNISON", { { M (mUni), "Voices" }, { M (mDetune), "Detune" }, { M (mDrift), "Drift" } } },
-        { "FILTER  LP / BP / HP", { { M (mFlt), "Type" }, { M (mCut), "Cutoff" }, { M (mRes), "Reso" }, { M (mFDrive), "Drive" }, { M (mEnv), "Env" }, { M (mKey), "Key" }, { M (mVelF), "Vel" } } },
-        { "DRIVE (PEDAL)", { { M (mDist), "Model" }, { M (mDGain), "Gain" }, { M (mDTone), "Tone" }, { M (mDMix), "Mix" } } },
-        { "FILTER ENV", { { M (mFA), "A" }, { M (mFD), "D" }, { M (mFS), "S" }, { M (mFR), "R" } } },
-        { "AMP ENV", { { M (mAA), "A" }, { M (mAD), "D" }, { M (mAS), "S" }, { M (mAR), "R" } } },
-        { "LFO", { { M (mLfoShape), "Shape" }, { M (mLfoRate), "Rate" }, { M (mLfoDelay), "Delay" }, { M (mLfoPitch), "Pitch" }, { M (mLfoCut), "Cutoff" }, { M (mLfoTim), "PWM/Tmb" } } },
-        { "PITCH ENV / ACCENT", { { M (mPenv), "P.Env" }, { M (mPdec), "P.Dec" }, { M (mAccent), "Accent" } } },
-        { "LO-FI", { { M (mBits), "Bits" }, { M (mSrr), "Rate" } } },
-        { "DELAY", { { M (mDlyDiv), "Time" }, { M (mDlyFb), "Feedbk" }, { M (mDlyMix), "Mix" }, { M (mDlyPing), "Ping" } } },
-        { "OUT", { { M (mLevel), "Level" }, { M (mPan), "Pan" } } },
-    };
-    // FM grid content: per operator Coarse, Fine, Level, A, D, S, R  + algorithm / feedback / velocity
-    for (auto& gd : groups)
-        if (gd.id == 1)
-        {
-            gd.items.push_back ({ M (mAlg), "Algorithm" });
-            gd.items.push_back ({ M (mFb), "Feedback" });
-            gd.items.push_back ({ M (mFmVel), "Vel>Idx" });
-            for (int o = 0; o < numOps; ++o)
-                for (int q = 0; q < numOpParams; ++q) gd.items.push_back ({ M (opSuffix (o, q)), "" });
-        }
-    for (auto& gd : groups)
-    {
-        controls.emplace_back();
-        for (auto& [pid, label] : gd.items)
-        {
-            auto c = std::make_unique<Control> (p.apvts, pid, label);
-            addAndMakeVisible (*c);
-            controls.back().push_back (std::move (c));
-        }
-    }
+    buildGroups();
     onBtn = std::make_unique<Control> (p.apvts, M (mOn), "ON");
     engineBox = std::make_unique<Control> (p.apvts, M (mEngine), "Engine");
     // every synth model has its own engine: set by the model (or the preset), shown here but not selectable by hand
@@ -562,6 +522,10 @@ ModulePanel::ModulePanel (FivesynthProcessor& p, int m) : proc (p), module (m)
     engineBox->combo.setWantsKeyboardFocus (false);
     engineBox->combo.setTooltip ("il motore di sintesi è quello dello strumento scelto in Synth Model");
     addAndMakeVisible (*onBtn); addAndMakeVisible (*engineBox);
+    extraBtn.setClickingTogglesState (true);
+    extraBtn.setTooltip ("mostra i parametri del motore che lo strumento originale non ha, ma che questo suono usa");
+    extraBtn.onClick = [this] { if (auto* vp = findParentComponentOfClass<juce::Viewport>()) setSize (vp->getMaximumVisibleWidth(), preferredHeight (vp->getMaximumVisibleWidth())); resized(); repaint(); };
+    addChildComponent (extraBtn);
     addAndMakeVisible (algView);
     for (int s : { mOn, mModel, mEngine, mAlg })
         p.apvts.addParameterListener (def (M (s)).id, this);
@@ -580,9 +544,11 @@ void ModulePanel::applyFmMode()
     constexpr bool modern = false;   // the FM "MODERN" view was removed: FM modules always show the DX7 panel
     static const char* dxCap[numOpParams] = { "COARSE", "FINE", "OUT LVL", "R1 ATK", "R2 DEC", "L3 SUS", "R4 REL" };
     static const char* mdCap[numOpParams] = { "Coarse", "Fine", "Level", "Attack", "Decay", "Sustain", "Release" };
+    static const char* fourOpCap[numOpParams] = { "FREQ", "DETUNE", "OUT LEVEL", "AR", "D1R", "D1L", "RR" };   // DX21 / TX81Z
     for (size_t gi = 0; gi < groups.size(); ++gi)
     {
         if (groups[gi].id != 1) continue;
+        const bool fourOp = groups[gi].ops == 4;
         for (auto& c : controls[gi])
         {
             const auto& d = def (c->pid);
@@ -590,7 +556,7 @@ void ModulePanel::applyFmMode()
             if (s >= mOpBase && s < mOpBase + numOps * numOpParams)
             {
                 const int o = (s - mOpBase) / numOpParams, q = (s - mOpBase) % numOpParams;
-                c->setCaption (juce::String (modern ? "OP" : "OP") + juce::String (o + 1) + " " + (modern ? mdCap[q] : dxCap[q]));
+                c->setCaption (juce::String ("OP") + juce::String (o + 1) + " " + (modern ? mdCap[q] : fourOp ? fourOpCap[q] : dxCap[q]));
                 auto* prm = proc.apvts.getParameter (d.id);
                 if (q == opCrs) c->setFormatter ([modern] (double v) { const double r = v < 0.5 ? 0.5 : v; return modern ? "x" + juce::String (r, r < 1 ? 2 : 0) : juce::String (r, 2); });
                 else if (q == opFin) c->setFormatter ([modern] (double v) { return modern ? "+" + juce::String (v, 2) : juce::String (juce::roundToInt (v * 100)); });
@@ -607,11 +573,106 @@ void ModulePanel::applyFmMode()
     }
 }
 
+void ModulePanel::buildGroups()
+{
+    const int m = module;
+    auto M = [m] (int s) { return mod (m, s); };
+    const int mi = (int) proc.apvts.getRawParameterValue (def (M (mModel)).id)->load();
+    const int engine = (int) proc.apvts.getRawParameterValue (def (M (mEngine)).id)->load();
+    const auto* md = PresetLibrary::get().model (mi);
+    const auto* pnl = md != nullptr ? panels::find (md->name) : nullptr;
+    controls.clear();
+    groups.clear();
+    std::set<int> shown { mOn, mModel, mEngine, mLevel, mPan, mFmModern };
+    if (pnl != nullptr)
+    {
+        // the original instrument's sections and control names
+        for (auto& pg : *pnl)
+        {
+            GroupDef gd;
+            gd.title = pg.title; gd.page = pg.page; gd.cols = pg.cols;
+            if (pg.fmGrid) { gd.id = 1; gd.cols = 7; gd.ops = pg.ops; for (int s : { mAlg, mFb, mFmVel }) shown.insert (s); for (int o = 0; o < pg.ops; ++o) for (int q = 0; q < numOpParams; ++q) shown.insert (opSuffix (o, q)); }
+            for (auto& it : pg.items) { gd.items.push_back ({ M (it.suffix), it.label }); shown.insert (it.suffix); }
+            groups.push_back (gd);
+        }
+        // EXTRA: engine parameters the original has no control for, but that this sound uses (value not at default)
+        std::vector<int> cand { mOct, mSemi, mFine, mUni, mDetune, mDrift, mFlt, mCut, mRes, mFDrive, mKey, mEnv, mVelF,
+                                mDist, mDGain, mDTone, mDMix, mFA, mFD, mFS, mFR, mAA, mAD, mAS, mAR,
+                                mLfoShape, mLfoRate, mLfoDelay, mLfoPitch, mLfoCut, mLfoTim, mPenv, mPdec, mAccent, mBits, mSrr,
+                                mDlyDiv, mDlyFb, mDlyMix, mDlyPing };
+        if (engine == 0) for (int s = mO1Wave; s <= mPwm; ++s) cand.push_back (s);
+        if (engine == 2) for (int s : { mWt, mWPos, mWEnv, mWLfo }) cand.push_back (s);
+        if (engine == 3) for (int s : { mSsDet, mSsMix }) cand.push_back (s);
+        if (engine == 4) for (int s : { mPdW, mPdAmt, mPdEnv }) cand.push_back (s);
+        if (engine == 5) for (int s : { mAddM, mBright, mTilt, mInh, mEven }) cand.push_back (s);
+        GroupDef extra; extra.title = "EXTRA";
+        for (int s : cand)
+        {
+            if (shown.count (s) || ((engine == 3 || engine == 5) && (s == mUni || s == mDetune))) continue;
+            const auto& d = def (M (s));
+            if (std::abs (proc.apvts.getRawParameterValue (d.id)->load() - d.def) > 1.0e-4f)
+                extra.items.push_back ({ M (s), d.name.fromFirstOccurrenceOf (" ", false, false) });   // "A Drift" -> "Drift"
+        }
+        if (! extra.items.empty()) groups.push_back (extra);
+        extraBtn.setVisible (! extra.items.empty());
+    }
+    else
+    {
+        extraBtn.setVisible (false);
+        groups = {
+            { "PITCH", { { M (mOct), "Oct" }, { M (mSemi), "Semi" }, { M (mFine), "Fine" } } },
+            // analog page (engine 0)
+            { "OSC 1", { { M (mO1Wave), "Wave" }, { M (mO1Pw), "PW" }, { M (mO1Lvl), "Level" } }, 0, 0 },
+            { "OSC 2", { { M (mO2Wave), "Wave" }, { M (mO2Oct), "Oct" }, { M (mO2Semi), "Semi" }, { M (mO2Fine), "Fine" }, { M (mO2Pw), "PW" }, { M (mO2Lvl), "Level" } }, 0, 0 },
+            { "MIXER / MOD", { { M (mSub), "Sub" }, { M (mNoise), "Noise" }, { M (mSync), "Sync" }, { M (mXmod), "X-Mod" }, { M (mRing), "Ring" }, { M (mPwm), "PWM" } }, 0, 0 },
+            // FM page (engine 1): built as a 6 x 7 grid
+            { "FM OPERATORS", {}, 7, 1, 1 },
+            { "WAVETABLE", { { M (mWt), "Table" }, { M (mWPos), "Position" }, { M (mWEnv), "Env>Pos" }, { M (mWLfo), "LFO>Pos" } }, 0, 2 },
+            { "SUPERSAW", { { M (mSsDet), "Detune" }, { M (mSsMix), "Mix" } }, 0, 3 },
+            { "PHASE DISTORTION", { { M (mPdW), "Wave" }, { M (mPdAmt), "DCW" }, { M (mPdEnv), "Env>DCW" } }, 0, 4 },
+            { "ADDITIVE", { { M (mAddM), "Model" }, { M (mBright), "Bright" }, { M (mTilt), "Dec.Tilt" }, { M (mInh), "Inharm" }, { M (mEven), "Even" } }, 0, 5 },
+            { "UNISON", { { M (mUni), "Voices" }, { M (mDetune), "Detune" }, { M (mDrift), "Drift" } } },
+            { "FILTER  LP / BP / HP", { { M (mFlt), "Type" }, { M (mCut), "Cutoff" }, { M (mRes), "Reso" }, { M (mFDrive), "Drive" }, { M (mEnv), "Env" }, { M (mKey), "Key" }, { M (mVelF), "Vel" } } },
+            { "DRIVE (PEDAL)", { { M (mDist), "Model" }, { M (mDGain), "Gain" }, { M (mDTone), "Tone" }, { M (mDMix), "Mix" } } },
+            { "FILTER ENV", { { M (mFA), "A" }, { M (mFD), "D" }, { M (mFS), "S" }, { M (mFR), "R" } } },
+            { "AMP ENV", { { M (mAA), "A" }, { M (mAD), "D" }, { M (mAS), "S" }, { M (mAR), "R" } } },
+            { "LFO", { { M (mLfoShape), "Shape" }, { M (mLfoRate), "Rate" }, { M (mLfoDelay), "Delay" }, { M (mLfoPitch), "Pitch" }, { M (mLfoCut), "Cutoff" }, { M (mLfoTim), "PWM/Tmb" } } },
+            { "PITCH ENV / ACCENT", { { M (mPenv), "P.Env" }, { M (mPdec), "P.Dec" }, { M (mAccent), "Accent" } } },
+            { "LO-FI", { { M (mBits), "Bits" }, { M (mSrr), "Rate" } } },
+            { "DELAY", { { M (mDlyDiv), "Time" }, { M (mDlyFb), "Feedbk" }, { M (mDlyMix), "Mix" }, { M (mDlyPing), "Ping" } } },
+            { "OUT", { { M (mLevel), "Level" }, { M (mPan), "Pan" } } },
+        };
+    }
+    // FM grid content: algorithm / feedback / velocity, then per operator Coarse, Fine, Level, A, D, S, R
+    for (auto& gd : groups)
+        if (gd.id == 1)
+        {
+            gd.items.insert (gd.items.begin(), { { M (mAlg), "Algorithm" }, { M (mFb), "Feedback" }, { M (mFmVel), "Vel>Idx" } });
+            for (int o = 0; o < gd.ops; ++o)
+                for (int q = 0; q < numOpParams; ++q) gd.items.push_back ({ M (opSuffix (o, q)), "" });
+        }
+    for (auto& gd : groups)
+    {
+        controls.emplace_back();
+        for (auto& [pid, label] : gd.items)
+        {
+            auto c = std::make_unique<Control> (proc.apvts, pid, label);
+            if (skin != nullptr) c->setSkin (*skin);
+            addAndMakeVisible (*c);
+            controls.back().push_back (std::move (c));
+        }
+    }
+    builtModel = mi;
+    builtPreset = proc.presetIndex();
+}
+
 void ModulePanel::refreshSkin()
 {
     const int mi = (int) proc.apvts.getRawParameterValue (def (mod (module, mModel)).id)->load();
     const auto* md = PresetLibrary::get().model (mi);
     const int engine = (int) proc.apvts.getRawParameterValue (def (mod (module, mEngine)).id)->load();
+    const bool rebuild = mi != builtModel || proc.presetIndex() != builtPreset;
+    if (rebuild) buildGroups();
     digitalLook = engine != 0;
     const juce::String key = md != nullptr ? md->skin : juce::String (digitalLook ? "neutral-d" : "neutral-a");
     skin = &skins::find (key, digitalLook);
@@ -636,6 +697,7 @@ int ModulePanel::layoutGroups (int width, bool apply)
     {
         const auto& gd = groups[gi];
         bool visible = gd.page < 0 || gd.page == engine;
+        if (gd.title == "EXTRA" && ! extraBtn.getToggleState()) visible = false;   // hidden: the panel stays the original one
         if (gd.title == "UNISON" && (engine == 3 || engine == 5)) visible = false;
         if (apply) for (auto& c : controls[gi]) c->setVisible (visible);
         if (! visible) continue;
@@ -646,7 +708,7 @@ int ModulePanel::layoutGroups (int width, bool apply)
         if (gd.id == 1)   // FM grid: header row (alg diagram + 3 controls) + 6 operator rows of 7
         {
             gw = juce::jmin (xMax - x0, 8 * (cellW + 8) + 200);
-            gh = grpHead + knobH + 6 * knobH + 8;
+            gh = grpHead + knobH + gd.ops * knobH + 8;
             if (x + gw > xMax && x > x0) { x = x0; y += rowH + 8; rowH = 0; }
             if (apply)
             {
@@ -657,7 +719,7 @@ int ModulePanel::layoutGroups (int width, bool apply)
                 cs[1]->setBounds (x + 210 + cellW * 2, y + grpHead, cellW, knobH);
                 cs[2]->setBounds (x + 210 + cellW * 3, y + grpHead, cellW, knobH);
                 const int cw = (gw - 16) / 7;
-                for (int o = 0; o < numOps; ++o)
+                for (int o = 0; o < gd.ops; ++o)
                     for (int q = 0; q < numOpParams; ++q)
                         cs[(size_t) (3 + o * numOpParams + q)]->setBounds (x + 8 + q * cw, y + grpHead + knobH + o * knobH, cw, knobH);
             }
@@ -700,6 +762,7 @@ void ModulePanel::resized()
     const int right = getWidth() - 12 - (wood ? 16 : 0);
     onBtn->setBounds (right - 50, 13, 50, 26);
     engineBox->setBounds (right - 50 - 8 - 170, 2, 160, 48);
+    extraBtn.setBounds (right - 50 - 8 - 170 - 86, 13, 78, 26);
     layoutGroups (getWidth(), true);
 }
 

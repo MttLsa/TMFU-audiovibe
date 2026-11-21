@@ -147,6 +147,12 @@ p("Il menu <b>Synth Model</b> di una scheda elenca tutti gli strumenti presenti 
   "carica il <b>suono caratteristico</b> di quello strumento (il modulo del primo preset che lo usa) e ne prende l'aspetto: "
   "34 skin ispirate ai pannelli originali (legno Moog/Prophet, fader Juno, TB-303 argento, membrane e LCD DX7/M1, PPG blu, "
   "Virus e Nord rossi, CRT Fairlight…), senza loghi o grafiche originali.")
+p("<b>Pannelli come gli originali.</b> Ogni strumento mostra le sezioni e i nomi dei comandi del suo pannello vero, "
+  "collegati al parametro del motore che fa quel lavoro: la TB-303 ha solo Tuning, Waveform, Cut Off Freq, Resonance, Env Mod, "
+  "Decay e Accent; il Minimoog Controllers, Oscillator Bank, Mixer, Modifiers e Loudness Contour; i Juno LFO, DCO, VCF, ENV e "
+  "VCA a fader; il DX7 la griglia dei 6 operatori con l'algoritmo; DX21 e TX81Z 4 operatori (AR, D1R, D1L, RR); l'M1 OSC, VDF, "
+  "VDA e così via. I parametri del motore che lo strumento originale non ha, ma che il suono usa, sono raccolti nella sezione "
+  "<b>EXTRA</b>: si apre con il pulsante EXTRA nella testata del modulo ed è nascosta di default.")
 p("Strumento originale analogico → motore <b>Analog</b>; digitale → uno dei motori digitali. Gli strumenti ibridi o i "
   "brani con più synth sovrapposti usano più moduli in layer. Il motore fa parte dello strumento: il riquadro <b>Engine</b> nel "
   "pannello mostra quello in uso ma non si cambia a mano, così ogni synth resta coerente con l'originale.")

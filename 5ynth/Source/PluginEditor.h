@@ -79,7 +79,7 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> ba;
 };
 
-struct GroupDef { juce::String title; std::vector<std::pair<int, juce::String>> items; int cols = 0; int page = -1; int id = 0; };
+struct GroupDef { juce::String title; std::vector<std::pair<int, juce::String>> items; int cols = 0; int page = -1; int id = 0; int ops = params::numOps; };
 
 // FM algorithm diagram (operators as boxes, carriers on the bottom row)
 class AlgDiagram : public juce::Component
@@ -107,7 +107,9 @@ private:
     void parameterChanged (const juce::String&, float) override { triggerAsyncUpdate(); }
     void handleAsyncUpdate() override { refreshSkin(); }
     void applyFmMode();
+    void buildGroups();   // the panel of the chosen instrument (original sections / control names) + EXTRA
     int layoutGroups (int width, bool apply);
+    int builtModel = -2, builtPreset = -2;
     FivesynthProcessor& proc;
     int module;
     FivesynthLook look;
@@ -116,6 +118,7 @@ private:
     std::vector<std::vector<std::unique_ptr<Control>>> controls;
     std::vector<juce::Rectangle<int>> groupBounds;
     std::unique_ptr<Control> onBtn, engineBox;
+    juce::TextButton extraBtn { "EXTRA" };
     AlgDiagram algView;
     juce::Rectangle<int> algArea;
     bool digitalLook = false;

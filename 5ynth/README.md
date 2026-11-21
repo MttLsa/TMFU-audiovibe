@@ -50,6 +50,11 @@ fase. Il **+** apre la vista con tutti gli 8 LFO. LFO, EQ e filtri d'uscita non 
 ## Grafica
 - Stile Twinbox (piatto, scuro, in stile Ableton) con un leggero **rilievo**; font **Inter** Regular / SemiBold (SIL OFL) per tutto
   il testo dell'interfaccia. Tutte le scritte di moduli, parametri e preset sono in inglese.
+- **Pannelli come gli originali**: ogni strumento mostra le sezioni e i comandi del suo pannello vero (TB-303: Tuning,
+  Waveform, Cut Off Freq, Resonance, Env Mod, Decay, Accent; Minimoog: Controllers, Oscillator Bank, Mixer, Modifiers,
+  Loudness Contour; Juno: LFO, DCO, VCF, ENV, VCA; DX7: operatori e algoritmo; M1: OSC, VDF, VDA…), ognuno collegato al
+  parametro del motore che fa quel lavoro. I parametri del motore che l'originale non ha ma che il suono usa sono nel
+  pulsante **EXTRA** della testata del modulo (nascosti di default).
 - Ogni modulo prende l'aspetto dello strumento scelto (34 skin: legno Moog/Prophet, fader Juno/CS-80/Alpha Juno, TB-303
   argento, LCD e membrane DX7/M1, PPG blu, Virus/Nord rossi, CRT Fairlight…), senza loghi o grafiche originali.
 - **Fader più lunghi** sugli strumenti che hanno fader. Risoluzione fine: **1000 passi** sulla corsa delle manopole, **10000** sui
