@@ -15,9 +15,10 @@ namespace ui
     const juce::Colour fx     { 0xff5ab8ff };   // fx chain
     const juce::Colour mod    { 0xffc792ff };   // modulation
     const juce::Colour tune   { 0xffffd166 };   // tuning
-    // house font: Urbanist (SIL OFL 1.1, embedded as binary data), Light + SemiBold
+    // house font: Inter (SIL OFL 1.1, embedded as binary data), Regular + SemiBold
     juce::Typeface::Ptr typeface (bool bold);
     inline juce::Font font (float h, bool bold = false) { return juce::Font (juce::FontOptions (typeface (bold)).withHeight (h)); }
+    juce::Font nameFont (float h);   // "MICROVIBE" in the header: Urbanist SemiBold (unchanged)
     juce::Colour sourceColour (int src);
 }
 

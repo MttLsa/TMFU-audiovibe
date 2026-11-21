@@ -69,7 +69,7 @@ namespace params
         add ("uni", "Unison", I, 1, 7, 1);
         add ("detune", "Detune", F, 0, 1, 0.2f);
         add ("drift", "Drift", F, 0, 1, 0.15f);
-        add ("fmmodern", "FM Modern", B, 0, 1, 0);
+        add ("fmmodern", "FM Modern", B, 0, 1, 0);   // no longer shown (MODERN view removed); kept so saved projects keep their parameter list
         juce::StringArray algs; for (int i = 1; i <= 32; ++i) algs.add (juce::String (i));
         add ("alg", "FM Algorithm", C, 0, 0, 0, 0, "", algs);
         add ("fb", "FM Feedback", F, 0, 1, 0);

@@ -131,7 +131,7 @@ void ModulePart::start (float velocity, bool hard, const ModCtx& c, float note, 
     vel = velocity;
     const bool fresh = hard && ! aenv.active();
     const int engine = (int) v[mEngine];
-    if (hard)
+    if (fresh)
     {
         rng.seed (seed);
         for (int u = 0; u < maxUni; ++u)
@@ -142,8 +142,18 @@ void ModulePart::start (float velocity, bool hard, const ModCtx& c, float note, 
         }
         for (int k = 0; k < 7; ++k) ssPh[k] = rng.uni();
         phSub = ph1[0];
-        if (fresh) { lfoFade = v[mLfoDelay] < 1.0f ? 1.0f : 0.0f; drift = rng.bip() * 0.5f; driftTarget = rng.bip(); }
+        lfoFade = v[mLfoDelay] < 1.0f ? 1.0f : 0.0f; drift = rng.bip() * 0.5f; driftTarget = rng.bip();
         if (engine == 5) setupAdditive (c, note);
+    }
+    else if (hard && engine == 5)
+    {
+        // retrigger of a voice that is still sounding (mono / note stealing): the oscillators keep running.
+        // Resetting their phases (or the partial amplitudes) mid-waveform made an audible click on every note change.
+        const int oldN = numP;
+        float ph[numPartials], dyn[numPartials];
+        std::copy (pPh, pPh + numPartials, ph); std::copy (pDyn, pDyn + numPartials, dyn);
+        setupAdditive (c, note);
+        for (int k = 0; k < std::min (oldN, numP); ++k) { pPh[k] = ph[k]; pDyn[k] = dyn[k]; }
     }
     penv = v[mPenv];
     const bool acc = velocity > 0.75f;

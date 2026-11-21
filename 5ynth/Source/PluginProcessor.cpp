@@ -49,6 +49,8 @@ bool FivesynthProcessor::isBusesLayoutSupported (const BusesLayout& l) const
 void FivesynthProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     sr = sampleRate;
+    smoothed.assign ((size_t) numParams(), 0.0f);
+    smoothReset = true;
     engine.prepare (sampleRate, juce::jmax (32, samplesPerBlock));
     chorus.prepare (sampleRate);
     reverb.setSampleRate (sampleRate);
@@ -98,6 +100,7 @@ void FivesynthProcessor::loadPreset (int index)
     if (! juce::isPositiveAndBelow (index, (int) all.size())) return;
     const auto& pr = all[(size_t) index];
     loading = true;
+    smoothReset = true;
     for (int i = 0; i < numParams(); ++i)
         if (presetControlled (i)) setParam (i, def (i).def);
     for (int m = 0; m < numModules; ++m) setParam (mod (m, mOn), 0.0f);
@@ -131,6 +134,7 @@ void FivesynthProcessor::loadModelPatch (int module, int modelIndex)
     const auto* md = PresetLibrary::get().model (modelIndex);
     if (md == nullptr) return;
     loading = true;
+    smoothReset = true;
     for (auto& pr : PresetLibrary::get().all())
         for (auto& pm : pr.modules)
             if (pm.model == md->name)
@@ -197,7 +201,18 @@ void FivesynthProcessor::renderChunk (float* L, float* R, int n, const juce::Mid
 {
     const auto& lay = layout();
     const int np = numParams();
-    for (int i = 0; i < np; ++i) snap[(size_t) i] = raw[(size_t) i]->load();
+    // parameter snapshot; continuous (float) parameters are smoothed with a one-pole filter (~20 ms) so that moving a
+    // knob or fader changes the sound without steps; switches, menus and integer values change at once
+    const bool jump = smoothReset.exchange (false);
+    const float a = 1.0f - std::exp (-(float) n / (0.02f * (float) sr));
+    for (int i = 0; i < np; ++i)
+    {
+        const float target = raw[(size_t) i]->load();
+        auto& sm = smoothed[(size_t) i];
+        if (jump || def (i).kind != params::F) sm = target;
+        else sm += (target - sm) * a;
+        snap[(size_t) i] = sm;
+    }
 
     // ------------------------------------------------------------ 8 LFOs -> any parameter
     for (int l = 0; l < numLfos; ++l)
@@ -311,6 +326,7 @@ void FivesynthProcessor::setStateInformation (const void* data, int sizeInBytes)
         {
             auto vt = juce::ValueTree::fromXml (*xml);
             loading = true;
+            smoothReset = true;
             currentPreset.store ((int) vt.getProperty ("preset", -1));
             auto ui = vt.getChildWithName ("UI");
             if (ui.isValid()) { uiState.copyPropertiesFrom (ui, nullptr); vt.removeChild (ui, nullptr); }

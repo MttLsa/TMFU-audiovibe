@@ -115,7 +115,7 @@ private:
     std::vector<GroupDef> groups;
     std::vector<std::vector<std::unique_ptr<Control>>> controls;
     std::vector<juce::Rectangle<int>> groupBounds;
-    std::unique_ptr<Control> onBtn, engineBox, modernBtn;
+    std::unique_ptr<Control> onBtn, engineBox;
     AlgDiagram algView;
     juce::Rectangle<int> algArea;
     bool digitalLook = false;
@@ -245,5 +245,9 @@ private:
     int shownPreset = -2, selected = 0, shownSlots = -1;
     juce::Rectangle<float> logoArea;
     LogoSplash splash;
-    static constexpr int W = 1400, H = 900;
+    // BW x BH = reference layout. The window can take any size (full screen too): the UI is scaled by
+    // uiScale = min (width / BW, height / BH) and the logical area W x H grows on the other side.
+    static constexpr int BW = 1400, BH = 900;
+    int W = BW, H = BH;
+    float uiScale = 1.0f;
 };

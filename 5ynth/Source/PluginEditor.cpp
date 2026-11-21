@@ -5,13 +5,13 @@ using namespace params;
 using skins::Skin;
 
 // =====================================================================================================
-//  Fonts (Inter, SIL OFL: the closest freely licensed match for Ableton Live's interface font) + relief
+//  Fonts: Inter Regular / SemiBold (SIL OFL) for all text + relief
 // =====================================================================================================
 juce::Typeface::Ptr ui::typeface (bool bold)
 {
     static juce::Typeface::Ptr reg = juce::Typeface::createSystemTypefaceFor (BinaryData::InterRegular_ttf, BinaryData::InterRegular_ttfSize);
-    static juce::Typeface::Ptr semi = juce::Typeface::createSystemTypefaceFor (BinaryData::InterSemiBold_ttf, BinaryData::InterSemiBold_ttfSize);
-    return bold ? semi : reg;
+    static juce::Typeface::Ptr bld = juce::Typeface::createSystemTypefaceFor (BinaryData::InterSemiBold_ttf, BinaryData::InterSemiBold_ttfSize);
+    return bold ? bld : reg;
 }
 juce::Font ui::font (float h, bool bold) { return juce::Font (juce::FontOptions (typeface (bold)).withHeight (h)); }
 
@@ -375,8 +375,10 @@ void FivesynthLook::drawComboBox (juce::Graphics& g, int w, int h, bool, int, in
 // =====================================================================================================
 double FineSlider::snapValue (double v, DragMode)
 {
-    const double step = fader ? 0.001 : 0.01;
-    return juce::jlimit (getMinimum(), getMaximum(), std::round (v / step) * step);
+    // fine resolution along the control's travel: 1000 steps on knobs, 10000 on faders (the audio is smoothed too)
+    const double step = fader ? 0.0001 : 0.001;
+    const double p = juce::jlimit (0.0, 1.0, std::round (valueToProportionOfLength (v) / step) * step);
+    return juce::jlimit (getMinimum(), getMaximum(), proportionOfLengthToValue (p));
 }
 
 bool FineSlider::keyPressed (const juce::KeyPress& k)
@@ -554,24 +556,27 @@ ModulePanel::ModulePanel (FivesynthProcessor& p, int m) : proc (p), module (m)
     }
     onBtn = std::make_unique<Control> (p.apvts, M (mOn), "ON");
     engineBox = std::make_unique<Control> (p.apvts, M (mEngine), "Engine");
-    modernBtn = std::make_unique<Control> (p.apvts, M (mFmModern), "MODERN");
-    addAndMakeVisible (*onBtn); addAndMakeVisible (*engineBox); addAndMakeVisible (*modernBtn);
+    // every synth model has its own engine: set by the model (or the preset), shown here but not selectable by hand
+    engineBox->combo.setInterceptsMouseClicks (false, false);   // (the tooltip still shows: it is read from the parent Control too)
+    engineBox->combo.setWantsKeyboardFocus (false);
+    engineBox->combo.setTooltip ("il motore di sintesi è quello dello strumento scelto in Synth Model");
+    addAndMakeVisible (*onBtn); addAndMakeVisible (*engineBox);
     addAndMakeVisible (algView);
-    for (int s : { mOn, mModel, mEngine, mFmModern, mAlg })
+    for (int s : { mOn, mModel, mEngine, mAlg })
         p.apvts.addParameterListener (def (M (s)).id, this);
     refreshSkin();
 }
 
 ModulePanel::~ModulePanel()
 {
-    for (int s : { mOn, mModel, mEngine, mFmModern, mAlg })
+    for (int s : { mOn, mModel, mEngine, mAlg })
         proc.apvts.removeParameterListener (def (mod (module, s)).id, this);
     setLookAndFeel (nullptr);
 }
 
 void ModulePanel::applyFmMode()
 {
-    const bool modern = proc.apvts.getRawParameterValue (def (mod (module, mFmModern)).id)->load() > 0.5f;
+    constexpr bool modern = false;   // the FM "MODERN" view was removed: FM modules always show the DX7 panel
     static const char* dxCap[numOpParams] = { "COARSE", "FINE", "OUT LVL", "R1 ATK", "R2 DEC", "L3 SUS", "R4 REL" };
     static const char* mdCap[numOpParams] = { "Coarse", "Fine", "Level", "Attack", "Decay", "Sustain", "Release" };
     for (size_t gi = 0; gi < groups.size(); ++gi)
@@ -607,14 +612,11 @@ void ModulePanel::refreshSkin()
     const auto* md = PresetLibrary::get().model (mi);
     const int engine = (int) proc.apvts.getRawParameterValue (def (mod (module, mEngine)).id)->load();
     digitalLook = engine != 0;
-    const bool modern = proc.apvts.getRawParameterValue (def (mod (module, mFmModern)).id)->load() > 0.5f;
-    // FM "modern" = Ableton Operator-like: clean flat knobs on the neutral skin
-    juce::String key = md != nullptr ? md->skin : juce::String (digitalLook ? "neutral-d" : "neutral-a");
-    if (engine == 1 && modern) key = "neutral-d";
+    const juce::String key = md != nullptr ? md->skin : juce::String (digitalLook ? "neutral-d" : "neutral-a");
     skin = &skins::find (key, digitalLook);
     look.setSkin (*skin);
     for (auto& grp : controls) for (auto& c : grp) c->setSkin (*skin);
-    for (auto* c : { onBtn.get(), engineBox.get(), modernBtn.get() }) c->setSkin (*skin);
+    for (auto* c : { onBtn.get(), engineBox.get() }) c->setSkin (*skin);
     applyFmMode();
     algView.setAlg ((int) proc.apvts.getRawParameterValue (def (mod (module, mAlg)).id)->load(), skin->accent, skin->text);
     if (auto* vp = findParentComponentOfClass<juce::Viewport>()) setSize (vp->getMaximumVisibleWidth(), preferredHeight (vp->getMaximumVisibleWidth()));
@@ -686,7 +688,6 @@ int ModulePanel::layoutGroups (int width, bool apply)
     }
     algView.setVisible (engine == 1);
     if (apply) algView.setBounds (algArea);
-    modernBtn->setVisible (engine == 1);
     return y + rowH + 12;
 }
 
@@ -697,8 +698,7 @@ void ModulePanel::resized()
     const bool wood = skin != nullptr && skin->wood;
     const int right = getWidth() - 12 - (wood ? 16 : 0);
     onBtn->setBounds (right - 50, 13, 50, 26);
-    modernBtn->setBounds (right - 50 - 84, 13, 78, 26);
-    engineBox->setBounds (right - 50 - 84 - 170, 2, 160, 48);
+    engineBox->setBounds (right - 50 - 8 - 170, 2, 160, 48);
     layoutGroups (getWidth(), true);
 }
 
@@ -759,7 +759,7 @@ void ModulePanel::paint (juce::Graphics& g)
         g.setColour (s.lcdBg); g.fillRoundedRectangle (lcd, 2.0f);
         if (s.pattern == skins::Crt) for (float yy = lcd.getY(); yy < lcd.getBottom(); yy += 2.0f) { g.setColour (juce::Colours::black.withAlpha (0.25f)); g.drawHorizontalLine ((int) yy, lcd.getX(), lcd.getRight()); }
         g.setColour (s.lcdText);
-        g.setFont (juce::Font (juce::FontOptions (juce::Font::getDefaultMonospacedFontName(), 14.0f, juce::Font::bold)));
+        g.setFont (ui::font (14.0f, true));
         g.drawFittedText (txt.toUpperCase(), lcd.reduced (6, 2).toNearestInt(), juce::Justification::centredLeft, 1, 0.7f);
     }
     for (size_t gi = 0; gi < groups.size(); ++gi)
@@ -1100,7 +1100,8 @@ void PresetBrowser::paint (juce::Graphics& g)
 {
     g.fillAll (ui::bg);
     g.setColour (ui::dim); g.setFont (ui::font (11.0f));
-    g.drawText (juce::String ((int) rows.size()) + " presets, ordered by year", getLocalBounds().reduced (12, 8).removeFromTop (16), juce::Justification::topRight);
+    g.drawText (juce::String ((int) rows.size()) + " presets, ordered by year", getLocalBounds().reduced (10).removeFromTop (28).withTrimmedRight (90),
+                juce::Justification::centredRight);
 }
 
 void PresetBrowser::resized()
@@ -1226,6 +1227,8 @@ FivesynthEditor::FivesynthEditor (FivesynthProcessor& p)
     eqExpand.onClick = [this] { showOverlay (&eqBig); };
     eqExpand.setComponentID ("eqExpand");
     browse.setComponentID ("browse");
+    prev.setComponentID ("prev");
+    next.setComponentID ("next");
     overlayClose.setComponentID ("overlayClose");
     content.addAndMakeVisible (eqExpand);
     lfoSmall.onExpand = [this] { showOverlay (&lfoBig); };
@@ -1259,6 +1262,7 @@ FivesynthEditor::FivesynthEditor (FivesynthProcessor& p)
     presetInfo.setFont (ui::font (12.5f));
     presetInfo.setColour (juce::Label::textColourId, ui::dim);
     presetName.setInterceptsMouseClicks (false, false);
+    presetInfo.setInterceptsMouseClicks (false, false);   // it must never swallow clicks meant for the < > buttons
     content.addAndMakeVisible (presetName);
     content.addAndMakeVisible (presetInfo);
     keys.setKeyWidth (17.0f);
@@ -1270,10 +1274,9 @@ FivesynthEditor::FivesynthEditor (FivesynthProcessor& p)
     content.setInterceptsMouseClicks (false, true);   // clicks on the header logo reach the editor
     content.setBounds (0, 0, W, H);
     setResizable (true, true);
-    setResizeLimits (W / 2, H / 2, W * 2, H * 2);
-    getConstrainer()->setFixedAspectRatio ((double) W / H);
-    const double sc = (double) proc.uiState.getProperty ("scale", 1.0);
-    setSize ((int) (W * sc), (int) (H * sc));
+    setResizeLimits (BW / 2, BH / 2, 16384, 16384);   // free aspect ratio: maximise / full screen fills the screen
+    const double sc = (double) proc.uiState.getProperty ("scale", 1.0);   // sessions saved before 2.0.1 only stored a scale
+    setSize ((int) proc.uiState.getProperty ("w", (int) (BW * sc)), (int) proc.uiState.getProperty ("h", (int) (BH * sc)));
     selectModule (0);
     startTimerHz (30);
     updateHeader();
@@ -1329,20 +1332,26 @@ void FivesynthEditor::layoutSlots()
 
 void FivesynthEditor::resized()
 {
-    const float s = (float) getWidth() / (float) W;
-    content.setTransform (juce::AffineTransform::scale (s));
-    proc.uiState.setProperty ("scale", (double) s, nullptr);
+    uiScale = juce::jmax (0.25f, juce::jmin ((float) getWidth() / (float) BW, (float) getHeight() / (float) BH));
+    W = juce::jmax (BW, juce::roundToInt ((float) getWidth() / uiScale));
+    H = juce::jmax (BH, juce::roundToInt ((float) getHeight() / uiScale));
+    const int dh = H - BH;                       // extra height goes to the module area
+    content.setBounds (0, 0, W, H);
+    content.setTransform (juce::AffineTransform::scale (uiScale));
+    proc.uiState.setProperty ("w", getWidth(), nullptr);
+    proc.uiState.setProperty ("h", getHeight(), nullptr);
     // header
     logoArea = { 8, 3, 252, 58 };
     splash.setBounds (0, 0, W, H);
-    presetName.setBounds (272, 6, 640, 28);
-    presetInfo.setBounds (272, 34, 790, 22);
+    // preset name / info stop before the < > buttons (the info label used to cover their lower half)
+    presetName.setBounds (272, 6, W - 420 - 12 - 272, 28);
+    presetInfo.setBounds (272, 34, W - 420 - 12 - 272, 22);
     prev.setBounds (W - 420, 16, 34, 34); next.setBounds (W - 382, 16, 34, 34); browse.setBounds (W - 344, 16, 110, 34);
     layoutSlots();
-    moduleView.setBounds (8, 132, W - 16, 486);
-    browser.setBounds (8, 66, W - 16, 552);
+    moduleView.setBounds (8, 132, W - 16, 486 + dh);
+    browser.setBounds (8, 66, W - 16, 552 + dh);
     // bottom strip
-    const int y0 = 626, gh = 158;
+    const int y0 = 626 + dh, gh = 158;
     int x = 8;
     globalGroups.clear();
     auto place = [&] (int grp, int cols)
@@ -1370,9 +1379,11 @@ void FivesynthEditor::resized()
     eqExpand.setBounds (x + 250 - 26, y0 + 4, 22, 18);
     x += 256;
     lfoSmall.setBounds (x, y0, W - 8 - x, gh);
-    keys.setBounds (8, 792, W - 16, 100);
-    eqBig.setBounds (40, 140, W - 80, 600);
-    lfoBig.setBounds (40, 140, W - 80, 600);
+    keys.setBounds (8, 792 + dh, W - 16, 100);
+    keys.setKeyWidth ((float) (W - 16) / 75.0f);   // the 75 white keys of the MIDI range fill the whole width
+    keys.setLowestVisibleKey (0);
+    eqBig.setBounds (40, 140, W - 80, 600 + dh);
+    lfoBig.setBounds (40, 140, W - 80, 600 + dh);
     overlayClose.setBounds (W - 40 - 90, 146, 80, 26);
     if (panels[selected]) selectModule (selected);
 }
@@ -1380,7 +1391,7 @@ void FivesynthEditor::resized()
 void FivesynthEditor::paint (juce::Graphics& g)
 {
     g.fillAll (ui::bg);
-    g.addTransform (juce::AffineTransform::scale ((float) getWidth() / (float) W));
+    g.addTransform (juce::AffineTransform::scale (uiScale));
     ui::relief (g, juce::Rectangle<float> (0, 0, (float) W, 64), ui::panel, 0.0f, true);
     drawLogo (g);
     // output meter
@@ -1420,8 +1431,7 @@ void FivesynthEditor::drawLogo (juce::Graphics& g)
 
 void FivesynthEditor::mouseDown (const juce::MouseEvent& e)
 {
-    const float s = (float) getWidth() / (float) W;
-    if (logoArea.contains (e.position / s)) { splash.setVisible (true); splash.toFront (false); }
+    if (logoArea.contains (e.position / uiScale)) { splash.setVisible (true); splash.toFront (false); }
 }
 
 void FivesynthEditor::updateHeader()
@@ -1444,7 +1454,7 @@ void FivesynthEditor::timerCallback()
     if (proc.presetIndex() != shownPreset) updateHeader();
     const int slots = (int) proc.apvts.getRawParameterValue (def (layout().gSlots).id)->load();
     if (slots != shownSlots) { layoutSlots(); if (selected >= slots) selectModule (0); }
-    const float s = (float) getWidth() / (float) W;
+    const float s = uiScale;
     repaint ((int) ((W - 104) * s), 0, (int) (104 * s), (int) (60 * s));
     repaint (0, (int) (70 * s), getWidth(), (int) (60 * s));
 }

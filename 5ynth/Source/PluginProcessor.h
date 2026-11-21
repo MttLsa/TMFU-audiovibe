@@ -62,6 +62,8 @@ private:
     std::vector<std::atomic<float>*> raw;
     std::vector<juce::RangedAudioParameter*> prm;
     std::vector<float> snap;
+    std::vector<float> smoothed;              // continuous parameters glide to their new value (~20 ms): no zipper steps
+    std::atomic<bool> smoothReset { true };   // preset / model load: jump straight to the new values
     SynthEngine engine;
     fx::Chorus chorus;
     juce::Reverb reverb;

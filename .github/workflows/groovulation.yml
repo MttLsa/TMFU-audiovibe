@@ -1,0 +1,33 @@
+name: groovulation
+
+on:
+  push:
+    branches: [ main, "claude/**" ]
+    paths: [ "groovulation/**", ".github/workflows/groovulation.yml", "!groovulation/**/*.md", "!groovulation/docs/**" ]
+  workflow_dispatch:
+
+jobs:
+  macos:
+    runs-on: macos-15-intel    # AU + VST3 + .pkg installer (universal: Intel x86_64 + Apple Silicon); auval runs on Intel
+    defaults:
+      run:
+        working-directory: groovulation
+    steps:
+      - uses: actions/checkout@v5
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release --parallel --target Groovulation_AU Groovulation_VST3
+      - name: Validate AU
+        run: |
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R build/Groovulation_artefacts/Release/AU/Groovulation.component ~/Library/Audio/Plug-Ins/Components/
+          killall -9 AudioComponentRegistrar || true
+          auval -v aumu Grvl Twnb
+      - name: Build installer
+        run: ./packaging/macos/make_pkg.sh 1.1.12
+      - name: Upload installer
+        uses: actions/upload-artifact@v5
+        with:
+          name: Groovulation-macOS-Installer
+          path: groovulation/build/installer/Groovulation-1.1.12-macOS.pkg

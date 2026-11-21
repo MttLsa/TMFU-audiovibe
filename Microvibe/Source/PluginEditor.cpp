@@ -30,9 +30,16 @@ static juce::String shortSource (int s)
 
 juce::Typeface::Ptr ui::typeface (bool bold)
 {
-    static const juce::Typeface::Ptr regular = juce::Typeface::createSystemTypefaceFor (BinaryData::UrbanistLight_ttf, BinaryData::UrbanistLight_ttfSize);
-    static const juce::Typeface::Ptr heavy   = juce::Typeface::createSystemTypefaceFor (BinaryData::UrbanistSemiBold_ttf, BinaryData::UrbanistSemiBold_ttfSize);
+    static const juce::Typeface::Ptr regular = juce::Typeface::createSystemTypefaceFor (BinaryData::InterRegular_ttf, BinaryData::InterRegular_ttfSize);
+    static const juce::Typeface::Ptr heavy   = juce::Typeface::createSystemTypefaceFor (BinaryData::InterSemiBold_ttf, BinaryData::InterSemiBold_ttfSize);
     return bold ? heavy : regular;
+}
+
+// plug-in name in the header only: Urbanist SemiBold, as before the switch to Inter
+juce::Font ui::nameFont (float h)
+{
+    static const juce::Typeface::Ptr tf = juce::Typeface::createSystemTypefaceFor (BinaryData::UrbanistSemiBold_ttf, BinaryData::UrbanistSemiBold_ttfSize);
+    return juce::Font (juce::FontOptions (tf).withHeight (h));
 }
 
 // =============================================================================================== look
@@ -1205,7 +1212,7 @@ void MicrovibeEditor::paint (juce::Graphics& g)
     };
     // header
     g.setColour (ui::panel); g.fillRect (rHeader);
-    g.setColour (ui::text); g.setFont (ui::font (24.0f, true));
+    g.setColour (ui::text); g.setFont (ui::nameFont (24.0f));
     g.drawText ("MICROVIBE", 16, 10, 200, 30, juce::Justification::left);
     g.setColour (ui::text); g.setFont (ui::font (11.0f));
     g.drawText ("TMFU audiovibe  -  glitch / texture / fx", 16, 40, 260, 16, juce::Justification::left);

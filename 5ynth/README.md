@@ -7,7 +7,7 @@ storia, ognuno legato al **brano più famoso che l'ha usato**. La libreria è or
 
 ![5ynth](docs/gui_Organ_2.png)
 
-Manuale d'uso: [docs/5ynth_Manuale_v2.1.0.pdf](docs/5ynth_Manuale_v2.1.0.pdf).
+**Manuale d'uso (PDF):** [docs/5ynth_Manuale_v2.1.0.pdf](docs/5ynth_Manuale_v2.1.0.pdf)
 
 ## Moduli synth A–E
 
@@ -22,12 +22,10 @@ Manuale d'uso: [docs/5ynth_Manuale_v2.1.0.pdf](docs/5ynth_Manuale_v2.1.0.pdf).
   HP12, LP24 clean, notch), **drive a pedale** (Tube, **RAT**, **DS-1**), inviluppi filtro e ampiezza, LFO, pitch env,
   accent, lo-fi, **delay** (tempo, feedback, mix, ping-pong), **level** e **pan**.
 
-### FM a 6 operatori: DX7 o MODERN
-I moduli FM hanno 6 operatori e i **32 algoritmi** in stile DX7 (schema dell'algoritmo disegnato nel pannello).
-- Modo **DX7**: parametri come sul DX7 — COARSE / FINE 0–99, OUT LVL 0–99, rate R1/R2/R4 (99 = veloce), livello L3 0–99,
-  FEEDBACK 0–7, celle a membrana con LCD.
-- **MODERN**: gli stessi operatori presentati come in Operator di Ableton Live — ratio ×, fine +, livelli in dB, Attack /
-  Decay / Release in ms, Sustain in dB, manopole pulite.
+### FM a 6 operatori
+I moduli FM hanno 6 operatori e i **32 algoritmi** in stile DX7 (schema dell'algoritmo disegnato nel pannello), con i
+parametri come sul DX7 — COARSE / FINE 0–99, OUT LVL 0–99, rate R1/R2/R4 (99 = veloce), livello L3 0–99, FEEDBACK 0–7,
+celle a membrana con LCD.
 
 ### TB-303
 - **Filtro**: diode ladder a 4 poli con il primo polo un'ottava sopra gli altri (gli stadi del 303 non sono separati),
@@ -50,13 +48,14 @@ Saw Up/Down, Square, S&H, Random; rate libero o **SYNC** al tempo (8 battute …
 fase. Il **+** apre la vista con tutti gli 8 LFO. LFO, EQ e filtri d'uscita non cambiano quando carichi un preset.
 
 ## Grafica
-- Stile Twinbox (piatto, scuro, in stile Ableton) con un leggero **rilievo**; font **Inter** (il più vicino, con licenza libera,
-  al font dell'interfaccia di Ableton Live, che è proprietario).
+- Stile Twinbox (piatto, scuro, in stile Ableton) con un leggero **rilievo**; font **Inter** Regular / SemiBold (SIL OFL) per tutto
+  il testo dell'interfaccia. Tutte le scritte di moduli, parametri e preset sono in inglese.
 - Ogni modulo prende l'aspetto dello strumento scelto (34 skin: legno Moog/Prophet, fader Juno/CS-80/Alpha Juno, TB-303
   argento, LCD e membrane DX7/M1, PPG blu, Virus/Nord rossi, CRT Fairlight…), senza loghi o grafiche originali.
 - **Fader più lunghi** sugli strumenti che hanno fader. Risoluzione fine: le manopole si muovono a passi di **0,01**, i fader di
   **0,001**; dopo un clic le frecce muovono di 1 % (fader 0,1 %), Shift = 10× più fine; doppio clic = valore di default.
-- Finestra **ridimensionabile** (dal 50 % al 200 %, la dimensione viene ricordata), con EQ e LFO espandibili.
+- Finestra **ridimensionabile** liberamente (la dimensione viene ricordata): ingrandita o a schermo intero occupa tutto lo
+  schermo, lo spazio in più va ai moduli. EQ e LFO espandibili.
 - Logo **5YNTH**, disegnato in vettoriale (nitido a ogni dimensione): lettere in metallo spazzolato; il "5" ha la barra
   superiore a forma di tastiera stilizzata e **cinque barre luminose** (i 5 synth); una cornice segue il contorno della
   scritta. Clic sul logo nella testata = logo grande (clic per chiuderlo).
@@ -76,7 +75,7 @@ Elenco completo: [docs/PRESETS.md](docs/PRESETS.md).
 
 | | | |
 |---|---|---|
-| ![](docs/gui_E.PIANO_1.png) DX7 | ![](docs/gui_FM_modern.png) FM MODERN, 5 moduli | ![](docs/gui_Acid_Tracks.png) TB-303 |
+| ![](docs/gui_E.PIANO_1.png) DX7 | ![](docs/gui_FM_5_modules.png) FM, 5 moduli | ![](docs/gui_Acid_Tracks.png) TB-303 |
 | ![](docs/gui_Time_After_Time_Pad.png) Juno-60 (fader) | ![](docs/gui_browser.png) Browser | ![](docs/gui_eq.png) EQ |
 
 ## Fonti della ricerca
@@ -110,8 +109,9 @@ Su macOS la CI (`.github/workflows/5ynth.yml`, runner Intel) produce l'installer
 **5ynth-2.1.0-macOS.pkg** (Intel + Apple Silicon: AU, VST3, app Standalone). Nella DAW compare sotto **TMFU audiovibe**
 come **5ynth** (AU `aumu Szla Tmfu`: codici e stato dei parametri invariati, i progetti salvati con SynthZilla ritrovano il plugin).
 
-Strumenti: `tools/gen_presets.py` (libreria + `docs/PRESETS.md`); test con `-DFIVESYNTH_BUILD_TESTS=ON`:
-`FivesynthTest <dir> units | check | levels | wav <nome> | gui | logo`; manuale: `python3 tools/make_manual.py 2.1.0`.
+Strumenti: `tools/gen_presets.py` (libreria + `docs/PRESETS.md`); `tools/make_manual.py <params.json> <versione>` (manuale PDF,
+`params.json` da `FivesynthTest <dir> params`); test con `-DFIVESYNTH_BUILD_TESTS=ON`:
+`FivesynthTest <dir> units | check | levels | wav <nome> | gui | logo | params`.
 
 > Marchi e nomi degli strumenti appartengono ai rispettivi proprietari e sono usati solo per indicare lo strumento di
 > riferimento. Font: vedi `resources/fonts/FONTS-LICENSE.txt`.

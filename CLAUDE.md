@@ -14,11 +14,13 @@
   `AU_MAIN_TYPE kAudioUnitType_MusicEffect`, es. Microvibe) `auval -v aumf <PLUGIN_CODE> Tmfu`.
 
 ## Font e lingua dell'interfaccia
-- Font unico per tutte le scritte di ogni plugin e documento: **Urbanist** (The Urbanist Project Authors, SIL OFL 1.1),
-  geometric sans serif: **Light** per i testi, **SemiBold** per titoli, pulsanti e tutto ciò che è in grassetto.
-  Va incorporato nel binario (`Urbanist-Light.ttf` + `Urbanist-SemiBold.ttf` in `resources/fonts/`, aggiunti a
-  `juce_add_binary_data`, con `OFL.txt` accanto) e usato tramite `Typeface::createSystemTypefaceFor` +
+- Font unico per tutte le scritte di ogni plugin: **Inter** (The Inter Project Authors, SIL OFL 1.1):
+  **Regular** per i testi, **SemiBold** per titoli, pulsanti e tutto ciò che è in grassetto.
+  Va incorporato nel binario (`Inter-Regular.ttf` + `Inter-SemiBold.ttf` in `resources/fonts/`, aggiunti a
+  `juce_add_binary_data`, con la licenza OFL accanto) e usato tramite `Typeface::createSystemTypefaceFor` +
   `setDefaultSansSerifTypeface`/`getTypefaceForFont` nel LookAndFeel, così anche menu, popup e tooltip lo usano.
-  Modello: `Microvibe/Source/PluginEditor.cpp` (`ui::typeface`). Anche i manuali PDF usano Urbanist.
+  Modello: `Microvibe/Source/PluginEditor.cpp` (`ui::typeface`).
+- Logo e nome del plugin nell'intestazione restano col loro font originale (es. Microvibe Urbanist SemiBold,
+  Groovulation Urbanist Light, SynthZilla Rostex Outline): font separato solo per quelle scritte.
 - Nomi di moduli, parametri, pulsanti e titoli dei pannelli in **inglese**; restano in italiano solo menu contestuali,
   tooltip, suggerimenti e testi di aiuto.
