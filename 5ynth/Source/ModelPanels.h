@@ -12,7 +12,10 @@
 // =====================================================================================================
 namespace panels
 {
-    struct Item { int suffix; const char* label; };
+    // choices: for menus, the items the original offers (indices of the parameter's choice list), in panel order
+    struct Item { int suffix; const char* label; std::vector<int> choices = {}; };
+    // analog waveform indices (params "o1wave" / "o2wave")
+    enum Wave { Saw = 0, Pulse, Tri, Sine, Shark, Square, WideRect, NarrowRect, RevSaw };
     struct Group
     {
         const char* title;
@@ -34,8 +37,8 @@ namespace panels
             std::map<juce::String, Panel> m;
             // ------------------------------------------------------------------ Moog
             m["Moog modular"] = {
-                { "921 OSCILLATOR 1", { { mOct, "Range" }, { mO1Wave, "Waveform" }, { mO1Pw, "Width" }, { mO1Lvl, "Level" } } },
-                { "921 OSCILLATOR 2", { { mO2Oct, "Range" }, { mO2Fine, "Frequency" }, { mO2Wave, "Waveform" }, { mO2Lvl, "Level" } } },
+                { "921 OSCILLATOR 1", { { mOct, "Range" }, { mO1Wave, "Waveform", { Saw, Tri, Sine, Pulse } }, { mO1Pw, "Width" }, { mO1Lvl, "Level" } } },
+                { "921 OSCILLATOR 2", { { mO2Oct, "Range" }, { mO2Fine, "Frequency" }, { mO2Wave, "Waveform", { Saw, Tri, Sine, Pulse } }, { mO2Lvl, "Level" } } },
                 { "904A LOW PASS FILTER", { { mCut, "Fixed Control V." }, { mRes, "Regeneration" }, { mEnv, "Control In (Env)" }, { mKey, "Keyboard CV" } } },
                 { "911 ENVELOPE (FILTER)", { { mFA, "T1 Attack" }, { mFD, "T2 Decay" }, { mFS, "Esus" }, { mFR, "T3 Release" } } },
                 { "911 ENVELOPE (VCA)", { { mAA, "T1 Attack" }, { mAD, "T2 Decay" }, { mAS, "Esus" }, { mAR, "T3 Release" } } },
@@ -43,30 +46,30 @@ namespace panels
             };
             m["Moog Minimoog Model D"] = {
                 { "CONTROLLERS", { { mFine, "Tune" }, { mLfoRate, "Osc 3 Rate (Mod)" }, { mLfoPitch, "Osc Modulation" }, { mLfoCut, "Filter Modulation" } } },
-                { "OSCILLATOR BANK", { { mOct, "Osc 1 Range" }, { mO1Wave, "Osc 1 Waveform" }, { mO2Oct, "Osc 2 Range" }, { mO2Fine, "Osc 2 Frequency" }, { mO2Wave, "Osc 2 Waveform" } } },
+                { "OSCILLATOR BANK", { { mOct, "Osc 1 Range" }, { mO1Wave, "Osc 1 Waveform", { Tri, Shark, Saw, Square, WideRect, NarrowRect } }, { mO2Oct, "Osc 2 Range" }, { mO2Fine, "Osc 2 Frequency" }, { mO2Wave, "Osc 2 Waveform", { Tri, Shark, Saw, Square, WideRect, NarrowRect } } } },
                 { "MIXER", { { mO1Lvl, "Osc 1" }, { mO2Lvl, "Osc 2" }, { mNoise, "Noise" } } },
                 { "MODIFIERS - FILTER", { { mCut, "Cutoff Frequency" }, { mRes, "Emphasis" }, { mEnv, "Amount of Contour" }, { mKey, "Keyboard Control" } } },
                 { "FILTER CONTOUR", { { mFA, "Attack Time" }, { mFD, "Decay Time" }, { mFS, "Sustain Level" } } },
                 { "LOUDNESS CONTOUR", { { mAA, "Attack Time" }, { mAD, "Decay Time" }, { mAS, "Sustain Level" } } },
             };
             m["Polymoog"] = {
-                { "OSCILLATORS", { { mO1Wave, "Waveform" }, { mO1Pw, "Pulse Width" }, { mO2Wave, "Osc 2 Wave" }, { mO2Fine, "Osc 2 Tune" }, { mO2Lvl, "Osc 2 Level" }, { mSub, "Sub Octave" } } },
+                { "OSCILLATORS", { { mO1Wave, "Waveform", { Saw, Pulse } }, { mO1Pw, "Pulse Width" }, { mO2Wave, "Osc 2 Wave", { Saw, Pulse } }, { mO2Fine, "Osc 2 Tune" }, { mO2Lvl, "Osc 2 Level" }, { mSub, "Sub Octave" } } },
                 { "MODULATION", { { mLfoShape, "Waveform" }, { mLfoRate, "Rate" }, { mLfoPitch, "Pitch Mod" }, { mLfoTim, "PW Mod" }, { mPwm, "PWM" } } },
                 { "VCF", { { mCut, "Cutoff" }, { mRes, "Emphasis" }, { mEnv, "Contour Amount" } } },
                 { "VCF CONTOUR", { { mFA, "Attack" }, { mFD, "Decay" }, { mFS, "Sustain" }, { mFR, "Release" } } },
                 { "VCA CONTOUR", { { mAA, "Attack" }, { mAD, "Decay" }, { mAS, "Sustain" }, { mAR, "Release" } } },
             };
             m["Moog Source"] = {
-                { "OSCILLATOR 1", { { mOct, "Octave" }, { mO1Wave, "Waveform" }, { mO1Pw, "Pulse Width" }, { mO1Lvl, "Level" } } },
-                { "OSCILLATOR 2", { { mO2Oct, "Octave" }, { mO2Semi, "Frequency" }, { mO2Wave, "Waveform" }, { mO2Lvl, "Level" }, { mSync, "Sync" } } },
+                { "OSCILLATOR 1", { { mOct, "Octave" }, { mO1Wave, "Waveform", { Saw, Tri, Pulse } }, { mO1Pw, "Pulse Width" }, { mO1Lvl, "Level" } } },
+                { "OSCILLATOR 2", { { mO2Oct, "Octave" }, { mO2Semi, "Frequency" }, { mO2Wave, "Waveform", { Saw, Tri, Pulse } }, { mO2Lvl, "Level" }, { mSync, "Sync" } } },
                 { "MIXER", { { mSub, "Sub" }, { mNoise, "Noise" } } },
                 { "FILTER", { { mCut, "Cutoff" }, { mRes, "Emphasis" }, { mEnv, "Contour Amount" }, { mKey, "Kbd Amount" } } },
                 { "FILTER CONTOUR", { { mFA, "Attack" }, { mFD, "Decay" }, { mFS, "Sustain" }, { mFR, "Release" } } },
                 { "LOUDNESS CONTOUR", { { mAA, "Attack" }, { mAD, "Decay" }, { mAS, "Sustain" }, { mAR, "Release" } } },
             };
             m["Moog Sub 37"] = {
-                { "OSCILLATOR 1", { { mOct, "Octave" }, { mO1Wave, "Wave" }, { mO1Lvl, "Osc 1" } } },
-                { "OSCILLATOR 2", { { mO2Oct, "Octave" }, { mO2Fine, "Frequency" }, { mO2Wave, "Wave" }, { mO2Lvl, "Osc 2" }, { mSync, "Hard Sync" } } },
+                { "OSCILLATOR 1", { { mOct, "Octave" }, { mO1Wave, "Wave", { Tri, Saw, Square, NarrowRect } }, { mO1Lvl, "Osc 1" } } },
+                { "OSCILLATOR 2", { { mO2Oct, "Octave" }, { mO2Fine, "Frequency" }, { mO2Wave, "Wave", { Tri, Saw, Square, NarrowRect } }, { mO2Lvl, "Osc 2" }, { mSync, "Hard Sync" } } },
                 { "MIXER", { { mSub, "Sub Osc" }, { mNoise, "Noise" } } },
                 { "FILTER", { { mCut, "Cutoff" }, { mRes, "Resonance" }, { mFDrive, "Multidrive" }, { mEnv, "EG Amt" }, { mKey, "KB Amt" } } },
                 { "FILTER EG", { { mFA, "Attack" }, { mFD, "Decay" }, { mFS, "Sustain" }, { mFR, "Release" } } },
@@ -76,18 +79,18 @@ namespace panels
             };
             // ------------------------------------------------------------------ early / experimental
             m["Electro-Theremin"] = {
-                { "OSCILLATOR", { { mFine, "Pitch Trim" }, { mO1Wave, "Tone" }, { mO2Wave, "Tone 2" }, { mO2Fine, "Tone 2 Tune" }, { mO2Lvl, "Tone 2 Level" } } },
+                { "OSCILLATOR", { { mFine, "Pitch Trim" }, { mO1Wave, "Tone", { Sine, Tri } }, { mO2Wave, "Tone 2", { Sine, Tri } }, { mO2Fine, "Tone 2 Tune" }, { mO2Lvl, "Tone 2 Level" } } },
                 { "TONE", { { mCut, "Brightness" }, { mRes, "Resonance" } } },
                 { "EXPRESSION", { { mAA, "Swell" }, { mAR, "Fade" }, { mLfoRate, "Vibrato Rate" }, { mLfoPitch, "Vibrato Depth" }, { mLfoDelay, "Vibrato Delay" } } },
             };
             m["BBC Radiophonic oscillators"] = {
-                { "OSCILLATORS", { { mOct, "Octave" }, { mO1Wave, "Osc 1 Wave" }, { mO2Wave, "Osc 2 Wave" }, { mO2Lvl, "Osc 2 Level" } } },
+                { "OSCILLATORS", { { mOct, "Octave" }, { mO1Wave, "Osc 1 Wave", { Sine, Square, Saw, Tri } }, { mO2Wave, "Osc 2 Wave", { Sine, Square, Saw, Tri } }, { mO2Lvl, "Osc 2 Level" } } },
                 { "FILTER", { { mCut, "Frequency" }, { mRes, "Resonance" }, { mEnv, "Envelope" } } },
                 { "ENVELOPE (TAPE)", { { mFD, "Filter Decay" }, { mFS, "Filter Level" }, { mAA, "Attack" }, { mAD, "Decay" }, { mAS, "Level" }, { mAR, "Release" } } },
             };
             m["EMS VCS3 / Synthi AKS"] = {
-                { "OSCILLATOR 1", { { mOct, "Frequency (Oct)" }, { mO1Wave, "Shape" }, { mO1Lvl, "Level" } } },
-                { "OSCILLATOR 2", { { mO2Fine, "Frequency" }, { mO2Wave, "Shape" }, { mO2Lvl, "Level" } } },
+                { "OSCILLATOR 1", { { mOct, "Frequency (Oct)" }, { mO1Wave, "Shape", { Sine, Saw } }, { mO1Lvl, "Level" } } },
+                { "OSCILLATOR 2", { { mO2Fine, "Frequency" }, { mO2Wave, "Shape", { Pulse, Tri } }, { mO2Lvl, "Level" } } },
                 { "OSCILLATOR 3", { { mLfoRate, "Frequency" }, { mLfoShape, "Shape" }, { mLfoPitch, "To Pitch" }, { mLfoCut, "To Filter" } } },
                 { "RING MOD / NOISE", { { mRing, "Ring Modulator" }, { mNoise, "Noise" } } },
                 { "FILTER", { { mCut, "Frequency" }, { mRes, "Response" }, { mEnv, "Envelope" } } },
@@ -95,8 +98,8 @@ namespace panels
             };
             // ------------------------------------------------------------------ ARP
             const Panel arp = {
-                { "VCO 1", { { mOct, "Coarse Tune" }, { mO1Wave, "Waveform" }, { mO1Pw, "Pulse Width" }, { mO1Lvl, "Level" } } },
-                { "VCO 2", { { mO2Oct, "Coarse Tune" }, { mO2Fine, "Fine Tune" }, { mO2Wave, "Waveform" }, { mO2Lvl, "Level" }, { mSync, "Sync" } } },
+                { "VCO 1", { { mOct, "Coarse Tune" }, { mO1Wave, "Waveform", { Saw, Pulse, Tri, Sine } }, { mO1Pw, "Pulse Width" }, { mO1Lvl, "Level" } } },
+                { "VCO 2", { { mO2Oct, "Coarse Tune" }, { mO2Fine, "Fine Tune" }, { mO2Wave, "Waveform", { Saw, Pulse, Tri, Sine } }, { mO2Lvl, "Level" }, { mSync, "Sync" } } },
                 { "MIXER", { { mRing, "Ring Mod" }, { mSub, "Sub Osc" }, { mNoise, "Noise" } } },
                 { "VCF", { { mCut, "Initial Frequency" }, { mRes, "Resonance" }, { mEnv, "ADSR Amount" }, { mKey, "Kybd CV" }, { mLfoCut, "LFO Amount" } } },
                 { "ADSR", { { mFA, "Attack" }, { mFD, "Decay" }, { mFS, "Sustain" }, { mFR, "Release" } } },
@@ -111,7 +114,7 @@ namespace panels
             };
             // ------------------------------------------------------------------ Yamaha CS-80
             m["Yamaha CS-80"] = {
-                { "VCO I / II", { { mOct, "Feet" }, { mO1Wave, "Saw / Square" }, { mO1Pw, "Pulse Width" }, { mPwm, "PWM Speed" }, { mO2Oct, "Ch II Feet" }, { mO2Fine, "Ch II Detune" }, { mO2Wave, "Ch II Wave" }, { mO2Lvl, "Ch II Level" } } },
+                { "VCO I / II", { { mOct, "Feet" }, { mO1Wave, "Saw / Square", { Saw, Pulse } }, { mO1Pw, "Pulse Width" }, { mPwm, "PWM Speed" }, { mO2Oct, "Ch II Feet" }, { mO2Fine, "Ch II Detune" }, { mO2Wave, "Ch II Wave", { Saw, Pulse } }, { mO2Lvl, "Ch II Level" } } },
                 { "NOISE / SINE", { { mSub, "Sine" }, { mNoise, "Noise" } } },
                 { "VCF", { { mCut, "LPF Cutoff" }, { mRes, "Resonance" }, { mEnv, "EG Depth" }, { mKey, "Brilliance" } } },
                 { "VCF EG", { { mFA, "Attack" }, { mFD, "Decay" }, { mFS, "Initial Level" }, { mFR, "Release" } } },
@@ -121,8 +124,8 @@ namespace panels
             };
             // ------------------------------------------------------------------ Sequential / Oberheim
             m["Sequential Prophet-5"] = {
-                { "OSCILLATOR A", { { mOct, "Frequency" }, { mO1Wave, "Saw / Pulse" }, { mO1Pw, "Pulse Width" }, { mSync, "Sync" } } },
-                { "OSCILLATOR B", { { mO2Semi, "Frequency" }, { mO2Fine, "Fine" }, { mO2Wave, "Saw / Tri / Pulse" }, { mO2Pw, "Pulse Width" } } },
+                { "OSCILLATOR A", { { mOct, "Frequency" }, { mO1Wave, "Saw / Pulse", { Saw, Pulse } }, { mO1Pw, "Pulse Width" }, { mSync, "Sync" } } },
+                { "OSCILLATOR B", { { mO2Semi, "Frequency" }, { mO2Fine, "Fine" }, { mO2Wave, "Saw / Tri / Pulse", { Saw, Tri, Pulse } }, { mO2Pw, "Pulse Width" } } },
                 { "POLY-MOD", { { mXmod, "Osc B" }, { mPenv, "Filt Env" }, { mPdec, "Env Decay" } } },
                 { "MIXER", { { mO1Lvl, "Osc A" }, { mO2Lvl, "Osc B" }, { mNoise, "Noise" } } },
                 { "FILTER", { { mCut, "Cutoff" }, { mRes, "Resonance" }, { mEnv, "Env Amt" }, { mKey, "Keyboard" } } },
@@ -131,8 +134,8 @@ namespace panels
                 { "LFO / WHEEL-MOD", { { mLfoShape, "Shape" }, { mLfoRate, "Frequency" }, { mLfoPitch, "Freq A+B" }, { mLfoTim, "PW A+B" }, { mPwm, "PWM" }, { mLfoCut, "Filter" } } },
             };
             const Panel obx = {
-                { "OSCILLATOR 1", { { mOct, "Octave" }, { mO1Wave, "Saw / Pulse" }, { mO1Pw, "Pulse Width" } } },
-                { "OSCILLATOR 2", { { mO2Fine, "Detune" }, { mO2Wave, "Saw / Pulse" }, { mO2Pw, "Pulse Width" }, { mO2Lvl, "Level" }, { mSync, "Sync" } } },
+                { "OSCILLATOR 1", { { mOct, "Octave" }, { mO1Wave, "Saw / Pulse", { Saw, Pulse } }, { mO1Pw, "Pulse Width" } } },
+                { "OSCILLATOR 2", { { mO2Fine, "Detune" }, { mO2Wave, "Saw / Pulse", { Saw, Pulse } }, { mO2Pw, "Pulse Width" }, { mO2Lvl, "Level" }, { mSync, "Sync" } } },
                 { "FILTER", { { mCut, "Frequency" }, { mRes, "Resonance" }, { mEnv, "Modulation" }, { mKey, "Keyboard" } } },
                 { "FILTER ENVELOPE", { { mFA, "Attack" }, { mFD, "Decay" }, { mFS, "Sustain" }, { mFR, "Release" } } },
                 { "VOLUME ENVELOPE", { { mAA, "Attack" }, { mAD, "Decay" }, { mAS, "Sustain" }, { mAR, "Release" } } },
@@ -142,8 +145,8 @@ namespace panels
             m["Oberheim OB-X"] = obx; m["Oberheim OB-Xa"] = obx;
             // ------------------------------------------------------------------ Korg MS-20
             m["Korg MS-20"] = {
-                { "VCO 1", { { mOct, "Scale" }, { mO1Wave, "Waveform" }, { mO1Pw, "Pulse Width" }, { mO1Lvl, "VCO 1 Level" } } },
-                { "VCO 2", { { mO2Semi, "Pitch" }, { mO2Wave, "Waveform" }, { mO2Lvl, "VCO 2 Level" }, { mRing, "Ring Mod" } } },
+                { "VCO 1", { { mOct, "Scale" }, { mO1Wave, "Waveform", { Tri, Saw, Pulse } }, { mO1Pw, "Pulse Width" }, { mO1Lvl, "VCO 1 Level" } } },
+                { "VCO 2", { { mO2Semi, "Pitch" }, { mO2Wave, "Waveform", { Saw, Square, NarrowRect } }, { mO2Lvl, "VCO 2 Level" }, { mRing, "Ring Mod" } } },
                 { "VCF", { { mCut, "LPF Cutoff" }, { mRes, "Peak" }, { mEnv, "EG Int" }, { mFDrive, "Drive" }, { mKey, "Kbd Track" } } },
                 { "EG 1 (VCF)", { { mFA, "Attack" }, { mFD, "Release" }, { mFS, "Sustain" } } },
                 { "EG 2 (VCA)", { { mAA, "Attack" }, { mAD, "Decay" }, { mAS, "Sustain" }, { mAR, "Release" } } },
@@ -151,8 +154,8 @@ namespace panels
             };
             // ------------------------------------------------------------------ Roland analog
             m["Roland Jupiter-8"] = {
-                { "VCO-1", { { mOct, "Range" }, { mO1Wave, "Waveform" }, { mXmod, "Cross Mod" } } },
-                { "VCO-2", { { mO2Oct, "Range" }, { mO2Fine, "Fine Tune" }, { mO2Wave, "Waveform" }, { mO1Pw, "Pulse Width" }, { mSync, "Sync" } } },
+                { "VCO-1", { { mOct, "Range" }, { mO1Wave, "Waveform", { Tri, Saw, Pulse, Square } }, { mXmod, "Cross Mod" } } },
+                { "VCO-2", { { mO2Oct, "Range" }, { mO2Fine, "Fine Tune" }, { mO2Wave, "Waveform", { Sine, Saw, Pulse } }, { mO1Pw, "Pulse Width" }, { mSync, "Sync" } } },
                 { "SOURCE MIX", { { mO1Lvl, "VCO-1" }, { mO2Lvl, "VCO-2" }, { mSub, "Sub" }, { mNoise, "Noise" } } },
                 { "VCF", { { mCut, "Cutoff Freq" }, { mRes, "Resonance" }, { mEnv, "Env Mod" }, { mLfoCut, "LFO Mod" }, { mKey, "Key Follow" } } },
                 { "ENV-1 (VCF)", { { mFA, "Attack" }, { mFD, "Decay" }, { mFS, "Sustain" }, { mFR, "Release" } } },
@@ -162,14 +165,14 @@ namespace panels
             };
             const Panel juno = {
                 { "LFO", { { mLfoRate, "Rate" }, { mLfoDelay, "Delay Time" }, { mLfoShape, "Wave" } } },
-                { "DCO", { { mOct, "Range" }, { mLfoPitch, "LFO" }, { mO1Wave, "Pulse / Saw" }, { mO1Pw, "PW" }, { mPwm, "PWM" }, { mLfoTim, "PWM (LFO)" }, { mSub, "Sub Osc" }, { mNoise, "Noise" } } },
+                { "DCO", { { mOct, "Range" }, { mLfoPitch, "LFO" }, { mO1Wave, "Pulse / Saw", { Pulse, Saw } }, { mO1Pw, "PW" }, { mPwm, "PWM" }, { mLfoTim, "PWM (LFO)" }, { mSub, "Sub Osc" }, { mNoise, "Noise" } } },
                 { "VCF", { { mCut, "Freq" }, { mRes, "Res" }, { mEnv, "Env" }, { mLfoCut, "LFO" }, { mKey, "Kybd" } } },
                 { "ENV", { { mFA, "A" }, { mFD, "D" }, { mFS, "S" }, { mFR, "R" } } },
                 { "VCA", { { mAA, "A" }, { mAD, "D" }, { mAS, "S" }, { mAR, "R" } } },
             };
             m["Roland Juno-60"] = juno; m["Roland Juno-106"] = juno;
             m["Roland SH-101"] = {
-                { "VCO", { { mOct, "Range" }, { mLfoPitch, "Mod" }, { mO1Wave, "Waveform" }, { mO1Pw, "Pulse Width" }, { mPwm, "PWM" } } },
+                { "VCO", { { mOct, "Range" }, { mLfoPitch, "Mod" }, { mO1Wave, "Waveform", { Pulse, Saw } }, { mO1Pw, "Pulse Width" }, { mPwm, "PWM" } } },
                 { "SOURCE MIXER", { { mO1Lvl, "Pulse / Saw" }, { mSub, "Sub Osc" }, { mNoise, "Noise" } } },
                 { "VCF", { { mCut, "Freq" }, { mRes, "Res" }, { mEnv, "Env" }, { mLfoCut, "Mod" }, { mKey, "Kybd" } } },
                 { "ENV", { { mFA, "A" }, { mFD, "D" }, { mFS, "S" }, { mFR, "R" } } },
@@ -177,19 +180,19 @@ namespace panels
                 { "MODULATOR", { { mLfoRate, "Rate" }, { mLfoShape, "Waveform" }, { mLfoDelay, "Delay" } } },
             };
             m["Roland TB-303"] = {
-                { "TB-303", { { mFine, "Tuning" }, { mO1Wave, "Waveform" }, { mCut, "Cut Off Freq" }, { mRes, "Resonance" }, { mEnv, "Env Mod" }, { mFD, "Decay" }, { mAccent, "Accent" } } },
+                { "TB-303", { { mFine, "Tuning" }, { mO1Wave, "Waveform", { Saw, Square } }, { mCut, "Cut Off Freq" }, { mRes, "Resonance" }, { mEnv, "Env Mod" }, { mFD, "Decay" }, { mAccent, "Accent" } } },
             };
             m["Roland JX-8P"] = {
-                { "DCO-1", { { mOct, "Range" }, { mO1Wave, "Waveform" }, { mO1Lvl, "Level" } } },
-                { "DCO-2", { { mO2Oct, "Range" }, { mO2Fine, "Fine Tune" }, { mO2Wave, "Waveform" }, { mO2Lvl, "Level" }, { mXmod, "Cross Mod" } } },
+                { "DCO-1", { { mOct, "Range" }, { mO1Wave, "Waveform", { Saw, Pulse, Square } }, { mO1Lvl, "Level" } } },
+                { "DCO-2", { { mO2Oct, "Range" }, { mO2Fine, "Fine Tune" }, { mO2Wave, "Waveform", { Saw, Pulse, Square } }, { mO2Lvl, "Level" }, { mXmod, "Cross Mod" } } },
                 { "VCF", { { mCut, "Cutoff Freq" }, { mRes, "Resonance" }, { mEnv, "Env Mod" }, { mKey, "Key Follow" } } },
                 { "ENV-1", { { mFA, "Attack" }, { mFD, "Decay" }, { mFS, "Sustain" }, { mFR, "Release" } } },
                 { "ENV-2", { { mAA, "Attack" }, { mAD, "Decay" }, { mAS, "Sustain" }, { mAR, "Release" } } },
                 { "UNISON", { { mUni, "Voices" }, { mDetune, "Detune" } } },
             };
             m["Roland Alpha Juno-2"] = {
-                { "DCO", { { mOct, "Range" }, { mO1Wave, "Pulse / Saw" }, { mO1Pw, "PW" }, { mPwm, "PWM Rate" }, { mSub, "Sub Osc" }, { mNoise, "Noise" }, { mLfoPitch, "LFO Mod" } } },
-                { "DCO 2 (LAYER)", { { mO2Oct, "Range" }, { mO2Fine, "Detune" }, { mO2Wave, "Wave" }, { mO2Lvl, "Level" } } },
+                { "DCO", { { mOct, "Range" }, { mO1Wave, "Pulse / Saw", { Pulse, Saw, Square } }, { mO1Pw, "PW" }, { mPwm, "PWM Rate" }, { mSub, "Sub Osc" }, { mNoise, "Noise" }, { mLfoPitch, "LFO Mod" } } },
+                { "DCO 2 (LAYER)", { { mO2Oct, "Range" }, { mO2Fine, "Detune" }, { mO2Wave, "Wave", { Pulse, Saw, Square } }, { mO2Lvl, "Level" } } },
                 { "VCF", { { mCut, "Cutoff Freq" }, { mRes, "Resonance" }, { mEnv, "Env Mod" }, { mKey, "Key Follow" } } },
                 { "ENV", { { mAA, "T1" }, { mAD, "T2 / T3" }, { mAS, "L3" }, { mAR, "T4" } } },
                 { "ENV (VCF)", { { mFA, "T1" }, { mFD, "T2 / T3" }, { mFS, "L3" }, { mFR, "T4" } } },

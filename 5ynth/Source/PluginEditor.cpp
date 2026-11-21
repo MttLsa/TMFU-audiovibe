@@ -430,6 +430,22 @@ Control::Control (juce::AudioProcessorValueTreeState& st, int p, const juce::Str
     }
 }
 
+void Control::restrictChoices (juce::AudioProcessorValueTreeState& st, const std::vector<int>& allowed)
+{
+    const auto& d = def (pid);
+    auto* prm = st.getParameter (d.id);
+    if (prm == nullptr || d.kind != C) return;
+    ca.reset();
+    combo.clear (juce::dontSendNotification);
+    std::vector<int> items = allowed;
+    const int cur = (int) std::lround (st.getRawParameterValue (d.id)->load());
+    if (std::find (items.begin(), items.end(), cur) == items.end()) items.push_back (cur);   // a preset may use another one
+    for (int i : items) if (juce::isPositiveAndBelow (i, d.choices.size())) combo.addItem (d.choices[i], i + 1);   // id = index + 1
+    pa = std::make_unique<juce::ParameterAttachment> (*prm, [this] (float v) { combo.setSelectedId ((int) std::lround (v) + 1, juce::dontSendNotification); });
+    combo.onChange = [this] { if (pa != nullptr && combo.getSelectedId() > 0) pa->setValueAsCompleteGesture ((float) (combo.getSelectedId() - 1)); };
+    pa->sendInitialUpdate();
+}
+
 void Control::setSkin (const Skin& s)
 {
     if (sa != nullptr)
@@ -583,6 +599,7 @@ void ModulePanel::buildGroups()
     const auto* pnl = md != nullptr ? panels::find (md->name) : nullptr;
     controls.clear();
     groups.clear();
+    std::map<int, std::vector<int>> restricted;   // menus limited to the original's items
     std::set<int> shown { mOn, mModel, mEngine, mLevel, mPan, mFmModern };
     if (pnl != nullptr)
     {
@@ -592,7 +609,11 @@ void ModulePanel::buildGroups()
             GroupDef gd;
             gd.title = pg.title; gd.page = pg.page; gd.cols = pg.cols;
             if (pg.fmGrid) { gd.id = 1; gd.cols = 7; gd.ops = pg.ops; for (int s : { mAlg, mFb, mFmVel }) shown.insert (s); for (int o = 0; o < pg.ops; ++o) for (int q = 0; q < numOpParams; ++q) shown.insert (opSuffix (o, q)); }
-            for (auto& it : pg.items) { gd.items.push_back ({ M (it.suffix), it.label }); shown.insert (it.suffix); }
+            for (auto& it : pg.items)
+            {
+                gd.items.push_back ({ M (it.suffix), it.label }); shown.insert (it.suffix);
+                if (! it.choices.empty()) restricted[M (it.suffix)] = it.choices;
+            }
             groups.push_back (gd);
         }
         // EXTRA: engine parameters the original has no control for, but that this sound uses (value not at default)
@@ -657,6 +678,7 @@ void ModulePanel::buildGroups()
         for (auto& [pid, label] : gd.items)
         {
             auto c = std::make_unique<Control> (proc.apvts, pid, label);
+            if (auto it = restricted.find (pid); it != restricted.end()) c->restrictChoices (proc.apvts, it->second);
             if (skin != nullptr) c->setSkin (*skin);
             addAndMakeVisible (*c);
             controls.back().push_back (std::move (c));

@@ -65,6 +65,8 @@ public:
     void setSkin (const skins::Skin& s);
     void setCaption (const juce::String& c) { caption = c; repaint(); }
     void setFormatter (std::function<juce::String (double)> f) { knob.formatter = std::move (f); repaint(); }
+    // menu limited to the items the original instrument has (indices of the parameter's choices, in that order)
+    void restrictChoices (juce::AudioProcessorValueTreeState& st, const std::vector<int>& allowed);
     void resized() override;
     void paint (juce::Graphics&) override;
     int pid;
@@ -77,6 +79,7 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> sa;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> ca;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> ba;
+    std::unique_ptr<juce::ParameterAttachment> pa;
 };
 
 struct GroupDef { juce::String title; std::vector<std::pair<int, juce::String>> items; int cols = 0; int page = -1; int id = 0; int ops = params::numOps; };

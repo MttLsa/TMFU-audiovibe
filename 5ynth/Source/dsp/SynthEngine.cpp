@@ -14,6 +14,14 @@ namespace
             case 0: return sawBlep (ph, inc);
             case 1: return pulseBlep (ph, inc, pw);
             case 2: return triangle (ph);
+            case 3: return sine (ph);
+            // Minimoog Model D waveform switch: shark tooth (triangle / sawtooth cross), square and the two fixed
+            // rectangles (no pulse-width control on the original), reverse sawtooth (oscillator 3)
+            case 4: return (0.5f * (triangle (ph) + sawBlep (ph, inc)) + 0.25f) * (1.0f / 0.75f);
+            case 5: return pulseBlep (ph, inc, 0.5f);
+            case 6: return pulseBlep (ph, inc, 0.30f);
+            case 7: return pulseBlep (ph, inc, 0.15f);
+            case 8: return -sawBlep (ph, inc);
             default: return sine (ph);
         }
     }

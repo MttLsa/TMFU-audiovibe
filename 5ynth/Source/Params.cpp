@@ -51,10 +51,12 @@ namespace params
         add ("oct", "Octave", I, -3, 3, 0);
         add ("semi", "Semi", I, -12, 12, 0, 0, "st");
         add ("fine", "Fine", F, -100, 100, 0, 0, "ct");
-        add ("o1wave", "Osc1 Wave", C, 0, 0, 0, 0, "", split ("Saw|Pulse|Triangle|Sine"));
+        // waveforms of the analog oscillators (the panel of each instrument offers only the ones its original has)
+        static const char* oscWaves = "Saw|Pulse|Triangle|Sine|Shark Tooth|Square|Wide Rectangle|Narrow Rectangle|Reverse Saw";
+        add ("o1wave", "Osc1 Wave", C, 0, 0, 0, 0, "", split (oscWaves));
         add ("o1pw", "Osc1 PW", F, 0.05f, 0.95f, 0.5f, 0, "", {}, true);
         add ("o1lvl", "Osc1 Level", F, 0, 1, 1, 0, "", {}, true);
-        add ("o2wave", "Osc2 Wave", C, 0, 0, 0, 0, "", split ("Saw|Pulse|Triangle|Sine"));
+        add ("o2wave", "Osc2 Wave", C, 0, 0, 0, 0, "", split (oscWaves));
         add ("o2oct", "Osc2 Octave", I, -3, 3, 0);
         add ("o2semi", "Osc2 Semi", I, -12, 12, 0, 0, "st");
         add ("o2fine", "Osc2 Fine", F, -100, 100, 0, 0, "ct");

@@ -555,6 +555,15 @@ for pr in P:
             if v is None: continue
             if k.startswith("g_"): glob[k] = v
             else: mp[k] = v
+        # only the waveforms the original instrument has (Minimoog Model D: triangle, shark tooth, sawtooth, square,
+        # wide / narrow rectangle; no sine, no pulse-width control)
+        if model == "Moog Minimoog Model D":
+            for wk, pk in (("o1wave", "o1pw"), ("o2wave", "o2pw")):
+                w = mp.get(wk, "Saw")
+                if w == "Pulse":
+                    pw = mp.pop(pk, 0.5)
+                    mp[wk] = "Square" if pw >= 0.4 else ("Wide Rectangle" if pw >= 0.22 else "Narrow Rectangle")
+                elif w == "Sine": mp[wk] = "Triangle"
         models_used.add(model)
         mods.append(dict(slot=slot, model=model, p=mp))
     if pr["name"] in levels: glob["g_trim"] = round(max(-36.0, min(36.0, levels[pr["name"]])), 2)

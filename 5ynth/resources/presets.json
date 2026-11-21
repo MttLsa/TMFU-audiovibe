@@ -1320,7 +1320,7 @@
       "engine": "Analog",
       "oct": -1,
       "o1wave": "Saw",
-      "o2wave": "Pulse",
+      "o2wave": "Square",
       "o2oct": 0,
       "o2fine": 4,
       "o2lvl": 0.85,
@@ -1520,7 +1520,7 @@
      "p": {
       "engine": "Analog",
       "o1wave": "Saw",
-      "o2wave": "Pulse",
+      "o2wave": "Square",
       "o2lvl": 0.0,
       "o2fine": 6,
       "flt": "LP24 Ladder",
@@ -5674,7 +5674,7 @@
      "model": "Moog Minimoog Model D",
      "p": {
       "engine": "Analog",
-      "o1wave": "Sine",
+      "o1wave": "Triangle",
       "o2wave": "Saw",
       "o2lvl": 0.0,
       "o2fine": 8,
@@ -5704,7 +5704,7 @@
     "g_mode": "Mono",
     "g_glide": 140,
     "g_revmix": 0.2,
-    "g_trim": 6.0
+    "g_trim": 6.67
    }
   },
   {
