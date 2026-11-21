@@ -66,7 +66,7 @@ fase. Il **+** apre la vista con tutti gli 8 LFO. LFO, EQ e filtri d'uscita non 
   scritta. Clic sul logo nella testata = logo grande (clic per chiuderlo).
 
 ## Preset
-151 preset dal 1963 al 2023, **ordinati per anno**. Nel browser ogni riga è:
+200 preset dal 1963 al 2023, **ordinati per anno**. Nel browser ogni riga è:
 `anno  Nome preset  (Genere - Brano)   strumento   moduli`. Ricerca testuale e salti rapidi per decennio.
 - **Nomi reali** dei preset di fabbrica quando il suono è un preset documentato (Organ 2, Piano 16', Universe, Lore, Ooh/Aah,
   Choir, E.PIANO 1, BASS 1, Lately Bass, Solid Bass, What The, Fantasia, Pizzagogo, Digital Native Dance, Staccato Heaven,

@@ -174,8 +174,8 @@ static void drawContourFrame (juce::Graphics& g, const juce::Path& shape, const 
                 *bd.getPixelPointer (x, y) = (uint8) jmax (0, (int) outer[(size_t) (y * w + x)] - (int) inner[(size_t) (y * w + x)]);
         cache = { w, h, gap, line, img };
     }
-    ColourGradient gr (Colour (0xffaaaaaa), area.getX(), area.getY(), Colour (0xff5c5c5c), area.getRight(), area.getBottom(), false);
-    gr.addColour (0.5, Colour (0xff8e8e8e));
+    ColourGradient gr (Colour (0xffd6d6d6), area.getX(), area.getY(), Colour (0xff8a8a8a), area.getRight(), area.getBottom(), false);
+    gr.addColour (0.5, Colour (0xffb4b4b4));
     g.setGradientFill (gr);
     g.drawImage (cache.img, area, RectanglePlacement::stretchToFit, true);
 }
@@ -183,7 +183,7 @@ static void drawContourFrame (juce::Graphics& g, const juce::Path& shape, const 
 void logo::drawWordmark (juce::Graphics& g, juce::Rectangle<float> r, juce::RectanglePlacement place)
 {
     using namespace juce;
-    constexpr float gap = 30, line = 8;                    // contour frame: distance from the letters, thickness
+    constexpr float gap = 30, line = 14;                   // contour frame: distance from the letters, thickness
     FiveGeometry five;
     auto letters = wordLetters (233 + 44, 226);           // letters as wide as the 5; Y starts 44 after it (open at the top)
     Path shape (five.metal);                               // everything the frame goes around

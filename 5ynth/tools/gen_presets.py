@@ -536,6 +536,121 @@ S("Rumble Sub", 2022, "Techno", "Rumble techno (es. Amelie Lens - Higher)", "Ame
                      g_revmix=0.5, g_revsize=0.8, g_revdamp=0.9, g_drive=0.4)), notes=UNC)
 
 # ------------------------------------------------------------------------------------------------ resolve + write
+# ---------------------------------------------------------------------------------------- added: Beatles, 1990s-2010s dance
+S("Maxwell's Moog", 1969, "Rock", "Maxwell's Silver Hammer", "The Beatles", "Lead",
+  ("Moog modular", lead(wave="Saw", o2wave="Saw", o2lvl=0.4, o2fine=4, cut=1500, res=0.2, env=0.3, glide=90, vib=0.3, lforate=5.0, aa=20, g_revmix=0.2)),
+  notes="Moog IIIp played by George Harrison on Abbey Road (ribbon controller lead).")
+S("I Want You Wind", 1969, "Rock", "I Want You (She's So Heavy)", "The Beatles", "FX",
+  ("Moog modular", an(o1lvl=0.0, o2lvl=0.0, noise=1.0, flt=FLT["LP24"], cut=700, res=0.55, env=0.0, aa=2500, ad=3000, **{"as": 1.0}, ar=3000,
+     lforate=0.12, lfoshape="Sine", lfocut=0.75, g_revmix=0.35, g_revsize=0.85, g_mode="Poly")),
+  notes="Moog white-noise 'wind' that grows to the end of the track.")
+S("Around the World Bass", 1997, "House", "Around the World", "Daft Punk", "Bass",
+  ("Roland Juno-106", sh_bass(cut=520, res=0.45, env=0.55, dec=260, sub=0.6, wave="Saw", g_glide=0)), notes=DEB)
+S("Freed from Desire Bass", 1996, "Eurodance", "Freed from Desire", "Gala", "Bass",
+  ("Roland Juno-106", sh_bass(cut=700, res=0.3, env=0.45, dec=200, sub=0.5, wave="Pulse")), notes=DEB)
+S("9PM Lead", 1998, "Trance", "9PM (Till I Come)", "ATB", "Lead",
+  ("Roland JP-8000", wt("Analog Morph", pos=0.5, cut=2600, res=0.25, env=0.35, att=1, dec=500, sus=0.6, rel=250, uni=2, det=0.12, fd=400, fs=0.4,
+                        g_mode="Mono", g_glide=40, dlymix=0.25, dlydiv="1/8D", g_revmix=0.25)), notes=UNC)
+S("Better Off Alone Pluck", 1999, "Eurodance", "Better Off Alone", "Alice Deejay", "Pluck",
+  ("Roland JP-8080", supersaw(det=0.3, mix=0.5, cut=2200, att=1, dec=260, sus=0.0, rel=220, env=0.5, fd=240, fs=0.0, dlymix=0.2, dlydiv="1/8D")), notes=UNC)
+S("Adagio Supersaw", 2004, "Trance", "Adagio for Strings", "Tiësto", "Pad",
+  ("Access Virus", supersaw(det=0.42, mix=0.62, cut=3500, att=200, dec=1500, sus=0.9, rel=900, g_revmix=0.35, g_revsize=0.8)), notes=UNC)
+S("Titanium Supersaw", 2011, "EDM", "Titanium", "David Guetta feat. Sia", "Chord",
+  ("LennarDigital Sylenth1", supersaw(det=0.45, mix=0.65, cut=7000, att=5, dec=800, sus=0.85, rel=400, g_revmix=0.3)), notes=UNC)
+S("Clarity Lead", 2012, "EDM", "Clarity", "Zedd feat. Foxes", "Lead",
+  ("NI Massive", supersaw(det=0.4, mix=0.6, cut=5500, att=2, dec=400, sus=0.8, rel=300, env=0.25, fd=300, dlymix=0.15, g_revmix=0.3)), notes=UNC)
+S("Animals Lead", 2013, "EDM", "Animals", "Martin Garrix", "Lead",
+  ("LennarDigital Sylenth1", wt("Pulse Width", pos=0.25, cut=3200, res=0.2, env=0.4, att=1, dec=220, sus=0.4, rel=120, uni=3, det=0.2, fd=200, fs=0.3,
+                                oct=-1, g_drive=0.4, g_mode="Mono")), notes=UNC)
+S("Opus Arp", 2015, "Trance", "Opus", "Eric Prydz", "Sequence",
+  ("Access Virus", wt("Analog Morph", pos=0.3, cut=1400, res=0.35, env=0.5, att=1, dec=240, sus=0.0, rel=200, uni=2, det=0.1, fd=220, fs=0.0,
+                      dlymix=0.3, dlydiv="1/8D", dlyfb=0.45, g_revmix=0.35)), notes=UNC)
+S("Faded Pluck", 2015, "EDM", "Faded", "Alan Walker", "Pluck",
+  ("Xfer Serum", supersaw(det=0.35, mix=0.55, cut=3000, att=1, dec=300, sus=0.1, rel=300, env=0.4, fd=280, fs=0.1, dlymix=0.25, dlydiv="1/8D", g_revmix=0.35)),
+  notes=UNC)
+
+# ---------------------------------------------------------------------------------------- added: iconic synth songs (to 200)
+S("Magic Fly Lead", 1977, "Disco", "Magic Fly", "Space", "Lead",
+  ("ARP Odyssey", lead(wave="Saw", cut=2200, res=0.25, env=0.3, glide=70, vib=0.25, g_revmix=0.25)), notes=UNC)
+S("Equinoxe 5 Sequence", 1978, "Electronic", "Equinoxe Part 5", "Jean-Michel Jarre", "Sequence",
+  ("ARP 2600", pluck_a(cut=1300, res=0.4, env=0.6, dec=150, dlymix=0.3, dlydiv="1/8D", g_revmix=0.3)), notes=UNC)
+S("Fly Like an Eagle Synth", 1976, "Rock", "Fly Like an Eagle", "Steve Miller Band", "FX",
+  ("ARP Odyssey", an(o1wave="Saw", o2wave="Saw", o2lvl=0.6, o2fine=12, flt=FLT["LP24"], cut=900, res=0.6, env=0.0, aa=600, ad=2000, **{"as": 1.0}, ar=1500,
+     lforate=0.3, lfocut=0.6, lfoshape="Sine", g_revmix=0.35)), notes=UNC)
+S("Are Friends Electric Lead", 1979, "New Wave", "Are 'Friends' Electric?", "Tubeway Army (Gary Numan)", "Lead",
+  ("Polymoog", poly_pad(wave="Saw", pwm=0.0, cut=2200, res=0.1, env=0.2, att=20, rel=300, chorus="Ensemble", sub=0.0, o2wave="Saw", o2lvl=0.8, o2fine=-14)),
+  original="Vox Humana")
+S("Funkytown Riff", 1979, "Disco", "Funkytown", "Lipps Inc.", "Lead",
+  ("Sequential Prophet-5", an(o1wave="Pulse", o1pw=0.3, o2wave="Saw", o2lvl=0.5, o2fine=5, flt=FLT["LP24"], cut=1600, res=0.35, env=0.5, fd=200, fs=0.2,
+     aa=1, ad=300, **{"as": 0.6}, ar=120, g_mode="Mono")), notes=UNC)
+S("Vienna Solo", 1980, "New Wave", "Vienna", "Ultravox", "Lead",
+  ("ARP Odyssey", lead(wave="Saw", cut=1800, res=0.3, env=0.3, glide=120, vib=0.3, g_revmix=0.35)), notes=UNC)
+S("Computer Love Melody", 1981, "Electronic", "Computer Love", "Kraftwerk", "Lead",
+  ("Moog Minimoog Model D", lead(wave="Square", o2wave="Saw", o2lvl=0.3, cut=2600, res=0.15, env=0.25, glide=20, g_revmix=0.25)), notes=UNC)
+S("Africa Brass", 1982, "Pop", "Africa", "Toto", "Brass",
+  ("Yamaha CS-80", brass(cut=1200, env=0.45, att=60, dec=900, sus=0.6, g_revmix=0.25)), notes=UNC)
+S("Thriller Bass", 1982, "Pop", "Thriller", "Michael Jackson", "Bass",
+  ("Moog Minimoog Model D", moog_bass(cut=550, res=0.25, env=0.5, dec=250)), notes="Minimoog bass (layered with bass guitar on the record).")
+S("Billie Jean Bass", 1982, "Pop", "Billie Jean", "Michael Jackson", "Bass",
+  ("Moog Minimoog Model D", moog_bass(cut=420, res=0.15, env=0.35, dec=200, sus=0.4)), notes=UNC)
+S("Rockit Stab", 1983, "Hip-Hop", "Rockit", "Herbie Hancock", "Stab",
+  ("Fairlight CMI", add("Brass", bright=0.6, att=1, dec=400, sus=0.0, rel=150, bits=0.4, srr=0.2)), notes=UNC)
+S("Gonna Make You Sweat Stab", 1990, "House", "Gonna Make You Sweat (Everybody Dance Now)", "C+C Music Factory", "Stab",
+  ("Korg M1", add("Brass", bright=0.7, att=1, dec=350, sus=0.0, rel=120)), notes=UNC)
+S("Mr. Vain Riff", 1993, "Eurodance", "Mr. Vain", "Culture Beat", "Lead",
+  ("Korg M1", add("Strings", bright=0.7, att=2, dec=300, sus=0.4, rel=150)), notes=UNC)
+S("Dreamer Piano", 1994, "House", "Dreamer", "Livin' Joy", "Piano",
+  ("Korg M1", add("Piano", bright=0.8, tilt=0.45, inh=0.2, att=1, dec=3500, sus=0.0, rel=350)), original="Piano 16'", notes=UNC)
+S("Missing Pad", 1995, "House", "Missing (Todd Terry remix)", "Everything but the Girl", "Chord",
+  ("Roland Juno-106", poly_stab(cut=1600, res=0.15, env=0.35, dec=900, chorus="II", g_revmix=0.2)), notes=UNC)
+S("Professional Widow Bass", 1996, "House", "Professional Widow (Armand's Star Trunk Funkin' Mix)", "Tori Amos", "Bass",
+  ("Roland Juno-106", sh_bass(cut=800, res=0.35, env=0.6, dec=200, sub=0.5, wave="Saw")), notes=DEB)
+S("Encore Une Fois Lead", 1996, "Eurodance", "Encore une fois", "Sash!", "Lead",
+  ("Roland JP-8000", supersaw(det=0.35, mix=0.55, cut=3500, att=2, dec=300, sus=0.5, rel=200, env=0.3, fd=250)), notes=UNC)
+S("Block Rockin' Riff", 1997, "Electronic", "Block Rockin' Beats", "The Chemical Brothers", "Bass",
+  ("Roland SH-101", sh_bass(cut=700, res=0.45, env=0.6, dec=180, sub=0.3, wave="Saw", dist="RAT", dgain=0.35)), notes=DEB)
+S("Castles in the Sky Lead", 2000, "Trance", "Castles in the Sky", "Ian Van Dahl", "Lead",
+  ("Roland JP-8000", supersaw(det=0.4, mix=0.6, cut=4000, att=2, dec=400, sus=0.7, rel=300, dlymix=0.2, dlydiv="1/8D")), notes=UNC)
+S("Silence Supersaw", 2000, "Trance", "Silence (Tiësto remix)", "Delerium feat. Sarah McLachlan", "Pad",
+  ("Access Virus", supersaw(det=0.4, mix=0.6, cut=3000, att=300, dec=1500, sus=0.9, rel=1200, g_revmix=0.4)), notes=UNC)
+S("Hands Up for Detroit Stab", 2006, "House", "Put Your Hands Up for Detroit", "Fedde Le Grand", "Stab",
+  ("Access Virus", wt("Analog Morph", pos=0.4, cut=1600, res=0.4, env=0.6, att=1, dec=200, sus=0.0, rel=120, uni=3, det=0.25, fd=180, fs=0.0)), notes=UNC)
+S("D.A.N.C.E. Bass", 2007, "Electro", "D.A.N.C.E.", "Justice", "Bass",
+  ("Moog Minimoog Model D", moog_bass(cut=700, res=0.35, env=0.5, dec=220, dist="DS-1", dgain=0.4)), notes=DEB)
+S("We Are Your Friends Bass", 2006, "Electro", "We Are Your Friends", "Justice vs. Simian", "Bass",
+  ("Access Virus", wt("Pulse Width", pos=0.4, cut=1200, res=0.4, env=0.55, att=1, dec=300, sus=0.5, rel=80, oct=-1, g_drive=0.6, g_mode="Mono")), notes=UNC)
+S("Ghosts 'n' Stuff Stab", 2008, "EDM", "Ghosts 'n' Stuff", "deadmau5", "Stab",
+  ("NI Massive", wt("Growl", pos=0.4, cut=2200, res=0.3, env=0.5, att=1, dec=250, sus=0.2, rel=150, uni=3, det=0.2, fd=220, fs=0.1, g_drive=0.3)), notes=UNC)
+S("Feel So Close Lead", 2011, "EDM", "Feel So Close", "Calvin Harris", "Lead",
+  ("LennarDigital Sylenth1", supersaw(det=0.35, mix=0.55, cut=5000, att=2, dec=300, sus=0.6, rel=250, env=0.25, fd=250, dlymix=0.15)), notes=UNC)
+S("We Found Love Lead", 2011, "EDM", "We Found Love", "Rihanna feat. Calvin Harris", "Lead",
+  ("LennarDigital Sylenth1", supersaw(det=0.42, mix=0.62, cut=6000, att=2, dec=400, sus=0.8, rel=300)), notes=UNC)
+S("Midnight City Lead", 2011, "Indie", "Midnight City", "M83", "Lead",
+  ("Roland Juno-106", an(o1wave="Saw", o2lvl=0.0, flt=FLT["LP24"], cut=4500, res=0.15, env=0.2, aa=2, ad=400, **{"as": 0.8}, ar=300,
+     g_chomode="I+II", g_chomix=0.6, g_revmix=0.35, dlymix=0.2)), notes=UNC)
+S("Bangarang Bass", 2011, "Dubstep", "Bangarang", "Skrillex", "Bass",
+  ("NI Massive", wt("Growl", pos=0.5, wlfo=0.5, cut=1500, res=0.35, env=0.3, att=1, dec=300, sus=0.8, rel=80, oct=-1, lforate=4.0, lfocut=0.6, g_drive=0.6, g_mode="Mono")), notes=UNC)
+S("Language Lead", 2012, "EDM", "Language", "Porter Robinson", "Lead",
+  ("NI Massive", supersaw(det=0.4, mix=0.6, cut=5000, att=5, dec=500, sus=0.7, rel=400, g_revmix=0.35)), notes=UNC)
+S("Greyhound Lead", 2012, "EDM", "Greyhound", "Swedish House Mafia", "Lead",
+  ("LennarDigital Sylenth1", wt("Pulse Width", pos=0.3, cut=2600, res=0.25, env=0.4, att=1, dec=250, sus=0.5, rel=150, uni=3, det=0.25, fd=220, g_drive=0.3)), notes=UNC)
+S("Tsunami Lead", 2013, "EDM", "Tsunami", "DVBBS & Borgeous", "Lead",
+  ("LennarDigital Sylenth1", supersaw(det=0.45, mix=0.65, cut=6500, att=2, dec=300, sus=0.7, rel=200, env=0.2, fd=200)), notes=UNC)
+
+S("Fade to Grey Pad", 1980, "New Wave", "Fade to Grey", "Visage", "Pad",
+  ("Polymoog", poly_pad(wave="Saw", pwm=0.0, cut=1600, res=0.1, env=0.15, att=300, rel=1200, chorus="Ensemble", sub=0.0, o2wave="Saw", o2lvl=0.7, o2fine=-10)), notes=UNC)
+S("Don't You Want Me Riff", 1981, "Synth-Pop", "Don't You Want Me", "The Human League", "Lead",
+  ("Roland Jupiter-8", an(o1wave="Saw", o2wave="Pulse", o2lvl=0.6, o2fine=6, flt=FLT["LP24"], cut=2000, res=0.2, env=0.35, fd=250, fs=0.3, aa=1, ad=350,
+     **{"as": 0.6}, ar=150, g_revmix=0.15)), notes=UNC)
+S("Smalltown Boy Lead", 1984, "Synth-Pop", "Smalltown Boy", "Bronski Beat", "Lead",
+  ("Roland Jupiter-8", lead(wave="Pulse", cut=3000, res=0.15, env=0.2, glide=20, vib=0.15, g_revmix=0.3, dlymix=0.2)), notes=UNC)
+S("Pump Up the Jam Bass", 1989, "House", "Pump Up the Jam", "Technotronic", "Bass",
+  ("Roland Juno-106", sh_bass(cut=650, res=0.3, env=0.5, dec=180, sub=0.5, wave="Pulse")), notes=DEB)
+S("Lights Pluck", 2011, "Pop", "Lights", "Ellie Goulding", "Pluck",
+  ("LennarDigital Sylenth1", supersaw(det=0.3, mix=0.5, cut=2800, att=1, dec=250, sus=0.1, rel=250, env=0.4, fd=230, fs=0.1, dlymix=0.25, dlydiv="1/8D")), notes=UNC)
+S("Summer Lead", 2014, "EDM", "Summer", "Calvin Harris", "Lead",
+  ("LennarDigital Sylenth1", wt("Pulse Width", pos=0.2, cut=3500, res=0.2, env=0.3, att=1, dec=300, sus=0.6, rel=200, uni=3, det=0.18, fd=250, fs=0.4)), notes=UNC)
+
 levels = json.load(open(LEVELS)) if os.path.exists(LEVELS) else {}
 models_used = set()
 out, seen = [], set()

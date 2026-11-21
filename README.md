@@ -1,6 +1,6 @@
 # TWINBOX — groovebox ibrida VST3 / AU (v2.14)
 
-> Nello stesso repository: **[5ynth](5ynth/README.md)** (ex SynthZilla), synth 5-in-1 con fino a 5 moduli synth analogici / digitali con 151 suoni di synth famosi 1963–2023, ognuno legato al suo brano.
+> Nello stesso repository: **[5ynth](5ynth/README.md)** (ex SynthZilla), synth 5-in-1 con fino a 5 moduli synth analogici / digitali con 200 suoni di synth famosi 1963–2023, ognuno legato al suo brano.
 > E **[MICROVIBE](Microvibe/README.md)**, plugin di glitch, texture, percussioni organiche ed effetti (tape, vinile, wobble, delay, reverb, Shepard) per minimal e microhouse, con matrice di modulazione, poliritmie e microtonalità.
 
 Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in un solo plugin:
