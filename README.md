@@ -1,4 +1,4 @@
-# DUALBOX — groovebox ibrida VST3 / AU (v2.16.1)
+# DUALBOX — groovebox ibrida VST3 / AU (v2.17)
 
 > Dalla v2.15 il plugin si chiama **DUALBOX** (prima *Twinbox*). L'installer rimuove le vecchie copie
 > `Twinbox.component` / `Twinbox.vst3`; i campioni stanno ora in `…/Dualbox/Samples`.
@@ -12,9 +12,9 @@ DUALBOX è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in 
 |---|---|
 | **A — Drum Synth** (in alto) | 8 canali di percussioni sintetiche, 12 pattern (A–L) fino a **64 step** con Trigger / Accent / Fill, Swing, Fill Rate, Morph, **fino a 8 LFO** |
 | **B — Groovebox** (in basso) | 5 voci a campioni (Kick, Snare, Hat, **Belt**, **Capsule**), sequencer A–D fino a **64 step** con catena di pattern e motore **Remix**, effetti Filter / EQ / Delay / xFx (23 modi) / Mix / Out, **fino a 8 LFO**, pulsanti **NORM** e **MIDI** |
-| **GLOBAL CONTROL** (a destra, comprimibile) | Crossfader A↔B, filtro master **Cutoff** (manopola grande) HP/BP/LP + **Resonance**, Master, Tempo / Run |
+| **GLOBAL CONTROL** (a destra, comprimibile) | Crossfader A↔B, filtri master **HP / BP / LP** (ognuno on/off) + **Resonance**, Master, Tempo / Run, **MULTI OUT** |
 
-📖 **Manuale d'uso completo (PDF):** [docs/DUALBOX_Manuale_v2.16.1.pdf](docs/DUALBOX_Manuale_v2.16.1.pdf)
+📖 **Manuale d'uso completo (PDF):** [docs/DUALBOX_Manuale_v2.17.0.pdf](docs/DUALBOX_Manuale_v2.17.0.pdf)
 
 ![Interfaccia principale](docs/gui_main.png)
 
@@ -25,6 +25,15 @@ I testi delle licenze dei componenti usati (JUCE, VST 3 SDK, Audio Unit SDK, Sig
 raccolti in `THIRD_PARTY_NOTICES.txt`, generato da `tools/make_notices.py` durante la creazione dell'installer e installato
 in `/Users/Shared/Dualbox` e dentro i bundle AU / VST3. I crediti dei campioni sono in
 [`resources/SAMPLE_CREDITS.md`](resources/SAMPLE_CREDITS.md).
+
+## Novità 2.17
+
+- **Filtri master HP / BP / LP**: nel pannello GLOBAL CONTROL la manopola grande del cutoff è sostituita da tre filtri in
+  serie, ognuno con il suo pulsante on/off e la sua manopola; chiusure speculari (HP aperto tutto a sinistra, LP aperto tutto
+  a destra), Resonance condivisa.
+- **MULTI OUT**: Sezione A sull'uscita principale e Sezione B sulla seconda uscita stereo del plugin (da attivare nella DAW).
+- L'importazione Legacy si apre con il pulsante **?** della Sezione B.
+- Campioni di fabbrica senza nomi di modelli di strumenti; licenze di terze parti in `THIRD_PARTY_NOTICES.txt`.
 
 ## Novità 2.16.1
 
@@ -68,7 +77,7 @@ in `/Users/Shared/Dualbox` e dentro i bundle AU / VST3. I crediti dei campioni s
 
 ```
  A: 8 voci sintetiche ─► Level A ───────────────────────────────┐
-                                                               ├─► Mix A/B ─► Cutoff (HP/BP/LP + Res) ─► Master
+                                                               ├─► Mix A/B ─► HP ─► BP ─► LP (+ Res) ─► Master
  B: Kick Snare Hat Belt Capsule ─► Filter ─► EQ/Sat ──────┬─┘
                                    └─► Delay ─► xFx ─► FX Mix ┘ ─► Trash ─► Gain (= Level B) ─► NORM
 ```
@@ -154,7 +163,7 @@ Ogni sampler (Kick, Snare, Hat, Belt, Capsule) ha la manopola **WAV** e un menu 
 | Pulsante | Cartella |
 |---|---|
 | **DBX** | `Dualbox Kick`, `Dualbox Snare`, … (libreria di fabbrica v5: 48 kick puliti, 48 snare e clap morbidi, 32 coppie di hat, 46 Belt con **solo bassi e accordi, tutti in Do** (bassi accordati su Do, accordi della famiglia Do minore), 66 Capsule con **tom analogici e classici Hi/Mid/Low, conga analogiche Hi/Mid/Low**, conga, bongo, tom, darbuka, cajon, claves, log drum, snare morbide e dissonant hit; una parte dei campioni viene da librerie gratuite CC0 / Public Domain, vedi [`resources/SAMPLE_CREDITS.md`](resources/SAMPLE_CREDITS.md); installata al primo avvio e aggiornata automaticamente quando esce una nuova libreria, senza toccare i file tuoi) |
-| **LEG** | `Legacy Kick`, `Legacy Snare`, … (campioni importati con IMPORT LEGACY, vedi sotto) |
+| **LEG** | `Legacy Kick`, `Legacy Snare`, … (campioni importati con il pulsante ?, vedi sotto) |
 | **📁** | una cartella a tua scelta, impostabile per ogni modulo e salvata col progetto |
 
 Posizione delle cartelle:
@@ -166,7 +175,7 @@ Per l'Hat, se esiste `open/<stesso nome>.wav` dentro la cartella, viene usato pe
 
 ### Cartelle Legacy
 
-Premi **IMPORT LEGACY** nella sezione B e seleziona un file di ensemble (`.ens`) di tua proprietà. DUALBOX ne estrae le mappe di campioni nelle cartelle `Legacy *`, con i nomi originali:
+Premi il pulsante **?** (IMPORT LEGACY) nella sezione B e seleziona un file di ensemble (`.ens`) di tua proprietà. DUALBOX ne estrae le mappe di campioni nelle cartelle `Legacy *`, con i nomi originali:
 - Kick 128 campioni;
 - Snare 128;
 - Hat 127 chiusi + 127 aperti, abbinati;

@@ -12,7 +12,7 @@ public:
 private:
     void timerCallback() override;
     TwinboxProcessor& proc;
-    float lc = -1, lr = -1, lm = -1;
+    std::array<float, 7> last {};
 };
 
 // "GLOBAL CONTROL" — right-hand panel, collapsible by clicking its header
@@ -37,8 +37,9 @@ private:
     TwinboxProcessor& proc;
     bool expanded = true;
     Knob xfade { "A / B Mix", theme::accentG };
-    Knob cutoff { "CUTOFF", theme::accentG };
-    Segmented mode { theme::accentG, false };
+    Knob hp { " ", theme::accentG }, bp { " ", theme::accentG }, lp { " ", theme::accentG };   // captions are on the on/off buttons
+    Toggle hpOn { "HP", theme::accentG }, bpOn { "BP", theme::accentG }, lpOn { "LP", theme::accentG };
+    Toggle multi { "MULTI OUT", theme::accentG };
     Knob res { "Resonance", theme::accentG };
     Knob master { "Master", theme::accentG };
     Knob tempo { "Tempo", theme::accentG };

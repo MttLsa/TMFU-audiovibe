@@ -278,14 +278,19 @@ AudioProcessorValueTreeState::ParameterLayout createLayout()
     // ===================================================================== GLOBAL
     addFloat  (l, gXfade, "A/B Mix", NormalisableRange<float> (0.f, 100.f), 50.f,
                [] (float v, int) { return "A " + String (roundToInt (100 - v)) + " / B " + String (roundToInt (v)); });
-    addFloat  (l, gCutoff, "Cutoff", logRange (20.f, 20000.f, 1000.f), 20000.f, hzText);
-    addChoice (l, gMode, "Filter Mode", StringArray { "High Pass", "Band Pass", "Low Pass" }, 2);
+    addBool   (l, gHpOn, "Master High Pass On", false);
+    addFloat  (l, gHp,   "Master High Pass", logRange (20.f, 20000.f, 1000.f), 20.f, hzText);
+    addBool   (l, gBpOn, "Master Band Pass On", false);
+    addFloat  (l, gBp,   "Master Band Pass", logRange (20.f, 20000.f, 1000.f), 1000.f, hzText);
+    addBool   (l, gLpOn, "Master Low Pass On", false);
+    addFloat  (l, gLp,   "Master Low Pass", logRange (20.f, 20000.f, 1000.f), 20000.f, hzText);
     addFloat  (l, gRes, "Resonance", NormalisableRange<float> (0.f, 100.f), 0.f, pctText);
     addFloat  (l, gMaster, "Master", NormalisableRange<float> (-60.f, 6.f), 0.f, dbText);
     addFloat  (l, gTempo, "Tempo", NormalisableRange<float> (40.f, 240.f, 0.1f), 124.f,
                [] (float v, int) { return String (v, 1) + " BPM"; });
     addBool   (l, gRun, "Run (internal clock)", false);
     addChoice (l, gMidiTarget, "MIDI Keyboard Plays", StringArray { "Section A", "Section B" }, 0);
+    addBool   (l, gMulti, "Multi Out (A main, B output 2)", false);
 
     // ===================================================================== LFO targets + LFO parameters
     for (int sec = 0; sec < 2; ++sec)

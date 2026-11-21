@@ -247,7 +247,7 @@ private:
     void importLegacy();
 
     TwinboxProcessor& proc;
-    juce::TextButton browserBtn { "BROWSER" }, legacyBtn { "IMPORT LEGACY" };
+    juce::TextButton browserBtn { "BROWSER" }, legacyBtn { "?" };
     juce::ComboBox scaleRoot, scaleType;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> scaleRootAtt, scaleTypeAtt;
     Knob levelB { "Level B", theme::accentB };

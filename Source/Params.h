@@ -238,9 +238,13 @@ namespace params
 
     // ---------------- Global ----------------
     inline const char* gXfade  = "g_xfade";
-    inline const char* gCutoff = "g_cutoff";
-    inline const char* gMode   = "g_mode";
+    // master filter: three filters in series (HP -> BP -> LP), each switchable; HP is open at its left end (20 Hz),
+    // LP at its right end (20 kHz): turning them towards each other closes them (mirrored)
+    inline const char* gHpOn = "g_hp_on", *gHp = "g_hp";
+    inline const char* gBpOn = "g_bp_on", *gBp = "g_bp";
+    inline const char* gLpOn = "g_lp_on", *gLp = "g_lp";
     inline const char* gRes    = "g_res";
+    inline const char* gMulti  = "g_multi";       // multi-out: Section A on the main output, Section B on output 2
     inline const char* gMaster = "g_master";
     inline const char* gTempo  = "g_tempo";
     inline const char* gRun    = "g_run";

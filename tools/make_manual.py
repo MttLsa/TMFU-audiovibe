@@ -17,7 +17,7 @@ from reportlab.platypus import (BaseDocTemplate, PageTemplate, Frame, Paragraph,
 from reportlab.platypus.tableofcontents import TableOfContents
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-VERSION = sys.argv[1] if len(sys.argv) > 1 else "2.16.1"
+VERSION = sys.argv[1] if len(sys.argv) > 1 else "2.17.0"
 OUT = os.path.join(ROOT, "docs", "DUALBOX_Manuale_v%s.pdf" % VERSION)
 DOCS = os.path.join(ROOT, "docs")
 
@@ -168,6 +168,11 @@ table([["Stadio", "Descrizione"],
 
 h2("1.2 Novità della versione %s" % VERSION)
 bullets([
+    "<b>Novità 2.17</b>: il filtro master diventa <b>tre filtri HP, BP e LP</b> in serie, ognuno con il suo pulsante e la sua "
+    "manopola, con chiusure speculari (vedi capitolo 4); <b>MULTI OUT</b>: Sezione A e Sezione B su due uscite separate della "
+    "DAW (vedi 4.1); l'importazione Legacy si apre con il pulsante <b>?</b> della Sezione B; nomi dei campioni di fabbrica "
+    "senza nomi di modelli di strumenti (es. Analog, Classic, Digi, Studio, Vintage, Keys); licenze di terze parti nel file "
+    "THIRD_PARTY_NOTICES.txt e nel capitolo 13.",
     "<b>Novità 2.16.1</b>: volumi rivisti. Con i pattern di default la Sezione A ha lo stesso volume della Sezione B "
     "(prima era circa 8 dB più forte); ogni sezione è limitata a −1 dBFS prima del mix, quindi a qualsiasi posizione del "
     "crossfader (50 % compreso) e con Master a 0 dB l'uscita non supera mai 0 dBFS, anche nei progetti a 32 bit float; "
@@ -273,7 +278,7 @@ bullets([
     "numero di versione.",
     "<b>Sezione A</b>: intestazione (pattern A–L, BROWSER, Morph, Level A), lista canali, editor della drum patch, "
     "pannello Pattern.",
-    "<b>Sezione B</b>: intestazione (BROWSER, IMPORT LEGACY, SCALE, Level B) e tre file di pannelli: sequencer e "
+    "<b>Sezione B</b>: intestazione (BROWSER, pulsante ? per l'importazione Legacy, SCALE, Level B) e tre file di pannelli: sequencer e "
     "remix, i cinque moduli sample, la catena degli effetti.",
     "<b>GLOBAL CONTROL</b>: pannello comprimibile sul lato destro.",
 ])
@@ -309,14 +314,16 @@ h1("4. GLOBAL CONTROL")
 p("Il pannello a destra controlla la miscela delle due sezioni e il suono finale.")
 gc = [["Controllo", "Funzione"],
       ["A / B Mix", "Crossfader lineare 0–100 %. A sinistra solo A, al centro 50 % + 50 %, a destra solo B."],
-      ["CUTOFF", "Frequenza del filtro master, 20 Hz – 20 kHz (manopola grande)."],
-      ["HP / BP / LP", "Modalità del filtro: passa-alto, passa-banda, passa-basso. In LP a 20 kHz (o in HP a 20 Hz) il "
-       "filtro è escluso."],
-      ["Resonance", "Enfasi sulla frequenza di taglio, 0–100 %."],
-      ["Curva", "Visualizza in tempo reale la risposta del filtro."],
+      ["HP · BP · LP", "Tre filtri master in serie (passa-alto → passa-banda → passa-basso), ognuno con il suo pulsante di "
+       "accensione e la sua manopola di frequenza (20 Hz – 20 kHz). Le chiusure sono speculari: l'HP (a sinistra) è aperto "
+       "con la manopola tutta a sinistra e si chiude girandola verso destra; l'LP (a destra) è aperto tutto a destra e si "
+       "chiude girandolo verso sinistra; il BP sceglie la frequenza centrale. Accesi insieme, HP e LP formano una banda."],
+      ["Resonance", "Enfasi sulle frequenze di taglio dei filtri accesi, 0–100 %."],
+      ["Curva", "Visualizza in tempo reale la risposta dei filtri accesi."],
       ["Master", "Volume d'uscita, −60 … +6 dB, con indicatore di livello."],
       ["Tempo", "Tempo del clock interno, 40–240 BPM (usato quando la DAW è ferma o in Standalone)."],
-      ["RUN", "Avvia/ferma il clock interno. L'etichetta indica HOST SYNC, INTERNAL CLOCK o STOPPED."]]
+      ["RUN", "Avvia/ferma il clock interno. L'etichetta indica HOST SYNC, INTERNAL CLOCK o STOPPED."],
+      ["MULTI OUT", "Sezione A sull'uscita principale e Sezione B sulla seconda uscita stereo (vedi 4.1)."]]
 im = PI.open(os.path.join(DOCS, "gui_main.png")).convert("RGB").crop((1794, 6, 1794 + 257, 6 + 1220))
 gt = Table([[_img(im, 38), Table([[Paragraph(v, CELLB if (r == 0 or c == 0) else CELL) for c, v in enumerate(row)]
                                   for r, row in enumerate(gc)], colWidths=[25 * mm, 100 * mm],
@@ -325,8 +332,21 @@ gt = Table([[_img(im, 38), Table([[Paragraph(v, CELLB if (r == 0 or c == 0) else
            colWidths=[44 * mm, 126 * mm])
 gt.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
 story.append(gt)
-tip("Usa il filtro master per le transizioni: con il crossfader al centro, un HP risonante che sale lentamente svuota "
-    "il mix di entrambe le sezioni contemporaneamente.")
+tip("Usa i filtri master per le transizioni: con il crossfader al centro, un HP risonante che sale lentamente svuota "
+    "il mix di entrambe le sezioni contemporaneamente; HP e LP chiusi uno verso l'altro lasciano solo una banda di frequenze.")
+h2("4.1 Uscite separate (MULTI OUT)")
+p("DUALBOX ha due uscite stereo: <b>Main</b> e <b>Section B</b>. Normalmente si usa solo la principale, dove arriva il "
+  "mix delle due sezioni deciso dal crossfader A / B Mix.")
+bullets([
+    "Accendi <b>MULTI OUT</b> nel pannello GLOBAL CONTROL e attiva nella DAW la seconda uscita del plugin: la <b>Sezione A</b> "
+    "esce dall'uscita principale e la <b>Sezione B</b> dalla seconda, così puoi trattarle su due canali separati del mixer.",
+    "In MULTI OUT il crossfader non viene usato: ogni sezione esce al suo livello (Level A / Level B). I filtri master e il "
+    "volume Master agiscono su entrambe le uscite, ognuna con il proprio limitatore di sicurezza.",
+    "Se la DAW non ha attivato la seconda uscita, DUALBOX continua a mandare il mix sull'uscita principale.",
+    "Come attivarla: in Logic Pro scegli lo strumento nella versione <b>Multi-Output</b> e aggiungi le uscite con il "
+    "pulsante + del mixer; in Ableton Live usa un secondo canale MIDI/audio con Audio From → DUALBOX → Section B; in "
+    "Cubase, Reaper, Bitwig e Studio One attiva la seconda uscita del plugin nel suo menu delle uscite.",
+])
 
 # ---------------------------------------------------------------------------------------------- 5
 h1("5. Sezione A – Drum Synth")
@@ -441,7 +461,7 @@ bullets([
 h1("6. Sezione B – Groovebox")
 fig("gui_main.png", "Fig. 4 – Sezione B: Sequencer / Remix / Out+Global, i 5 moduli sample, XFX / Delay / LFO / Mix / "
     "EQ / Filter.", crop=(12, 559, 1775, 742))
-p("Nell'intestazione della Sezione B trovi BROWSER (preset di genere), IMPORT LEGACY (importazione di una libreria di "
+p("Nell'intestazione della Sezione B trovi BROWSER (preset di genere), il pulsante <b>?</b> (importazione di una libreria di "
   "campioni, vedi capitolo 7), il selettore SCALE (Root e tipo di scala condivisi da Belt e Capsule, vedi 6.5) e "
   "Level B, il volume master della sezione (è lo stesso parametro del GAIN del pannello OUT).")
 h2("6.1 SEQUENCER")
@@ -719,11 +739,11 @@ table([["Cartella", "Contenuto"],
         "Public Domain: crediti nel file SAMPLE_CREDITS.md dentro la cartella dei campioni. Quando una nuova versione "
         "porta una libreria aggiornata, i file di fabbrica vengono sostituiti automaticamente; i file aggiunti da te, "
         "le cartelle Legacy e le cartelle utente non vengono toccati."],
-       ["Legacy Kick / Snare / Hat / Belt / Capsule", "Campioni importati con IMPORT LEGACY (vedi 7.1)."],
+       ["Legacy Kick / Snare / Hat / Belt / Capsule", "Campioni importati con il pulsante ? (vedi 7.1)."],
        ["Cartella utente", "Qualsiasi cartella scelta con l'icona cartella, separatamente per ogni modulo."]], [52, 118])
 h2("7.1 Importare una libreria Legacy")
 bullets([
-    "Premi <b>IMPORT LEGACY</b> nell'intestazione della Sezione B e seleziona un file di ensemble (.ens) di tua proprietà "
+    "Premi il pulsante <b>?</b> (IMPORT LEGACY) nell'intestazione della Sezione B, accanto a BROWSER, e seleziona un file di ensemble (.ens) di tua proprietà "
     "che contiene mappe di campioni.",
     "DUALBOX estrae le mappe di campioni (Kick, Snare, Hat con i rispettivi aperti, Belt, Capsule) nelle cartelle Legacy. "
     "L'operazione richiede qualche secondo; l'avanzamento appare nell'intestazione.",
@@ -831,7 +851,9 @@ table([["Problema", "Soluzione"],
         "Master e che il CUTOFF non sia chiuso (LP a 20 kHz = aperto)."],
        ["I moduli B mostrano '(empty folder)'", "La cartella attiva è vuota: premi DBX, oppure importa una libreria "
         "Legacy prima di premere LEG, oppure scegli una cartella con campioni."],
-       ["IMPORT LEGACY dà errore", "Il file scelto non contiene mappe di campioni leggibili da DUALBOX."],
+       ["L'importazione Legacy (pulsante ?) dà errore", "Il file scelto non contiene mappe di campioni leggibili da DUALBOX."],
+       ["MULTI OUT acceso ma la Sezione B non arriva sul secondo canale", "Attiva nella DAW la seconda uscita stereo del "
+        "plugin (Section B) e instrada un canale su di essa (vedi 4.1)."],
        ["IMPORT PATTERN: 'No patterns or drum patches found'", "Il file non è un file di preset, pattern o suono in "
         "formato testo leggibile da DUALBOX: non viene cambiato nulla."],
        ["Il Belt in SCALE suona un attimo diverso subito dopo un cambio di scala", "La copia trasposta in alta qualità "
@@ -855,7 +877,7 @@ h1("12. Specifiche tecniche")
 table([["Voce", "Valore"],
        ["Formati", "VST3 (macOS, Windows, Linux), Audio Unit (macOS), Standalone"],
        ["macOS", "10.13 o successivo, binari universali Intel x86_64 + Apple Silicon arm64"],
-       ["Uscita", "Stereo"],
+       ["Uscite", "Stereo (mix A/B); con MULTI OUT due uscite stereo: Sezione A e Sezione B"],
        ["Voci", "Sezione A: 8 voci sintetiche (+ layer CLICK); Sezione B: 5 voci a campioni"],
        ["Pattern", "A: 12 × fino a 64 step; B: 4 × fino a 64 step + catena di 8 slot"],
        ["LFO", "da 1 a 8 per sezione (default 3); 7 forme; SYNC 8 bar … 1/32 (anche terzine e puntati) o RATE 10 ms … "

@@ -181,20 +181,70 @@ int main (int argc, char** argv)
 
     // ---------------------------------------------------------------- mix / filter cases
     {
+        // master filters: mode 0 = HP, 1 = BP, 2 = LP at 'cutoff'; -1 = all off
         struct Case { const char* name; float xfade; float cutoff; int mode; float res; };
-        const Case cases[] = { { "A_only", 0, 20000, 2, 0 }, { "B_only", 100, 20000, 2, 0 }, { "mix50", 50, 20000, 2, 0 },
+        const Case cases[] = { { "A_only", 0, 20000, -1, 0 }, { "B_only", 100, 20000, -1, 0 }, { "mix50", 50, 20000, -1, 0 },
                                { "lp_800_res70", 50, 800, 2, 70 }, { "hp_2k", 50, 2000, 0, 30 }, { "bp_1k_res100", 50, 1000, 1, 100 } };
         for (auto& c : cases)
         {
             TwinboxProcessor p;
             waitLibrary (p);
-            setP (p, params::gRun, 1); setP (p, params::gXfade, c.xfade); setP (p, params::gCutoff, c.cutoff);
-            setP (p, params::gMode, (float) c.mode); setP (p, params::gRes, c.res);
+            setP (p, params::gRun, 1); setP (p, params::gXfade, c.xfade); setP (p, params::gRes, c.res);
+            if (c.mode == 0) { setP (p, params::gHpOn, 1); setP (p, params::gHp, c.cutoff); }
+            if (c.mode == 1) { setP (p, params::gBpOn, 1); setP (p, params::gBp, c.cutoff); }
+            if (c.mode == 2) { setP (p, params::gLpOn, 1); setP (p, params::gLp, c.cutoff); }
             setP (p, params::aFill, 1);
             auto st = render (p, 6.0, outDir.getChildFile (String ("render_") + c.name + ".wav"));
             report (String ("render ") + c.name, st.nans == 0 && st.peak > 0.01f,
                     "peak " + String (Decibels::gainToDecibels (st.peak), 1) + " dBFS");
         }
+    }
+
+    // ---------------------------------------------------------------- master HP / BP / LP (mirrored) + multi-out
+    {
+        auto rms = [] (TwinboxProcessor& q, std::function<void()> setup) -> double
+        {
+            setP (q, params::gRun, 1); setP (q, params::gXfade, 50);
+            setup();
+            return render (q, 5.0).rms;
+        };
+        auto mk = [] { auto q = std::make_unique<TwinboxProcessor>(); waitLibrary (*q); return q; };
+        auto p0 = mk(); const double off = rms (*p0, [] {});
+        auto p1 = mk(); const double open = rms (*p1, [&] { for (auto* id : { params::gHpOn, params::gLpOn }) setP (*p1, id, 1);
+                                                            setP (*p1, params::gHp, 20); setP (*p1, params::gLp, 20000); });
+        auto p2 = mk(); const double hpClosed = rms (*p2, [&] { setP (*p2, params::gHpOn, 1); setP (*p2, params::gHp, 4000); });
+        auto p3 = mk(); const double lpClosed = rms (*p3, [&] { setP (*p3, params::gLpOn, 1); setP (*p3, params::gLp, 150); });
+        auto p4 = mk(); const double both = rms (*p4, [&] { setP (*p4, params::gHpOn, 1); setP (*p4, params::gLpOn, 1);
+                                                            setP (*p4, params::gHp, 300); setP (*p4, params::gLp, 3000); });
+        auto db = [&] (double x) { return Decibels::gainToDecibels ((float) (x / off)); };
+        report ("master HP / BP / LP (mirrored)", std::abs (db (open)) < 0.1 && db (hpClosed) < -6.0 && db (lpClosed) < -1.5 && db (both) < -1.0 && db (both) > -20.0,
+                "HP 20 Hz + LP 20 kHz on: " + String (db (open), 2) + " dB (transparent); HP 4 kHz " + String (db (hpClosed), 1)
+                + " dB; LP 150 Hz " + String (db (lpClosed), 1) + " dB; HP 300 + LP 3k " + String (db (both), 1) + " dB");
+
+        // multi-out: two stereo outputs, A on the main one, B on output 2
+        auto multiRender = [] (float aLevel, float bLevel) -> std::pair<double, double>
+        {
+            TwinboxProcessor q; waitLibrary (q);
+            auto layout = q.getBusesLayout();
+            layout.outputBuses.getReference (1) = AudioChannelSet::stereo();
+            const bool okLayout = q.setBusesLayout (layout);
+            setP (q, params::gMulti, 1); setP (q, params::gRun, 1); setP (q, params::gXfade, 50);
+            setP (q, params::aLevel, aLevel); setP (q, params::b (params::kick, params::lv::gain), bLevel);
+            setP (q, params::bGain, bLevel);
+            q.prepareToPlay (48000, 512);
+            AudioBuffer<float> buf (4, 512); MidiBuffer m;
+            double e1 = 0, e2 = 0;
+            for (int b2 = 0; b2 < 48000 * 4 / 512; ++b2)
+            {
+                q.processBlock (buf, m);
+                for (int i = 0; i < 512; ++i) { e1 += buf.getSample (0, i) * buf.getSample (0, i); e2 += buf.getSample (2, i) * buf.getSample (2, i); }
+            }
+            return { okLayout ? std::sqrt (e1) : -1.0, std::sqrt (e2) };
+        };
+        const auto onlyB = multiRender (-60, 0);     // Section A silenced -> main output ~ silent, output 2 plays
+        const auto onlyA = multiRender (0, -60);     // Section B silenced -> output 2 ~ silent, main plays
+        report ("multi-out (A main, B output 2)", onlyB.first >= 0 && onlyB.first < onlyB.second * 0.05 && onlyA.second < onlyA.first * 0.05 && onlyA.first > 0.1,
+                "A off: main " + String (onlyB.first, 3) + " / out2 " + String (onlyB.second, 3) + "; B off: main " + String (onlyA.first, 3) + " / out2 " + String (onlyA.second, 3));
     }
 
     // ---------------------------------------------------------------- every xFx mode + FX on
@@ -224,7 +274,7 @@ int main (int argc, char** argv)
             waitLibrary (p);
             setP (p, params::gRun, 1); setP (p, params::gXfade, 100); setP (p, params::bDirt, dirt);
             const int bs = 512; p.setPlayConfigDetails (0, 2, 48000, bs); p.prepareToPlay (48000, bs);
-            out.setSize (2, 48000 * 3); AudioBuffer<float> buf (2, bs); MidiBuffer m;
+            out.setSize (2, 48000 * 3, false, true); AudioBuffer<float> buf (2, bs); MidiBuffer m;   // cleared: the tail is not a full block
             for (int pos = 0; pos + bs <= out.getNumSamples(); pos += bs)
             {
                 p.processBlock (buf, m);

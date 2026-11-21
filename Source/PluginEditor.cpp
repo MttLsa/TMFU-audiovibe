@@ -1,6 +1,6 @@
 #include "PluginEditor.h"
 #ifndef JucePlugin_VersionString
- #define JucePlugin_VersionString "2.16.1"
+ #define JucePlugin_VersionString "2.17.0"
 #endif
 
 using namespace juce;

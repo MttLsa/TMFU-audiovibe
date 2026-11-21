@@ -564,7 +564,7 @@ void LimeSeqPanel::resized()
 SampleSelector::SampleSelector (TwinboxProcessor& p, int m, bool b2) : proc (p), module (m), big (b2)
 {
     twb.setTooltip ("Factory folder: Dualbox " + SampleLibrary::moduleName (m));
-    leg.setTooltip ("Legacy folder: samples imported with IMPORT LEGACY");
+    leg.setTooltip ("Legacy folder: samples imported with the ? button of Section B");
     usr.setTooltip ("Choose your own folder for this module");
     play.setTooltip ("Audition");
     const bool isClick = m == SampleLibrary::click;                 // Section A kick CLICK layer: factory or user folder only
@@ -1095,7 +1095,7 @@ LimeSection::LimeSection (TwinboxProcessor& p) : proc (p)
     browserBtn.onClick = [this] { if (onOpenBrowser) onOpenBrowser(); };
     browserBtn.setTooltip ("Genre preset browser (128 kits + patterns)");
     legacyBtn.onClick = [this] { importLegacy(); };
-    legacyBtn.setTooltip ("Import the sample maps of an ensemble file (.ens) you own into the Legacy folders");
+    legacyBtn.setTooltip ("Import a sample library from an ensemble file (.ens) you own into the Legacy folders (LEG)");
     levelB.attach (p.apvts, bGain);
     scaleRoot.addItemList (StringArray { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" }, 1);
     for (auto& sc : scales()) scaleType.addItem (sc.name, scaleType.getNumItems() + 1);
@@ -1207,7 +1207,7 @@ void LimeSection::resized()
     header.removeFromLeft (260);
     browserBtn.setBounds (header.removeFromLeft (90).withSizeKeepingCentre (90, 24));
     header.removeFromLeft (6);
-    legacyBtn.setBounds (header.removeFromLeft (120).withSizeKeepingCentre (120, 24));
+    legacyBtn.setBounds (header.removeFromLeft (34).withSizeKeepingCentre (26, 24));
     header.removeFromLeft (24);
     scaleRoot.setBounds (header.removeFromLeft (56).withSizeKeepingCentre (56, 24).translated (44, 0));
     scaleType.setBounds (header.removeFromLeft (150).withSizeKeepingCentre (150, 24).translated (48, 0));

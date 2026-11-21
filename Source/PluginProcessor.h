@@ -5,6 +5,7 @@
 #include "dsp/MicroEngine.h"
 #include "dsp/LimeEngine.h"
 #include "dsp/OutputNorm.h"
+#include "dsp/MasterFilter.h"
 
 class TwinboxProcessor : public juce::AudioProcessor, private juce::Timer
 {
@@ -77,15 +78,16 @@ private:
     bool   wasPlaying = false;
     std::atomic<bool> transportPlaying { false }, hostPlaying { false };
 
-    // global filter
-    TptSvf gFilt[2];
+    // master filter (HP / BP / LP in series); B has its own instance for the multi-out mode
+    MasterFilter mfMix, mfB;
+    SafetyLimiter safetyB;            // output 2 (multi-out) never clips either
+    bool multiActive() const;
     OutputNorm normA, normB;          // NORM buttons of Section A / B
     SafetyLimiter safety;             // output never clips
     // each section is limited at -1 dBFS before the A/B mix: at any crossfade position (50 % included) the sum of the
     // two sections stays below -1 dBFS (with Master at 0 dB)
     SafetyLimiter secLimA { 0.891f }, secLimB { 0.891f };
     std::atomic<float>* pNormA = nullptr, *pNormB = nullptr, *pMidiTarget = nullptr;
-    float  cutSm = 20000.0f;
     float  xfadeSm = 0.5f;
     juce::AudioBuffer<float> bufA, bufB;
     std::vector<TriggerEvent> midiA, midiB;
@@ -97,7 +99,8 @@ private:
     float lastMorph = -1.0f;
     std::vector<juce::RangedAudioParameter*> morphParams;   // ordered [ch][suffix]
 
-    std::atomic<float>* pXfade {}, *pCutoff {}, *pMode {}, *pRes {}, *pMaster {}, *pTempo {}, *pRun {}, *pMorph {};
+    std::atomic<float>* pXfade {}, *pRes {}, *pMaster {}, *pTempo {}, *pRun {}, *pMorph {};
+    std::atomic<float>* pHpOn {}, *pHp {}, *pBpOn {}, *pBp {}, *pLpOn {}, *pLp {}, *pMulti {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TwinboxProcessor)
 };
