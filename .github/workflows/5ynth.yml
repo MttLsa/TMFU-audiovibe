@@ -2,7 +2,7 @@ name: 5ynth
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, "claude/gracious-carson-gldets" ]   # this branch too, until it is merged
     paths: [ "5ynth/**", ".github/workflows/5ynth.yml" ]
   pull_request:
     paths: [ "5ynth/**", ".github/workflows/5ynth.yml" ]
