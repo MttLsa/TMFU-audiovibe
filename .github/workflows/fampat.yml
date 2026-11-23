@@ -1,11 +1,11 @@
-name: 5ynth
+name: FamPat
 
 on:
   push:
-    branches: [ main ]
-    paths: [ "5ynth/**", ".github/workflows/5ynth.yml" ]
+    branches: [ main, "claude/gracious-carson-gldets" ]   # temporary: build this branch
+    paths: [ "FamPat/**", ".github/workflows/fampat.yml" ]
   pull_request:
-    paths: [ "5ynth/**", ".github/workflows/5ynth.yml" ]
+    paths: [ "FamPat/**", ".github/workflows/fampat.yml" ]
   workflow_dispatch:
 
 jobs:
@@ -13,7 +13,7 @@ jobs:
     runs-on: macos-15-intel    # AU + VST3 + Standalone, universal binary (Intel + Apple Silicon); arm64 runners unavailable
     defaults:
       run:
-        working-directory: 5ynth
+        working-directory: FamPat
     steps:
       - uses: actions/checkout@v5
       - name: Configure
@@ -23,20 +23,20 @@ jobs:
       - name: Validate AU
         run: |
           mkdir -p ~/Library/Audio/Plug-Ins/Components
-          cp -R build/Fivesynth_artefacts/Release/AU/5ynth.component ~/Library/Audio/Plug-Ins/Components/
+          cp -R build/FamPat_artefacts/Release/AU/FamPat.component ~/Library/Audio/Plug-Ins/Components/
           killall -9 AudioComponentRegistrar || true
-          auval -v aumu Szla Tmfu
+          auval -v aumu Fmpt Tmfu
       - name: Build installer (.pkg, Intel + Apple Silicon)
-        run: ./packaging/macos/make_pkg.sh 2.1.0
+        run: ./packaging/macos/make_pkg.sh 1.0.0
       - name: Upload installer
         uses: actions/upload-artifact@v5
         with:
-          name: 5ynth-2.1.0-macOS-Installer
-          path: 5ynth/build/installer/5ynth-2.1.0-macOS.pkg
+          name: FamPat-1.0.0-macOS-Installer
+          path: FamPat/build/installer/FamPat-1.0.0-macOS.pkg
       - uses: actions/upload-artifact@v5
         with:
-          name: 5ynth-macOS
+          name: FamPat-macOS
           path: |
-            5ynth/build/Fivesynth_artefacts/Release/VST3
-            5ynth/build/Fivesynth_artefacts/Release/AU
-            5ynth/build/Fivesynth_artefacts/Release/Standalone
+            FamPat/build/FamPat_artefacts/Release/VST3
+            FamPat/build/FamPat_artefacts/Release/AU
+            FamPat/build/FamPat_artefacts/Release/Standalone

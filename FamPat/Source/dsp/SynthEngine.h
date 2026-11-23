@@ -9,7 +9,7 @@
 #include "../Params.h"
 
 // =====================================================================================================
-//  5ynth voice engine: up to 5 synth modules (A..E) per voice. Every module is a complete synth:
+//  FamPat voice engine: up to 5 synth modules (A..E) per voice. Every module is a complete synth:
 //   engine  Analog (poly-BLEP VCOs, sync, x-mod, ring, sub, unison + drift)
 //           FM 6-op (32 DX7-style algorithms, per-operator ADSR, feedback)
 //           Wavetable / Supersaw / Phase Distortion / Additive

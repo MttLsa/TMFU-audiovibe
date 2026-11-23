@@ -1,4 +1,4 @@
-# 5ynth - libreria dei preset (200)
+# FamPat - libreria dei preset (200)
 
 Ordinata per anno. Ogni preset: nome (genere - brano più famoso che ha usato quel suono), strumento originale, moduli usati. 
 **Nome di fabbrica** = nome reale del preset sullo strumento, quando il suono è un preset di fabbrica documentato.

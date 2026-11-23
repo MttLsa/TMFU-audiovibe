@@ -1,9 +1,9 @@
-// 5ynth (ex SynthZilla) offline harness
+// FamPat offline harness
 //   FamPatTest <outDir> check            render every preset: no NaN, not silent, report peak / loudness
 //   FamPatTest <outDir> levels           write <outDir>/levels.json: g_trim so that every preset peaks at -1 dBFS
 //   FamPatTest <outDir> wav <substring>  render matching presets to WAV
 //   FamPatTest <outDir> gui              GUI snapshots (PNG)
-//   FamPatTest <outDir> logo             logo_5ynth.png (wordmark on black)
+//   FamPatTest <outDir> logo             logo_fampat.png (FAMPAT logo on black)
 //   FamPatTest <outDir> params           <outDir>/params.json: every parameter (for tools/make_manual.py)
 //   FamPatTest <outDir> clicks           note changes in Mono / Legato / Poly: report presets with a discontinuity
 //   FamPatTest <outDir> smooth           a parameter jumps on a sustained note: the sound must not click
@@ -309,11 +309,11 @@ int main (int argc, char** argv)
             }
         std::printf ("%d preset/mode combinations with a click at note changes\n", bad);
     }
-    else if (mode == "logo")   // logo_5ynth.png: the wordmark on black, for README and manual
+    else if (mode == "logo")   // logo_fampat.png: the logo on black, for README and manual
     {
         Image img (Image::ARGB, 1800, 560, true);
         { Graphics g (img); g.fillAll (Colour (0xff0b0b0b)); logo::drawFamPat (g, { 120.0f, 140.0f, 1560.0f, 280.0f }); }
-        PNGImageFormat png; FileOutputStream os (outDir.getChildFile ("logo_5ynth.png")); os.setPosition (0); os.truncate(); png.writeImageToStream (img, os);
+        PNGImageFormat png; FileOutputStream os (outDir.getChildFile ("logo_fampat.png")); os.setPosition (0); os.truncate(); png.writeImageToStream (img, os);
     }
     else if (mode == "gui")
     {

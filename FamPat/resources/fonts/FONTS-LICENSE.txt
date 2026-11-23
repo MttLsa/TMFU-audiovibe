@@ -1,7 +1,9 @@
 Inter (Inter-Regular.ttf, Inter-SemiBold.ttf) - SIL Open Font License 1.1, see Inter-LICENSE.txt.
-  Used for all interface text: the closest freely licensed match for Ableton Live's interface font (Ableton Sans is proprietary).
+  Used for all interface text.
+
+Rostex Regular (Rostex-Regular.ttf) - Copyright (c) Roomspace Creative Lab, designer Bakhrudin Ja'far.
+  Used only for the "FAMPAT" logo lettering. Supplied by the plug-in author: the font embeds no license text,
+  so a license that allows embedding it in distributed software must be held.
 
 Urbanist (Urbanist-Light.ttf, Urbanist-SemiBold.ttf) - (c) The Urbanist Project Authors, SIL Open Font License 1.1, see OFL.txt.
   Used for the PDF manual (not embedded in the plug-in).
-
-The 5YNTH logo is drawn with vector paths in Source/PluginEditor.cpp (no font).

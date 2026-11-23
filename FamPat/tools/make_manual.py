@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Builds docs/5ynth_Manuale_v<version>.pdf (Italian user manual) with reportlab.
-Inputs: params.json (FamPatTest <dir> params), resources/presets.json, docs/gui_*.png, docs/logo_5ynth.png (FamPatTest <dir> logo)
-Usage:  python3 tools/make_manual.py <params.json> [version]
+Builds docs/FamPat_Manuale_v<version>.pdf (Italian user manual) with reportlab.
+Inputs: resources/presets.json, docs/logo_fampat.png (FamPatTest <dir> logo), docs/gui_*.png (FamPatTest <dir> gui)
+Usage:  python3 tools/make_manual.py [version]
 """
-import json, os, re, sys
+import json, os, sys
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -12,15 +12,13 @@ from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.fonts import addMapping
-from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle, PageBreak, KeepTogether)
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle, PageBreak, KeepTogether
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-params = json.load(open(sys.argv[1]))
-version = sys.argv[2] if len(sys.argv) > 2 else "2.1.0"
+version = sys.argv[1] if len(sys.argv) > 1 else "1.0.0"
 lib = json.load(open(os.path.join(ROOT, "resources", "presets.json")))
-OUT = os.path.join(ROOT, "docs", "5ynth_Manuale_v%s.pdf" % version)
+OUT = os.path.join(ROOT, "docs", "FamPat_Manuale_v%s.pdf" % version)
 
-# the plug-in's own interface font
 FONTS = os.path.join(ROOT, "resources", "fonts")
 pdfmetrics.registerFont(TTFont("Urbanist", os.path.join(FONTS, "Urbanist-Light.ttf")))
 pdfmetrics.registerFont(TTFont("Urbanist-Bold", os.path.join(FONTS, "Urbanist-SemiBold.ttf")))
@@ -28,16 +26,15 @@ for b, i, name in ((0, 0, "Urbanist"), (1, 0, "Urbanist-Bold"), (0, 1, "Urbanist
     addMapping("Urbanist", b, i, name)
 
 ss = getSampleStyleSheet()
-ACC = colors.HexColor("#e07b2a")      # analog orange
-DIG = colors.HexColor("#1f8fbf")      # digital blue
+ACC = colors.HexColor("#e07b2a")
+BLU = colors.HexColor("#1f8fbf")
 H1 = ParagraphStyle("h1", parent=ss["Heading1"], fontName="Urbanist-Bold", fontSize=19, leading=23, textColor=ACC, spaceAfter=8)
-H2 = ParagraphStyle("h2", parent=ss["Heading2"], fontName="Urbanist-Bold", fontSize=13, leading=16, textColor=DIG, spaceBefore=8, spaceAfter=4)
+H2 = ParagraphStyle("h2", parent=ss["Heading2"], fontName="Urbanist-Bold", fontSize=13, leading=16, textColor=BLU, spaceBefore=8, spaceAfter=4)
 P = ParagraphStyle("p", parent=ss["BodyText"], fontName="Urbanist", fontSize=10, leading=13.5)
 SMALL = ParagraphStyle("s", parent=P, fontSize=7.5, leading=9.2)
 SMALLB = ParagraphStyle("sb", parent=SMALL, fontName="Urbanist-Bold")
 BUL = ParagraphStyle("b", parent=P, leftIndent=11, bulletIndent=2)
 CAP = ParagraphStyle("cap", parent=P, fontSize=8.5, leading=11, textColor=colors.HexColor("#555555"), alignment=1)
-CODE = ParagraphStyle("code", parent=P, fontName="Courier", fontSize=8.5, leading=11)
 
 story = []
 def h1(t): story.append(Paragraph(t, H1))
@@ -45,17 +42,17 @@ def h2(t): story.append(Paragraph(t, H2))
 def p(t): story.append(Paragraph(t, P))
 def bullets(items):
     for it in items: story.append(Paragraph(it, BUL, bulletText="•"))
-def img(name, w=170, caption=None, folder="docs"):
-    path = os.path.join(ROOT, folder, name)
+def img(name, w=170, caption=None):
+    path = os.path.join(ROOT, "docs", name)
     if not os.path.exists(path): return
     from PIL import Image as PI
     iw, ih = PI.open(path).size
-    parts = [Image(path, width=w * mm, height=w * mm * ih / iw, mask="auto")]
+    parts = [Image(path, width=w * mm, height=w * mm * ih / iw)]
     if caption: parts.append(Paragraph(caption, CAP))
     parts.append(Spacer(1, 5))
     story.append(KeepTogether(parts))
-def table(rows, widths, head=True, style=SMALL):
-    data = [[Paragraph(str(c), SMALLB if (head and r == 0) else style) for c in row] for r, row in enumerate(rows)]
+def table(rows, widths, head=True):
+    data = [[Paragraph(str(c), SMALLB if (head and r == 0) else SMALL) for c in row] for r, row in enumerate(rows)]
     t = Table(data, colWidths=[w * mm for w in widths], repeatRows=1 if head else 0)
     st = [("VALIGN", (0, 0), (-1, -1), "TOP"), ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#c8c8c8")),
           ("LEFTPADDING", (0, 0), (-1, -1), 3), ("RIGHTPADDING", (0, 0), (-1, -1), 3),
@@ -65,280 +62,144 @@ def table(rows, widths, head=True, style=SMALL):
     story.append(t)
     story.append(Spacer(1, 6))
 
+n = len(lib["presets"])
+y0, y1 = min(x["year"] for x in lib["presets"]), max(x["year"] for x in lib["presets"])
+
 # ------------------------------------------------------------------------------------------- cover
-story.append(Spacer(1, 14 * mm))
-img("logo_5ynth.png", 170)
-story.append(Paragraph("5-in-1 synthesizer: fino a 5 synth analogici e digitali con i suoni famosi dal 1960 al 2020",
-                       ParagraphStyle("st", parent=P, fontSize=14, leading=18, alignment=1)))
+story.append(Spacer(1, 18 * mm))
+img("logo_fampat.png", 170)
+story.append(Paragraph("Famous patches: %d suoni di synth famosi dal %d al %d" % (n, y0, y1),
+                       ParagraphStyle("st", parent=P, fontSize=15, leading=19, alignment=1)))
 story.append(Spacer(1, 6))
 story.append(Paragraph("TMFU audiovibe  ·  Manuale d'uso  ·  versione %s  ·  VST3 / AU / Standalone" % version,
                        ParagraphStyle("c", parent=P, alignment=1)))
 story.append(Spacer(1, 10))
-img("gui_Organ_2.png", 170)
+img("gui_Time_After_Time_Pad.png", 170)
 story.append(PageBreak())
 
-# ------------------------------------------------------------------------------------------- 1 intro
-h1("1. Cos'è 5ynth")
-p("<b>5ynth</b> (prima si chiamava SynthZilla) è uno strumento virtuale che ricrea <b>per sintesi</b>, senza campioni, i suoni di synth più famosi della "
-  "storia. Ogni preset è legato al <b>brano più famoso che ha usato quel suono</b> e la libreria (%d preset, dal %d al %d) "
-  "è ordinata per anno. Un suono può usare fino a <b>5 moduli synth</b> (A–E) suonati insieme in layer: ogni modulo imita "
-  "uno strumento (Minimoog, TB-303, DX7, Juno, M1, PPG, Virus…) con il suo motore di sintesi e il suo aspetto grafico."
-  % (len(lib["presets"]), min(x["year"] for x in lib["presets"]), max(x["year"] for x in lib["presets"])))
+# ------------------------------------------------------------------------------------------- 1
+h1("1. Cos'è FamPat")
+p("FamPat (<i>famous patches</i>) è un <b>player di preset</b>: contiene %d suoni di synth famosi, dal %d al %d, ognuno "
+  "legato al brano più famoso che l'ha usato. I suoni sono ricreati <b>per sintesi</b>, senza campioni, con i circuiti degli "
+  "strumenti originali (filtri, oscillatori, convertitori). Ogni patch ha solo i comandi che servono per suonarla: "
+  "un <b>inviluppo del filtro</b>, un <b>inviluppo d'ampiezza</b> e la sezione <b>MASTER OUTPUT</b> con gli effetti che la "
+  "patch usa e il livello d'uscita." % (n, y0, y1))
 h2("Installazione (macOS)")
 bullets([
-    "Apri <i>5ynth-%s-macOS.pkg</i> (Mac Intel e Apple Silicon). Installa l'<b>AU</b> in /Library/Audio/Plug-Ins/Components, "
+    "Apri <i>FamPat-%s-macOS.pkg</i> (Mac Intel e Apple Silicon). Installa l'<b>AU</b> in /Library/Audio/Plug-Ins/Components, "
     "il <b>VST3</b> in /Library/Audio/Plug-Ins/VST3 e l'app <b>Standalone</b> in /Applicazioni." % version,
     "Il pacchetto non è firmato con un certificato Apple: se macOS lo blocca, clic destro sul file → <b>Apri</b>, oppure "
     "Impostazioni di Sistema → Privacy e sicurezza → <b>Apri comunque</b>.",
-    "Chiudi la DAW prima di installare un aggiornamento. Nella DAW il plugin compare sotto <b>TMFU audiovibe</b> come strumento "
-    "(AU <i>aumu Szla Tmfu</i>) con il nome <b>5ynth</b>. I progetti salvati con SynthZilla ritrovano il plugin con tutte le impostazioni: "
-    "i codici di identificazione non sono cambiati.",
+    "Nella DAW FamPat compare sotto <b>TMFU audiovibe</b> come strumento (AU <i>aumu Fmpt Tmfu</i>).",
 ])
 h2("Primi passi")
 bullets([
-    "Carica 5ynth su una traccia strumento e suona: parte con il preset <b>Organ 2</b> (House, Show Me Love).",
-    "Usa <b>&lt;</b> e <b>&gt;</b> per scorrere i preset in ordine di anno, oppure <b>BROWSER</b> per cercarli.",
-    "Clicca una scheda modulo (A, B…) per vederne e modificarne i parametri; con <b>+ CUSTOM</b> aggiungi moduli fino a E.",
-    "Tutti i preset sono normalizzati con picco a −1 dBFS: passando da un preset all'altro il volume resta simile.",
+    "Carica FamPat su una traccia strumento e suona: parte con il preset <b>Organ 2</b> (Show Me Love).",
+    "Scorri i preset con <b>&lt;</b> e <b>&gt;</b>, oppure apri il <b>BROWSER</b>.",
+    "Regola gli inviluppi e gli effetti; salva il risultato con <b>SAVE</b>.",
+    "Tutti i preset sono normalizzati con picco a −1 dBFS: passando da uno all'altro il volume resta simile.",
 ])
 
-# ------------------------------------------------------------------------------------------- 2 interface
+# ------------------------------------------------------------------------------------------- 2
 h1("2. L'interfaccia")
-img("gui_fullscreen_1920x1080.png", 170, "La finestra a schermo intero (1920 × 1080): lo spazio in più va ai moduli.")
+img("gui_Acid_Tracks.png", 170, "Acid Tracks (Roland TB-303): inviluppi e MASTER OUTPUT con Delay e Level.")
 h2("Testata")
 bullets([
-    "<b>Logo 5YNTH</b> (vettoriale, nitido a ogni dimensione): il 5 ha la barra superiore a forma di tastiera e cinque barre "
-    "luminose, i 5 synth. Un clic sul logo lo apre in grande, un altro clic lo chiude.",
-    "<b>Nome del preset</b> (genere – brano) e, sotto, anno, artista, strumento originale, moduli usati e nome del preset di fabbrica "
-    "quando il suono è un preset documentato.",
-    "<b>&lt; &gt;</b>: preset precedente / successivo. <b>BROWSER</b>: apre la libreria (capitolo 5).",
-    "<b>OUT</b>: meter del livello d'uscita (rosso vicino a 0 dBFS).",
+    "Il <b>logo</b>: un clic lo apre in grande, un altro clic lo chiude.",
+    "Nome del preset con genere e brano, e sotto anno, artista e strumento.",
+    "<b>&lt; &gt;</b>: preset precedente / successivo. <b>BROWSER</b>: la libreria (capitolo 3). <b>SAVE</b>: salva un preset "
+    "utente. <b>OUT</b>: livello d'uscita (rosso vicino a 0 dBFS).",
 ])
-h2("Schede dei moduli")
+h2("Scheda della patch")
+p("Nome del preset, brano, artista, anno e genere, lo strumento originale (o gli strumenti, se il suono ne sovrappone più "
+  "d'uno), il nome del preset di fabbrica quando il suono è un preset documentato e le note sulle fonti.")
+h2("FILTER ENVELOPE e AMP ENVELOPE")
+p("<b>Attack</b>, <b>Decay</b>, <b>Sustain</b> e <b>Release</b> dell'inviluppo del filtro e dell'inviluppo d'ampiezza, con il "
+  "disegno della curva. Al caricamento di un preset partono dai valori della patch, quindi il suono è quello originale "
+  "finché non li tocchi. Quando una patch suona con più synth sovrapposti, una sola coppia di inviluppi li regola tutti "
+  "insieme: i tempi cambiano nella stessa proporzione e i livelli di sustain dello stesso valore, così le differenze tra i "
+  "layer restano.")
+h2("MASTER OUTPUT")
+p("Compaiono solo gli effetti che la patch usa, più il livello d'uscita che c'è sempre:")
+table([
+    ["Sezione", "Comandi"],
+    ["DRIVE", "Drive: saturazione dell'uscita"],
+    ["PEDAL", "Gain del pedale di distorsione della patch (RAT, DS-1 o Tube)"],
+    ["CHORUS", "Mode (I, II, I+II stile Juno, Ensemble) e Mix"],
+    ["DELAY", "Time (1/16 … 1/2, terzine e puntati, a tempo con la DAW), Feedback, Mix"],
+    ["REVERB", "Size, Damp, Mix"],
+    ["LEVEL", "Master: livello d'uscita (−36 … +6 dB); un limiter di sicurezza protegge l'uscita"],
+], [30, 140])
+h2("Finestra e controlli")
 bullets([
-    "Ogni scheda (A–E) ha: pulsante con la lettera, menu <b>Synth Model</b>, <b>LVL</b> (livello) e <b>PAN</b>. Un clic in un punto "
-    "qualsiasi della scheda (lettera compresa) seleziona il modulo e ne mostra il pannello; la lettera illuminata indica che il "
-    "modulo è acceso. La barra colorata in basso mostra il livello del modulo (arancione = analogico, azzurro = digitale).",
-    "Un preset mostra solo i moduli che usa: un suono fatto con un solo synth ha una sola scheda. <b>+ CUSTOM</b> aggiunge un "
-    "modulo (fino a 5); la <b>x</b> sull'ultima scheda lo toglie (minimo 1 scheda).",
-    "Il pulsante <b>ON</b> nel pannello accende o spegne il modulo: un modulo spento non suona.",
-])
-h2("Finestra")
-bullets([
-    "La finestra si ridimensiona liberamente trascinando l'angolo in basso a destra, e la dimensione viene ricordata. "
-    "Ingrandita o a schermo intero occupa tutto lo schermo: l'altezza in più va all'area dei moduli, la larghezza in più "
-    "alle aree che si allargano (moduli, LFO, tastiera).",
+    "La finestra si ridimensiona liberamente (angolo in basso a destra) e la dimensione viene ricordata; ingrandita o a "
+    "schermo intero occupa tutto lo schermo.",
+    "Trascina in verticale le manopole; <b>Shift</b> = movimento più fine; <b>doppio clic</b> = valore predefinito del comando. "
+    "Il suono segue i comandi in modo continuo, senza scalini né click.",
     "La tastiera in basso suona con il mouse e mostra le note MIDI ricevute.",
 ])
-h2("Manopole, fader e menu")
+story.append(PageBreak())
+
+# ------------------------------------------------------------------------------------------- 3
+h1("3. Browser e preset utente")
+img("gui_browser.png", 160)
 bullets([
-    "Trascina in verticale per cambiare il valore; <b>Shift</b> mentre trascini = movimento più fine.",
-    "Dopo un clic, le <b>frecce</b> della tastiera muovono di 1 % (fader 0,1 %); con Shift 10 volte più fine.",
-    "Il suono segue manopole e fader in modo continuo, senza scalini né click: i valori scorrono in pochi millisecondi "
-    "anche quando un controllo viene mosso di scatto o da un'automazione.",
-    "<b>Doppio clic</b> = valore di default. La risoluzione è di 0,01 sulle manopole e di 0,001 sui fader.",
-    "Gli strumenti che sul pannello originale hanno fader (Juno, CS-80, Alpha Juno, SH-101…) li mostrano anche qui, più lunghi.",
+    "<b>Ricerca</b> per preset, canzone, artista, strumento o genere.",
+    "<b>Sort</b>: per anno, titolo della canzone, nome del preset o artista. Con l'ordine per anno i pulsanti dei "
+    "<b>decenni</b> saltano al punto giusto.",
+    "Un clic carica il preset; poi le frecce <b>su / giù</b> della tastiera caricano il precedente e il successivo; "
+    "<b>Invio</b> o doppio clic chiude il browser.",
+    "<b>USER</b>: i tuoi preset. Tasto destro su un preset: <i>Elimina</i> o <i>Mostra nella cartella</i>.",
+    "<b>SAVE</b> apre la finestra di salvataggio: scrivi il nome (o clicca un preset esistente per sovrascriverlo) e premi SAVE. "
+    "I file <i>.fampat</i> sono in ~/Library/Audio/Presets/TMFU audiovibe/FamPat.",
 ])
 
-# ------------------------------------------------------------------------------------------- 3 modules
-story.append(PageBreak())
-h1("3. I moduli synth")
-p("Il menu <b>Synth Model</b> di una scheda elenca tutti gli strumenti presenti nella libreria. Scegliendone uno, il modulo "
-  "carica il <b>suono caratteristico</b> di quello strumento (il modulo del primo preset che lo usa) e ne prende l'aspetto: "
-  "34 skin ispirate ai pannelli originali (legno Moog/Prophet, fader Juno, TB-303 argento, membrane e LCD DX7/M1, PPG blu, "
-  "Virus e Nord rossi, CRT Fairlight…), senza loghi o grafiche originali.")
-p("<b>Pannelli come gli originali.</b> Ogni strumento mostra le sezioni e i nomi dei comandi del suo pannello vero, "
-  "collegati al parametro del motore che fa quel lavoro: la TB-303 ha solo Tuning, Waveform, Cut Off Freq, Resonance, Env Mod, "
-  "Decay e Accent; il Minimoog Controllers, Oscillator Bank, Mixer, Modifiers e Loudness Contour; i Juno LFO, DCO, VCF, ENV e "
-  "VCA a fader; il DX7 la griglia dei 6 operatori con l'algoritmo; DX21 e TX81Z 4 operatori (AR, D1R, D1L, RR); l'M1 OSC, VDF, "
-  "VDA e così via. I parametri del motore che lo strumento originale non ha, ma che il suono usa, sono raccolti nella sezione "
-  "<b>EXTRA</b>: si apre con il pulsante EXTRA nella testata del modulo ed è nascosta di default.")
-p("Strumento originale analogico → motore <b>Analog</b>; digitale → uno dei motori digitali. Gli strumenti ibridi o i "
-  "brani con più synth sovrapposti usano più moduli in layer. Il motore fa parte dello strumento: il riquadro <b>Engine</b> nel "
-  "pannello mostra quello in uso ma non si cambia a mano, così ogni synth resta coerente con l'originale.")
-h2("Circuiti degli strumenti originali")
-p("Il filtro (e dove conta gli oscillatori e il convertitore) segue il circuito dello strumento scelto in Synth Model.")
+# ------------------------------------------------------------------------------------------- 4
+h1("4. I suoni e i circuiti")
+p("Ogni patch suona con il circuito dello strumento originale; i comandi interni non sono modificabili, così il suono resta "
+  "quello del preset.")
 table([
     ["Strumenti", "Circuito"],
-    ["Minimoog, Moog modular, Polymoog, Source, Sub 37; ARP 2500, 2600, Odyssey", "Ladder a transistor a 4 poli non lineare (saturazione per stadio, auto-oscillazione con la risonanza al massimo). Minimoog: forme d'onda originali e contorni Attack / Decay / Sustain con l'interruttore DECAY."],
-    ["Roland Juno-60 / 106, Jupiter-8, SH-101, JX-8P, Alpha Juno", "IR3109: 4 stadi OTA che saturano uno per uno, la risonanza toglie pochi bassi. Juno, JX-8P e Alpha Juno: DCO stabili, senza deriva."],
-    ["Roland TB-303", "Diode ladder a 4 stadi accoppiati, passa-alto da ~150 Hz nell'anello di risonanza, picco sulla manopola Cut Off Freq."],
-    ["Oberheim OB-X", "Filtro SEM a 2 poli (12 dB/ottava): bassi intatti, la risonanza non arriva all'auto-oscillazione."],
+    ["Minimoog, Moog modular, Polymoog, Source, Sub 37; ARP 2500, 2600, Odyssey", "Ladder a transistor a 4 poli non lineare. Minimoog: forme d'onda originali e contorni Attack / Decay / Sustain con l'interruttore DECAY."],
+    ["Roland Juno-60 / 106, Jupiter-8, SH-101, JX-8P, Alpha Juno", "IR3109 a 4 stadi OTA; Juno, JX-8P e Alpha Juno con DCO stabili."],
+    ["Roland TB-303", "Diode ladder a 4 stadi accoppiati con il passa-alto nell'anello di risonanza; accent con il circuito \"sweep\"."],
+    ["Oberheim OB-X", "Filtro SEM a 2 poli (12 dB/ottava)."],
     ["Oberheim OB-Xa, Sequential Prophet-5", "Curtis CEM3320 a 4 poli."],
-    ["Korg MS-20", "2 poli con la risonanza limitata da diodi, che arriva a urlare e ad auto-oscillare."],
+    ["Korg MS-20", "2 poli con risonanza limitata da diodi, fino all'auto-oscillazione."],
     ["Yamaha CS-80", "VCF a 12 dB/ottava."],
     ["EMS VCS3 / Synthi AKS", "Diode ladder."],
-    ["PPG Wave 2.3", "Wavetable a 8 bit che cambiano onda a scatti (come l'originale) + filtro SSM2044 a 4 poli."],
-    ["Yamaha DX7, TX-816, DX21, TX81Z", "DAC a 12 bit con esponente: il leggero rumore di quantizzazione dell'originale."],
-], [60, 110])
-h2("Motori (Engine)")
-table([
-    ["Engine", "Sintesi", "Strumenti tipici"],
-    ["Analog", "2 oscillatori (Saw, Pulse, Triangle, Sine) + sub, rumore, sync, cross mod, ring mod, PWM, drift", "Minimoog, Prophet-5, Juno, Jupiter-8, OB-X, TB-303, SH-101, MS-20, CS-80"],
-    ["FM 6-op", "6 operatori, 32 algoritmi in stile DX7, feedback, pannello come sul DX7", "DX7, TX-816, DX21, TX81Z"],
-    ["Wavetable", "12 tabelle d'onda con posizione modulabile da inviluppo e LFO", "PPG Wave, Massive, Serum, Wavestation"],
-    ["Supersaw", "7 saw desintonizzate (Detune, Mix)", "JP-8000 / JP-8080, Virus, Sylenth1"],
-    ["Phase Dist", "distorsione di fase in stile Casio CZ (forme d'onda risonanti)", "Casio CZ-5000"],
-    ["Additive", "fino a 40 parziali con 11 modelli (organo, piano, archi, coro, campana…)", "M1, D-50, Synclavier, Fairlight, string machine"],
-], [24, 78, 68])
-h2("Sezioni del pannello")
-p("Le sezioni visibili dipendono dal motore: quelle che il motore non usa vengono nascoste.")
-table([
-    ["Sezione", "Controlli"],
-    ["PITCH", "Oct (±3 ottave), Semi (±12), Fine (±100 cent)"],
-    ["OSC 1 / OSC 2", "Wave, PW (larghezza d'impulso), Level; OSC 2 anche Oct, Semi, Fine"],
-    ["MIXER / MOD", "Sub, Noise, Sync, X-Mod (cross modulation), Ring, PWM"],
-    ["FM OPERATORS", "schema dell'algoritmo, Algorithm, Feedback, Vel>Index; per ogni operatore Coarse, Fine, Level, Attack, Decay, Sustain, Release"],
-    ["WAVETABLE", "Table, Position, Env>Pos, LFO>Pos"],
-    ["SUPERSAW", "Detune, Mix"],
-    ["PHASE DISTORTION", "Wave, DCW (quantità), Env>DCW"],
-    ["ADDITIVE", "Model, Bright, Dec.Tilt (decadimento delle parziali alte), Inharm (inarmonicità), Even (parziali pari)"],
-    ["UNISON", "Voices (1–7), Detune, Drift (instabilità analogica)"],
-    ["FILTER LP / BP / HP", "Type (LP24 Ladder, LP 303 Diode, LP12, BP12, HP12, LP24 Clean, Notch, Off), Cutoff, Reso, Drive, Env, Key, Vel"],
-    ["DRIVE (PEDAL)", "Model (Off, Tube, RAT, DS-1), Gain, Tone, Mix"],
-    ["FILTER ENV / AMP ENV", "A, D, S, R"],
-    ["LFO", "Shape, Rate, Delay, Pitch, Cutoff, PWM/Tmb (timbro: PWM, posizione wavetable…)"],
-    ["PITCH ENV / ACCENT", "P.Env (±48 semitoni), P.Dec, Accent (note con velocity alta)"],
-    ["LO-FI", "Bits (bit crush), Rate (riduzione della frequenza di campionamento)"],
-    ["DELAY", "Time (1/16 … 1/2, sincronizzato), Feedbk, Mix, Ping (ping-pong)"],
-    ["OUT", "Level, Pan del modulo"],
-], [38, 132])
-h2("FM a 6 operatori")
-p("Parametri come sul DX7 — COARSE / FINE, OUT LVL 0–99, rate R1 / R2 / R4 (99 = veloce), livello L3 0–99, "
-  "FEEDBACK 0–7, celle a membrana con LCD.")
-img("gui_FM_5_modules.png", 150, "Modulo FM con 5 moduli attivi.")
-h2("TB-303")
-bullets([
-    "<b>LP 303 Diode</b>: diode ladder a 4 poli con il primo polo un'ottava sopra gli altri, passa-alto nel percorso di "
-    "risonanza come nel circuito originale (lo “squelch” che toglie i bassi invece di gonfiarli), sovracampionato 2×.",
-    "<b>Accent</b> con il circuito “sweep”: accent consecutivi si accumulano; sulle note accentate il decay del filtro è di 200 ms.",
-    "<b>Drive</b>: modelli dei pedali usati nell'acid — <b>RAT</b> (ProCo RAT) e <b>DS-1</b> (Boss), sovracampionati 2×.",
-])
-img("gui_Acid_Tracks.png", 150, "Acid Tracks: TB-303 con filtro diode e accent.")
-
-# ------------------------------------------------------------------------------------------- 4 global
+    ["PPG Wave 2.3", "Wavetable a 8 bit che cambiano onda a scatti + filtro SSM2044."],
+    ["Yamaha DX7, TX-816, DX21, TX81Z", "FM a 6 / 4 operatori, DAC a 12 bit con esponente."],
+    ["Altri digitali (D-50, M1, Triton, Fairlight, Wavestation, JP-8000 / 8080, Virus, Nord Lead, Massive, Sylenth1, Serum…)", "Motori FM, wavetable, supersaw, phase distortion e additivo."],
+], [70, 100])
+p("Quando lo strumento usato in un brano non è documentato con certezza, la scheda della patch lo dice.")
 story.append(PageBreak())
-h1("4. Sezione globale")
-p("La fascia in basso agisce su tutto il plugin. <b>LFO, EQ e filtri d'uscita non cambiano quando carichi un preset</b>: "
-  "puoi impostarli una volta e sfogliare i suoni.")
-h2("VOICE")
-bullets([
-    "<b>Mode</b>: <b>Poly</b> (16 voci), <b>Mono</b> (una voce, ogni nota riparte con l'inviluppo), <b>Legato</b> (una voce: "
-    "le note suonate senza staccare cambiano solo l'altezza, senza ripartire). In Mono e Legato, se le note si sovrappongono, "
-    "gli oscillatori continuano senza interruzioni (nessun click); rilasciando l'ultima nota si torna a quella ancora tenuta.",
-    "<b>Glide</b> (portamento, 0–3 s), <b>Bend</b> (escursione del pitch bend, 0–24 semitoni), <b>Vel</b> (quanto la "
-    "velocity influisce sul volume), <b>Width</b> (apertura stereo dell'unison), <b>MW Vib</b> (vibrato con la mod wheel).",
-])
-h2("FX, OUTPUT FILTERS, MASTER")
-bullets([
-    "<b>Drive</b> globale, <b>Chorus</b> (Off, I, II, I+II in stile Juno, Ensemble) con <b>Mix</b>, <b>Reverb</b> (Rev Size, Damp, Rev Mix).",
-    "<b>Filtri d'uscita</b> LP, BP e HP, ognuno con pulsante on/off, Cut e Res.",
-    "<b>Master</b> (−36 … +6 dB). Un limiter di sicurezza protegge l'uscita.",
-])
-h2("EQ a 5 bande")
-bullets([
-    "Nel riquadro piccolo trascina un nodo: orizzontale = frequenza, verticale = guadagno; <b>rotella</b> = Q; <b>doppio clic</b> = banda on/off.",
-    "Il pulsante <b>+</b> apre la finestra grande con tipo (Low Cut, Low Shelf, Bell, High Shelf, High Cut, Notch), frequenza, "
-    "guadagno e Q di ogni banda; <b>CLOSE</b> la chiude.",
-])
-img("gui_eq.png", 140, "La finestra grande dell'EQ.")
-h2("8 LFO")
-bullets([
-    "Ogni LFO può modulare <b>qualsiasi parametro</b> del plugin (moduli, effetti, EQ, filtri d'uscita): scegli il bersaglio "
-    "nel menu (<i>-- off</i> = nessuno).",
-    "Forme: Triangle, Sine, Saw Up, Saw Down, Square, S&amp;H, Random. Rate libero (0,01–40 Hz) o <b>SYNC</b> al tempo della "
-    "DAW (8 battute … 1/32, terzine e puntati), <b>Depth</b> bipolare, <b>Phase</b>.",
-    "I pulsanti 1–8 scelgono l'LFO da modificare; il <b>+</b> apre la vista con tutti gli 8 LFO.",
-    "Senza DAW (app Standalone) il tempo è quello del parametro <i>Tempo (no host)</i>, 124 bpm di default.",
-])
-h2("MIDI")
-bullets([
-    "<b>Pitch bend</b> (escursione impostata da Bend), <b>mod wheel</b> CC 1 (vibrato e cutoff, vedi MW Vib / MW Cutoff), "
-    "<b>sustain</b> CC 64, <b>All Notes Off</b> / <b>All Sound Off</b> (CC 123 / 120).",
-    "Tutti i parametri sono automatizzabili dalla DAW con il loro nome in inglese (es. <i>A Cutoff</i>, <i>Reverb Mix</i>).",
-])
 
-# ------------------------------------------------------------------------------------------- 5 presets
-story.append(PageBreak())
-h1("5. I preset")
-p("Nel <b>BROWSER</b> ogni riga mostra anno, nome del preset (genere – brano), strumento e moduli. Il campo di ricerca "
-  "filtra per preset, brano, artista, synth o genere; i pulsanti dei decenni (1960s … 2020s) saltano al primo preset del "
-  "decennio. Clic su una riga per caricarla; sotto la lista compaiono i dettagli e le note sulla fonte. "
-  "Quando lo strumento di un brano non è documentato con certezza, le note lo dicono.")
-img("gui_browser.png", 160, "Il browser dei preset.")
-p("<b>Nomi di fabbrica</b>: quando il suono è un preset documentato dello strumento originale (Organ 2, E.PIANO 1, "
-  "Lately Bass, What The, ORCH5, Sandstorm…) il nome reale è indicato nella colonna <i>Preset di fabbrica</i>.")
-pres = sorted(lib["presets"], key=lambda x: (x["year"], x["name"]))
-for dec in lib["decades"]:
-    rows = [["Anno", "Preset", "Genere – brano", "Artista", "Strumento", "Preset di fabbrica"]]
-    for x in pres:
-        if x.get("decade") != dec: continue
-        rows.append([x["year"], x["name"], "%s – %s" % (x["genre"], x["song"]), x["artist"], x.get("synth", ""), x.get("original", "")])
-    if len(rows) > 1:
-        h2(dec)
-        table(rows, [10, 33, 45, 30, 32, 20])
+# ------------------------------------------------------------------------------------------- 5
+h1("5. Elenco dei preset (%d)" % n)
+rows = [["Anno", "Preset", "Genere", "Brano", "Artista", "Strumento"]]
+for pr in sorted(lib["presets"], key=lambda x: (x["year"], x["name"])):
+    rows.append([pr["year"], pr["name"], pr["genre"], pr["song"], pr["artist"], pr["synth"]])
+table(rows, [10, 34, 21, 37, 33, 39])
 
-# ------------------------------------------------------------------------------------------- 6 parameter reference
-story.append(PageBreak())
-h1("6. Riferimento parametri")
-p("Elenco dei %d parametri automatizzabili. I parametri dei moduli sono uguali per A–E (nella DAW: <i>A Cutoff</i>, "
-  "<i>B Cutoff</i>…, id <i>A_cut</i>, <i>B_cut</i>…); quelli degli operatori FM, delle bande EQ e degli LFO sono mostrati una "
-  "volta con <i>n</i> al posto del numero." % len(params))
-def values(prm):
-    k = prm["kind"]
-    unit = (" " + prm["unit"]) if prm["unit"] else ""
-    def num(v):
-        return ("%g" % round(v, 3)).replace(".", ",")
-    if k == 2: return "Off / On", "On" if prm["def"] > 0.5 else "Off"
-    if k == 3:
-        ch = prm["choices"].split("|")
-        d = ch[int(prm["def"])] if int(prm["def"]) < len(ch) else ""
-        return (" / ".join(ch[:8]) + (" … (%d)" % len(ch) if len(ch) > 8 else "")), d
-    if prm["id"].endswith("_target"): return "-- off / qualsiasi parametro", "-- off"
-    return "%s … %s%s" % (num(prm["min"]), num(prm["max"]), unit), num(prm["def"]) + unit
-def section(title, items, collapse=None):
-    h2(title)
-    rows = [["Nome", "Id", "Valori", "Default"]]
-    seen = set()
-    for prm in items:
-        pid, name = prm["id"], prm["name"]
-        if collapse:
-            key = re.sub(collapse, lambda m: m.group(0).rstrip("0123456789") + "n", pid)
-            if key in seen: continue
-            seen.add(key)
-            pid = key
-            name = re.sub(r"(Op|EQ|LFO)\d", r"\1n", name)
-        rng, d = values(prm)
-        rows.append([name, pid, rng, d])
-    table(rows, [38, 26, 82, 24])
-mod_a = [x for x in params if x["module"] == 0]
-for x in mod_a: x["name"] = re.sub(r"^A ", "", x["name"])
-for x in mod_a: x["id"] = re.sub(r"^A_", "&lt;M&gt;_", x["id"])
-section("Moduli A–E", mod_a, collapse=r"op\d")
-section("Globali", [x for x in params if x["module"] < 0 and (x["id"].startswith("g_") or x["id"].startswith("of_"))])
-section("EQ (bande 1–5)", [x for x in params if re.match(r"eq\d_", x["id"])], collapse=r"^eq\d")
-section("LFO (1–8)", [x for x in params if re.match(r"l\d_", x["id"])], collapse=r"^l\d")
-
-# ------------------------------------------------------------------------------------------- 7 credits
-h1("7. Note")
+# ------------------------------------------------------------------------------------------- 6
+h1("6. Note")
 bullets([
-    "Font dell'interfaccia: <b>Inter</b>; font di questo manuale: <b>Urbanist</b> (entrambi SIL Open Font License). Il logo è disegnato in vettoriale.",
-    "I filtri e i pedali del TB-303 si basano su: Open303 (TeeBeeFilter), analisi TPT del diode ladder di Will Pirkle e JC-303, "
-    "analisi ElectroSmash del ProCo RAT.",
+    "Nella DAW sono automatizzabili solo i comandi visibili: Master, inviluppi ed effetti.",
     "Marchi e nomi degli strumenti appartengono ai rispettivi proprietari e sono usati solo per indicare lo strumento di "
-    "riferimento. Le attribuzioni dei suoni ai brani vengono da fonti di settore citate nelle note dei preset.",
+    "riferimento. Nessun campione, logo o grafica originale è incluso.",
+    "Font dell'interfaccia: Inter; di questo manuale: Urbanist (SIL Open Font License). Logo: Rostex.",
 ])
 
-# ------------------------------------------------------------------------------------------- build
 def footer(c, doc):
     c.saveState()
-    c.setFont("Urbanist", 8)
+    c.setFont("Urbanist", 7.5)
     c.setFillColor(colors.HexColor("#888888"))
-    c.drawString(18 * mm, 10 * mm, "5ynth %s — Manuale d'uso" % version)
+    c.drawString(18 * mm, 10 * mm, "FamPat %s — Manuale d'uso" % version)
     c.drawRightString(A4[0] - 18 * mm, 10 * mm, str(doc.page))
     c.restoreState()
 
-doc = SimpleDocTemplate(OUT, pagesize=A4, leftMargin=18 * mm, rightMargin=18 * mm, topMargin=16 * mm, bottomMargin=18 * mm,
-                        title="5ynth %s — Manuale d'uso" % version, author="TMFU audiovibe")
-doc.build(story, onFirstPage=lambda c, d: None, onLaterPages=footer)
+doc = SimpleDocTemplate(OUT, pagesize=A4, leftMargin=18 * mm, rightMargin=18 * mm, topMargin=16 * mm, bottomMargin=16 * mm,
+                        title="FamPat %s — Manuale d'uso" % version, author="TMFU audiovibe")
+doc.build(story, onFirstPage=footer, onLaterPages=footer)
 print("wrote", OUT)

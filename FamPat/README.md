@@ -1,41 +1,29 @@
-# 5ynth — 5-in-1 synthesizer: fino a 5 synth (analogici / digitali) con i suoni famosi 1960–2020 (VST3 / AU / Standalone)
+# FamPat — famous patches: 200 suoni di synth famosi 1963–2023 (VST3 / AU / Standalone)
 
-![5ynth](docs/logo_5ynth.png)
+![FamPat](docs/logo_fampat.png)
 
-**5ynth** (ex SynthZilla; TMFU audiovibe, JUCE 8 / C++17) ricrea **per sintesi** — senza campioni — i suoni di synth più famosi della
-storia, ognuno legato al **brano più famoso che l'ha usato**. La libreria è ordinata **per anno**.
+**FamPat** (TMFU audiovibe, JUCE 8 / C++17) è un **player di preset**: 200 suoni di synth famosi ricreati **per sintesi** —
+senza campioni — con i circuiti degli strumenti originali, ognuno legato al **brano più famoso che l'ha usato**.
 
-![5ynth](docs/gui_Organ_2.png)
+![FamPat](docs/gui_Time_After_Time_Pad.png)
 
-**Manuale d'uso (PDF):** [docs/5ynth_Manuale_v2.1.0.pdf](docs/5ynth_Manuale_v2.1.0.pdf)
+**Manuale d'uso (PDF):** [docs/FamPat_Manuale_v1.0.0.pdf](docs/FamPat_Manuale_v1.0.0.pdf)
 
-## Moduli synth A–E
+## Il player
+- **Scheda della patch**: nome, brano, artista, anno, genere, strumento originale, preset di fabbrica, note sulle fonti.
+- **FILTER ENVELOPE** e **AMP ENVELOPE** (Attack, Decay, Sustain, Release, con la curva): una coppia per tutta la patch; al
+  caricamento partono dai valori della patch. Nelle patch a più synth sovrapposti muovono tutti gli inviluppi insieme
+  (tempi in proporzione, sustain con lo stesso scarto).
+- **MASTER OUTPUT**: gli effetti che la patch usa — Drive, Pedal (RAT / DS-1 / Tube), Chorus, Delay (a tempo), Reverb — e il
+  **Level**. Nella DAW sono automatizzabili solo questi comandi.
+- Testata con logo (clic = logo grande), frecce **< >**, **BROWSER** (ricerca, ordine per anno / canzone / preset / artista,
+  decenni, frecce della tastiera) e **SAVE** / **USER** per i preset utente (`~/Library/Audio/Presets/TMFU audiovibe/FamPat`,
+  file `.fampat`). Tastiera in basso, finestra ridimensionabile e a schermo intero.
+- Il suono segue i comandi senza scalini né click; nessun click ai cambi di nota (Mono, Legato, Poly).
 
-- Un preset mostra solo i moduli che usa (un synth = una scheda); il pulsante **+ CUSTOM** aggiunge moduli fino a 5 (A–E); la **x** sulla scheda toglie l'ultimo. Un clic sulla scheda seleziona il modulo.
-- Ogni modulo ha un menu **Synth Model** (il motore di sintesi segue lo strumento e non si cambia a mano): scegli uno qualsiasi degli strumenti presenti nei preset (Minimoog, TB-303, DX7,
-  M1, D-50, Juno, Jupiter-8, CS-80, PPG, Fairlight, Virus, Sylenth1, Serum…). Il modulo carica il suono caratteristico di
-  quello strumento e ne prende l'aspetto grafico.
-- Strumento originale analogico → motore **Analog**; digitale → motore digitale (**FM 6-op**, **Wavetable**, **Supersaw**,
-  **Phase Dist**, **Additive**); combinazione analogico + digitale (synth ibridi o strumenti sovrapposti sul disco) → più
-  moduli in **layer**. Il generatore della libreria controlla questa regola.
-- Ogni modulo ha: pitch, oscillatori/motore, unison, **filtro LP / BP / HP** (LP24 ladder, **LP 303 diode**, LP12, BP12,
-  HP12, LP24 clean, notch), **drive a pedale** (Tube, **RAT**, **DS-1**), inviluppi filtro e ampiezza, LFO, pitch env,
-  accent, lo-fi, **delay** (tempo, feedback, mix, ping-pong), **level** e **pan**.
-
-### FM a 6 operatori
-I moduli FM hanno 6 operatori e i **32 algoritmi** in stile DX7 (schema dell'algoritmo disegnato nel pannello), con i
-parametri come sul DX7 — COARSE / FINE 0–99, OUT LVL 0–99, rate R1/R2/R4 (99 = veloce), livello L3 0–99, FEEDBACK 0–7,
-celle a membrana con LCD.
-
-### TB-303
-- **Filtro**: diode ladder a 4 poli con il primo polo un'ottava sopra gli altri (gli stadi del 303 non sono separati),
-  passa-alto (~150 Hz) nel percorso di risonanza come nel circuito originale (lo "squelch" che toglie i bassi invece di
-  gonfiarli), saturazione all'ingresso, compensazione del guadagno, risolto a feedback istantaneo e sovracampionato 2×.
-  **Accent** con il circuito "sweep" (accent consecutivi si accumulano) e decay del filtro a 200 ms sulle note accentate.
-- **Drive**: modelli dei pedali usati sull'acid — **RAT** (stadio LM308 con rami di pre-enfasi ~60 Hz / ~1,5 kHz e banda che
-  si restringe col guadagno, diodi 1N914 al silicio, filtro Tone 475 Hz–20 kHz) e **DS-1** (booster + op-amp, diodi
-  leggermente asimmetrici, tone stack LP/HP), sovracampionati 2×.
-- Riferimenti: Open303 (TeeBeeFilter), analisi TPT del diode ladder di Will Pirkle e JC-303, analisi ElectroSmash del ProCo RAT.
+| | |
+|---|---|
+| ![](docs/gui_Acid_Tracks.png) | ![](docs/gui_browser.png) |
 
 ## Circuiti degli strumenti originali
 Il circuito del filtro (e, dove conta, degli oscillatori e del convertitore) segue lo strumento scelto in Synth Model:
@@ -48,34 +36,6 @@ Il circuito del filtro (e, dove conta, degli oscillatori e del convertitore) seg
 - **Korg MS-20**: 2 poli con risonanza limitata da diodi che arriva all'auto-oscillazione; **Yamaha CS-80**: VCF a 12 dB.
 - **EMS VCS3**: diode ladder; **PPG Wave 2.3**: wavetable a 8 bit che cambiano onda a scatti + filtro SSM2044.
 - **Yamaha DX7 / TX-816 / DX21 / TX81Z**: DAC a 12 bit con esponente (rumore di quantizzazione che segue il livello).
-
-## Uscita
-**Drive**, **Chorus** (I / II / I+II stile Juno, Ensemble), **Reverb**, **EQ grafico a 5 bande** (statico; nodi trascinabili:
-frequenza/guadagno, rotella = Q, doppio clic = on/off; il pulsante **+** apre la finestra grande con tipo, frequenza,
-guadagno e Q di ogni banda), **filtri d'uscita LP / BP / HP** con cutoff e risonanza, Master, limiter di sicurezza.
-
-## 8 LFO
-Ogni LFO può modulare **qualsiasi parametro** del plugin (tutti i moduli, effetti, EQ, filtri d'uscita). Forme Triangle, Sine,
-Saw Up/Down, Square, S&H, Random; rate libero o **SYNC** al tempo (8 battute … 1/32, terzine e puntati), depth bipolare,
-fase. Il **+** apre la vista con tutti gli 8 LFO. LFO, EQ e filtri d'uscita non cambiano quando carichi un preset.
-
-## Grafica
-- Stile Twinbox (piatto, scuro, in stile Ableton) con un leggero **rilievo**; font **Inter** Regular / SemiBold (SIL OFL) per tutto
-  il testo dell'interfaccia. Tutte le scritte di moduli, parametri e preset sono in inglese.
-- **Pannelli come gli originali**: ogni strumento mostra le sezioni e i comandi del suo pannello vero (TB-303: Tuning,
-  Waveform, Cut Off Freq, Resonance, Env Mod, Decay, Accent; Minimoog: Controllers, Oscillator Bank, Mixer, Modifiers,
-  Loudness Contour; Juno: LFO, DCO, VCF, ENV, VCA; DX7: operatori e algoritmo; M1: OSC, VDF, VDA…), ognuno collegato al
-  parametro del motore che fa quel lavoro. I parametri del motore che l'originale non ha ma che il suono usa sono nel
-  pulsante **EXTRA** della testata del modulo (nascosti di default).
-- Ogni modulo prende l'aspetto dello strumento scelto (34 skin: legno Moog/Prophet, fader Juno/CS-80/Alpha Juno, TB-303
-  argento, LCD e membrane DX7/M1, PPG blu, Virus/Nord rossi, CRT Fairlight…), senza loghi o grafiche originali.
-- **Fader più lunghi** sugli strumenti che hanno fader. Risoluzione fine: **1000 passi** sulla corsa delle manopole, **10000** sui
-  fader, e il suono segue i controlli senza scalini né click (valori smussati in pochi ms); dopo un clic le frecce muovono di 1 % (fader 0,1 %), Shift = 10× più fine; doppio clic = valore di default.
-- Finestra **ridimensionabile** liberamente (la dimensione viene ricordata): ingrandita o a schermo intero occupa tutto lo
-  schermo, lo spazio in più va ai moduli. EQ e LFO espandibili.
-- Logo **5YNTH**, disegnato in vettoriale (nitido a ogni dimensione): lettere in metallo spazzolato; il "5" ha la barra
-  superiore a forma di tastiera stilizzata e **cinque barre luminose** (i 5 synth); una cornice segue il contorno della
-  scritta. Clic sul logo nella testata = logo grande (clic per chiuderlo).
 
 ## Preset
 200 preset dal 1963 al 2023, **ordinati per anno**. Nel browser ogni riga è:
@@ -115,20 +75,18 @@ Elenco completo: [docs/PRESETS.md](docs/PRESETS.md).
 ## Compilazione e installazione
 
 ```bash
-cmake -S 5ynth -B 5ynth/build -DCMAKE_BUILD_TYPE=Release
+cmake -S FamPat -B FamPat/build -DCMAKE_BUILD_TYPE=Release
 ```
 
 ```bash
-cmake --build 5ynth/build --config Release --parallel
+cmake --build FamPat/build --config Release --parallel
 ```
 
-Su macOS la CI (`.github/workflows/5ynth.yml`, runner Intel) produce l'installer universale
-**5ynth-2.1.0-macOS.pkg** (Intel + Apple Silicon: AU, VST3, app Standalone). Nella DAW compare sotto **TMFU audiovibe**
-come **5ynth** (AU `aumu Szla Tmfu`: codici e stato dei parametri invariati, i progetti salvati con SynthZilla ritrovano il plugin).
+Su macOS la CI (`.github/workflows/fampat.yml`, runner Intel) produce l'installer universale **FamPat-1.0.0-macOS.pkg**
+(Intel + Apple Silicon: AU, VST3, app Standalone). Nella DAW compare sotto **TMFU audiovibe** come **FamPat** (AU `aumu Fmpt Tmfu`).
 
-Strumenti: `tools/gen_presets.py` (libreria + `docs/PRESETS.md`); `tools/make_manual.py <params.json> <versione>` (manuale PDF,
-`params.json` da `FivesynthTest <dir> params`); test con `-DFIVESYNTH_BUILD_TESTS=ON`:
-`FivesynthTest <dir> units | check | levels | wav <nome> | gui | logo | params`.
+Strumenti: `tools/gen_presets.py` (libreria + `docs/PRESETS.md`); `tools/make_manual.py <versione>` (manuale PDF);
+test con `-DFAMPAT_BUILD_TESTS=ON`: `FamPatTest <dir> units | check | levels | clicks | smooth | wav <nome> | gui | logo`.
 
 > Marchi e nomi degli strumenti appartengono ai rispettivi proprietari e sono usati solo per indicare lo strumento di
 > riferimento. Font: vedi `resources/fonts/FONTS-LICENSE.txt`.

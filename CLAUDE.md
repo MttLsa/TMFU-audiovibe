@@ -1,13 +1,13 @@
 # Convenzioni del repository
 
-## Plugin nuovi (da 5ynth, ex SynthZilla / Twinsynth, in poi)
+## Plugin nuovi (da SynthZilla / 5ynth / FamPat in poi)
 - Produttore mostrato nel browser della DAW: **TMFU audiovibe**. In `juce_add_plugin`:
   `COMPANY_NAME "TMFU audiovibe"`, `PLUGIN_MANUFACTURER_CODE Tmfu`, `BUNDLE_ID "com.tmfuaudiovibe.<nomeplugin>"`
   (ogni plugin ha il proprio `PLUGIN_CODE` di 4 caratteri, unico).
 - I plugin già pubblicati prima del cambio (Twinbox, Groovulation) hanno `COMPANY_NAME "TMFU audiovibe"` ma tengono il
   vecchio `PLUGIN_MANUFACTURER_CODE Twnb`, così i progetti salvati nelle DAW continuano a ritrovarli: non cambiarlo.
 - Installer macOS `.pkg` universale (Intel x86_64 + Apple Silicon arm64), costruito dalla CI sul runner `macos-15-intel`
-  con `packaging/macos/make_pkg.sh` (modello: `5ynth/packaging/macos/make_pkg.sh`): AU in /Library/Audio/Plug-Ins/Components,
+  con `packaging/macos/make_pkg.sh` (modello: `FamPat/packaging/macos/make_pkg.sh`): AU in /Library/Audio/Plug-Ins/Components,
   VST3 in /Library/Audio/Plug-Ins/VST3, app Standalone in /Applications; controlla con `lipo` che i binari siano universali
   e che l'AU si presenti come "TMFU audiovibe: <nome>".
 - Validazione AU in CI: `auval -v aumu <PLUGIN_CODE> Tmfu` per gli strumenti; per gli effetti che ricevono MIDI (music effect,
@@ -21,6 +21,6 @@
   `setDefaultSansSerifTypeface`/`getTypefaceForFont` nel LookAndFeel, così anche menu, popup e tooltip lo usano.
   Modello: `Microvibe/Source/PluginEditor.cpp` (`ui::typeface`).
 - Logo e nome del plugin nell'intestazione restano col loro font originale (es. Microvibe Urbanist SemiBold,
-  Groovulation Urbanist Light, SynthZilla Rostex Outline): font separato solo per quelle scritte.
+  Groovulation Urbanist Light, FamPat Rostex Regular): font separato solo per quelle scritte.
 - Nomi di moduli, parametri, pulsanti e titoli dei pannelli in **inglese**; restano in italiano solo menu contestuali,
   tooltip, suggerimenti e testi di aiuto.
