@@ -2,7 +2,7 @@ name: FamPat
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, "claude/gracious-carson-gldets" ]   # temporary: build this branch
     paths: [ "FamPat/**", ".github/workflows/fampat.yml" ]
   pull_request:
     paths: [ "FamPat/**", ".github/workflows/fampat.yml" ]

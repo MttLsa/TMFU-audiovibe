@@ -258,6 +258,21 @@ void FamPatProcessor::renderChunk (float* L, float* R, int n, const juce::MidiBu
                     if (ms[k] == mFS || ms[k] == mAS) v = juce::jlimit (0.0f, 1.0f, v + (target - refV[k]));   // sustain: same offset
                     else v = juce::jlimit (0.5f, 10000.0f, v * target / std::max (0.5f, refV[k]));            // times: same ratio
                 }
+                // FILTER ENVELOPE must always act: patches without a filter get a transparent LP that the envelope
+                // opens (fully open at sustain 1 = the original sound), patches whose filter ignores the envelope get
+                // some envelope depth with the cutoff lowered so the sustain brightness stays the same
+                {
+                    float& flt = snap[(size_t) mod (m, mFlt)];
+                    float& cut = snap[(size_t) mod (m, mCut)];
+                    float& env = snap[(size_t) mod (m, mEnv)];
+                    if ((int) flt == 7) { flt = 5.0f; cut = 150.0f; env = 1.0f; snap[(size_t) mod (m, mKey)] = 0.0f; snap[(size_t) mod (m, mVelF)] = 0.0f; snap[(size_t) mod (m, mRes)] = 0.0f; }
+                    else if (std::abs (env) < 0.05f && (int) flt != 4 && (int) flt != 3)
+                    {
+                        const float fs0 = raw[(size_t) mod (m, mFS)]->load();
+                        env = 0.4f;
+                        cut = juce::jlimit (20.0f, 20000.0f, cut * std::exp2 (-7.0f * 0.4f * fs0));
+                    }
+                }
                 float& mix = snap[(size_t) mod (m, mDlyMix)];
                 const float pMix = snap[(size_t) L.pDlyMix];
                 mix = maxMix > 0.0f ? juce::jlimit (0.0f, 1.0f, mix * pMix / maxMix) : (m == ref ? pMix : 0.0f);
@@ -447,6 +462,8 @@ void FamPatProcessor::initPlayerControls()
     const int pr[8] = { L.pFA, L.pFD, L.pFS, L.pFR, L.pAA, L.pAD, L.pAS, L.pAR };
     const int ms[8] = { mFA, mFD, mFS, mFR, mAA, mAD, mAS, mAR };
     for (int k = 0; k < 8; ++k) setParam (pr[k], val (mod (ref, ms[k])));
+    if ((int) val (mod (ref, mFlt)) == 7)   // no filter in the patch: the added LP starts fully open (sound unchanged)
+    { setParam (L.pFA, 0.5f); setParam (L.pFD, 400.0f); setParam (L.pFS, 1.0f); setParam (L.pFR, val (mod (ref, mAR))); }
     setParam (L.pDlyDiv, dly >= 0 ? val (mod (dly, mDlyDiv)) : 3.0f);
     setParam (L.pDlyFb, dly >= 0 ? val (mod (dly, mDlyFb)) : 0.35f);
     setParam (L.pDlyMix, dly >= 0 ? val (mod (dly, mDlyMix)) : 0.0f);
