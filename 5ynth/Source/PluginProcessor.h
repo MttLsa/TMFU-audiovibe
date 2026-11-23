@@ -49,6 +49,7 @@ public:
     bool saveUserPreset (const juce::String& name);       // overwrites a preset with the same name
     bool loadUserPreset (const juce::File& file);
     juce::String userPresetName() const { return currentUser; }
+    void initPlayerControls();   // player envelopes / delay / pedal <- the loaded patch
 
     juce::AudioProcessorValueTreeState apvts;
     juce::MidiKeyboardState keyboard;

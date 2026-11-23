@@ -43,7 +43,7 @@ juce_add_plugin(Fivesynth
   DESCRIPTION "5-in-1 synthesizer: up to 5 analog / digital synth modules with famous sounds 1960s-2020s")
 
 set(TS_SOURCES
-  Source/PluginProcessor.cpp Source/PluginEditor.cpp Source/Params.cpp Source/Presets.cpp
+  Source/PluginProcessor.cpp Source/PluginEditor.cpp Source/PlayerEditor.cpp Source/Params.cpp Source/Presets.cpp
   Source/dsp/SynthEngine.cpp Source/dsp/Wavetables.cpp)
 target_sources(Fivesynth PRIVATE ${TS_SOURCES})
 target_include_directories(Fivesynth PRIVATE Source)

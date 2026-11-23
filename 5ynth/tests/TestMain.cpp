@@ -312,7 +312,7 @@ int main (int argc, char** argv)
     else if (mode == "logo")   // logo_5ynth.png: the wordmark on black, for README and manual
     {
         Image img (Image::ARGB, 1800, 560, true);
-        { Graphics g (img); g.fillAll (Colour (0xff0b0b0b)); logo::drawWordmark (g, { 60.0f, 60.0f, 1680.0f, 440.0f }); }
+        { Graphics g (img); g.fillAll (Colour (0xff0b0b0b)); logo::drawFamPat (g, { 120.0f, 140.0f, 1560.0f, 280.0f }); }
         PNGImageFormat png; FileOutputStream os (outDir.getChildFile ("logo_5ynth.png")); os.setPosition (0); os.truncate(); png.writeImageToStream (img, os);
     }
     else if (mode == "gui")

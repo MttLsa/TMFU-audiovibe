@@ -23,6 +23,7 @@ namespace params
         int module = -1;          // 0..4 for module parameters, -1 otherwise
         int suffix = -1;          // index in the module suffix table
         bool fader = false;       // drawn as a long fader on skins that have faders
+        bool automatable = true;  // shown to the DAW (player: only master, envelopes and the effects)
     };
 
     constexpr int numModules = 5, numLfos = 8, numEqBands = 5, numOps = 6;
@@ -61,6 +62,9 @@ namespace params
         int eqBase[numEqBands];         // on, type, freq, gain, q
         int lfoBase[numLfos];           // target, shape, rate, sync, div, depth, phase
         int numTargets;                 // LFO targets = every parameter before lfoBase[0]
+        // preset player controls: one filter / amp envelope for the whole patch (scale every module's envelope),
+        // the patch's delay and pedal drive
+        int pFA, pFD, pFS, pFR, pAA, pAD, pAS, pAR, pDlyDiv, pDlyFb, pDlyMix, pPedal;
         int num;
     };
     enum EqP { eqOn, eqType, eqFreq, eqGain, eqQ, numEqP };

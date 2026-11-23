@@ -231,6 +231,8 @@ private:
 namespace logo
 {
     void drawWordmark (juce::Graphics& g, juce::Rectangle<float> r, juce::RectanglePlacement place = juce::RectanglePlacement::centred);
+    // FamPat: minimal geometric "FAMPAT" wordmark (vector)
+    void drawFamPat (juce::Graphics& g, juce::Rectangle<float> r, juce::RectanglePlacement place = juce::RectanglePlacement::centred);
 }
 
 // full-size logo shown over the editor (click on the header logo); any click closes it

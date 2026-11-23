@@ -196,7 +196,23 @@ namespace params
             b.add (P + "depth", N + "Depth", F, -1, 1, 0.5f);
             b.add (P + "phase", N + "Phase", F, 0, 360, 0, 0, "deg");
         }
+        // preset player
+        L.pFA = b.add ("p_fa", "Filter Env Attack", F, 0.5f, 10000, 2, 300, "ms");
+        L.pFD = b.add ("p_fd", "Filter Env Decay", F, 0.5f, 10000, 400, 300, "ms");
+        L.pFS = b.add ("p_fs", "Filter Env Sustain", F, 0, 1, 0.4f, 0, "");
+        L.pFR = b.add ("p_fr", "Filter Env Release", F, 0.5f, 10000, 300, 300, "ms");
+        L.pAA = b.add ("p_aa", "Amp Env Attack", F, 0.5f, 10000, 2, 300, "ms");
+        L.pAD = b.add ("p_ad", "Amp Env Decay", F, 0.5f, 10000, 500, 300, "ms");
+        L.pAS = b.add ("p_as", "Amp Env Sustain", F, 0, 1, 1, 0, "");
+        L.pAR = b.add ("p_ar", "Amp Env Release", F, 0.5f, 10000, 250, 300, "ms");
+        L.pDlyDiv = b.add ("p_dlydiv", "Delay Time", C, 0, 0, 3, 0, "", split ("1/16|1/8T|1/8|1/8D|1/4T|1/4|1/4D|1/2"));
+        L.pDlyFb  = b.add ("p_dlyfb", "Delay Feedback", F, 0, 0.95f, 0.35f);
+        L.pDlyMix = b.add ("p_dlymix", "Delay Mix", F, 0, 1, 0);
+        L.pPedal  = b.add ("p_pedal", "Pedal Drive", F, 0, 1, 0.5f);
         L.num = (int) b.d.size();
+        // the DAW sees only what the player shows: master, envelopes, delay, pedal, drive, chorus, reverb
+        for (auto& d : b.d)
+            d.automatable = d.id.startsWith ("p_") || d.id == "g_master" || d.id == "g_drive" || d.id.startsWith ("g_cho") || d.id.startsWith ("g_rev");
         D = std::move (b.d);
     }
 
@@ -235,7 +251,7 @@ namespace params
                     juce::NormalisableRange<float> r (d.mn, d.mx);
                     if (d.centre > d.mn && d.centre < d.mx) r.setSkewForCentre (d.centre);
                     const Def copy = d;
-                    auto attr = juce::AudioParameterFloatAttributes().withLabel (d.unit)
+                    auto attr = juce::AudioParameterFloatAttributes().withLabel (d.unit).withAutomatable (d.automatable)
                         .withStringFromValueFunction ([copy] (float v, int) { return fmtValue (copy, v); });
                     lay.add (std::make_unique<juce::AudioParameterFloat> (pid, d.name, r, d.def, attr));
                     break;
@@ -244,15 +260,16 @@ namespace params
                 {
                     if (d.id.endsWith ("_target"))
                     {
-                        auto attr = juce::AudioParameterIntAttributes().withStringFromValueFunction ([] (int v, int) {
+                        auto attr = juce::AudioParameterIntAttributes().withAutomatable (d.automatable).withStringFromValueFunction ([] (int v, int) {
                             return v <= 0 ? juce::String ("-- off") : def (v - 1).name; });
                         lay.add (std::make_unique<juce::AudioParameterInt> (pid, d.name, (int) d.mn, (int) d.mx, (int) d.def, attr));
                     }
-                    else lay.add (std::make_unique<juce::AudioParameterInt> (pid, d.name, (int) d.mn, (int) d.mx, (int) d.def));
+                    else lay.add (std::make_unique<juce::AudioParameterInt> (pid, d.name, (int) d.mn, (int) d.mx, (int) d.def,
+                                                                             juce::AudioParameterIntAttributes().withAutomatable (d.automatable)));
                     break;
                 }
-                case B: lay.add (std::make_unique<juce::AudioParameterBool> (pid, d.name, d.def > 0.5f)); break;
-                case C: lay.add (std::make_unique<juce::AudioParameterChoice> (pid, d.name, d.choices, (int) d.def)); break;
+                case B: lay.add (std::make_unique<juce::AudioParameterBool> (pid, d.name, d.def > 0.5f, juce::AudioParameterBoolAttributes().withAutomatable (d.automatable))); break;
+                case C: lay.add (std::make_unique<juce::AudioParameterChoice> (pid, d.name, d.choices, (int) d.def, juce::AudioParameterChoiceAttributes().withAutomatable (d.automatable))); break;
             }
         }
         return lay;

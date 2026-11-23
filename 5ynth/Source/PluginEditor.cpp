@@ -199,7 +199,7 @@ void LogoSplash::paint (juce::Graphics& g)
 {
     g.fillAll (juce::Colours::black.withAlpha (0.92f));
     auto r = getLocalBounds().toFloat().withSizeKeepingCentre (760.0f, 300.0f);
-    logo::drawWordmark (g, r.removeFromTop (250.0f));
+    logo::drawFamPat (g, r.removeFromTop (250.0f).reduced (60.0f, 40.0f));
     g.setColour (ui::dim); g.setFont (ui::font (13.0f));
     g.drawText ("TMFU audiovibe  v" + juce::String (JucePlugin_VersionString), r.removeFromTop (30.0f), juce::Justification::centred);
 }

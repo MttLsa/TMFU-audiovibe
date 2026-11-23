@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "PlayerEditor.h"
 
 using namespace params;
 
@@ -10,10 +11,9 @@ namespace
     bool presetControlled (int i)
     {
         const auto& L = layout();
-        if (i >= L.lfoBase[0]) return false;                      // LFOs: the user's
-        if (i >= L.eqBase[0]) return false;                       // EQ: the user's
-        if (i >= L.ofLpOn && i <= L.ofHpRes) return false;        // output filters: the user's
+        // preset player: LFOs, EQ and output filters are no longer user controls -> every preset resets them to neutral
         if (i == L.gMaster || i == L.gBpm) return false;
+        if (def (i).id.startsWith ("p_")) return false;              // player controls: set from the patch (initPlayerControls)
         return true;
     }
 }
@@ -141,6 +141,7 @@ void FivesynthProcessor::loadPreset (int index)
         setParam (i, value);
     }
     setParam (layout().gSlots, (float) (maxSlot + 1));   // only the modules the patch uses (no empty extra module)
+    initPlayerControls();
     currentPreset.store (index);
     currentUser = {};
     ++presetCounter;
@@ -232,6 +233,38 @@ void FivesynthProcessor::renderChunk (float* L, float* R, int n, const juce::Mid
         if (jump || def (i).kind != params::F) sm = target;
         else sm += (target - sm) * a;
         snap[(size_t) i] = sm;
+    }
+
+    // ------------------------------------------------------------ preset player controls -> every module of the patch
+    {
+        const auto& L = layout();
+        const int slots = juce::jlimit (1, numModules, (int) snap[(size_t) L.gSlots]);
+        int ref = -1; float maxMix = 0.0f;
+        for (int m = 0; m < slots; ++m)
+            if (snap[(size_t) mod (m, mOn)] > 0.5f) { if (ref < 0) ref = m; maxMix = std::max (maxMix, snap[(size_t) mod (m, mDlyMix)]); }
+        if (ref >= 0)
+        {
+            const int pr[8] = { L.pFA, L.pFD, L.pFS, L.pFR, L.pAA, L.pAD, L.pAS, L.pAR };
+            const int ms[8] = { mFA, mFD, mFS, mFR, mAA, mAD, mAS, mAR };
+            float refV[8];
+            for (int k = 0; k < 8; ++k) refV[k] = snap[(size_t) mod (ref, ms[k])];
+            for (int m = 0; m < slots; ++m)
+            {
+                if (snap[(size_t) mod (m, mOn)] < 0.5f) continue;
+                for (int k = 0; k < 8; ++k)
+                {
+                    float& v = snap[(size_t) mod (m, ms[k])];
+                    const float target = snap[(size_t) pr[k]];
+                    if (ms[k] == mFS || ms[k] == mAS) v = juce::jlimit (0.0f, 1.0f, v + (target - refV[k]));   // sustain: same offset
+                    else v = juce::jlimit (0.5f, 10000.0f, v * target / std::max (0.5f, refV[k]));            // times: same ratio
+                }
+                float& mix = snap[(size_t) mod (m, mDlyMix)];
+                const float pMix = snap[(size_t) L.pDlyMix];
+                mix = maxMix > 0.0f ? juce::jlimit (0.0f, 1.0f, mix * pMix / maxMix) : (m == ref ? pMix : 0.0f);
+                if (mix > 0.0f) { snap[(size_t) mod (m, mDlyDiv)] = snap[(size_t) L.pDlyDiv]; snap[(size_t) mod (m, mDlyFb)] = snap[(size_t) L.pDlyFb]; }
+                if (snap[(size_t) mod (m, mDist)] > 0.5f) snap[(size_t) mod (m, mDGain)] = snap[(size_t) L.pPedal];
+            }
+        }
     }
 
     // ------------------------------------------------------------ 8 LFOs -> any parameter
@@ -328,7 +361,7 @@ void FivesynthProcessor::renderChunk (float* L, float* R, int n, const juce::Mid
     outMeter.store (juce::jmax (pk, outMeter.load() * 0.97f));
 }
 
-juce::AudioProcessorEditor* FivesynthProcessor::createEditor() { return new FivesynthEditor (*this); }
+juce::AudioProcessorEditor* FivesynthProcessor::createEditor() { return new PlayerEditor (*this); }
 
 void FivesynthProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
@@ -385,13 +418,39 @@ bool FivesynthProcessor::loadUserPreset (const juce::File& file)
     auto vt = juce::ValueTree::fromXml (*xml);
     loading = true;
     smoothReset = true;
+    const bool hasPlayer = vt.getChildWithProperty ("id", "p_fa").isValid();
     apvts.replaceState (vt);
+    if (! hasPlayer) initPlayerControls();
     loading = false;
     currentPreset.store (-1);
     currentUser = root->getStringAttribute ("name", file.getFileNameWithoutExtension());
     ++presetCounter;
     resetPending.store (true);
     return true;
+}
+
+// preset player: the patch's envelopes / delay / pedal become the player controls (sound unchanged until moved)
+void FivesynthProcessor::initPlayerControls()
+{
+    const auto& L = layout();
+    auto val = [this] (int i) { return raw[(size_t) i]->load(); };
+    const int slots = (int) val (L.gSlots);
+    int ref = -1, dly = -1, ped = -1;
+    for (int m = 0; m < juce::jmin (slots, numModules); ++m)
+    {
+        if (val (mod (m, mOn)) < 0.5f) continue;
+        if (ref < 0) ref = m;
+        if (val (mod (m, mDlyMix)) > 0.0f && (dly < 0 || val (mod (m, mDlyMix)) > val (mod (dly, mDlyMix)))) dly = m;
+        if (val (mod (m, mDist)) > 0.5f && ped < 0) ped = m;
+    }
+    if (ref < 0) ref = 0;
+    const int pr[8] = { L.pFA, L.pFD, L.pFS, L.pFR, L.pAA, L.pAD, L.pAS, L.pAR };
+    const int ms[8] = { mFA, mFD, mFS, mFR, mAA, mAD, mAS, mAR };
+    for (int k = 0; k < 8; ++k) setParam (pr[k], val (mod (ref, ms[k])));
+    setParam (L.pDlyDiv, dly >= 0 ? val (mod (dly, mDlyDiv)) : 3.0f);
+    setParam (L.pDlyFb, dly >= 0 ? val (mod (dly, mDlyFb)) : 0.35f);
+    setParam (L.pDlyMix, dly >= 0 ? val (mod (dly, mDlyMix)) : 0.0f);
+    setParam (L.pPedal, ped >= 0 ? val (mod (ped, mDGain)) : 0.5f);
 }
 
 void FivesynthProcessor::setStateInformation (const void* data, int sizeInBytes)
@@ -408,7 +467,9 @@ void FivesynthProcessor::setStateInformation (const void* data, int sizeInBytes)
             ++presetCounter;
             auto ui = vt.getChildWithName ("UI");
             if (ui.isValid()) { uiState.copyPropertiesFrom (ui, nullptr); vt.removeChild (ui, nullptr); }
+            const bool hasPlayer = vt.getChildWithProperty ("id", "p_fa").isValid();
             apvts.replaceState (vt);
+            if (! hasPlayer) initPlayerControls();   // project saved by an earlier version
             loading = false;
         }
 }
