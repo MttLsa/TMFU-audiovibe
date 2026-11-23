@@ -33,12 +33,12 @@ jobs:
           killall -9 AudioComponentRegistrar || true
           auval -v aumf Mcvb Tmfu
       - name: Build installer (.pkg, Intel + Apple Silicon)
-        run: ./packaging/macos/make_pkg.sh 1.1.0
+        run: ./packaging/macos/make_pkg.sh 1.1.1
       - name: Upload installer
         uses: actions/upload-artifact@v5
         with:
-          name: Microvibe-1.1.0-macOS-Installer
-          path: Microvibe/build/installer/Microvibe-1.1.0-macOS.pkg
+          name: Microvibe-1.1.1-macOS-Installer
+          path: Microvibe/build/installer/Microvibe-1.1.1-macOS.pkg
       - uses: actions/upload-artifact@v5
         with:
           name: Microvibe-macOS

@@ -1,0 +1,6 @@
+#!/bin/bash
+# Creates the Groovulation folders (shared by all users): loops, PRINT, snapshots, database.
+ROOT="/Users/Shared/Groovulation"
+mkdir -p "$ROOT/Loops" "$ROOT/PRINT" "$ROOT/Snapshots" "$ROOT/Database"
+chmod -R a+rwX "$ROOT"
+exit 0

@@ -1,0 +1,42 @@
+name: FamPat
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ "FamPat/**", ".github/workflows/fampat.yml" ]
+  pull_request:
+    paths: [ "FamPat/**", ".github/workflows/fampat.yml" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15-intel    # AU + VST3 + Standalone, universal binary (Intel + Apple Silicon); arm64 runners unavailable
+    defaults:
+      run:
+        working-directory: FamPat
+    steps:
+      - uses: actions/checkout@v5
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release --parallel
+      - name: Validate AU
+        run: |
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R build/FamPat_artefacts/Release/AU/FamPat.component ~/Library/Audio/Plug-Ins/Components/
+          killall -9 AudioComponentRegistrar || true
+          auval -v aumu Fmpt Tmfu
+      - name: Build installer (.pkg, Intel + Apple Silicon)
+        run: ./packaging/macos/make_pkg.sh 1.0.0
+      - name: Upload installer
+        uses: actions/upload-artifact@v5
+        with:
+          name: FamPat-1.0.0-macOS-Installer
+          path: FamPat/build/installer/FamPat-1.0.0-macOS.pkg
+      - uses: actions/upload-artifact@v5
+        with:
+          name: FamPat-macOS
+          path: |
+            FamPat/build/FamPat_artefacts/Release/VST3
+            FamPat/build/FamPat_artefacts/Release/AU
+            FamPat/build/FamPat_artefacts/Release/Standalone

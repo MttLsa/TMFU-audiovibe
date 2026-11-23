@@ -1,3 +1,4 @@
+Copyright (c) 2016 The Inter Project Authors (https://github.com/rsms/inter)
 Copyright 2021 The Urbanist Project Authors (https://github.com/coreyhu/Urbanist)
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.

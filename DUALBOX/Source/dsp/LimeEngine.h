@@ -1,0 +1,143 @@
+#pragma once
+#include "MicroEngine.h"   // TriggerEvent, TptSvf, BlockTime
+#include "SampleLibrary.h"
+#include "LimeFX.h"
+#include "BeltStretch.h"
+
+// =================================================================================================
+//  Section B : sample groovebox
+//   Voices    : Kick, Snare, Hat (closed/open), Tie (tonal), Pod (percussion)
+//   Sequencer : patterns A-D, main grid Kick/Snare/C-Hat/O-Hat (off/on/accent), value lanes Tie/Pod/Mod,
+//               own lengths (up to 64) + stretch, start step, swing, half tempo, pattern chain (8 slots),
+//               Remix engine (127 remix patterns, rate, shift, NOW)
+//   FX        : Filter (env) > EQ/Sat > Delay > xFx > FX Mix > Dirt > Gain (> NORM)
+// =================================================================================================
+class LimeEngine
+{
+public:
+    static constexpr int NP = params::numLimePatterns;   // A-D
+    static constexpr int NS = params::numLimeSteps;      // 64
+    enum TrigLane { laneKick = 0, laneSnare, laneCHat, laneOHat, numTrigLanes };
+    enum ValueLane { laneTie = 0, lanePod, laneMod, numValueLanes };
+    // trigger targets (MIDI 48.. / audition)
+    enum Target { tKick = 0, tSnare, tCHat, tOHat, tTie, tPod, numTargets };
+
+    struct Pattern
+    {
+        std::array<std::array<std::atomic<uint8_t>, NS>, numTrigLanes> trig;   // 0 off, 1 on, 2 accent
+        std::array<std::array<std::atomic<float>, NS>, numValueLanes> value;   // Tie/Pod: 0 = off; Mod: 0..1
+        std::array<std::array<std::atomic<float>, NS>, 2> vel;                  // Tie/Pod per-step velocity 0..1 (default 1)
+        Pattern() { clear(); }
+        void clear()
+        {
+            for (auto& l : trig) for (auto& s : l) s.store (0);
+            for (auto& l : value) for (auto& s : l) s.store (0.0f);
+            for (auto& l : vel) for (auto& s : l) s.store (1.0f);
+        }
+        void copyFrom (const Pattern& o)
+        {
+            for (size_t l = 0; l < trig.size(); ++l) for (size_t s = 0; s < (size_t) NS; ++s) trig[l][s].store (o.trig[l][s].load());
+            for (size_t l = 0; l < value.size(); ++l) for (size_t s = 0; s < (size_t) NS; ++s) value[l][s].store (o.value[l][s].load());
+            for (size_t l = 0; l < vel.size(); ++l) for (size_t s = 0; s < (size_t) NS; ++s) vel[l][s].store (o.vel[l][s].load());
+        }
+    };
+
+    explicit LimeEngine (SampleLibrary& lib);
+    void bind (ParamSource& apvts);   // parameters (LFO-modulated copies)
+    void prepare (double sampleRate, int blockSize);
+    void process (float* L, float* R, int numSamples, const BlockTime& bt, const std::vector<TriggerEvent>& midiEvents);
+
+    Pattern& pattern (int i) { return patterns[(size_t) juce::jlimit (0, NP - 1, i)]; }
+    int  playingPattern() const   { return currentPattern.load(); }
+    int  chainSlot() const        { return chainIndex.load(); }
+    int  laneStep (int lane) const { return laneSteps[(size_t) lane].load(); }   // 0 main, 1 tie, 2 pod, 3 mod
+    bool remixActive() const      { return remixing.load(); }
+    int  hitCount (int target) const { return hits[(size_t) target].load(); }
+    float modValueNow() const     { return modNow.load(); }
+    void audition (int target, float vel = 1.0f);
+    void auditionSample (int module, int index);   // play a specific sample of a module (pitch window)
+    void remixNow()               { remixNowFlag.store (true); }
+
+    // xFx XY motion recorder (REC records pad movements in a tempo-synced loop of LEN, PLAY loops them)
+    void xyTouch (float x, float y, bool down);          // from the UI pad (0..1)
+    bool  xyPlayingBack() const { return xyPlayback.load(); }
+    bool  xyRecording() const   { return xyRecNow.load(); }
+    bool  xyHasMotion() const   { return xyHas.load(); }
+    float xyCurrentX() const    { return xyCurX.load(); }
+    float xyCurrentY() const    { return xyCurY.load(); }
+    float xyLoopPos() const     { return xyPos.load(); }
+    void  xyClear()             { xyClearReq.store (true); }
+
+    juce::ValueTree saveState() const;
+    void loadState (const juce::ValueTree& vt);
+    void loadDefaultPatterns();
+
+    // Belt SCALE (Groovulation logic). semis = total transposition of the sample, corr = the part that brings it
+    // into the scale (rendered with Signalsmith Stretch), note = resulting tonic (for melodies). false = no key.
+    bool beltScale (const Sample& s, float tuneBase, float& semis, float& corr, int& note) const;
+    bool beltStretchIdle() const { return beltStretch.idle(); }
+    SamplePtr beltRendered (int index, float corr) const { return beltStretch.lookup (library.set (SampleLibrary::tie).get(), index, corr); }
+
+private:
+    struct Ev { int offset; int target; float vel; float value; bool isMod; int forced = -1; };
+    LookaheadWindow look;
+    NudgeQueue<Ev> queue;
+    struct Voice
+    {
+        SamplePtr smp;
+        bool active = false, fading = false;
+        double pos = 0.0, t = 0.0, fmPhase = 0.0, rate = 1.0, rateTarget = 1.0;
+        float gain = 1.0f, fade = 1.0f, prevShape[2] {};
+        float holdS = 0, tau = 0.1f, attS = 0;
+        bool fullLen = false;
+        float fmAmt = 0, zap = 0, cut = 20000;
+        SampleSetPtr set; int smpIndex = -1; bool manualPitch = false; float baseShift = 0;   // live per-sample pitch
+        TptSvf flt[2], hp[2];
+    };
+
+    void readParams();
+    void trigger (int target, float vel, float laneValue, int forcedIndex = -1);
+    void renderSampleVoice (int voice, Voice& v, float* dl, float* dr, int n);
+    int  remap (int pos, int len) const;
+    std::atomic<float>* p (const juce::String& id) const;
+
+    SampleLibrary& library;
+    BeltStretch beltStretch { library };
+    std::atomic<float>* scaleRootP = nullptr; std::atomic<float>* scaleTypeP = nullptr; std::atomic<float>* bTuneP = nullptr;
+    std::array<std::array<std::atomic<float>*, 40>, params::numLimeVoices> vk {};   // per-voice parameter pointers
+    ParamSource* state = nullptr;
+    std::array<Pattern, NP> patterns;
+    std::array<std::array<int8_t, 16>, 128> remixTable {};
+
+    // voices: 0 kick, 1 snare, 2 hat, 3 tie, 4 pod (2 voices each for declick)
+    std::array<std::array<Voice, 2>, 5> voices;
+    std::array<int, 5> nextVoice {};
+    double tiePrevRate = 1.0;
+
+
+    // FX
+    EnvFilter envFilter; EqSat eq; TapeDelay delay; XFx xfx; GentleSat dirtSat;
+    static constexpr int xyN = 1024;
+    std::array<float, xyN> xyBufX {}, xyBufY {};
+    std::atomic<bool> xyHas { false }, xyTouching { false }, xyPlayback { false }, xyRecNow { false }, xyClearReq { false };
+    std::atomic<int> xyTouchCount { 0 };
+    std::atomic<float> xyTouchX { 0.5f }, xyTouchY { 0.5f }, xyCurX { 0.5f }, xyCurY { 0.5f }, xyPos { 0.0f };
+    int xyLastTouchCount = 0, xyLastIdx = -1;
+    float xySmX = 0.5f, xySmY = 0.5f;
+    double xyFreePpq = 0.0;
+    std::vector<float> dryL, dryR, tieL, tieR, sendL, sendR, dlyL, dlyR, xL, xR, srcMono;
+    float normEnv = 0.0f, modSmooth = 0.0f;
+
+    // sequencer state
+    std::atomic<int> currentPattern { 0 }, chainIndex { 0 };
+    std::array<std::atomic<int>, 4> laneSteps {};
+    std::array<std::atomic<int>, numTargets> hits {};
+    std::array<std::atomic<int>, numTargets> auditionQ {};
+    std::array<std::atomic<int>, 5> auditionIdx { { -1, -1, -1, -1, -1 } };
+    std::atomic<bool> remixing { false }, remixNowFlag { false };
+    std::atomic<float> modNow { 0.0f };
+    float modHeld = 0.0f, remixPos = 0.0f;
+    long long lastLoop = -1;
+    bool remixThisLoop = false, nowPending = false;
+    double sr = 44100.0;
+};

@@ -1,0 +1,57 @@
+name: dualbox
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ "DUALBOX/**", ".github/workflows/dualbox.yml", "!DUALBOX/**/*.md", "!DUALBOX/docs/**" ]   # only DUALBOX changes trigger this build
+  pull_request:
+    paths: [ "DUALBOX/**", ".github/workflows/dualbox.yml" ]
+  workflow_dispatch:                            # manual start from the Actions tab
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15-intel  # builds AU + VST3 + .pkg installer (universal: Intel x86_64 + Apple Silicon; Intel runner = shorter queues)
+            name: macOS
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: DUALBOX
+    steps:
+      - uses: actions/checkout@v5
+      - name: Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libfreetype-dev libx11-dev libxcomposite-dev libxcursor-dev \
+            libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libfontconfig1-dev libgl1-mesa-dev ninja-build
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release --parallel
+      - name: Validate AU (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R build/Dualbox_artefacts/Release/AU/DUALBOX.component ~/Library/Audio/Plug-Ins/Components/
+          killall -9 AudioComponentRegistrar || true
+          auval -v aumu Twbx Twnb
+          auval -a | grep "Twbx Twnb" | tee /dev/stderr | grep -q "TMFU audiovibe: DUALBOX"   # name shown in the hosts
+      - name: Build installer (macOS)
+        if: runner.os == 'macOS'
+        run: ./packaging/macos/make_pkg.sh 2.17.0
+      - name: Upload installer (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v5
+        with:
+          name: DUALBOX-macOS-Installer
+          path: DUALBOX/build/installer/DUALBOX-2.17.0-macOS.pkg
+      - uses: actions/upload-artifact@v5
+        with:
+          name: DUALBOX-${{ matrix.name }}
+          path: |
+            DUALBOX/build/Dualbox_artefacts/Release/VST3
+            DUALBOX/build/Dualbox_artefacts/Release/AU

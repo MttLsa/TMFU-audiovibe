@@ -1,0 +1,494 @@
+#include "PluginProcessor.h"
+#include "PluginEditor.h"
+#include "PlayerEditor.h"
+
+using namespace params;
+
+namespace
+{
+    // the preset library must exist before the parameter layout (the "Synth Model" lists come from it)
+    juce::AudioProcessorValueTreeState::ParameterLayout makeLayout() { PresetLibrary::get(); return createLayout(); }
+    bool presetControlled (int i)
+    {
+        const auto& L = layout();
+        // preset player: LFOs, EQ and output filters are no longer user controls -> every preset resets them to neutral
+        if (i == L.gMaster || i == L.gBpm) return false;
+        if (def (i).id.startsWith ("p_")) return false;              // player controls: set from the patch (initPlayerControls)
+        return true;
+    }
+}
+
+FamPatProcessor::FamPatProcessor()
+    : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
+      apvts (*this, nullptr, "FAMPAT", makeLayout())
+{
+    const int n = numParams();
+    raw.resize ((size_t) n); prm.resize ((size_t) n); snap.assign ((size_t) n, 0.0f);
+    for (int i = 0; i < n; ++i)
+    {
+        raw[(size_t) i] = apvts.getRawParameterValue (def (i).id);
+        prm[(size_t) i] = apvts.getParameter (def (i).id);
+    }
+    for (int m = 0; m < numModules; ++m) apvts.addParameterListener (def (mod (m, mModel)).id, this);
+    // filter circuits of the real instruments
+    const auto& models = PresetLibrary::get().models();
+    for (int i = 0; i < (int) models.size(); ++i)
+        if (models[(size_t) i].name == "Moog Minimoog Model D") engine.setModelCircuit (i, dsp::Circuit::Minimoog);
+        else if (models[(size_t) i].name.startsWith ("Moog") || models[(size_t) i].name == "Polymoog") engine.setModelCircuit (i, dsp::Circuit::Moog);
+        else if (models[(size_t) i].name == "Roland Jupiter-8" || models[(size_t) i].name == "Roland SH-101") engine.setModelCircuit (i, dsp::Circuit::RolandVCO);
+        else if (models[(size_t) i].name.startsWith ("Roland Juno") || models[(size_t) i].name == "Roland JX-8P" || models[(size_t) i].name == "Roland Alpha Juno-2")
+            engine.setModelCircuit (i, dsp::Circuit::RolandDCO);
+        else if (models[(size_t) i].name == "Oberheim OB-X") engine.setModelCircuit (i, dsp::Circuit::OberheimSEM);
+        else if (models[(size_t) i].name == "Oberheim OB-Xa" || models[(size_t) i].name == "Sequential Prophet-5") engine.setModelCircuit (i, dsp::Circuit::Cem3320);
+        else if (models[(size_t) i].name == "Korg MS-20") engine.setModelCircuit (i, dsp::Circuit::Korg35);
+        else if (models[(size_t) i].name == "Yamaha CS-80") engine.setModelCircuit (i, dsp::Circuit::YamahaCS);
+        else if (models[(size_t) i].name.startsWith ("ARP 2") || models[(size_t) i].name == "ARP Odyssey") engine.setModelCircuit (i, dsp::Circuit::Arp);
+        else if (models[(size_t) i].name == "EMS VCS3 / Synthi AKS") engine.setModelCircuit (i, dsp::Circuit::Ems);
+        else if (models[(size_t) i].name == "PPG Wave 2.3") engine.setModelCircuit (i, dsp::Circuit::Ppg);
+        else if (models[(size_t) i].name == "Yamaha DX7" || models[(size_t) i].name == "Yamaha TX-816"
+                 || models[(size_t) i].name == "Yamaha DX21" || models[(size_t) i].name == "Yamaha TX81Z") engine.setModelCircuit (i, dsp::Circuit::YamahaFM);
+    const auto& all = PresetLibrary::get().all();
+    int start = 0;
+    for (int i = 0; i < (int) all.size(); ++i) if (all[(size_t) i].name == "Organ 2") start = i;
+    if (! all.empty()) loadPreset (start);
+}
+
+FamPatProcessor::~FamPatProcessor()
+{
+    for (int m = 0; m < numModules; ++m) apvts.removeParameterListener (def (mod (m, mModel)).id, this);
+}
+
+bool FamPatProcessor::isBusesLayoutSupported (const BusesLayout& l) const
+{
+    return l.getMainOutputChannelSet() == juce::AudioChannelSet::stereo();
+}
+
+void FamPatProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+{
+    sr = sampleRate;
+    smoothed.assign ((size_t) numParams(), 0.0f);
+    smoothReset = true;
+    engine.prepare (sampleRate, juce::jmax (32, samplesPerBlock));
+    chorus.prepare (sampleRate);
+    reverb.setSampleRate (sampleRate);
+    reverb.reset();
+    limiter.prepare (sampleRate);
+    setLatencySamples (fx::Limiter::D);   // the safety limiter looks ahead
+    revBuf.setSize (2, juce::jmax (32, samplesPerBlock));
+    chunkMidi.ensureSize (2048);
+    for (auto& b : eq) for (auto& q : b) q.reset();
+    for (auto& f : outF) for (auto& s : f) s.reset();
+    for (auto& k : eqKey) for (auto& x : k) x = -12345.0f;
+    keyboard.reset();
+}
+
+const juce::String FamPatProcessor::getProgramName (int i)
+{
+    const auto& all = PresetLibrary::get().all();
+    return juce::isPositiveAndBelow (i, (int) all.size()) ? all[(size_t) i].name : juce::String ("Init");
+}
+
+void FamPatProcessor::setParam (int i, float value)
+{
+    auto* p = prm[(size_t) i];
+    p->setValueNotifyingHost (p->convertTo0to1 (juce::jlimit (def (i).mn, def (i).mx, value)));
+}
+
+void FamPatProcessor::applyModuleValues (int slot, const PresetModule& pm)
+{
+    for (int s = 0; s < numModSuffix; ++s)
+    {
+        if (s == mOn || s == mModel) continue;
+        const int i = mod (slot, s);
+        float value = def (i).def;
+        const juce::String key = def (i).id.fromFirstOccurrenceOf ("_", false, false);
+        if (const auto* var = pm.values.getVarPointer (key))
+        {
+            if (var->isString()) { const int c = def (i).choices.indexOf (var->toString(), true); if (c >= 0) value = (float) c; }
+            else value = (float) (double) *var;
+        }
+        if (s == mLevel && ! pm.values.contains (key)) value = 0.8f;
+        setParam (i, value);
+    }
+}
+
+void FamPatProcessor::loadPreset (int index)
+{
+    const auto& all = PresetLibrary::get().all();
+    if (! juce::isPositiveAndBelow (index, (int) all.size())) return;
+    const auto& pr = all[(size_t) index];
+    loading = true;
+    smoothReset = true;
+    for (int i = 0; i < numParams(); ++i)
+        if (presetControlled (i)) setParam (i, def (i).def);
+    for (int m = 0; m < numModules; ++m) setParam (mod (m, mOn), 0.0f);
+    int maxSlot = 0;
+    for (auto& pm : pr.modules)
+    {
+        setParam (mod (pm.slot, mOn), 1.0f);
+        const int mi = PresetLibrary::get().modelIndex (pm.model);
+        if (mi >= 0) setParam (mod (pm.slot, mModel), (float) mi);
+        applyModuleValues (pm.slot, pm);
+        maxSlot = juce::jmax (maxSlot, pm.slot);
+    }
+    for (auto& nv : pr.globals)
+    {
+        const int i = indexOf (nv.name.toString());
+        if (i < 0) continue;
+        float value = def (i).def;
+        if (nv.value.isString()) { const int c = def (i).choices.indexOf (nv.value.toString(), true); if (c >= 0) value = (float) c; }
+        else value = (float) (double) nv.value;
+        setParam (i, value);
+    }
+    setParam (layout().gSlots, (float) (maxSlot + 1));   // only the modules the patch uses (no empty extra module)
+    initPlayerControls();
+    currentPreset.store (index);
+    currentUser = {};
+    ++presetCounter;
+    resetPending.store (true);
+    loading = false;
+}
+
+// "Change synth" of a module: copy the module of the first preset that uses that instrument (its signature sound)
+void FamPatProcessor::loadModelPatch (int module, int modelIndex)
+{
+    const auto* md = PresetLibrary::get().model (modelIndex);
+    if (md == nullptr) return;
+    loading = true;
+    smoothReset = true;
+    for (auto& pr : PresetLibrary::get().all())
+        for (auto& pm : pr.modules)
+            if (pm.model == md->name)
+            {
+                applyModuleValues (module, pm);
+                loading = false;
+                return;
+            }
+    PresetModule empty;
+    applyModuleValues (module, empty);
+    setParam (mod (module, mEngine), md->digital ? 1.0f : 0.0f);
+    loading = false;
+}
+
+void FamPatProcessor::parameterChanged (const juce::String& id, float)
+{
+    if (loading) return;
+    for (int m = 0; m < numModules; ++m)
+        if (id == def (mod (m, mModel)).id) pendingModel.fetch_or (1 << m);
+    triggerAsyncUpdate();
+}
+
+void FamPatProcessor::handleAsyncUpdate()
+{
+    const int mask = pendingModel.exchange (0);
+    for (int m = 0; m < numModules; ++m)
+        if (mask & (1 << m)) loadModelPatch (m, (int) raw[(size_t) mod (m, mModel)]->load());
+}
+
+void FamPatProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
+{
+    juce::ScopedNoDenormals noDenormals;
+    const int n = buffer.getNumSamples();
+    keyboard.processNextMidiBuffer (midi, 0, n, true);
+    if (resetPending.exchange (false)) engine.allNotesOff();
+    buffer.clear();
+
+    double bpm = raw[(size_t) layout().gBpm]->load(), ppq = -1;
+    bool playing = false;
+    if (auto* ph = getPlayHead())
+        if (auto pos = ph->getPosition())
+        {
+            if (auto b = pos->getBpm()) bpm = *b;
+            playing = pos->getIsPlaying();
+            if (auto p = pos->getPpqPosition()) ppq = *p;
+        }
+    if (ppq < 0) ppq = internalPpq;
+
+    float* L = buffer.getWritePointer (0);
+    float* R = buffer.getWritePointer (1);
+    constexpr int chunk = 32;
+    for (int s = 0; s < n; s += chunk)
+    {
+        const int len = juce::jmin (chunk, n - s);
+        chunkMidi.clear();
+        for (const auto meta : midi)
+            if (meta.samplePosition >= s && meta.samplePosition < s + len) chunkMidi.addEvent (meta.getMessage(), meta.samplePosition - s);
+        renderChunk (L + s, R + s, len, chunkMidi, bpm, ppq + (double) s / sr * bpm / 60.0, playing);
+    }
+    internalPpq = ppq + (double) n / sr * bpm / 60.0;
+}
+
+void FamPatProcessor::renderChunk (float* L, float* R, int n, const juce::MidiBuffer& midi, double bpm, double ppq, bool playing)
+{
+    const auto& lay = layout();
+    const int np = numParams();
+    // parameter snapshot; continuous (float) parameters are smoothed with a one-pole filter (~20 ms) so that moving a
+    // knob or fader changes the sound without steps; switches, menus and integer values change at once
+    const bool jump = smoothReset.exchange (false);
+    const float a = 1.0f - std::exp (-(float) n / (0.02f * (float) sr));
+    for (int i = 0; i < np; ++i)
+    {
+        const float target = raw[(size_t) i]->load();
+        auto& sm = smoothed[(size_t) i];
+        if (jump || def (i).kind != params::F) sm = target;
+        else sm += (target - sm) * a;
+        snap[(size_t) i] = sm;
+    }
+
+    // ------------------------------------------------------------ preset player controls -> every module of the patch
+    {
+        const auto& L = layout();
+        const int slots = juce::jlimit (1, numModules, (int) snap[(size_t) L.gSlots]);
+        int ref = -1; float maxMix = 0.0f;
+        for (int m = 0; m < slots; ++m)
+            if (snap[(size_t) mod (m, mOn)] > 0.5f) { if (ref < 0) ref = m; maxMix = std::max (maxMix, snap[(size_t) mod (m, mDlyMix)]); }
+        if (ref >= 0)
+        {
+            const int pr[8] = { L.pFA, L.pFD, L.pFS, L.pFR, L.pAA, L.pAD, L.pAS, L.pAR };
+            const int ms[8] = { mFA, mFD, mFS, mFR, mAA, mAD, mAS, mAR };
+            float refV[8];
+            for (int k = 0; k < 8; ++k) refV[k] = snap[(size_t) mod (ref, ms[k])];
+            for (int m = 0; m < slots; ++m)
+            {
+                if (snap[(size_t) mod (m, mOn)] < 0.5f) continue;
+                for (int k = 0; k < 8; ++k)
+                {
+                    float& v = snap[(size_t) mod (m, ms[k])];
+                    const float target = snap[(size_t) pr[k]];
+                    if (ms[k] == mFS || ms[k] == mAS) v = juce::jlimit (0.0f, 1.0f, v + (target - refV[k]));   // sustain: same offset
+                    else v = juce::jlimit (0.5f, 10000.0f, v * target / std::max (0.5f, refV[k]));            // times: same ratio
+                }
+                // FILTER ENVELOPE must always act: patches without a filter get a transparent LP that the envelope
+                // opens (fully open at sustain 1 = the original sound), patches whose filter ignores the envelope get
+                // some envelope depth with the cutoff lowered so the sustain brightness stays the same
+                {
+                    float& flt = snap[(size_t) mod (m, mFlt)];
+                    float& cut = snap[(size_t) mod (m, mCut)];
+                    float& env = snap[(size_t) mod (m, mEnv)];
+                    if ((int) flt == 7) { flt = 5.0f; cut = 150.0f; env = 1.0f; snap[(size_t) mod (m, mKey)] = 0.0f; snap[(size_t) mod (m, mVelF)] = 0.0f; snap[(size_t) mod (m, mRes)] = 0.0f; }
+                    else if (std::abs (env) < 0.05f && (int) flt != 4 && (int) flt != 3)
+                    {
+                        const float fs0 = raw[(size_t) mod (m, mFS)]->load();
+                        env = 0.4f;
+                        cut = juce::jlimit (20.0f, 20000.0f, cut * std::exp2 (-7.0f * 0.4f * fs0));
+                    }
+                }
+                float& mix = snap[(size_t) mod (m, mDlyMix)];
+                const float pMix = snap[(size_t) L.pDlyMix];
+                mix = maxMix > 0.0f ? juce::jlimit (0.0f, 1.0f, mix * pMix / maxMix) : (m == ref ? pMix : 0.0f);
+                if (mix > 0.0f) { snap[(size_t) mod (m, mDlyDiv)] = snap[(size_t) L.pDlyDiv]; snap[(size_t) mod (m, mDlyFb)] = snap[(size_t) L.pDlyFb]; }
+                if (snap[(size_t) mod (m, mDist)] > 0.5f) snap[(size_t) mod (m, mDGain)] = snap[(size_t) L.pPedal];
+            }
+        }
+    }
+
+    // ------------------------------------------------------------ 8 LFOs -> any parameter
+    for (int l = 0; l < numLfos; ++l)
+    {
+        const int b = lay.lfoBase[l];
+        const int shape = (int) snap[(size_t) (b + lShape)];
+        double cyclesPerSec;
+        const bool sync = snap[(size_t) (b + lSync)] > 0.5f;
+        if (sync) cyclesPerSec = bpm / 60.0 / lfoDivBeats ((int) snap[(size_t) (b + lDiv)]);
+        else cyclesPerSec = snap[(size_t) (b + lRate)];
+        const double prev = lfoPhase[l];
+        if (sync && playing) lfoPhase[l] = ppq / lfoDivBeats ((int) snap[(size_t) (b + lDiv)]);
+        else lfoPhase[l] += cyclesPerSec * n / sr;
+        const bool wrapped = std::floor (lfoPhase[l]) != std::floor (prev);
+        if (wrapped) { lfoSh[l] = rnd.nextFloat() * 2.0f - 1.0f; lfoRnd[l][0] = lfoRnd[l][1]; lfoRnd[l][1] = rnd.nextFloat() * 2.0f - 1.0f; }
+        double ph = lfoPhase[l] + snap[(size_t) (b + lPhase)] / 360.0;
+        const float p = (float) (ph - std::floor (ph));
+        const float fr = (float) (lfoPhase[l] - std::floor (lfoPhase[l]));
+        float val;
+        switch (shape)
+        {
+            case 0: val = dsp::triangle (p); break;
+            case 1: val = dsp::sine (p); break;
+            case 2: val = 2.0f * p - 1.0f; break;
+            case 3: val = 1.0f - 2.0f * p; break;
+            case 4: val = p < 0.5f ? 1.0f : -1.0f; break;
+            case 5: val = lfoSh[l]; break;
+            default: val = lfoRnd[l][0] + (lfoRnd[l][1] - lfoRnd[l][0]) * (0.5f - 0.5f * std::cos (fr * 3.14159265f)); break;
+        }
+        lfoVals[(size_t) l].store (val);
+        const int t = (int) snap[(size_t) (b + lTarget)] - 1;
+        if (t >= 0 && t < lay.numTargets)
+        {
+            auto* pr = prm[(size_t) t];
+            const float norm = juce::jlimit (0.0f, 1.0f, pr->convertTo0to1 (snap[(size_t) t]) + snap[(size_t) (b + lDepth)] * val * 0.5f);
+            snap[(size_t) t] = pr->convertFrom0to1 (norm);
+        }
+    }
+
+    engine.render (L, R, n, midi, snap.data(), bpm);
+
+    // ------------------------------------------------------------ global chain: drive, chorus, reverb, EQ, output filters
+    const float* v = snap.data();
+    if (v[lay.gDrive] > 0.001f)
+    {
+        const float k = 1.0f + v[lay.gDrive] * 9.0f, comp = 1.0f / std::pow (k, 0.55f);
+        for (int i = 0; i < n; ++i) { L[i] = dsp::fastTanh (L[i] * k) * comp * 1.2f; R[i] = dsp::fastTanh (R[i] * k) * comp * 1.2f; }
+    }
+    chorus.process (L, R, n, (int) v[lay.gChoMode], v[lay.gChoMix]);
+    if (v[lay.gRevMix] > 0.001f)
+    {
+        juce::Reverb::Parameters rp;
+        rp.roomSize = 0.3f + 0.68f * v[lay.gRevSize]; rp.damping = v[lay.gRevDamp]; rp.wetLevel = 1.0f; rp.dryLevel = 0.0f; rp.width = 1.0f;
+        reverb.setParameters (rp);
+        revBuf.copyFrom (0, 0, L, n); revBuf.copyFrom (1, 0, R, n);
+        reverb.processStereo (revBuf.getWritePointer (0), revBuf.getWritePointer (1), n);
+        const float wet = v[lay.gRevMix] * 0.5f, dry = 1.0f - 0.3f * v[lay.gRevMix];
+        for (int i = 0; i < n; ++i) { L[i] = L[i] * dry + revBuf.getSample (0, i) * wet; R[i] = R[i] * dry + revBuf.getSample (1, i) * wet; }
+    }
+    for (int e = 0; e < numEqBands; ++e)
+    {
+        const int b = lay.eqBase[e];
+        if (v[b + eqOn] < 0.5f) continue;
+        const float key[5] = { 1, v[b + eqType], v[b + eqFreq], v[b + eqGain], v[b + eqQ] };
+        if (std::memcmp (key, eqKey[e], sizeof (key)) != 0)
+        {
+            for (auto& q : eq[e]) q.set ((int) key[1], key[2], key[3], key[4], (float) sr);
+            std::memcpy (eqKey[e], key, sizeof (key));
+        }
+        const int type = (int) key[1];
+        if ((type == 1 || type == 2 || type == 3) && std::abs (key[3]) < 0.01f) continue;
+        for (int i = 0; i < n; ++i) { L[i] = eq[e][0].process (L[i]); R[i] = eq[e][1].process (R[i]); }
+    }
+    const int ofOn[3] = { lay.ofLpOn, lay.ofBpOn, lay.ofHpOn };
+    for (int f = 0; f < 3; ++f)
+    {
+        if (v[ofOn[f]] < 0.5f) continue;
+        const float g = dsp::cutoffG (v[ofOn[f] + 1], (float) sr), res = v[ofOn[f] + 2];
+        const int mode = f == 0 ? 0 : f == 1 ? 1 : 2;
+        for (int i = 0; i < n; ++i) { L[i] = outF[f][0].process (L[i], g, res, mode); R[i] = outF[f][1].process (R[i], g, res, mode); }
+    }
+
+    const float target = juce::Decibels::decibelsToGain (v[lay.gMaster] + v[lay.gTrim]);
+    float pk = 0.0f;
+    for (int i = 0; i < n; ++i)
+    {
+        gainSm += (target - gainSm) * 0.002f;
+        L[i] *= gainSm; R[i] *= gainSm;
+        pk = juce::jmax (pk, std::abs (L[i]), std::abs (R[i]));
+    }
+    peakPre.store (juce::jmax (peakPre.load(), pk));
+    limiter.process (L, R, n);
+    outMeter.store (juce::jmax (pk, outMeter.load() * 0.97f));
+}
+
+juce::AudioProcessorEditor* FamPatProcessor::createEditor() { return new PlayerEditor (*this); }
+
+void FamPatProcessor::getStateInformation (juce::MemoryBlock& destData)
+{
+    auto state = apvts.copyState();
+    state.setProperty ("preset", currentPreset.load(), nullptr);
+    state.setProperty ("userPreset", currentUser, nullptr);
+    state.removeChild (state.getChildWithName ("UI"), nullptr);
+    state.appendChild (uiState.createCopy(), nullptr);
+    if (auto xml = state.createXml()) copyXmlToBinary (*xml, destData);
+}
+
+juce::File FamPatProcessor::userPresetFolder()
+{
+   #if JUCE_MAC
+    auto dir = juce::File::getSpecialLocation (juce::File::userHomeDirectory).getChildFile ("Library/Audio/Presets/TMFU audiovibe/FamPat");
+   #else
+    auto dir = juce::File::getSpecialLocation (juce::File::userDocumentsDirectory).getChildFile ("TMFU audiovibe/FamPat Presets");
+   #endif
+    return dir;
+}
+
+juce::Array<juce::File> FamPatProcessor::userPresets() const
+{
+    auto files = userPresetFolder().findChildFiles (juce::File::findFiles, false, "*.fampat");
+    std::sort (files.begin(), files.end(), [] (const juce::File& a, const juce::File& b) { return a.getFileNameWithoutExtension().compareNatural (b.getFileNameWithoutExtension()) < 0; });
+    return files;
+}
+
+bool FamPatProcessor::saveUserPreset (const juce::String& rawName)
+{
+    const auto name = juce::File::createLegalFileName (rawName.trim());
+    if (name.isEmpty()) return false;
+    auto dir = userPresetFolder();
+    if (! dir.createDirectory()) return false;
+    auto state = apvts.copyState();
+    state.removeChild (state.getChildWithName ("UI"), nullptr);
+    state.removeProperty ("preset", nullptr);
+    juce::XmlElement root ("FAMPAT_PRESET");
+    root.setAttribute ("name", rawName.trim());
+    root.setAttribute ("version", JucePlugin_VersionString);
+    if (auto xml = state.createXml()) root.addChildElement (xml.release());
+    if (! dir.getChildFile (name + ".fampat").replaceWithText (root.toString())) return false;
+    currentUser = rawName.trim();
+    ++presetCounter;
+    return true;
+}
+
+bool FamPatProcessor::loadUserPreset (const juce::File& file)
+{
+    auto root = juce::XmlDocument::parse (file);
+    if (root == nullptr || ! root->hasTagName ("FAMPAT_PRESET")) return false;
+    auto* xml = root->getChildByName (apvts.state.getType());
+    if (xml == nullptr) return false;
+    auto vt = juce::ValueTree::fromXml (*xml);
+    loading = true;
+    smoothReset = true;
+    const bool hasPlayer = vt.getChildWithProperty ("id", "p_fa").isValid();
+    apvts.replaceState (vt);
+    if (! hasPlayer) initPlayerControls();
+    loading = false;
+    currentPreset.store (-1);
+    currentUser = root->getStringAttribute ("name", file.getFileNameWithoutExtension());
+    ++presetCounter;
+    resetPending.store (true);
+    return true;
+}
+
+// preset player: the patch's envelopes / delay / pedal become the player controls (sound unchanged until moved)
+void FamPatProcessor::initPlayerControls()
+{
+    const auto& L = layout();
+    auto val = [this] (int i) { return raw[(size_t) i]->load(); };
+    const int slots = (int) val (L.gSlots);
+    int ref = -1, dly = -1, ped = -1;
+    for (int m = 0; m < juce::jmin (slots, numModules); ++m)
+    {
+        if (val (mod (m, mOn)) < 0.5f) continue;
+        if (ref < 0) ref = m;
+        if (val (mod (m, mDlyMix)) > 0.0f && (dly < 0 || val (mod (m, mDlyMix)) > val (mod (dly, mDlyMix)))) dly = m;
+        if (val (mod (m, mDist)) > 0.5f && ped < 0) ped = m;
+    }
+    if (ref < 0) ref = 0;
+    const int pr[8] = { L.pFA, L.pFD, L.pFS, L.pFR, L.pAA, L.pAD, L.pAS, L.pAR };
+    const int ms[8] = { mFA, mFD, mFS, mFR, mAA, mAD, mAS, mAR };
+    for (int k = 0; k < 8; ++k) setParam (pr[k], val (mod (ref, ms[k])));
+    if ((int) val (mod (ref, mFlt)) == 7)   // no filter in the patch: the added LP starts fully open (sound unchanged)
+    { setParam (L.pFA, 0.5f); setParam (L.pFD, 400.0f); setParam (L.pFS, 1.0f); setParam (L.pFR, val (mod (ref, mAR))); }
+    setParam (L.pDlyDiv, dly >= 0 ? val (mod (dly, mDlyDiv)) : 3.0f);
+    setParam (L.pDlyFb, dly >= 0 ? val (mod (dly, mDlyFb)) : 0.35f);
+    setParam (L.pDlyMix, dly >= 0 ? val (mod (dly, mDlyMix)) : 0.0f);
+    setParam (L.pPedal, ped >= 0 ? val (mod (ped, mDGain)) : 0.5f);
+}
+
+void FamPatProcessor::setStateInformation (const void* data, int sizeInBytes)
+{
+    if (auto xml = getXmlFromBinary (data, sizeInBytes))
+        if (xml->hasTagName (apvts.state.getType()))
+        {
+            auto vt = juce::ValueTree::fromXml (*xml);
+            loading = true;
+            smoothReset = true;
+            currentPreset.store ((int) vt.getProperty ("preset", -1));
+            currentUser = vt.getProperty ("userPreset", "").toString();
+            vt.removeProperty ("userPreset", nullptr);
+            ++presetCounter;
+            auto ui = vt.getChildWithName ("UI");
+            if (ui.isValid()) { uiState.copyPropertiesFrom (ui, nullptr); vt.removeChild (ui, nullptr); }
+            const bool hasPlayer = vt.getChildWithProperty ("id", "p_fa").isValid();
+            apvts.replaceState (vt);
+            if (! hasPlayer) initPlayerControls();   // project saved by an earlier version
+            loading = false;
+        }
+}
+
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new FamPatProcessor(); }
