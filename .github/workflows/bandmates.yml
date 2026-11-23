@@ -1,0 +1,30 @@
+name: bandmates
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ "Bandmates/**", ".github/workflows/bandmates.yml" ]
+  pull_request:
+    paths: [ "Bandmates/**", ".github/workflows/bandmates.yml" ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Bandmates
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: "Tests (engine + devices on a simulated Live set)"
+        run: node --test
+      - name: Devices up to date
+        run: node tools/build.js --check
+      - name: Upload devices
+        uses: actions/upload-artifact@v5
+        with:
+          name: Bandmates-MaxForLive
+          path: Bandmates/devices/
