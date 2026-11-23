@@ -2,7 +2,7 @@
 #include "PluginEditor.h"
 
 // =====================================================================================================
-//  5ynth preset player: the 200 patches with their names and sounds (internal circuits unchanged), one
+//  FamPat preset player: the 200 patches with their names and sounds (internal circuits unchanged), one
 //  FILTER ENVELOPE and one AMP ENVELOPE for the whole patch, and a MASTER OUTPUT section with the patch's
 //  effects (drive / pedal, chorus, delay, reverb: only the ones the patch uses) and the output level.
 // =====================================================================================================
@@ -11,11 +11,11 @@
 class EnvCurve : public juce::Component, private juce::Timer
 {
 public:
-    EnvCurve (FivesynthProcessor& p, int a, int d, int s, int r, juce::Colour c) : proc (p), ia (a), id (d), is (s), ir (r), col (c) { startTimerHz (15); }
+    EnvCurve (FamPatProcessor& p, int a, int d, int s, int r, juce::Colour c) : proc (p), ia (a), id (d), is (s), ir (r), col (c) { startTimerHz (15); }
     void paint (juce::Graphics&) override;
 private:
     void timerCallback() override { repaint(); }
-    FivesynthProcessor& proc;
+    FamPatProcessor& proc;
     int ia, id, is, ir;
     juce::Colour col;
 };
@@ -23,7 +23,7 @@ private:
 class PlayerEditor : public juce::AudioProcessorEditor, private juce::Timer
 {
 public:
-    explicit PlayerEditor (FivesynthProcessor&);
+    explicit PlayerEditor (FamPatProcessor&);
     ~PlayerEditor() override;
     void paint (juce::Graphics&) override;
     void resized() override;
@@ -32,8 +32,8 @@ private:
     void timerCallback() override;
     void updatePatch();
     void layoutMaster();
-    FivesynthProcessor& proc;
-    FivesynthLook look;
+    FamPatProcessor& proc;
+    FamPatLook look;
     juce::Component content;
     PresetBrowser browser;
     SavePresetWindow saveWindow;

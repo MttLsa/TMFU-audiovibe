@@ -1,13 +1,13 @@
 // 5ynth (ex SynthZilla) offline harness
-//   FivesynthTest <outDir> check            render every preset: no NaN, not silent, report peak / loudness
-//   FivesynthTest <outDir> levels           write <outDir>/levels.json: g_trim so that every preset peaks at -1 dBFS
-//   FivesynthTest <outDir> wav <substring>  render matching presets to WAV
-//   FivesynthTest <outDir> gui              GUI snapshots (PNG)
-//   FivesynthTest <outDir> logo             logo_5ynth.png (wordmark on black)
-//   FivesynthTest <outDir> params           <outDir>/params.json: every parameter (for tools/make_manual.py)
-//   FivesynthTest <outDir> clicks           note changes in Mono / Legato / Poly: report presets with a discontinuity
-//   FivesynthTest <outDir> smooth           a parameter jumps on a sustained note: the sound must not click
-//   FivesynthTest <outDir> units            unit checks (5 modules, LFO modulation, EQ, output filters, model change, FM 6-op)
+//   FamPatTest <outDir> check            render every preset: no NaN, not silent, report peak / loudness
+//   FamPatTest <outDir> levels           write <outDir>/levels.json: g_trim so that every preset peaks at -1 dBFS
+//   FamPatTest <outDir> wav <substring>  render matching presets to WAV
+//   FamPatTest <outDir> gui              GUI snapshots (PNG)
+//   FamPatTest <outDir> logo             logo_5ynth.png (wordmark on black)
+//   FamPatTest <outDir> params           <outDir>/params.json: every parameter (for tools/make_manual.py)
+//   FamPatTest <outDir> clicks           note changes in Mono / Legato / Poly: report presets with a discontinuity
+//   FamPatTest <outDir> smooth           a parameter jumps on a sustained note: the sound must not click
+//   FamPatTest <outDir> units            unit checks (5 modules, LFO modulation, EQ, output filters, model change, FM 6-op)
 #include "../Source/PluginProcessor.h"
 #include "../Source/PluginEditor.h"
 #include <juce_audio_formats/juce_audio_formats.h>
@@ -23,11 +23,11 @@ static bool isPoly (const Preset& p)
     return false;
 }
 
-static void setP (FivesynthProcessor& p, int i, float v) { auto* pr = p.apvts.getParameter (def (i).id); pr->setValueNotifyingHost (pr->convertTo0to1 (v)); }
+static void setP (FamPatProcessor& p, int i, float v) { auto* pr = p.apvts.getParameter (def (i).id); pr->setValueNotifyingHost (pr->convertTo0to1 (v)); }
 
 using NoteList = std::vector<std::tuple<double, int, int, double>>;   // start s, note, velocity, duration s
 
-static Stats render (FivesynthProcessor& proc, const Preset* pr, double seconds, AudioBuffer<float>* keep = nullptr, int fixedNote = -1, const NoteList* notes = nullptr)
+static Stats render (FamPatProcessor& proc, const Preset* pr, double seconds, AudioBuffer<float>* keep = nullptr, int fixedNote = -1, const NoteList* notes = nullptr)
 {
     const double sr = 48000.0; const int bs = 256;
     proc.setPlayConfigDetails (0, 2, sr, bs);
@@ -101,7 +101,7 @@ int main (int argc, char** argv)
         float minP = 10, maxP = -200;
         for (int i = 0; i < (int) all.size(); ++i)
         {
-            FivesynthProcessor proc;
+            FamPatProcessor proc;
             proc.loadPreset (i);
             const auto st = render (proc, &all[(size_t) i], 4.0);
             const float pkDb = Decibels::gainToDecibels (proc.prePeak(), -200.0f);
@@ -118,7 +118,7 @@ int main (int argc, char** argv)
     {
         const auto& L = layout();
         {   // 5 modules: turning on C, D, E adds sound
-            FivesynthProcessor p; p.loadPreset (findPreset ("Acid Tracks"));
+            FamPatProcessor p; p.loadPreset (findPreset ("Acid Tracks"));
             const auto a = render (p, nullptr, 1.0, nullptr, 48);
             setP (p, L.gSlots, 5);
             for (int m = 2; m < 5; ++m) { setP (p, mod (m, mOn), 1); setP (p, mod (m, mModel), 0); }
@@ -127,7 +127,7 @@ int main (int argc, char** argv)
             expect (b.nans == 0, "5 modules finite");
         }
         {   // model change loads the signature patch of that instrument
-            FivesynthProcessor p; p.loadPreset (findPreset ("Acid Tracks"));
+            FamPatProcessor p; p.loadPreset (findPreset ("Acid Tracks"));
             const int dx = PresetLibrary::get().modelIndex ("Yamaha DX7");
             p.loadModelPatch (0, dx);
             expect ((int) p.apvts.getRawParameterValue ("A_engine")->load() == 1, "change synth -> DX7 loads FM engine");
@@ -135,7 +135,7 @@ int main (int argc, char** argv)
             expect (st.loud > -50 && st.nans == 0, "DX7 patch plays");
         }
         {   // LFO modulates a parameter
-            FivesynthProcessor p; p.loadPreset (findPreset ("Can You Feel It Pad"));
+            FamPatProcessor p; p.loadPreset (findPreset ("Can You Feel It Pad"));
             setP (p, mod (0, mLevel), 0.3f);   // low base level: a symmetric square LFO then changes the mean loudness
             const auto a = render (p, nullptr, 2.0, nullptr, 60);
             setP (p, L.lfoBase[0] + lTarget, (float) (mod (0, mLevel) + 1));
@@ -144,7 +144,7 @@ int main (int argc, char** argv)
             expect (std::abs (b.loud - a.loud) > 0.5, "LFO 1 -> A level changes the output");
         }
         {   // output filters + EQ
-            FivesynthProcessor p; p.loadPreset (findPreset ("Jump Brass"));
+            FamPatProcessor p; p.loadPreset (findPreset ("Jump Brass"));
             const auto a = render (p, nullptr, 1.5, nullptr, 60);
             setP (p, L.ofLpOn, 1); setP (p, L.ofLpCut, 200);
             const auto b = render (p, nullptr, 1.5, nullptr, 60);
@@ -155,13 +155,13 @@ int main (int argc, char** argv)
             expect (c.loud > a.loud + 2, "EQ band 3 +15 dB boosts");
         }
         {   // FM 6-op: every algorithm renders
-            FivesynthProcessor p; p.loadPreset (findPreset ("E.PIANO 1"));
+            FamPatProcessor p; p.loadPreset (findPreset ("E.PIANO 1"));
             bool fine = true;
             for (int a = 0; a < 32; ++a) { setP (p, mod (0, mAlg), (float) a); const auto st = render (p, nullptr, 0.4, nullptr, 60); fine &= st.nans == 0 && st.loud > -70; }
             expect (fine, "all 32 FM algorithms produce sound");
         }
         {   // 303 filter self-oscillation stays finite, RAT drive raises level
-            FivesynthProcessor p; p.loadPreset (findPreset ("Acid Tracks"));
+            FamPatProcessor p; p.loadPreset (findPreset ("Acid Tracks"));
             setP (p, mod (0, mRes), 1.0f);
             const auto a = render (p, nullptr, 1.0, nullptr, 36);
             expect (a.nans == 0, "303 filter at max resonance is stable");
@@ -175,7 +175,7 @@ int main (int argc, char** argv)
             for (int engine : { 0, 5 })
                 for (int vm : { 1, 2 })
                 {
-                    FivesynthProcessor p; p.loadPreset (findPreset ("Acid Tracks"));
+                    FamPatProcessor p; p.loadPreset (findPreset ("Acid Tracks"));
                     setP (p, mod (0, mEngine), (float) engine); setP (p, mod (0, mO1Wave), 3); setP (p, mod (0, mO1Lvl), 1);
                     setP (p, mod (0, mO2Lvl), 0); setP (p, mod (0, mSub), 0); setP (p, mod (0, mNoise), 0); setP (p, mod (0, mUni), 1);
                     setP (p, mod (0, mDrift), 0); setP (p, mod (0, mFlt), 7); setP (p, mod (0, mDist), 0); setP (p, mod (0, mDlyMix), 0);
@@ -194,11 +194,11 @@ int main (int argc, char** argv)
                 }
         }
         {   // module delay
-            FivesynthProcessor p; p.loadPreset (findPreset ("Popcorn Pluck"));
+            FamPatProcessor p; p.loadPreset (findPreset ("Popcorn Pluck"));
             const auto a = render (p, nullptr, 2.0, nullptr, 60);
-            setP (p, mod (0, mDlyMix), 0.8f); setP (p, mod (0, mDlyFb), 0.6f);
+            setP (p, layout().pDlyMix, 0.8f); setP (p, layout().pDlyFb, 0.6f);   // the player's Delay controls
             const auto b = render (p, nullptr, 2.0, nullptr, 60);
-            expect (b.loud > a.loud, "module delay adds echoes");
+            expect (b.loud > a.loud, "MASTER OUTPUT delay adds echoes");
         }
     }
     else if (mode == "params")
@@ -223,7 +223,7 @@ int main (int argc, char** argv)
         for (int i = 0; i < (int) all.size(); ++i)
         {
             if (q.isNotEmpty() && ! all[(size_t) i].name.toLowerCase().contains (q)) continue;
-            FivesynthProcessor proc; proc.loadPreset (i);
+            FamPatProcessor proc; proc.loadPreset (i);
             AudioBuffer<float> b;
             const auto st = render (proc, &all[(size_t) i], 4.0, &b);
             WavAudioFormat wav;
@@ -246,7 +246,7 @@ int main (int argc, char** argv)
             { "Oxygene Strings", layout().gDrive, 0, 1, "Drive" },       { "Oxygene Strings", mod (0, mDetune), 0, 1, "Detune" } };
         for (auto& c : cases)
         {
-            FivesynthProcessor proc; proc.loadPreset (findPreset (c.preset));
+            FamPatProcessor proc; proc.loadPreset (findPreset (c.preset));
             setP (proc, c.param, c.from);
             const double sr = 48000.0; const int bs = 256;
             proc.setPlayConfigDetails (0, 2, sr, bs); proc.prepareToPlay (sr, bs);
@@ -289,7 +289,7 @@ int main (int argc, char** argv)
         for (int i = 0; i < (int) all.size(); ++i)
             for (int md : { 1, 2, 0 })
             {
-                FivesynthProcessor proc; proc.loadPreset (i);
+                FamPatProcessor proc; proc.loadPreset (i);
                 setP (proc, layout().gMode, (float) md);
                 AudioBuffer<float> b;
                 render (proc, &all[(size_t) i], 3.4, &b, -1, md == 0 ? &polyNl : &nl);
@@ -330,24 +330,22 @@ int main (int argc, char** argv)
         {
             const int idx = findPreset (n);
             if (idx < 0) { std::printf ("missing %s\n", n.toRawUTF8()); continue; }
-            FivesynthProcessor proc; proc.loadPreset (idx);
+            FamPatProcessor proc; proc.loadPreset (idx);
             std::unique_ptr<AudioProcessorEditor> ed (proc.createEditor());
             ed->setSize (1400, 900);
             snap (*ed, "gui_" + File::createLegalFileName (n).replaceCharacter (' ', '_') + ".png");
         }
         for (auto sz : { Point<int> (1920, 1080), Point<int> (2560, 1600) })
         {   // free aspect ratio: a full-screen window is filled edge to edge
-            FivesynthProcessor proc; proc.loadPreset (findPreset ("Final Countdown Brass"));
+            FamPatProcessor proc; proc.loadPreset (findPreset ("Final Countdown Brass"));
             std::unique_ptr<AudioProcessorEditor> ed (proc.createEditor());
             ed->setSize (sz.x, sz.y);
             snap (*ed, "gui_fullscreen_" + String (sz.x) + "x" + String (sz.y) + ".png");
         }
-        {   // FM view with 5 modules, browser, EQ overlay
-            FivesynthProcessor proc; proc.loadPreset (findPreset ("E.PIANO 1"));
-            setP (proc, layout().gSlots, 5);
+        {   // header buttons, browser, save window, logo
+            FamPatProcessor proc; proc.loadPreset (findPreset ("E.PIANO 1"));
             std::unique_ptr<AudioProcessorEditor> ed (proc.createEditor());
             ed->setSize (1400, 900);
-            snap (*ed, "gui_FM_5_modules.png");
             std::function<Component* (Component*, const String&)> find = [&] (Component* c, const String& id) -> Component* {
                 if (c->getComponentID() == id) return c;
                 for (auto* ch : c->getChildren()) if (auto* r = find (ch, id)) return r;
@@ -355,7 +353,7 @@ int main (int argc, char** argv)
             auto click = [&] (const String& id) { if (auto* b = dynamic_cast<Button*> (find (ed.get(), id))) b->triggerClick(); else std::printf ("no %s\n", id.toRawUTF8()); };
             // every point of the < > preset buttons must reach the button (no label on top of them)
             ed->setVisible (true);
-            for (auto* id : { "prev", "next", "browse" })
+            for (auto* id : { "prev", "next", "browse", "savePreset" })
                 if (auto* b = find (ed.get(), id))
                 {
                     const auto r = ed->getLocalArea (b, b->getLocalBounds()).reduced (2);
@@ -375,9 +373,8 @@ int main (int argc, char** argv)
             click ("browse");
             snap (*ed, "gui_browser.png");
             click ("browse");
-            click ("eqExpand");
-            snap (*ed, "gui_eq.png");
-            click ("overlayClose");
+            click ("savePreset");
+            snap (*ed, "gui_save.png");
             if (auto* sp = find (ed.get(), "logoSplash")) { sp->setVisible (true); sp->toFront (false); }
             snap (*ed, "gui_logo.png");
         }

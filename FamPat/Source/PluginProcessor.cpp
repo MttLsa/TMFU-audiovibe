@@ -18,9 +18,9 @@ namespace
     }
 }
 
-FivesynthProcessor::FivesynthProcessor()
+FamPatProcessor::FamPatProcessor()
     : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
-      apvts (*this, nullptr, "SYNTHZILLA", makeLayout())   // state tag kept from SynthZilla: saved projects reload
+      apvts (*this, nullptr, "FAMPAT", makeLayout())
 {
     const int n = numParams();
     raw.resize ((size_t) n); prm.resize ((size_t) n); snap.assign ((size_t) n, 0.0f);
@@ -53,17 +53,17 @@ FivesynthProcessor::FivesynthProcessor()
     if (! all.empty()) loadPreset (start);
 }
 
-FivesynthProcessor::~FivesynthProcessor()
+FamPatProcessor::~FamPatProcessor()
 {
     for (int m = 0; m < numModules; ++m) apvts.removeParameterListener (def (mod (m, mModel)).id, this);
 }
 
-bool FivesynthProcessor::isBusesLayoutSupported (const BusesLayout& l) const
+bool FamPatProcessor::isBusesLayoutSupported (const BusesLayout& l) const
 {
     return l.getMainOutputChannelSet() == juce::AudioChannelSet::stereo();
 }
 
-void FivesynthProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void FamPatProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     sr = sampleRate;
     smoothed.assign ((size_t) numParams(), 0.0f);
@@ -82,19 +82,19 @@ void FivesynthProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     keyboard.reset();
 }
 
-const juce::String FivesynthProcessor::getProgramName (int i)
+const juce::String FamPatProcessor::getProgramName (int i)
 {
     const auto& all = PresetLibrary::get().all();
     return juce::isPositiveAndBelow (i, (int) all.size()) ? all[(size_t) i].name : juce::String ("Init");
 }
 
-void FivesynthProcessor::setParam (int i, float value)
+void FamPatProcessor::setParam (int i, float value)
 {
     auto* p = prm[(size_t) i];
     p->setValueNotifyingHost (p->convertTo0to1 (juce::jlimit (def (i).mn, def (i).mx, value)));
 }
 
-void FivesynthProcessor::applyModuleValues (int slot, const PresetModule& pm)
+void FamPatProcessor::applyModuleValues (int slot, const PresetModule& pm)
 {
     for (int s = 0; s < numModSuffix; ++s)
     {
@@ -112,7 +112,7 @@ void FivesynthProcessor::applyModuleValues (int slot, const PresetModule& pm)
     }
 }
 
-void FivesynthProcessor::loadPreset (int index)
+void FamPatProcessor::loadPreset (int index)
 {
     const auto& all = PresetLibrary::get().all();
     if (! juce::isPositiveAndBelow (index, (int) all.size())) return;
@@ -150,7 +150,7 @@ void FivesynthProcessor::loadPreset (int index)
 }
 
 // "Change synth" of a module: copy the module of the first preset that uses that instrument (its signature sound)
-void FivesynthProcessor::loadModelPatch (int module, int modelIndex)
+void FamPatProcessor::loadModelPatch (int module, int modelIndex)
 {
     const auto* md = PresetLibrary::get().model (modelIndex);
     if (md == nullptr) return;
@@ -170,7 +170,7 @@ void FivesynthProcessor::loadModelPatch (int module, int modelIndex)
     loading = false;
 }
 
-void FivesynthProcessor::parameterChanged (const juce::String& id, float)
+void FamPatProcessor::parameterChanged (const juce::String& id, float)
 {
     if (loading) return;
     for (int m = 0; m < numModules; ++m)
@@ -178,14 +178,14 @@ void FivesynthProcessor::parameterChanged (const juce::String& id, float)
     triggerAsyncUpdate();
 }
 
-void FivesynthProcessor::handleAsyncUpdate()
+void FamPatProcessor::handleAsyncUpdate()
 {
     const int mask = pendingModel.exchange (0);
     for (int m = 0; m < numModules; ++m)
         if (mask & (1 << m)) loadModelPatch (m, (int) raw[(size_t) mod (m, mModel)]->load());
 }
 
-void FivesynthProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
+void FamPatProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
     juce::ScopedNoDenormals noDenormals;
     const int n = buffer.getNumSamples();
@@ -218,7 +218,7 @@ void FivesynthProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::M
     internalPpq = ppq + (double) n / sr * bpm / 60.0;
 }
 
-void FivesynthProcessor::renderChunk (float* L, float* R, int n, const juce::MidiBuffer& midi, double bpm, double ppq, bool playing)
+void FamPatProcessor::renderChunk (float* L, float* R, int n, const juce::MidiBuffer& midi, double bpm, double ppq, bool playing)
 {
     const auto& lay = layout();
     const int np = numParams();
@@ -361,9 +361,9 @@ void FivesynthProcessor::renderChunk (float* L, float* R, int n, const juce::Mid
     outMeter.store (juce::jmax (pk, outMeter.load() * 0.97f));
 }
 
-juce::AudioProcessorEditor* FivesynthProcessor::createEditor() { return new PlayerEditor (*this); }
+juce::AudioProcessorEditor* FamPatProcessor::createEditor() { return new PlayerEditor (*this); }
 
-void FivesynthProcessor::getStateInformation (juce::MemoryBlock& destData)
+void FamPatProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     auto state = apvts.copyState();
     state.setProperty ("preset", currentPreset.load(), nullptr);
@@ -373,24 +373,24 @@ void FivesynthProcessor::getStateInformation (juce::MemoryBlock& destData)
     if (auto xml = state.createXml()) copyXmlToBinary (*xml, destData);
 }
 
-juce::File FivesynthProcessor::userPresetFolder()
+juce::File FamPatProcessor::userPresetFolder()
 {
    #if JUCE_MAC
-    auto dir = juce::File::getSpecialLocation (juce::File::userHomeDirectory).getChildFile ("Library/Audio/Presets/TMFU audiovibe/5ynth");
+    auto dir = juce::File::getSpecialLocation (juce::File::userHomeDirectory).getChildFile ("Library/Audio/Presets/TMFU audiovibe/FamPat");
    #else
-    auto dir = juce::File::getSpecialLocation (juce::File::userDocumentsDirectory).getChildFile ("TMFU audiovibe/5ynth Presets");
+    auto dir = juce::File::getSpecialLocation (juce::File::userDocumentsDirectory).getChildFile ("TMFU audiovibe/FamPat Presets");
    #endif
     return dir;
 }
 
-juce::Array<juce::File> FivesynthProcessor::userPresets() const
+juce::Array<juce::File> FamPatProcessor::userPresets() const
 {
-    auto files = userPresetFolder().findChildFiles (juce::File::findFiles, false, "*.5ynth");
+    auto files = userPresetFolder().findChildFiles (juce::File::findFiles, false, "*.fampat");
     std::sort (files.begin(), files.end(), [] (const juce::File& a, const juce::File& b) { return a.getFileNameWithoutExtension().compareNatural (b.getFileNameWithoutExtension()) < 0; });
     return files;
 }
 
-bool FivesynthProcessor::saveUserPreset (const juce::String& rawName)
+bool FamPatProcessor::saveUserPreset (const juce::String& rawName)
 {
     const auto name = juce::File::createLegalFileName (rawName.trim());
     if (name.isEmpty()) return false;
@@ -399,20 +399,20 @@ bool FivesynthProcessor::saveUserPreset (const juce::String& rawName)
     auto state = apvts.copyState();
     state.removeChild (state.getChildWithName ("UI"), nullptr);
     state.removeProperty ("preset", nullptr);
-    juce::XmlElement root ("FIVESYNTH_PRESET");
+    juce::XmlElement root ("FAMPAT_PRESET");
     root.setAttribute ("name", rawName.trim());
     root.setAttribute ("version", JucePlugin_VersionString);
     if (auto xml = state.createXml()) root.addChildElement (xml.release());
-    if (! dir.getChildFile (name + ".5ynth").replaceWithText (root.toString())) return false;
+    if (! dir.getChildFile (name + ".fampat").replaceWithText (root.toString())) return false;
     currentUser = rawName.trim();
     ++presetCounter;
     return true;
 }
 
-bool FivesynthProcessor::loadUserPreset (const juce::File& file)
+bool FamPatProcessor::loadUserPreset (const juce::File& file)
 {
     auto root = juce::XmlDocument::parse (file);
-    if (root == nullptr || ! root->hasTagName ("FIVESYNTH_PRESET")) return false;
+    if (root == nullptr || ! root->hasTagName ("FAMPAT_PRESET")) return false;
     auto* xml = root->getChildByName (apvts.state.getType());
     if (xml == nullptr) return false;
     auto vt = juce::ValueTree::fromXml (*xml);
@@ -430,7 +430,7 @@ bool FivesynthProcessor::loadUserPreset (const juce::File& file)
 }
 
 // preset player: the patch's envelopes / delay / pedal become the player controls (sound unchanged until moved)
-void FivesynthProcessor::initPlayerControls()
+void FamPatProcessor::initPlayerControls()
 {
     const auto& L = layout();
     auto val = [this] (int i) { return raw[(size_t) i]->load(); };
@@ -453,7 +453,7 @@ void FivesynthProcessor::initPlayerControls()
     setParam (L.pPedal, ped >= 0 ? val (mod (ped, mDGain)) : 0.5f);
 }
 
-void FivesynthProcessor::setStateInformation (const void* data, int sizeInBytes)
+void FamPatProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     if (auto xml = getXmlFromBinary (data, sizeInBytes))
         if (xml->hasTagName (apvts.state.getType()))
@@ -474,4 +474,4 @@ void FivesynthProcessor::setStateInformation (const void* data, int sizeInBytes)
         }
 }
 
-juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new FivesynthProcessor(); }
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new FamPatProcessor(); }

@@ -7,13 +7,13 @@
 #include "dsp/SynthEngine.h"
 #include "dsp/Effects.h"
 
-class FivesynthProcessor : public juce::AudioProcessor,
+class FamPatProcessor : public juce::AudioProcessor,
                             private juce::AudioProcessorValueTreeState::Listener,
                             private juce::AsyncUpdater
 {
 public:
-    FivesynthProcessor();
-    ~FivesynthProcessor() override;
+    FamPatProcessor();
+    ~FamPatProcessor() override;
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
@@ -43,8 +43,8 @@ public:
     int  presetIndex() const { return currentPreset.load(); }
     // changes on every preset load (factory or user): the editor refreshes header and panels from it
     int  presetSerial() const { return presetCounter.load(); }
-    // ---------------------------------------------------------------- user presets (.5ynth files)
-    static juce::File userPresetFolder();                 // ~/Library/Audio/Presets/TMFU audiovibe/5ynth on macOS
+    // ---------------------------------------------------------------- user presets (.fampat files)
+    static juce::File userPresetFolder();                 // ~/Library/Audio/Presets/TMFU audiovibe/FamPat on macOS
     juce::Array<juce::File> userPresets() const;          // sorted by name
     bool saveUserPreset (const juce::String& name);       // overwrites a preset with the same name
     bool loadUserPreset (const juce::File& file);
@@ -94,5 +94,5 @@ private:
     double sr = 48000.0, internalPpq = 0;
     float gainSm = 1.0f;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FivesynthProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FamPatProcessor)
 };

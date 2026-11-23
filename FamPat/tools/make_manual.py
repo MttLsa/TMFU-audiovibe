@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Builds docs/5ynth_Manuale_v<version>.pdf (Italian user manual) with reportlab.
-Inputs: params.json (FivesynthTest <dir> params), resources/presets.json, docs/gui_*.png, docs/logo_5ynth.png (FivesynthTest <dir> logo)
+Inputs: params.json (FamPatTest <dir> params), resources/presets.json, docs/gui_*.png, docs/logo_5ynth.png (FamPatTest <dir> logo)
 Usage:  python3 tools/make_manual.py <params.json> [version]
 """
 import json, os, re, sys

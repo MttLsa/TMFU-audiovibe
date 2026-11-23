@@ -3,7 +3,7 @@
 #include <vector>
 
 // =====================================================================================================
-//  5ynth parameters (built programmatically):
+//  FamPat parameters (built programmatically):
 //   * 5 synth modules A..E  -> ids "A_<suffix>" ... "E_<suffix>"  (same suffix table for every module)
 //   * global                -> "g_*"   output filters -> "of_*"   graphic EQ -> "eq1_*".."eq5_*"
 //   * 8 LFOs                -> "l1_*".."l8_*"  (can modulate any non-LFO parameter)

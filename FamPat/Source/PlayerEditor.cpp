@@ -1,60 +1,28 @@
 #include "PlayerEditor.h"
+#include "BinaryData.h"
 
 using namespace params;
 
 // =====================================================================================================
-//  FamPat logo: geometric letters of one constant stroke on a 100-unit cap height; the A's are open (no crossbar)
-//  and the first one holds a small "play" triangle, the only coloured element (it is a preset player).
+//  FamPat logo: "FAMPAT" in Rostex Regular (white), followed by an orange "play" triangle (it is a preset player)
 // =====================================================================================================
 void logo::drawFamPat (juce::Graphics& g, juce::Rectangle<float> r, juce::RectanglePlacement place)
 {
     using namespace juce;
-    const int variant = SystemStats::getEnvironmentVariable ("FAMPAT_V", "1").getIntValue();   // TEMP: mock-ups
-    const float t = variant == 2 ? 9.0f : 13.0f, H = 100.0f, gap = 15.0f;
-    Path ink, accent, second;
-    float x = 0;
-    auto bar = [&] (Path& p, float x0, float y0, float w, float h) { p.addRectangle (x0, y0, w, h); };
-    auto diag = [&] (Path& p, float x1, float y1, float x2, float y2)
-    {   // stroke of width t between two points, cut flat at y = 0 and y = H
-        Path l; l.startNewSubPath (x1, y1); l.lineTo (x2, y2);
-        Path o; PathStrokeType (t, PathStrokeType::mitered, PathStrokeType::butt).createStrokedPath (o, l); p.addPath (o);
-    };
-    auto letterA = [&] (Path& p, bool play)
-    {
-        const float w = 74;
-        Path a; a.startNewSubPath (x, H); a.lineTo (x + w * 0.5f, 0); a.lineTo (x + w, H);
-        a.lineTo (x + w - t * 1.12f, H); a.lineTo (x + w * 0.5f, t * 2.2f); a.lineTo (x + t * 1.12f, H); a.closeSubPath();
-        p.addPath (a);
-        if (play) { const float cx = x + w * 0.5f, cy = 80; accent.addTriangle (cx - 4.5f, cy - 7.5f, cx - 4.5f, cy + 7.5f, cx + 8.0f, cy); }
-        x += w + gap;
-    };
-    Path& rest = variant == 3 ? second : ink;   // variant 3: "PAT" in the accent colour
-    // F
-    bar (ink, x, 0, t, H); bar (ink, x, 0, 56, t); bar (ink, x, 44, 46, t); x += 56 + gap;
-    letterA (ink, variant != 3);
-    // M
-    { const float w = 84; bar (ink, x, 0, t, H); bar (ink, x + w - t, 0, t, H);
-      Path v; v.startNewSubPath (x, 0); v.lineTo (x + t * 1.2f, 0); v.lineTo (x + w * 0.5f, 58); v.lineTo (x + w - t * 1.2f, 0); v.lineTo (x + w, 0);
-      v.lineTo (x + w * 0.5f, 58 + t * 1.6f); v.closeSubPath(); ink.addPath (v); x += w + gap; }
-    // P
-    { const float w = 60, bh = 58; bar (rest, x, 0, t, H);
-      Path outline;   // bowl = ring of width t (stroked outline), open towards the stem
-      const float r = (bh - t) * 0.5f;
-      outline.startNewSubPath (x + t * 0.5f, t * 0.5f);
-      outline.lineTo (x + w - t * 0.5f - r, t * 0.5f);
-      outline.addCentredArc (x + w - t * 0.5f - r, t * 0.5f + r, r, r, 0, 0, MathConstants<float>::pi);
-      outline.lineTo (x + t * 0.5f, bh - t * 0.5f);
-      Path ring; PathStrokeType (t, PathStrokeType::mitered, PathStrokeType::butt).createStrokedPath (ring, outline);
-      rest.addPath (ring); x += w + gap; }
-    letterA (rest, false);
-    // T
-    { const float w = 68; bar (rest, x, 0, w, t); bar (rest, x + (w - t) * 0.5f, 0, t, H); x += w; }
-    const Rectangle<float> box (0, 0, x, H);
-    const auto T = place.getTransformToFit (box, r);
-    ink.applyTransform (T); accent.applyTransform (T); second.applyTransform (T);
-    const Colour white (0xfff0f0f0), orange (0xffff8a3d);
-    g.setColour (white); g.fillPath (ink);
-    g.setColour (orange); g.fillPath (accent); g.fillPath (second);
+    static Typeface::Ptr tf = Typeface::createSystemTypefaceFor (BinaryData::RostexRegular_ttf, BinaryData::RostexRegular_ttfSize);
+    GlyphArrangement ga;
+    ga.addLineOfText (Font (FontOptions (tf).withHeight (100.0f)), "FAMPAT", 0, 0);
+    Path text; ga.createPath (text);
+    const auto tb = text.getBounds();                         // cap height of the lettering
+    const float h = tb.getHeight(), gap = h * 0.22f, tw = h * 0.62f;
+    Path play;                                               // after the text, as tall as the letters' middle part
+    const float px = tb.getRight() + gap, cy = tb.getCentreY();
+    play.addTriangle (px, cy - tw * 0.5f, px, cy + tw * 0.5f, px + tw * 0.87f, cy);
+    Path all (text); all.addPath (play);
+    const auto T = place.getTransformToFit (all.getBounds(), r);
+    text.applyTransform (T); play.applyTransform (T);
+    g.setColour (Colour (0xfff0f0f0)); g.fillPath (text);
+    g.setColour (Colour (0xffff8a3d)); g.fillPath (play);
 }
 
 // =====================================================================================================
@@ -85,7 +53,7 @@ void EnvCurve::paint (juce::Graphics& g)
 // =====================================================================================================
 //  Player editor
 // =====================================================================================================
-PlayerEditor::PlayerEditor (FivesynthProcessor& p)
+PlayerEditor::PlayerEditor (FamPatProcessor& p)
     : AudioProcessorEditor (p), proc (p), browser (p), saveWindow (p), keys (p.keyboard, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     setLookAndFeel (&look);

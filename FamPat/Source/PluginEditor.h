@@ -22,10 +22,10 @@ namespace ui
     void relief (juce::Graphics& g, juce::Rectangle<float> r, juce::Colour base, float corner, bool raised = true);
 }
 
-class FivesynthLook : public juce::LookAndFeel_V4
+class FamPatLook : public juce::LookAndFeel_V4
 {
 public:
-    FivesynthLook();
+    FamPatLook();
     void setSkin (const skins::Skin& s);
     const skins::Skin* skin = nullptr;
     juce::Typeface::Ptr getTypefaceForFont (const juce::Font&) override;
@@ -82,101 +82,10 @@ private:
     std::unique_ptr<juce::ParameterAttachment> pa;
 };
 
-struct GroupDef { juce::String title; std::vector<std::pair<int, juce::String>> items; int cols = 0; int page = -1; int id = 0; int ops = params::numOps; };
-
-// FM algorithm diagram (operators as boxes, carriers on the bottom row)
-class AlgDiagram : public juce::Component
-{
-public:
-    void setAlg (int a, juce::Colour c, juce::Colour t) { alg = a; col = c; txt = t; repaint(); }
-    void paint (juce::Graphics&) override;
-private:
-    int alg = 0; juce::Colour col, txt;
-};
-
-// One synth module editor (A..E). The look follows the chosen synth model.
-class ModulePanel : public juce::Component, private juce::AudioProcessorValueTreeState::Listener, private juce::AsyncUpdater
-{
-public:
-    ModulePanel (FivesynthProcessor&, int module);
-    ~ModulePanel() override;
-    void paint (juce::Graphics&) override;
-    void paintOverChildren (juce::Graphics&) override;
-    void resized() override;
-    void refreshSkin();
-    int preferredHeight (int width);
-    const skins::Skin& currentSkin() const { return *skin; }
-private:
-    void parameterChanged (const juce::String&, float) override { triggerAsyncUpdate(); }
-    void handleAsyncUpdate() override { refreshSkin(); }
-    void applyFmMode();
-    void buildGroups();   // the panel of the chosen instrument (original sections / control names) + EXTRA
-    int layoutGroups (int width, bool apply);
-    int builtModel = -2, builtPreset = -2;
-    FivesynthProcessor& proc;
-    int module;
-    FivesynthLook look;
-    const skins::Skin* skin = nullptr;
-    std::vector<GroupDef> groups;
-    std::vector<std::vector<std::unique_ptr<Control>>> controls;
-    std::vector<juce::Rectangle<int>> groupBounds;
-    std::unique_ptr<Control> onBtn, engineBox;
-    juce::TextButton extraBtn { "EXTRA" };
-    AlgDiagram algView;
-    juce::Rectangle<int> algArea;
-    bool digitalLook = false;
-};
-
-// 5-band static EQ with draggable nodes (FabFilter-style display)
-class EqView : public juce::Component, private juce::Timer
-{
-public:
-    explicit EqView (FivesynthProcessor&);
-    ~EqView() override { setLookAndFeel (nullptr); }
-    void makeBig();
-    void resized() override;
-    void paint (juce::Graphics&) override;
-    void mouseDown (const juce::MouseEvent&) override;
-    void mouseDrag (const juce::MouseEvent&) override;
-    void mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
-    void mouseDoubleClick (const juce::MouseEvent&) override;
-    std::function<void()> onExpand;
-    bool big = false;
-private:
-    void timerCallback() override { repaint(); }
-    float xToF (float x) const; float fToX (float f) const; float gToY (float db) const; float yToG (float y) const;
-    juce::Rectangle<float> plot() const;
-    FivesynthProcessor& proc;
-    int dragBand = -1;
-    float range = 18.0f;
-    FivesynthLook look;
-    std::vector<std::unique_ptr<Control>> bandCtl;
-};
-
-class LfoPanel : public juce::Component, private juce::Timer
-{
-public:
-    LfoPanel (FivesynthProcessor&, bool showAll);
-    void resized() override;
-    void paint (juce::Graphics&) override;
-    std::function<void()> onExpand;
-private:
-    void timerCallback() override { repaint(); }
-    void select (int l);
-    FivesynthProcessor& proc;
-    bool all;
-    int sel = 0;
-    juce::TextButton tabs[params::numLfos], expand { "+" };
-    struct Row { std::unique_ptr<juce::ComboBox> target; std::unique_ptr<Control> shape, rate, sync, div, depth, phase;
-                 std::unique_ptr<juce::ParameterAttachment> tAtt; };
-    std::vector<Row> rows;
-    FivesynthLook look;
-};
-
 class PresetBrowser : public juce::Component, private juce::ListBoxModel
 {
 public:
-    explicit PresetBrowser (FivesynthProcessor&);
+    explicit PresetBrowser (FamPatProcessor&);
     void paint (juce::Graphics&) override;
     void resized() override;
     void refresh();
@@ -195,7 +104,7 @@ private:
     juce::TextButton userBtn { "USER" };
     juce::ComboBox sortBox;   // Year / Song / Preset / Artist
     juce::Array<juce::File> userFiles;
-    FivesynthProcessor& proc;
+    FamPatProcessor& proc;
     juce::ListBox list { "presets", this };
     juce::TextEditor search;
     juce::TextButton close { "CLOSE" };
@@ -208,7 +117,7 @@ private:
 class SavePresetWindow : public juce::Component, private juce::ListBoxModel
 {
 public:
-    explicit SavePresetWindow (FivesynthProcessor&);
+    explicit SavePresetWindow (FamPatProcessor&);
     void open();
     void paint (juce::Graphics&) override;
     void resized() override;
@@ -218,7 +127,7 @@ private:
     void paintListBoxItem (int row, juce::Graphics&, int w, int h, bool selected) override;
     void listBoxItemClicked (int row, const juce::MouseEvent&) override;
     void save();
-    FivesynthProcessor& proc;
+    FamPatProcessor& proc;
     juce::TextEditor name;
     juce::ListBox list { "user presets", this };
     juce::TextButton saveBtn { "SAVE" }, cancelBtn { "CANCEL" };
@@ -226,12 +135,9 @@ private:
     juce::Array<juce::File> files;
 };
 
-// 5ynth logo, drawn as vectors (sharp at any size): "5YNTH" in brushed metal whose "5" carries a stylised keyboard
-// and five glowing bars, inside a frame that follows the letters' outline
+// FamPat logo: "FAMPAT" in Rostex Regular + an orange "play" triangle (vector, sharp at any size)
 namespace logo
 {
-    void drawWordmark (juce::Graphics& g, juce::Rectangle<float> r, juce::RectanglePlacement place = juce::RectanglePlacement::centred);
-    // FamPat: minimal geometric "FAMPAT" wordmark (vector)
     void drawFamPat (juce::Graphics& g, juce::Rectangle<float> r, juce::RectanglePlacement place = juce::RectanglePlacement::centred);
 }
 
@@ -242,51 +148,4 @@ public:
     LogoSplash() { setInterceptsMouseClicks (true, false); setComponentID ("logoSplash"); }
     void paint (juce::Graphics&) override;
     void mouseDown (const juce::MouseEvent&) override { setVisible (false); }
-};
-
-class FivesynthEditor : public juce::AudioProcessorEditor, private juce::Timer
-{
-public:
-    explicit FivesynthEditor (FivesynthProcessor&);
-    ~FivesynthEditor() override;
-    void paint (juce::Graphics&) override;
-    void resized() override;
-    void mouseDown (const juce::MouseEvent&) override;
-private:
-    void timerCallback() override;
-    void updateHeader();
-    void drawLogo (juce::Graphics&);
-    void selectModule (int m);
-    void layoutSlots();
-    void showOverlay (juce::Component* c);
-    FivesynthProcessor& proc;
-    FivesynthLook look;
-    juce::Component content;
-    std::unique_ptr<ModulePanel> panels[params::numModules];
-    juce::Viewport moduleView;
-    struct SlotCard : public juce::Component { int m = 0; std::function<void()> onSelect; void mouseDown (const juce::MouseEvent&) override { if (onSelect) onSelect(); } };
-    SlotCard cards[params::numModules];
-    std::unique_ptr<Control> cardOn[params::numModules], cardModel[params::numModules], cardLevel[params::numModules], cardPan[params::numModules];
-    juce::TextButton cardRemove[params::numModules];
-    std::unique_ptr<ModulePanel> dummy;
-    std::vector<std::unique_ptr<Control>> globals;
-    std::vector<juce::Rectangle<int>> globalGroups;
-    juce::StringArray globalTitles;
-    EqView eqSmall, eqBig;
-    LfoPanel lfoSmall, lfoBig;
-    juce::TextButton eqExpand { "+" }, overlayClose { "CLOSE" };
-    juce::Component* overlay = nullptr;
-    juce::MidiKeyboardComponent keys;
-    PresetBrowser browser;
-    juce::TextButton prev { "<" }, next { ">" }, browse { "BROWSER" }, custom { "+ CUSTOM" }, savePreset { "SAVE" };
-    SavePresetWindow saveWindow;
-    juce::Label presetName, presetInfo;
-    int shownPreset = -2, selected = 0, shownSlots = -1;
-    juce::Rectangle<float> logoArea;
-    LogoSplash splash;
-    // BW x BH = reference layout. The window can take any size (full screen too): the UI is scaled by
-    // uiScale = min (width / BW, height / BH) and the logical area W x H grows on the other side.
-    static constexpr int BW = 1400, BH = 900;
-    int W = BW, H = BH;
-    float uiScale = 1.0f;
 };

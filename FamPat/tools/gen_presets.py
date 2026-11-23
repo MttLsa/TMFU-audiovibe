@@ -9,7 +9,7 @@ recreates:
   * digital original (FM, wavetable, ROM/PCM, VA, software) -> module with a digital engine
   * analog + digital combination (hybrid synth, or two instruments layered on the record) -> two modules in layer
 `original` = the real factory preset name when the sound is a documented factory preset.
-Levels: tools/levels.json (written by `FivesynthTest <dir> levels`) -> g_trim so every preset peaks at -1 dBFS.
+Levels: tools/levels.json (written by `FamPatTest <dir> levels`) -> g_trim so every preset peaks at -1 dBFS.
 """
 import json, os
 
