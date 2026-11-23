@@ -1,0 +1,42 @@
+name: heatsink
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ "HEATSINK/**", ".github/workflows/heatsink.yml" ]
+  pull_request:
+    paths: [ "HEATSINK/**", ".github/workflows/heatsink.yml" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15-intel    # AU + VST3 + Standalone, universal binary (Intel + Apple Silicon)
+    defaults:
+      run:
+        working-directory: HEATSINK
+    steps:
+      - uses: actions/checkout@v5
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release --parallel
+      - name: Validate AU
+        run: |
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R build/HEATSINK_artefacts/Release/AU/HEATSINK.component ~/Library/Audio/Plug-Ins/Components/
+          killall -9 AudioComponentRegistrar || true
+          auval -v aufx Htsk Tmfu
+      - name: Build installer (.pkg, Intel + Apple Silicon)
+        run: ./packaging/macos/make_pkg.sh 1.0.0
+      - name: Upload installer
+        uses: actions/upload-artifact@v5
+        with:
+          name: HEATSINK-1.0.0-macOS-Installer
+          path: HEATSINK/build/installer/HEATSINK-1.0.0-macOS.pkg
+      - uses: actions/upload-artifact@v5
+        with:
+          name: HEATSINK-macOS
+          path: |
+            HEATSINK/build/HEATSINK_artefacts/Release/VST3
+            HEATSINK/build/HEATSINK_artefacts/Release/AU
+            HEATSINK/build/HEATSINK_artefacts/Release/Standalone
