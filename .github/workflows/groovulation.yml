@@ -3,7 +3,7 @@ name: groovulation
 on:
   push:
     branches: [ main, "claude/**" ]
-    paths: [ "groovulation/**", ".github/workflows/groovulation.yml", "!groovulation/**/*.md", "!groovulation/docs/**" ]
+    paths: [ "Groovulation/**", ".github/workflows/groovulation.yml", "!Groovulation/**/*.md", "!Groovulation/docs/**" ]
   workflow_dispatch:
 
 jobs:
@@ -11,7 +11,7 @@ jobs:
     runs-on: macos-15-intel    # AU + VST3 + .pkg installer (universal: Intel x86_64 + Apple Silicon); auval runs on Intel
     defaults:
       run:
-        working-directory: groovulation
+        working-directory: Groovulation
     steps:
       - uses: actions/checkout@v5
       - name: Configure
@@ -30,4 +30,4 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: Groovulation-macOS-Installer
-          path: groovulation/build/installer/Groovulation-1.1.12-macOS.pkg
+          path: Groovulation/build/installer/Groovulation-1.1.12-macOS.pkg

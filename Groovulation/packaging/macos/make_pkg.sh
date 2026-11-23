@@ -2,7 +2,7 @@
 # Builds an (unsigned) macOS installer: Groovulation-<version>-macOS.pkg
 # with the AU (Components) and VST3 plug-ins (universal: Intel + Apple Silicon) and the
 # /Users/Shared/Groovulation folders (Loops, PRINT, Snapshots, Database, Skins).
-# Run from the groovulation/ folder after building:  ./packaging/macos/make_pkg.sh 1.0.0
+# Run from the Groovulation/ folder after building:  ./packaging/macos/make_pkg.sh 1.0.0
 set -euo pipefail
 VERSION="${1:-1.0.0}"
 ART="build/Groovulation_artefacts/Release"

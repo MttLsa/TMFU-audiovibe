@@ -1,9 +1,11 @@
-name: build
+name: dualbox
 
 on:
   push:
     branches: [ main ]
-    paths-ignore: [ "docs/**", "README.md", "groovulation/**", ".github/workflows/groovulation.yml" ]   # docs and Groovulation do not trigger the Twinbox build
+    paths: [ "DUALBOX/**", ".github/workflows/dualbox.yml", "!DUALBOX/**/*.md", "!DUALBOX/docs/**" ]   # only DUALBOX changes trigger this build
+  pull_request:
+    paths: [ "DUALBOX/**", ".github/workflows/dualbox.yml" ]
   workflow_dispatch:                            # manual start from the Actions tab
 
 jobs:
@@ -15,6 +17,9 @@ jobs:
           - os: macos-15-intel  # builds AU + VST3 + .pkg installer (universal: Intel x86_64 + Apple Silicon; Intel runner = shorter queues)
             name: macOS
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: DUALBOX
     steps:
       - uses: actions/checkout@v5
       - name: Linux dependencies
@@ -43,10 +48,10 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: DUALBOX-macOS-Installer
-          path: build/installer/DUALBOX-2.17.0-macOS.pkg
+          path: DUALBOX/build/installer/DUALBOX-2.17.0-macOS.pkg
       - uses: actions/upload-artifact@v5
         with:
           name: DUALBOX-${{ matrix.name }}
           path: |
-            build/Dualbox_artefacts/Release/VST3
-            build/Dualbox_artefacts/Release/AU
+            DUALBOX/build/Dualbox_artefacts/Release/VST3
+            DUALBOX/build/Dualbox_artefacts/Release/AU
