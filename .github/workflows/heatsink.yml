@@ -2,7 +2,7 @@ name: heatsink
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, "claude/**" ]
     paths: [ "HEATSINK/**", ".github/workflows/heatsink.yml" ]
   pull_request:
     paths: [ "HEATSINK/**", ".github/workflows/heatsink.yml" ]
