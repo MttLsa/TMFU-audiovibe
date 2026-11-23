@@ -6,7 +6,7 @@ using namespace juce;
 namespace
 {
     const char* moduleNames[] { "Kick", "Snare", "Hat", "Belt", "Capsule", "Click" };   // Belt / Capsule were called Tie / Pod before v2.12
-    const char* sourceKeys[]  { "twinbox", "legacy", "user" };
+    const char* sourceKeys[]  { "dualbox", "legacy", "user" };
 
     Array<File> audioFilesIn (const File& folder)
     {
@@ -24,7 +24,7 @@ namespace
 //==============================================================================
 SampleLibrary::SampleLibrary()
 {
-    sources.fill (twinbox);
+    sources.fill (factory);
     for (auto& s : sets) s = std::make_shared<SampleSet>();
 }
 
@@ -40,14 +40,14 @@ File SampleLibrary::rootFolder()
    #else
     auto base = File::getSpecialLocation (File::commonDocumentsDirectory);   // macOS: /Users/Shared
    #endif
-    return base.getChildFile ("Twinbox").getChildFile ("Samples");
+    return base.getChildFile ("Dualbox").getChildFile ("Samples");
 }
 
 String SampleLibrary::moduleName (int m) { return moduleNames[jlimit (0, numModules - 1, m)]; }
 
 File SampleLibrary::folderFor (int module, Source s)
 {
-    return rootFolder().getChildFile ((s == legacy ? "Legacy " : "Twinbox ") + moduleName (module));
+    return rootFolder().getChildFile ((s == legacy ? "Legacy " : "Dualbox ") + moduleName (module));
 }
 
 StringArray SampleLibrary::namesIn (const File& folder)
@@ -86,7 +86,7 @@ void SampleLibrary::installFactoryIfMissing()
 
     bool missing = false;
     for (int m = 0; m < numModules; ++m)
-        if (audioFilesIn (folderFor (m, twinbox)).isEmpty()) missing = true;
+        if (audioFilesIn (folderFor (m, factory)).isEmpty()) missing = true;
     const bool upgrade = installedManifest.isObject() && readVersion (installedManifest) < readVersion (embeddedManifest);
     if (! missing && ! upgrade) return;
 
@@ -99,30 +99,30 @@ void SampleLibrary::installFactoryIfMissing()
                     {
                         const String name = f.getProperty ("file", "").toString();
                         if (name.isEmpty() || name.containsAnyOf ("/\\")) continue;
-                        const auto folder = root.getChildFile ("Twinbox " + mod.name.toString());
+                        const auto folder = root.getChildFile ("Dualbox " + mod.name.toString());
                         folder.getChildFile (name).deleteFile();
                         folder.getChildFile ("open").getChildFile (name).deleteFile();
-                        folder.getChildFile (".twinbox_pitch.txt").deleteFile();
+                        folder.getChildFile (".dualbox_pitch.txt").deleteFile();
                     }
     if (upgrade)                                              // remove the old factory folders if they are now empty
-        for (auto* oldName : { "Twinbox Tie", "Twinbox Pod" })
+        for (auto* oldName : { "Dualbox Tie", "Dualbox Pod" })
         {
             const auto f = root.getChildFile (oldName);
             if (f.isDirectory())
             {
-                f.getChildFile (".twinbox_pitch.txt").deleteFile();
+                f.getChildFile (".dualbox_pitch.txt").deleteFile();
                 if (f.getNumberOfChildFiles (File::findFilesAndDirectories) == 0) f.deleteFile();
             }
         }
     const auto r = zip.uncompressTo (root, upgrade);   // overwrite only when upgrading the factory set
-    if (r.failed()) DBG ("Twinbox: factory sample install failed: " << r.getErrorMessage());
+    if (r.failed()) DBG ("DUALBOX: factory sample install failed: " << r.getErrorMessage());
 }
 
 File SampleLibrary::currentFolder (int m) const
 {
     const auto s = sources[(size_t) m];
     if (s == user && userFolders[(size_t) m].isDirectory()) return userFolders[(size_t) m];
-    return folderFor (m, s == user ? twinbox : s);
+    return folderFor (m, s == user ? factory : s);
 }
 
 void SampleLibrary::setSource (int m, Source s)
@@ -174,7 +174,7 @@ void SampleLibrary::reload (int m)
         auto set = std::make_shared<SampleSet>();
         set->folder = folder;
         // pitch cache: "<file>\t<size>\t<pitch>\t<conf>" lines in a hidden file inside the folder
-        const auto cacheFile = folder.getChildFile (".twinbox_pitch.txt");
+        const auto cacheFile = folder.getChildFile (".dualbox_pitch.txt");
         std::map<String, std::pair<String, std::pair<float, float>>> cache;
         {
             StringArray lines; lines.addLines (cacheFile.loadFileAsString());
@@ -186,6 +186,20 @@ void SampleLibrary::reload (int m)
         }
         StringArray newCache;
         bool cacheDirty = false;
+        // Belt: key analysis cache "<file>\t<size>\t<key data>" (Groovulation analysis)
+        const auto keyCacheFile = folder.getChildFile (".dualbox_key.txt");
+        std::map<String, std::pair<String, String>> keyCache;
+        if (m == tie)
+        {
+            StringArray lines; lines.addLines (keyCacheFile.loadFileAsString());
+            for (auto& l : lines)
+            {
+                StringArray t; t.addTokens (l, "\t", {});
+                if (t.size() == 3) keyCache[t[0]] = { t[1], t[2] };
+            }
+        }
+        StringArray newKeyCache;
+        bool keyCacheDirty = false;
         for (auto& f : audioFilesIn (folder))
         {
             if (auto s = loadFile (fm, f))
@@ -196,6 +210,22 @@ void SampleLibrary::reload (int m)
                     auto it = cache.find (f.getFileName());
                     if (it != cache.end() && it->second.first == sizeKey) { ms->pitch = it->second.second.first; ms->pitchConf = it->second.second.second; }
                     else { ms->pitch = detectPitch (*ms, ms->pitchConf); cacheDirty = true; }
+                    if (m == tie)
+                    {
+                        auto kit = keyCache.find (f.getFileName());
+                        keyanalysis::Result kr;
+                        if (! (kit != keyCache.end() && kit->second.first == sizeKey && keyanalysis::fromString (kit->second.second, kr)))
+                        {
+                            kr = keyanalysis::analyse (ms->L, ms->R, ms->sourceRate, ms->name);
+                            keyCacheDirty = true;
+                        }
+                        int nr; bool nm;
+                        if (keyanalysis::keyFromName (ms->name, nr, nm)) { kr.nameRoot = nr; kr.nameMinor = nm; }
+                        ms->key = kr; ms->hasKey = kr.ok;
+                        newKeyCache.add (f.getFileName() + "\t" + sizeKey + "\t" + keyanalysis::toString (kr));
+                        // the fundamental of the Groovulation analysis is shown as the "audio" note
+                        ms->pitch = (kr.f0 > 0.0f && kr.voiced >= 0.3f) ? 69.0f + 12.0f * std::log2 (kr.f0 / 440.0f) : -1.0f;
+                    }
                     ms->namePitch = pitchFromName (ms->name, ms->pitch);
                     newCache.add (f.getFileName() + "\t" + sizeKey + "\t" + String (ms->pitch, 3) + "\t" + String (ms->pitchConf, 3));
                 }
@@ -211,6 +241,7 @@ void SampleLibrary::reload (int m)
             }
         }
         if (cacheDirty) cacheFile.replaceWithText (newCache.joinIntoString ("\n"));   // silently ignored if read-only
+        if (keyCacheDirty) keyCacheFile.replaceWithText (newKeyCache.joinIntoString ("\n"));
         set->offsets = std::vector<std::atomic<float>> ((size_t) set->size());
         bool current;
         {
@@ -453,8 +484,8 @@ void SampleLibrary::loadState (const ValueTree& vt)
     {
         auto c = vt.getChildWithName (moduleName (m));
         if (! c.isValid()) continue;
-        const String src = c.getProperty ("source", "twinbox");
-        sources[(size_t) m] = src == "legacy" ? legacy : (src == "user" ? user : twinbox);
+        const String src = c.getProperty ("source", "dualbox");
+        sources[(size_t) m] = src == "legacy" ? legacy : (src == "user" ? user : factory);
         const String up = c.getProperty ("user");
         userFolders[(size_t) m] = up.isNotEmpty() ? File (up) : File();
     }
@@ -486,7 +517,7 @@ LegacyImporter::Result LegacyImporter::run (const File& ens, std::function<void 
 
     std::vector<size_t> mapPos;
     for (size_t p = find ("NIMapFile", 0); p < n; p = find ("NIMapFile", p + 9)) mapPos.push_back (p);
-    if (mapPos.empty()) { res.message = "No sample maps found: is this the Limelite ensemble?"; return res; }
+    if (mapPos.empty()) { res.message = "No sample maps found in this file."; return res; }
 
     for (size_t mi = 0; mi < mapPos.size(); ++mi)
     {
@@ -535,7 +566,7 @@ LegacyImporter::Result LegacyImporter::run (const File& ens, std::function<void 
 
     int total = 0, done = 0;
     for (auto& t : targets) if (auto* m = findMap (t.map)) total += (int) m->entries.size();
-    if (total == 0) { res.message = "The sample maps of Limelite were not found in this file."; return res; }
+    if (total == 0) { res.message = "No readable sample maps were found in this file."; return res; }
 
     const Map* closedHat = findMap ("Closed Hat");
     WavAudioFormat wav;

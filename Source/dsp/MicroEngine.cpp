@@ -344,7 +344,7 @@ void MicroEngine::process (float* L, float* R, int numSamples, const BlockTime& 
 
     // ---------------- render with sample-accurate triggers
     // fixed -6 dB of section headroom (8 drums summing), then the "Level A" control
-    levelGain = 0.436f * juce::Decibels::decibelsToGain (pLevel->load(), -60.0f);   // -7.2 dB: same loudness as Section B, no clipping
+    levelGain = 0.1775f * juce::Decibels::decibelsToGain (pLevel->load(), -60.0f);   // -15 dB: default patterns as loud as Section B
     int pos = 0, ei = 0;
     while (pos < numSamples)
     {

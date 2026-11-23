@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Twinbox factory sample generator.
+Dualbox factory sample generator.
 
-Renders the default sample folders for Section B ("Twinbox Kick", "Twinbox Snare", "Twinbox Hat",
-"Twinbox Tie", "Twinbox Pod") as 44.1 kHz / 16-bit mono WAV files, plus a manifest with genre tags
+Renders the default sample folders for Section B ("Dualbox Kick", "Dualbox Snare", "Dualbox Hat",
+"Dualbox Tie", "Dualbox Pod") as 44.1 kHz / 16-bit mono WAV files, plus a manifest with genre tags
 that the preset generator uses to build genre-coherent kits.
 
-Hats follow the Limelite convention: every closed hat "X.wav" may have an open partner in "open/X.wav".
+Hats follow this convention: every closed hat "X.wav" may have an open partner in "open/X.wav".
 
 Usage: python3 tools/gen_samples.py resources/samples
 """
@@ -94,7 +94,7 @@ def trim(x, thresh=1e-4):
 
 def write(module, name, x, tags, subdir=None):
     x = fade_tail(declick_head(normalize(trim(np.asarray(x, dtype=float)))))
-    folder = os.path.join(OUT, f"Twinbox {module}", *( [subdir] if subdir else [] ))
+    folder = os.path.join(OUT, f"Dualbox {module}", *( [subdir] if subdir else [] ))
     os.makedirs(folder, exist_ok=True)
     path = os.path.join(folder, name + ".wav")
     data = (np.clip(x, -1, 1) * 32767).astype("<i2").tobytes()
@@ -396,32 +396,32 @@ add("Kick", "Ro Punch", "rominimal",       lambda s: K(55, 170, 0.025, 0.17, 0.5
 add("Kick", "Ro Round", "rominimal",       lambda s: K(50, 120, 0.04, 0.26, 0.8, click=0.06, sub=0.15, seed=s))
 add("Kick", "Ro Tight", "rominimal",       lambda s: K(60, 200, 0.015, 0.1, 0.35, click=0.25, seed=s))
 add("Kick", "Ro Sub", "rominimal",         lambda s: K(46, 95, 0.06, 0.55, 1.5, click=0.03, sub=0.35, seed=s))
-add("Kick", "Ro Clean 909", "rominimal",   lambda s: K(52, 210, 0.022, 0.2, 0.6, click=0.3, noise=0.08, seed=s))
+add("Kick", "Ro Clean Classic", "rominimal",   lambda s: K(52, 210, 0.022, 0.2, 0.6, click=0.3, noise=0.08, seed=s))
 add("Kick", "Ro Felt", "rominimal",        lambda s: K(57, 130, 0.03, 0.14, 0.45, click=0.02, drive=1.05, seed=s))
-add("Kick", "House 909 Warm", "house",     lambda s: K(52, 230, 0.024, 0.32, 0.9, click=0.35, noise=0.12, seed=s))
-add("Kick", "House 909 Clean", "house",    lambda s: K(54, 250, 0.02, 0.28, 0.8, click=0.4, noise=0.12, seed=s))
+add("Kick", "House Classic Warm", "house",     lambda s: K(52, 230, 0.024, 0.32, 0.9, click=0.35, noise=0.12, seed=s))
+add("Kick", "House Classic Clean", "house",    lambda s: K(54, 250, 0.02, 0.28, 0.8, click=0.4, noise=0.12, seed=s))
 add("Kick", "House Garage", "house",       lambda s: K(50, 180, 0.035, 0.35, 1.0, click=0.2, sub=0.2, seed=s))
 add("Kick", "House Deep", "house",         lambda s: K(47, 140, 0.04, 0.45, 1.2, click=0.12, sub=0.25, seed=s))
 add("Kick", "House Box", "house",          lambda s: K(60, 220, 0.018, 0.16, 0.5, click=0.3, seed=s))
 add("Kick", "House Round", "house",        lambda s: K(50, 160, 0.03, 0.3, 0.9, click=0.15, seed=s))
-add("Kick", "TH 808 Clean", "techhouse",   lambda s: K(47, 110, 0.05, 0.42, 1.2, click=0.1, seed=s))
-add("Kick", "TH 707", "techhouse",         lambda s: K(60, 230, 0.017, 0.14, 0.45, click=0.35, noise=0.12, seed=s))
-add("Kick", "TH 909", "techhouse",         lambda s: K(53, 250, 0.022, 0.27, 0.8, click=0.4, noise=0.12, seed=s))
+add("Kick", "TH Analog Clean", "techhouse",   lambda s: K(47, 110, 0.05, 0.42, 1.2, click=0.1, seed=s))
+add("Kick", "TH Retro", "techhouse",         lambda s: K(60, 230, 0.017, 0.14, 0.45, click=0.35, noise=0.12, seed=s))
+add("Kick", "TH Classic", "techhouse",         lambda s: K(53, 250, 0.022, 0.27, 0.8, click=0.4, noise=0.12, seed=s))
 add("Kick", "TH Jack", "techhouse",        lambda s: K(56, 230, 0.02, 0.2, 0.6, click=0.4, seed=s))
 add("Kick", "TH UK Punch", "techhouse",    lambda s: K(54, 220, 0.022, 0.22, 0.7, click=0.3, sub=0.1, seed=s))
 add("Kick", "TH Detroit", "techhouse",     lambda s: K(50, 190, 0.03, 0.34, 0.9, click=0.25, seed=s))
 add("Kick", "Deep Dusty", "deephouse",     lambda s: svf(K(52, 160, 0.03, 0.3, 0.9, click=0.12, seed=s), 2800, 0.7, "lp"))
 add("Kick", "Deep Thump", "deephouse",     lambda s: svf(K(55, 140, 0.03, 0.2, 0.6, click=0.08, seed=s), 2200, 0.7, "lp"))
-add("Kick", "Deep Soft 909", "deephouse",  lambda s: K(52, 210, 0.026, 0.3, 0.9, click=0.25, noise=0.08, seed=s))
+add("Kick", "Deep Soft Classic", "deephouse",  lambda s: K(52, 210, 0.026, 0.3, 0.9, click=0.25, noise=0.08, seed=s))
 add("Kick", "Deep Dub", "deephouse",       lambda s: K(48, 120, 0.045, 0.4, 1.1, click=0.08, sub=0.25, seed=s))
 add("Kick", "Deep Tape", "deephouse",      lambda s: svf(K(54, 190, 0.025, 0.28, 0.8, click=0.2, seed=s), 3500, 0.7, "lp"))
 add("Kick", "Deep Round", "deephouse",     lambda s: K(50, 130, 0.04, 0.32, 0.9, click=0.05, seed=s))
-add("Kick", "Electro 808 Boom", "breakbeat", lambda s: K(42, 150, 0.06, 0.9, 2.0, click=0.12, seed=s))
-add("Kick", "Electro 808 Long", "breakbeat", lambda s: K(45, 120, 0.05, 0.7, 1.8, click=0.08, seed=s))
+add("Kick", "Electro Analog Boom", "breakbeat", lambda s: K(42, 150, 0.06, 0.9, 2.0, click=0.12, seed=s))
+add("Kick", "Electro Analog Long", "breakbeat", lambda s: K(45, 120, 0.05, 0.7, 1.8, click=0.08, seed=s))
 add("Kick", "Electro Punch", "breakbeat",  lambda s: K(58, 260, 0.018, 0.18, 0.5, click=0.4, seed=s))
-add("Kick", "Electro Short 808", "breakbeat", lambda s: K(50, 140, 0.04, 0.25, 0.7, click=0.12, seed=s))
+add("Kick", "Electro Short Analog", "breakbeat", lambda s: K(50, 140, 0.04, 0.25, 0.7, click=0.12, seed=s))
 add("Kick", "Electro Tight", "breakbeat",  lambda s: K(62, 300, 0.012, 0.12, 0.4, click=0.45, seed=s))
-add("Kick", "Electro 808 Mid", "breakbeat", lambda s: K(48, 160, 0.05, 0.5, 1.4, click=0.15, seed=s))
+add("Kick", "Electro Analog Mid", "breakbeat", lambda s: K(48, 160, 0.05, 0.5, 1.4, click=0.15, seed=s))
 
 # ===== SNARE (only soft snares and soft claps)
 add("Snare", "Tek Soft Snare", "techno",   lambda s: softsnare(200, 0.04, 0.14, 3000, mix=0.75, room=0.4, seed=s))
@@ -448,15 +448,15 @@ add("Snare", "Ro Room Clap", "rominimal",  lambda s: convolve(softclap(1200, 0.0
 add("Snare", "Ro Tight Snare", "rominimal", lambda s: softsnare(240, 0.015, 0.04, 3200, mix=0.7, length=0.2, seed=s))
 add("Snare", "Ro Velvet Clap", "rominimal", lambda s: softclap(1000, 0.09, room=0.3, length=0.4, seed=s, lp=4500))
 add("Snare", "Ro Ghost Snare", "rominimal", lambda s: softsnare(200, 0.02, 0.05, 2600, mix=0.7, length=0.25, seed=s, lp=4000))
-add("Snare", "House 909 Clap", "house",    lambda s: softclap(1150, 0.15, room=0.4, seed=s))
+add("Snare", "House Classic Clap", "house",    lambda s: softclap(1150, 0.15, room=0.4, seed=s))
 add("Snare", "House Garage Snare", "house", lambda s: softsnare(185, 0.05, 0.12, 3200, mix=0.7, seed=s))
 add("Snare", "House Clap Stack", "house",  lambda s: softclap(1050, 0.22, bursts=5, room=0.6, length=0.8, seed=s))
 add("Snare", "House Soft Clap", "house",   lambda s: softclap(1250, 0.1, room=0.2, length=0.45, seed=s))
-add("Snare", "House 909 Snare", "house",   lambda s: softsnare(180, 0.07, 0.15, 3200, mix=0.65, seed=s))
+add("Snare", "House Classic Snare", "house",   lambda s: softsnare(180, 0.07, 0.15, 3200, mix=0.65, seed=s))
 add("Snare", "House Room Snare", "house",  lambda s: softsnare(200, 0.05, 0.12, 2800, mix=0.7, room=0.5, seed=s))
-add("Snare", "TH 707 Clap", "techhouse",   lambda s: softclap(1250, 0.09, length=0.4, room=0.1, seed=s))
-add("Snare", "TH 808 Clap", "techhouse",   lambda s: softclap(1050, 0.13, length=0.5, room=0.3, seed=s))
-add("Snare", "TH 707 Snare", "techhouse",  lambda s: softsnare(220, 0.04, 0.09, 3000, mix=0.6, length=0.35, seed=s))
+add("Snare", "TH Retro Clap", "techhouse",   lambda s: softclap(1250, 0.09, length=0.4, room=0.1, seed=s))
+add("Snare", "TH Analog Clap", "techhouse",   lambda s: softclap(1050, 0.13, length=0.5, room=0.3, seed=s))
+add("Snare", "TH Retro Snare", "techhouse",  lambda s: softsnare(220, 0.04, 0.09, 3000, mix=0.6, length=0.35, seed=s))
 add("Snare", "TH Tight Clap", "techhouse", lambda s: softclap(1500, 0.06, bursts=3, spacing=0.008, room=0.0, length=0.3, seed=s))
 add("Snare", "TH Warm Snare", "techhouse", lambda s: softsnare(200, 0.05, 0.11, 3500, mix=0.7, seed=s))
 add("Snare", "TH Layer Clap", "techhouse", lambda s: softclap(1150, 0.16, bursts=5, room=0.5, length=0.6, seed=s))
@@ -466,16 +466,16 @@ add("Snare", "Deep Short Clap", "deephouse", lambda s: softclap(1200, 0.06, burs
 add("Snare", "Deep Dub Clap", "deephouse", lambda s: delay_fx(softclap(1100, 0.08, room=0.2, length=0.35, seed=s), 0.75, 120, 0.4, 0.3, 1500))
 add("Snare", "Deep Soft Clap", "deephouse", lambda s: softclap(950, 0.25, room=1.0, length=0.9, seed=s, lp=5000))
 add("Snare", "Deep Tape Snare", "deephouse", lambda s: softsnare(190, 0.06, 0.13, 3000, mix=0.65, seed=s, lp=4000))
-add("Snare", "Electro 808 Snare", "breakbeat", lambda s: svf(snare808(185, 0.6, 0.12, seed=s), 7000, 0.7, "lp"))
+add("Snare", "Electro Analog Snare", "breakbeat", lambda s: svf(snare808(185, 0.6, 0.12, seed=s), 7000, 0.7, "lp"))
 add("Snare", "Electro Snappy", "breakbeat", lambda s: svf(snare808(220, 0.75, 0.09, 0.35, seed=s), 6500, 0.7, "lp"))
 add("Snare", "Electro Clap", "breakbeat",  lambda s: softclap(1200, 0.1, length=0.45, room=0.2, seed=s))
 add("Snare", "Electro Break Snare", "breakbeat", lambda s: softsnare(200, 0.05, 0.12, 3200, mix=0.7, room=0.3, seed=s))
-add("Snare", "Electro Soft 808", "breakbeat", lambda s: svf(snare808(170, 0.5, 0.1, seed=s), 5000, 0.7, "lp"))
+add("Snare", "Electro Soft Analog", "breakbeat", lambda s: svf(snare808(170, 0.5, 0.1, seed=s), 5000, 0.7, "lp"))
 add("Snare", "Electro Room Clap", "breakbeat", lambda s: softclap(1100, 0.15, bursts=4, room=0.5, length=0.6, seed=s))
 
 # ===== HATS (closed + open pairs): (tau, hp, metal, base, open_tau, extra) - low metal ratio, soft
 HATS = {
- "techno":     [("Tek 909 Hat", (0.04, 8000, 0.3, 430), 0.5, {}), ("Tek Soft Steel", (0.035, 7000, 0.35, 480), 0.5, {}),
+ "techno":     [("Tek Classic Hat", (0.04, 8000, 0.3, 430), 0.5, {}), ("Tek Soft Steel", (0.035, 7000, 0.35, 480), 0.5, {}),
                 ("Tek Hiss Ride", (0.06, 9000, 0.15, 520), 1.2, dict(bp=6000)), ("Tek Dark", (0.05, 4500, 0.3, 300), 0.4, {})],
  "minimal":    [("Min Tick", (0.012, 9500, 0.3, 500), 0.12, {}), ("Min Crackle", (0.02, 7000, 0.0, 400), 0.15, dict(bp=8000)),
                 ("Min Grain", (0.018, 7000, 0.1, 300), 0.14, dict(bp=6500)), ("Min Micro", (0.006, 12000, 0.3, 700), 0.06, {})],
@@ -483,13 +483,13 @@ HATS = {
                 ("Mic Rattle", (0.05, 4800, 0.05, 340), 0.18, dict(shaker=True, bp=5600)), ("Mic Dust", (0.01, 11000, 0.1, 520), 0.09, {})],
  "rominimal":  [("Ro Crisp", (0.02, 8500, 0.2, 450), 0.2, {}), ("Ro Shuffle", (0.03, 6500, 0.05, 410), 0.16, dict(bp=8500)),
                 ("Ro Tsk", (0.025, 9000, 0.25, 470), 0.25, {}), ("Ro Soft Shaker", (0.05, 5500, 0.0, 380), 0.2, dict(shaker=True))],
- "house":      [("House 909 Hat", (0.045, 8000, 0.25, 420), 0.42, {}), ("House Open Tss", (0.05, 7000, 0.25, 390), 0.6, {}),
+ "house":      [("House Classic Hat", (0.045, 8000, 0.25, 420), 0.42, {}), ("House Open Tss", (0.05, 7000, 0.25, 390), 0.6, {}),
                 ("House Soft Ride", (0.1, 6000, 0.3, 520), 1.0, dict(bp=7000)), ("House Shaker", (0.06, 6000, 0.0, 700), 0.28, dict(shaker=True, bp=8000))],
- "techhouse":  [("TH 808 Hat", (0.035, 7000, 0.35, 360), 0.32, {}), ("TH 707 Hat", (0.03, 8500, 0.3, 450), 0.35, {}),
+ "techhouse":  [("TH Analog Hat", (0.035, 7000, 0.35, 360), 0.32, {}), ("TH Retro Hat", (0.03, 8500, 0.3, 450), 0.35, {}),
                 ("TH Jack Hat", (0.03, 8000, 0.25, 450), 0.38, {}), ("TH Shuffle", (0.035, 7500, 0.2, 430), 0.3, dict(bp=10000))],
  "deephouse":  [("Deep Lofi Hat", (0.04, 5500, 0.2, 360), 0.45, {}), ("Deep Brushy", (0.08, 3500, 0.0, 300), 0.3, dict(shaker=True)),
                 ("Deep Dusty Ride", (0.1, 5000, 0.3, 500), 0.9, dict(bp=6000)), ("Deep Soft Tsss", (0.05, 7000, 0.2, 390), 0.55, {})],
- "breakbeat":  [("Electro 808 Hat", (0.03, 7500, 0.35, 360), 0.3, {}), ("Electro Tick", (0.015, 10000, 0.3, 520), 0.15, {}),
+ "breakbeat":  [("Electro Analog Hat", (0.03, 7500, 0.35, 360), 0.3, {}), ("Electro Tick", (0.015, 10000, 0.3, 520), 0.15, {}),
                 ("Electro Soft Cymbal", (0.12, 5000, 0.2, 330), 1.1, {}), ("Electro Soft Hat", (0.035, 6500, 0.3, 470), 0.4, {})],
 }
 
@@ -523,7 +523,7 @@ add("Tie", "Trance Bass C", ["techno", "techhouse"],                            
 add("Tie", "Voxy Bass C", ["microhouse", "minimal", "techhouse"],                       lambda s: bass_sample("sample-pi/bass/bass_voxy_c.ogg", 1.4))
 add("Tie", "Voxy Bass Hit C", ["microhouse", "rominimal", "minimal"],                   lambda s: bass_sample("sample-pi/bass/bass_voxy_hit_c.ogg", 0.5))
 add("Tie", "Drop Bass C", ["breakbeat", "techno"],                                      lambda s: bass_sample("sample-pi/bass/bass_drop_c.ogg", 1.6))
-# synth basses (Twinbox)
+# synth basses (DUALBOX)
 add("Tie", "Sub Bass C", ALL,                                    lambda s: tonal([C2], [1], 0.9, tau=0.45, drive=1.0))
 add("Tie", "Deep Sub C", ["deephouse", "house", "techno"],       lambda s: tonal([C2], [1], 1.2, tau=0.6, drive=1.0))
 add("Tie", "Rumble Bass C", ["techno"],                          lambda s: softbass(C2, 1.0, 0.5, cutoff=220, sub=0.8))
@@ -537,17 +537,17 @@ add("Tie", "Robot Bass C", ["breakbeat"],                        lambda s: softb
 add("Tie", "Acid Bass C", ["techhouse"],                         lambda s: acid(C2, 0.35, cutoff=450, env=3.5, res=0.8, decay=0.12, drive=1.2))
 add("Tie", "Felt Bass C", ["minimal", "microhouse"],             lambda s: softbass(C2, 0.35, 0.12, cutoff=400, kind="sine"))
 # chords from free libraries: Rhodes 1977 Mark I (CC0) and Steinway grand (Public Domain), C minor family
-add("Tie", "Rhodes Cm7", DEEP,                              lambda s: rhodes_chord("m7"))
-add("Tie", "Rhodes Cm9", DEEP,                              lambda s: rhodes_chord("m9"))
-add("Tie", "Rhodes Cm11 Open", ["deephouse", "microhouse"], lambda s: rhodes_chord("m11", 36, "open"))
-add("Tie", "Rhodes Csus", ["house", "deephouse", "techhouse"], lambda s: rhodes_chord("sus"))
-add("Tie", "Rhodes Cm Short", ["minimal", "rominimal", "microhouse"], lambda s: rhodes_chord("min", 48, None, 0.5))
+add("Tie", "Keys Cm7", DEEP,                              lambda s: rhodes_chord("m7"))
+add("Tie", "Keys Cm9", DEEP,                              lambda s: rhodes_chord("m9"))
+add("Tie", "Keys Cm11 Open", ["deephouse", "microhouse"], lambda s: rhodes_chord("m11", 36, "open"))
+add("Tie", "Keys Csus", ["house", "deephouse", "techhouse"], lambda s: rhodes_chord("sus"))
+add("Tie", "Keys Cm Short", ["minimal", "rominimal", "microhouse"], lambda s: rhodes_chord("min", 48, None, 0.5))
 add("Tie", "Piano Cm7", ["house", "deephouse"],             lambda s: piano_chord("m7"))
 add("Tie", "Piano Cm9", ["house", "deephouse", "microhouse"], lambda s: piano_chord("m9"))
 add("Tie", "Piano Cmadd9", ["house", "techhouse"],          lambda s: piano_chord("madd9"))
 add("Tie", "Piano Cm Short", ["minimal", "techhouse", "rominimal"], lambda s: piano_chord("min", 48, None, 0.45))
 add("Tie", "Piano Cm6 Low", ["deephouse", "minimal"],       lambda s: piano_chord("m6", 36, "open"))
-# synth chords (Twinbox)
+# synth chords (DUALBOX)
 add("Tie", "Dub Chord Cm7", ["techno", "deephouse", "minimal"], lambda s: delay_fx(tonal([FS.hz(m) for m in FS.cnotes("m7")], [1] * 4, 0.5, kind="saw", cutoff=800, cut_env=1.0, q=0.9, tau=0.15, detune=0.006, drive=1.0), 0.75, 125, 0.45, 0.4, 1600))
 add("Tie", "Garage Stab Cm9", ["house", "techhouse"],     lambda s: synth_chord("m9", 0.4, 1500, 0.12))
 add("Tie", "Minor Stab Cm", ["breakbeat", "techno", "techhouse"], lambda s: synth_chord("min", 0.5, 2000, 0.15))
@@ -587,31 +587,31 @@ D = lambda *p, length=1.0: SOFT(FS.dani(*os.path.join(*p).split(os.sep), length=
 O = lambda *p, length=1.0: SOFT(FS.ora(*os.path.join(*p).split(os.sep), length=length), 5000)
 
 # 808 toms / congas
-add("Pod", "808 Tom Low", ["techno", "techhouse", "breakbeat", "house"], lambda s: tr808_tom(92, 0.22, seed=s))
-add("Pod", "808 Tom Mid", ["techno", "techhouse", "breakbeat", "house"], lambda s: tr808_tom(132, 0.17, seed=s))
-add("Pod", "808 Tom Hi", ["techno", "techhouse", "breakbeat", "house"],  lambda s: tr808_tom(186, 0.13, seed=s))
-add("Pod", "808 Conga Low", ALL,  lambda s: tr808_tom(170, 0.11, noise=0.0, seed=s))
-add("Pod", "808 Conga Mid", ALL,  lambda s: tr808_tom(255, 0.09, noise=0.0, seed=s))
-add("Pod", "808 Conga Hi", ALL,   lambda s: tr808_tom(370, 0.07, noise=0.0, seed=s))
+add("Pod", "Analog Tom Low", ["techno", "techhouse", "breakbeat", "house"], lambda s: tr808_tom(92, 0.22, seed=s))
+add("Pod", "Analog Tom Mid", ["techno", "techhouse", "breakbeat", "house"], lambda s: tr808_tom(132, 0.17, seed=s))
+add("Pod", "Analog Tom Hi", ["techno", "techhouse", "breakbeat", "house"],  lambda s: tr808_tom(186, 0.13, seed=s))
+add("Pod", "Analog Conga Low", ALL,  lambda s: tr808_tom(170, 0.11, noise=0.0, seed=s))
+add("Pod", "Analog Conga Mid", ALL,  lambda s: tr808_tom(255, 0.09, noise=0.0, seed=s))
+add("Pod", "Analog Conga Hi", ALL,   lambda s: tr808_tom(370, 0.07, noise=0.0, seed=s))
 # 909 toms
-add("Pod", "909 Tom Low", ["techno", "techhouse", "house"], lambda s: tr909_tom(98, 0.2, seed=s))
-add("Pod", "909 Tom Mid", ["techno", "techhouse", "house"], lambda s: tr909_tom(140, 0.16, seed=s))
-add("Pod", "909 Tom Hi", ["techno", "techhouse", "house"],  lambda s: tr909_tom(196, 0.12, seed=s))
+add("Pod", "Classic Tom Low", ["techno", "techhouse", "house"], lambda s: tr909_tom(98, 0.2, seed=s))
+add("Pod", "Classic Tom Mid", ["techno", "techhouse", "house"], lambda s: tr909_tom(140, 0.16, seed=s))
+add("Pod", "Classic Tom Hi", ["techno", "techhouse", "house"],  lambda s: tr909_tom(196, 0.12, seed=s))
 # LinnDrum LM-2 (Public Domain)
-for nm, fn, g in [("LM2 Conga Hi", "conga-h", DEEP), ("LM2 Conga HiHi", "conga-hh", DEEP), ("LM2 Conga Mid", "conga-m", DEEP),
-                  ("LM2 Conga Low", "conga-l", DEEP), ("LM2 Conga LowLow", "conga-ll", DEEP), ("LM2 Tom Hi", "tom-h", ["house", "breakbeat"]),
-                  ("LM2 Tom Mid", "tom-m", ["house", "breakbeat"]), ("LM2 Tom Low", "tom-l", ["house", "breakbeat", "deephouse"]),
-                  ("LM2 Stick", "stick-m", ["minimal", "microhouse", "rominimal"]), ("LM2 Snare Soft", "snare-l", ["house", "deephouse"])]:
+for nm, fn, g in [("Studio Conga Hi", "conga-h", DEEP), ("Studio Conga HiHi", "conga-hh", DEEP), ("Studio Conga Mid", "conga-m", DEEP),
+                  ("Studio Conga Low", "conga-l", DEEP), ("Studio Conga LowLow", "conga-ll", DEEP), ("Studio Tom Hi", "tom-h", ["house", "breakbeat"]),
+                  ("Studio Tom Mid", "tom-m", ["house", "breakbeat"]), ("Studio Tom Low", "tom-l", ["house", "breakbeat", "deephouse"]),
+                  ("Studio Stick", "stick-m", ["minimal", "microhouse", "rominimal"]), ("Studio Snare Soft", "snare-l", ["house", "deephouse"])]:
     add("Pod", nm, g, (lambda f: lambda s: O("LM-2", "samples", f + ".wav"))(fn))
 # Roland TR-505 (Public Domain)
-for nm, fn, g in [("505 Conga Hi", "tr505-conga-h", ["techhouse", "house", "microhouse"]), ("505 Conga Low", "tr505-conga-l", ["techhouse", "house", "microhouse"]),
-                  ("505 Tom Hi", "tr505-tom-h", ["breakbeat", "techhouse"]), ("505 Tom Mid", "tr505-tom-m", ["breakbeat", "techhouse"]),
-                  ("505 Tom Low", "tr505-tom-l", ["breakbeat", "techhouse", "techno"]), ("505 Rim", "tr505-rim", ["minimal", "techhouse", "rominimal"]),
-                  ("505 Snare", "tr505-snare", ["breakbeat", "house"])]:
+for nm, fn, g in [("Digi Conga Hi", "tr505-conga-h", ["techhouse", "house", "microhouse"]), ("Digi Conga Low", "tr505-conga-l", ["techhouse", "house", "microhouse"]),
+                  ("Digi Tom Hi", "tr505-tom-h", ["breakbeat", "techhouse"]), ("Digi Tom Mid", "tr505-tom-m", ["breakbeat", "techhouse"]),
+                  ("Digi Tom Low", "tr505-tom-l", ["breakbeat", "techhouse", "techno"]), ("Digi Rim", "tr505-rim", ["minimal", "techhouse", "rominimal"]),
+                  ("Digi Snare", "tr505-snare", ["breakbeat", "house"])]:
     add("Pod", nm, g, (lambda f: lambda s: O("TR-505", "samples", f + ".wav"))(fn))
 # Roland CR-78 (Public Domain)
-for nm, fn, g in [("CR78 Bongo Hi", "bongo-h", ["minimal", "microhouse", "rominimal"]), ("CR78 Bongo Low", "bongo-l", ["minimal", "microhouse", "rominimal"]),
-                  ("CR78 Conga Low", "conga-l", ["minimal", "microhouse", "rominimal", "deephouse"]), ("CR78 Rim", "rim", ["minimal", "rominimal", "microhouse"])]:
+for nm, fn, g in [("Vintage Bongo Hi", "bongo-h", ["minimal", "microhouse", "rominimal"]), ("Vintage Bongo Low", "bongo-l", ["minimal", "microhouse", "rominimal"]),
+                  ("Vintage Conga Low", "conga-l", ["minimal", "microhouse", "rominimal", "deephouse"]), ("Vintage Rim", "rim", ["minimal", "rominimal", "microhouse"])]:
     add("Pod", nm, g, (lambda f: lambda s: O("CR-78", "samples", f + ".wav"))(fn))
 # VCSL acoustic percussion (CC0)
 for nm, path, g in [
@@ -646,7 +646,7 @@ for nm, fn, g in [("Pi Tom Hi", "tom/drum_tom_hi_soft", ["techno", "breakbeat", 
                   ("Pi Tom Low", "tom/drum_tom_lo_soft", ["techno", "breakbeat", "deephouse"]), ("Tabla Ghe", "tabla/tabla_ghe1", ["microhouse", "rominimal"]),
                   ("Tabla Te", "tabla/tabla_te1", ["microhouse", "minimal"]), ("Tabla Ke", "tabla/tabla_ke1", ["minimal", "rominimal"])]:
     add("Pod", nm, g, (lambda f: lambda s: D("sample-pi", "drums", "one-shots", *(f + ".ogg").split("/")))(fn))
-# soft dissonant hits (Twinbox)
+# soft dissonant hits (DUALBOX)
 add("Pod", "Dissonant Hit Low", ["techno", "minimal"],        lambda s: dissonant([36, 37, 42, 47], 0.8, 0.25, 600))
 add("Pod", "Dissonant Hit Mid", ["techno", "techhouse"],      lambda s: dissonant([48, 49, 54, 59], 0.6, 0.18, 1200))
 add("Pod", "Dissonant Stab", ["minimal", "microhouse"],       lambda s: dissonant([60, 61, 66, 70], 0.4, 0.1, 1800))
@@ -671,7 +671,7 @@ for genre in GENRES:
         write("Hat", fname, hat(tau, hp, metal, base, max(0.12, tau * 7), seed=seed, **extra), [genre])
         write("Hat", fname, hat(otau, hp, metal, base, max(0.3, otau * 6), seed=seed, **extra), [genre], subdir="open")
 
-# ===== CLICK: short transients layered on the Kick of Section A (Twinbox Click)
+# ===== CLICK: short transients layered on the Kick of Section A (Dualbox Click)
 def tr_noise(fc, tau, length=0.08, mode="bp", q=0.8, seed=1):
     t = t_axis(length); n = rng(seed).standard_normal(len(t))
     return svf(n, fc, q, mode) * env_exp(t, tau)
@@ -681,7 +681,7 @@ def tr_tone(f, tau, length=0.08, drop=0.5, partial=0.0):
 CLICKS = [
     ("Beater Hard",   lambda s: tr_noise(3500, 0.0025, seed=s) * 1.2 + 0.6 * tr_tone(1200, 0.004)),
     ("Beater Soft",   lambda s: svf(tr_noise(2200, 0.004, seed=s) + 0.5 * tr_tone(800, 0.006), 5000, 0.7, "lp")),
-    ("909 Attack",    lambda s: tr_noise(4000, 0.003, mode="hp", seed=s) + 0.8 * tr_tone(1600, 0.003, drop=1.0)),
+    ("Classic Attack",    lambda s: tr_noise(4000, 0.003, mode="hp", seed=s) + 0.8 * tr_tone(1600, 0.003, drop=1.0)),
     ("Wood Tick",     lambda s: tr_tone(1800, 0.006, partial=0.25) + 0.3 * tr_noise(3000, 0.002, seed=s)),
     ("Tick Short",    lambda s: tr_noise(5000, 0.0015, q=1.2, seed=s)),
     ("Knock",         lambda s: tr_tone(900, 0.012, drop=0.3) + 0.3 * tr_noise(1500, 0.003, seed=s)),

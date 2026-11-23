@@ -150,7 +150,10 @@ private:
     juce::TextButton clearBtn { "Clear" }, copyPat { "Copy Pat" }, pastePat { "Paste Pat" };
     int patClip = -1;
     juce::OwnedArray<juce::TextButton> pageBtns;
-    juce::TextButton browserBtn { "BROWSER" };
+    juce::TextButton browserBtn { "BROWSER" }, importBtn { "IMPORT PATTERN" };
+    std::unique_ptr<juce::FileChooser> importChooser;
+    juce::String importStatus;
+    void importPattern();
 public:
     std::function<void()> onOpenBrowser;
 private:

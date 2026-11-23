@@ -89,7 +89,7 @@ void ControlPanel::resized()
 }
 
 //==============================================================================
-//  Panels factory (original control sets of Limelite 1.3)
+//  Panels factory (control sets of the Section B panels)
 //==============================================================================
 std::unique_ptr<ControlPanel> makeLimePanel (TwinboxProcessor& p, const String& which, bool big)
 {
@@ -563,13 +563,13 @@ void LimeSeqPanel::resized()
 //==============================================================================
 SampleSelector::SampleSelector (TwinboxProcessor& p, int m, bool b2) : proc (p), module (m), big (b2)
 {
-    twb.setTooltip ("Factory folder: Twinbox " + SampleLibrary::moduleName (m));
-    leg.setTooltip ("Legacy folder: original Limelite samples (use IMPORT LEGACY first)");
+    twb.setTooltip ("Factory folder: Dualbox " + SampleLibrary::moduleName (m));
+    leg.setTooltip ("Legacy folder: samples imported with the ? button of Section B");
     usr.setTooltip ("Choose your own folder for this module");
     play.setTooltip ("Audition");
     const bool isClick = m == SampleLibrary::click;                 // Section A kick CLICK layer: factory or user folder only
     for (auto* b3 : { &twb, &leg, &usr }) b3->setColour (TextButton::buttonOnColourId, isClick ? theme::accentA : theme::accentB);
-    twb.onClick = [this] { proc.library.setSource (module, SampleLibrary::twinbox); };
+    twb.onClick = [this] { proc.library.setSource (module, SampleLibrary::factory); };
     leg.onClick = [this] { proc.library.setSource (module, SampleLibrary::legacy); };
     usr.onClick = [this] { chooseFolder(); };
     play.onClick = [this]
@@ -611,7 +611,7 @@ void SampleSelector::refresh()
     shownIndex = -1;
     timerCallback();
     const auto src = proc.library.source (module);
-    twb.setToggleState (src == SampleLibrary::twinbox, dontSendNotification);
+    twb.setToggleState (src == SampleLibrary::factory, dontSendNotification);
     leg.setToggleState (src == SampleLibrary::legacy, dontSendNotification);
     usr.setToggleState (src == SampleLibrary::user, dontSendNotification);
     usr.setTooltip (src == SampleLibrary::user ? "User folder: " + proc.library.userFolder (module).getFullPathName() : "Choose your own folder for this module");
@@ -771,11 +771,12 @@ LimeModulePanel::LimeModulePanel (TwinboxProcessor& p, int v, bool b2) : Control
     {
         scaleBtn = std::make_unique<Toggle> ("SCALE", theme::accentB);
         scaleBtn->attach (p.apvts, b (v, lv::scale));
-        scaleBtn->setTooltip ("SCALE on: every sample is re-pitched to the shared Root / Scale (from its detected pitch). Off = MANUAL per-sample pitch");
+        scaleBtn->setTooltip (v == tie ? "SCALE on: every sample is transposed into the shared Root / Scale from its detected key (high-quality pitch shift, same length). Off = MANUAL per-sample pitch"
+                                       : "SCALE on: every sample is re-pitched to the shared Root / Scale (from its detected pitch). Off = MANUAL per-sample pitch");
         addAndMakeVisible (*scaleBtn);
         nameBtn = std::make_unique<Toggle> ("NAME", theme::accentB);
         nameBtn->attach (p.apvts, b (v, lv::nameKey));
-        nameBtn->setTooltip ("NAME on: the sample key is read from the file name (e.g. 'pad chord Db', 'Rhodes Cm9', 'Bass F#2'); "
+        nameBtn->setTooltip ("NAME on: the sample key is read from the file name (e.g. 'pad chord Db', 'Keys Cm9', 'Bass F#2'); "
                              "if the name has no key the audio analysis is used. Off: audio analysis only");
         addAndMakeVisible (*nameBtn);
         noteBtn.setTooltip ("Per-sample pitch window: detected notes, play and -32..+32 st knobs (MANUAL mode)");
@@ -877,6 +878,21 @@ void PitchWindowContent::Row::paint (Graphics& g)
     g.drawText (smp->name, 78, 0, getWidth() - 78 - 370, getHeight(), Justification::centredLeft);
     // detected pitch: audio analysis and file-name key; the one in use is highlighted
     const bool nameOn = owner.proc.apvts.getRawParameterValue (b (owner.module, lv::nameKey))->load() > 0.5f;
+    if (smp->hasKey)
+    {
+        // Belt: key analysis (key + mode, tuning in cents) and key from the file name
+        const auto& K = smp->key;
+        const bool usingName = nameOn && K.nameRoot >= 0;
+        const int cents = roundToInt (K.tuneCents);
+        g.setFont (theme::font (12.0f, ! usingName));
+        g.setColour (K.keyRoot >= 0 ? (usingName ? theme::textDim : theme::accentB) : theme::textDim);
+        g.drawText ("audio " + (K.keyRoot >= 0 ? keyanalysis::keyName (K.keyRoot, K.minor) + (cents != 0 ? (cents > 0 ? " +" : " ") + String (cents) + "c" : String())
+                                              : String ("no key")), getWidth() - 372, 0, 122, getHeight(), Justification::centredLeft);
+        g.setFont (theme::font (12.0f, usingName));
+        g.setColour (usingName ? theme::accentB : theme::textDim);
+        g.drawText ("name " + keyanalysis::keyName (K.nameRoot, K.nameMinor), getWidth() - 248, 0, 84, getHeight(), Justification::centredLeft);
+        return;
+    }
     const bool usingName = nameOn && smp->namePitch >= 0;
     g.setFont (theme::font (12.0f, ! usingName));
     g.setColour (smp->pitch >= 0 ? (usingName ? theme::textDim : theme::accentB) : theme::textDim);
@@ -1079,7 +1095,7 @@ LimeSection::LimeSection (TwinboxProcessor& p) : proc (p)
     browserBtn.onClick = [this] { if (onOpenBrowser) onOpenBrowser(); };
     browserBtn.setTooltip ("Genre preset browser (128 kits + patterns)");
     legacyBtn.onClick = [this] { importLegacy(); };
-    legacyBtn.setTooltip ("Import the original Limelite samples from your own 'Limelite 1.3.ens' into the Legacy folders");
+    legacyBtn.setTooltip ("Import a sample library from an ensemble file (.ens) you own into the Legacy folders (LEG)");
     levelB.attach (p.apvts, bGain);
     scaleRoot.addItemList (StringArray { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" }, 1);
     for (auto& sc : scales()) scaleType.addItem (sc.name, scaleType.getNumItems() + 1);
@@ -1136,7 +1152,7 @@ void LimeSection::openWindow (const String& key, const String& title, std::funct
 
 void LimeSection::importLegacy()
 {
-    chooser = std::make_unique<FileChooser> ("Select your 'Limelite 1.3.ens'", File::getSpecialLocation (File::userHomeDirectory), "*.ens");
+    chooser = std::make_unique<FileChooser> ("Select an ensemble file (.ens)", File::getSpecialLocation (File::userHomeDirectory), "*.ens");
     chooser->launchAsync (FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles, [this] (const FileChooser& fc)
     {
         const auto f = fc.getResult();
@@ -1191,7 +1207,7 @@ void LimeSection::resized()
     header.removeFromLeft (260);
     browserBtn.setBounds (header.removeFromLeft (90).withSizeKeepingCentre (90, 24));
     header.removeFromLeft (6);
-    legacyBtn.setBounds (header.removeFromLeft (120).withSizeKeepingCentre (120, 24));
+    legacyBtn.setBounds (header.removeFromLeft (34).withSizeKeepingCentre (26, 24));
     header.removeFromLeft (24);
     scaleRoot.setBounds (header.removeFromLeft (56).withSizeKeepingCentre (56, 24).translated (44, 0));
     scaleType.setBounds (header.removeFromLeft (150).withSizeKeepingCentre (150, 24).translated (48, 0));

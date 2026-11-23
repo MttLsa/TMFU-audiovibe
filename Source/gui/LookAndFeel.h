@@ -21,9 +21,12 @@ namespace theme
     const juce::Colour stepOff   { 0xff3c3c3c };
     const juce::Colour stepBeat  { 0xff464646 };
 
+    // UI typeface: Inter (SIL OFL 1.1) - Regular for normal text, SemiBold for bold - embedded as binary data (resources/fonts).
+    juce::Typeface::Ptr uiTypeface (bool bold);
+
     inline juce::Font font (float h, bool bold = false)
     {
-        return juce::Font (juce::FontOptions (h, bold ? juce::Font::bold : juce::Font::plain));
+        return juce::Font (juce::FontOptions (uiTypeface (bold)).withHeight (h));
     }
 }
 
@@ -47,6 +50,8 @@ public:
     juce::Font getPopupMenuFont() override { return theme::font (13.0f); }
     juce::Font getTextButtonFont (juce::TextButton&, int h) override { return theme::font (juce::jmin (12.5f, h * 0.6f)); }
     juce::Label* createSliderTextBox (juce::Slider&) override;
+    // every font drawn through this LookAndFeel (labels, tooltips, text editors, ...) uses Inter
+    juce::Typeface::Ptr getTypefaceForFont (const juce::Font& f) override { return theme::uiTypeface (f.isBold()); }
     void drawDocumentWindowTitleBar (juce::DocumentWindow&, juce::Graphics&, int w, int h, int, int, const juce::Image*, bool) override;
 };
 

@@ -12,8 +12,9 @@ namespace
 }
 
 TwinboxProcessor::TwinboxProcessor()
-    : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
-      apvts (*this, nullptr, "TWINBOX", params::createLayout())
+    : AudioProcessor (BusesProperties().withOutput ("Main (A + B / A)", juce::AudioChannelSet::stereo(), true)
+                                       .withOutput ("Section B", juce::AudioChannelSet::stereo(), false)),
+      apvts (*this, nullptr, "DUALBOX", params::createLayout())
 {
     mod.init (apvts);
     micro.bind (mod);
@@ -26,8 +27,10 @@ TwinboxProcessor::TwinboxProcessor()
     for (int i = 0; i < numMicroChannels; ++i) microNames[(size_t) i] = names[i];
 
     pXfade = apvts.getRawParameterValue (gXfade);
-    pCutoff = apvts.getRawParameterValue (gCutoff);
-    pMode = apvts.getRawParameterValue (gMode);
+    pHpOn = apvts.getRawParameterValue (gHpOn); pHp = apvts.getRawParameterValue (gHp);
+    pBpOn = apvts.getRawParameterValue (gBpOn); pBp = apvts.getRawParameterValue (gBp);
+    pLpOn = apvts.getRawParameterValue (gLpOn); pLp = apvts.getRawParameterValue (gLp);
+    pMulti = apvts.getRawParameterValue (gMulti);
     pRes = apvts.getRawParameterValue (gRes);
     pMaster = apvts.getRawParameterValue (gMaster);
     pTempo = apvts.getRawParameterValue (gTempo);
@@ -49,7 +52,17 @@ TwinboxProcessor::~TwinboxProcessor() { stopTimer(); }
 
 bool TwinboxProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
-    return layouts.getMainOutputChannelSet() == juce::AudioChannelSet::stereo();
+    if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo()) return false;
+    // optional second stereo output (multi-out: Section B)
+    for (int i = 1; i < layouts.outputBuses.size(); ++i)
+        if (! layouts.outputBuses[i].isDisabled() && layouts.outputBuses[i] != juce::AudioChannelSet::stereo()) return false;
+    return layouts.outputBuses.size() <= 2;
+}
+
+bool TwinboxProcessor::multiActive() const
+{
+    return pMulti->load() > 0.5f && getBusCount (false) > 1 && getBus (false, 1) != nullptr && getBus (false, 1)->isEnabled()
+        && getBus (false, 1)->getNumberOfChannels() == 2;
 }
 
 void TwinboxProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -59,8 +72,9 @@ void TwinboxProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     lime.prepare (sampleRate, samplesPerBlock);
     bufA.setSize (2, samplesPerBlock);
     bufB.setSize (2, samplesPerBlock);
-    gFilt[0].reset(); gFilt[1].reset();
+    mfMix.reset(); mfB.reset(); safetyB.prepare (sampleRate);
     normA.prepare (sampleRate); normB.prepare (sampleRate); safety.prepare (sampleRate);
+    secLimA.prepare (sampleRate); secLimB.prepare (sampleRate);
     midiA.reserve (256); midiB.reserve (256);
     wasPlaying = false;
 }
@@ -131,52 +145,61 @@ void TwinboxProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mid
     lime.process  (bufB.getWritePointer (0), bufB.getWritePointer (1), n, bt, midiB);
     normA.process (bufA.getWritePointer (0), bufA.getWritePointer (1), n, pNormA->load() > 0.5f);
     normB.process (bufB.getWritePointer (0), bufB.getWritePointer (1), n, pNormB->load() > 0.5f);
+    secLimA.process (bufA.getWritePointer (0), bufA.getWritePointer (1), n);
+    secLimB.process (bufB.getWritePointer (0), bufB.getWritePointer (1), n);
 
-    // ------------------------------------------------------------ A/B mix -> cutoff filter -> master
+    // ------------------------------------------------------------ A/B mix -> master filter -> master volume
+    // normal: one stereo output = linear A/B crossfade.  MULTI OUT (and output 2 enabled in the host): Section A on the
+    // main output, Section B on output 2, each through its own master filter + master volume (crossfader not used)
     const float xTarget = pXfade->load() * 0.01f;
-    const float cutTarget = pCutoff->load();
-    const int mode = (int) pMode->load();                    // 0 HP, 1 BP, 2 LP
-    const int svfMode = mode == 0 ? 2 : (mode == 1 ? 1 : 0);
-    const double q = 0.5 + std::pow (pRes->load() * 0.01, 1.5) * 14.5;
     const float master = juce::Decibels::decibelsToGain (pMaster->load(), -60.0f);
-    const float bpMakeup = svfMode == 1 ? (float) juce::jmax (1.0, std::sqrt (q)) : 1.0f;   // keep BP loudness usable at high Q
-    const bool bypassFilter = (mode == 2 && cutTarget >= 19900.0f && pRes->load() < 0.5f)
-                           || (mode == 0 && cutTarget <= 20.5f && pRes->load() < 0.5f);
+    MasterFilter::Settings fs;
+    fs.hpOn = pHpOn->load() > 0.5f; fs.hp = pHp->load();
+    fs.bpOn = pBpOn->load() > 0.5f; fs.bp = pBp->load();
+    fs.lpOn = pLpOn->load() > 0.5f; fs.lp = pLp->load();
+    fs.res = pRes->load();
+    const bool multi = multiActive();
 
+    auto mainOut = getBusBuffer (buffer, false, 0);
     auto* aL = bufA.getReadPointer (0); auto* aR = bufA.getReadPointer (1);
     auto* bL = bufB.getReadPointer (0); auto* bR = bufB.getReadPointer (1);
-    auto* oL = buffer.getWritePointer (0); auto* oR = buffer.getWritePointer (1);
+    auto* oL = mainOut.getWritePointer (0); auto* oR = mainOut.getWritePointer (1);
     float pkA = 0, pkB = 0, pkO = 0;
-
     for (int i = 0; i < n; ++i)
     {
-        xfadeSm += 0.002f * (xTarget - xfadeSm);
-        cutSm += 0.004f * (cutTarget - cutSm);
-        if ((i & 15) == 0)
-        {
-            gFilt[0].set (cutSm, sr, q);
-            gFilt[1].g = gFilt[0].g; gFilt[1].k = gFilt[0].k;
-            gFilt[1].a1 = gFilt[0].a1; gFilt[1].a2 = gFilt[0].a2; gFilt[1].a3 = gFilt[0].a3;
-        }
-        // linear crossfade: 0 % = only A, 50 % = 50 % A + 50 % B, 100 % = only B
-        float l = aL[i] * (1.0f - xfadeSm) + bL[i] * xfadeSm;
-        float r = aR[i] * (1.0f - xfadeSm) + bR[i] * xfadeSm;
-        if (! bypassFilter)
-        {
-            l = gFilt[0].process (l, svfMode);
-            r = gFilt[1].process (r, svfMode);
-            l *= bpMakeup; r *= bpMakeup;
-        }
-        l *= master; r *= master;
-        oL[i] = l; oR[i] = r;
-    }
-    safety.process (oL, oR, n);                              // the output never clips (ceiling -0.3 dBFS)
-    for (int i = 0; i < n; ++i)
-    {
-        const float l = oL[i], r = oR[i];
         pkA = juce::jmax (pkA, std::abs (aL[i]), std::abs (aR[i]));
         pkB = juce::jmax (pkB, std::abs (bL[i]), std::abs (bR[i]));
-        pkO = juce::jmax (pkO, std::abs (l), std::abs (r));
+    }
+
+    if (multi)
+    {
+        auto out2 = getBusBuffer (buffer, false, 1);
+        auto* o2L = out2.getWritePointer (0); auto* o2R = out2.getWritePointer (1);
+        for (int i = 0; i < n; ++i) { oL[i] = aL[i]; oR[i] = aR[i]; o2L[i] = bL[i]; o2R[i] = bR[i]; }
+        mfMix.process (oL, oR, n, sr, fs);
+        mfB.process (o2L, o2R, n, sr, fs);
+        for (int i = 0; i < n; ++i) { oL[i] *= master; oR[i] *= master; o2L[i] *= master; o2R[i] *= master; }
+        safety.process (oL, oR, n);                          // both outputs never clip (ceiling -0.3 dBFS)
+        safetyB.process (o2L, o2R, n);
+        for (int i = 0; i < n; ++i) pkO = juce::jmax (pkO, std::abs (oL[i]), std::abs (oR[i]), juce::jmax (std::abs (o2L[i]), std::abs (o2R[i])));
+        xfadeSm = xTarget;
+    }
+    else
+    {
+        for (int i = 0; i < n; ++i)
+        {
+            xfadeSm += 0.002f * (xTarget - xfadeSm);
+            // linear crossfade: 0 % = only A, 50 % = 50 % A + 50 % B, 100 % = only B
+            oL[i] = aL[i] * (1.0f - xfadeSm) + bL[i] * xfadeSm;
+            oR[i] = aR[i] * (1.0f - xfadeSm) + bR[i] * xfadeSm;
+        }
+        mfMix.process (oL, oR, n, sr, fs);
+        for (int i = 0; i < n; ++i) { oL[i] *= master; oR[i] *= master; }
+        safety.process (oL, oR, n);                          // the output never clips (ceiling -0.3 dBFS)
+        for (int i = 0; i < n; ++i) pkO = juce::jmax (pkO, std::abs (oL[i]), std::abs (oR[i]));
+        if (getBusCount (false) > 1)                         // output 2 enabled but MULTI OUT off: silent
+            for (int c = 0; c < getBusBuffer (buffer, false, 1).getNumChannels(); ++c)
+                getBusBuffer (buffer, false, 1).clear (c, 0, n);
     }
     auto decayMeter = [] (std::atomic<float>& m, float pk) { m.store (juce::jmax (pk, m.load() * 0.92f)); };
     decayMeter (meters[0], pkA);
@@ -262,7 +285,7 @@ void TwinboxProcessor::importLegacy (const juce::File& ens, std::function<void (
 //==============================================================================
 void TwinboxProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    juce::ValueTree root ("TWINBOX_STATE");
+    juce::ValueTree root ("DUALBOX_STATE");
     root.appendChild (apvts.copyState(), nullptr);
     root.appendChild (micro.saveState(), nullptr);
     root.appendChild (lime.saveState(), nullptr);
@@ -287,7 +310,7 @@ void TwinboxProcessor::setStateInformation (const void* data, int sizeInBytes)
     auto xml = getXmlFromBinary (data, sizeInBytes);
     if (xml == nullptr) return;
     auto root = juce::ValueTree::fromXml (*xml);
-    if (! root.hasType ("TWINBOX_STATE")) return;
+    if (! root.hasType ("DUALBOX_STATE")) return;
 
     if (auto s = root.getChildWithName (apvts.state.getType()); s.isValid()) apvts.replaceState (s);
     micro.loadState (root.getChildWithName ("MICRO_PATTERNS"));

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Free (CC0 / Public Domain) sample sources for the Twinbox factory library (Tie + Pod).
+Free (CC0 / Public Domain) sample sources for the Dualbox factory library (Tie + Pod).
 
-The audio is read from local clones of two public repositories (not shipped in the Twinbox repo):
+The audio is read from local clones of two public repositories (not shipped in the Dualbox repo):
   danigb/samples  (https://github.com/danigb/samples)   - VCSL (CC0), Sample Pi (CC0), D. Smolken basses (CC0),
                                                            J. Learman Rhodes (CC0), Splendid Grand Piano (Public Domain)
   oramics/sampled (https://github.com/oramics/sampled)  - LinnDrum LM-2, Roland TR-505, Roland CR-78 (Public Domain)

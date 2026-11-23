@@ -2,9 +2,10 @@
 #include "MicroEngine.h"   // TriggerEvent, TptSvf, BlockTime
 #include "SampleLibrary.h"
 #include "LimeFX.h"
+#include "BeltStretch.h"
 
 // =================================================================================================
-//  Section B : groovebox modelled on Limelite 1.3 (Reaktor, NI 2004)
+//  Section B : sample groovebox
 //   Voices    : Kick, Snare, Hat (closed/open), Tie (tonal), Pod (percussion)
 //   Sequencer : patterns A-D, main grid Kick/Snare/C-Hat/O-Hat (off/on/accent), value lanes Tie/Pod/Mod,
 //               own lengths (up to 64) + stretch, start step, swing, half tempo, pattern chain (8 slots),
@@ -71,6 +72,12 @@ public:
     void loadState (const juce::ValueTree& vt);
     void loadDefaultPatterns();
 
+    // Belt SCALE (Groovulation logic). semis = total transposition of the sample, corr = the part that brings it
+    // into the scale (rendered with Signalsmith Stretch), note = resulting tonic (for melodies). false = no key.
+    bool beltScale (const Sample& s, float tuneBase, float& semis, float& corr, int& note) const;
+    bool beltStretchIdle() const { return beltStretch.idle(); }
+    SamplePtr beltRendered (int index, float corr) const { return beltStretch.lookup (library.set (SampleLibrary::tie).get(), index, corr); }
+
 private:
     struct Ev { int offset; int target; float vel; float value; bool isMod; int forced = -1; };
     LookaheadWindow look;
@@ -95,6 +102,8 @@ private:
     std::atomic<float>* p (const juce::String& id) const;
 
     SampleLibrary& library;
+    BeltStretch beltStretch { library };
+    std::atomic<float>* scaleRootP = nullptr; std::atomic<float>* scaleTypeP = nullptr; std::atomic<float>* bTuneP = nullptr;
     std::array<std::array<std::atomic<float>*, 40>, params::numLimeVoices> vk {};   // per-voice parameter pointers
     ParamSource* state = nullptr;
     std::array<Pattern, NP> patterns;

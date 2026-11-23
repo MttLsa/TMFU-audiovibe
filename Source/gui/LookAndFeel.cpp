@@ -1,6 +1,15 @@
 #include "LookAndFeel.h"
 
+#include <BinaryData.h>
+
 using namespace juce;
+
+Typeface::Ptr theme::uiTypeface (bool bold)
+{
+    static const Typeface::Ptr regular = Typeface::createSystemTypefaceFor (BinaryData::InterRegular_ttf, BinaryData::InterRegular_ttfSize);
+    static const Typeface::Ptr heavy   = Typeface::createSystemTypefaceFor (BinaryData::InterSemiBold_ttf, BinaryData::InterSemiBold_ttfSize);
+    return bold ? heavy : regular;
+}
 
 TwinLookAndFeel::TwinLookAndFeel()
 {
@@ -29,6 +38,7 @@ TwinLookAndFeel::TwinLookAndFeel()
     setColour (TextEditor::highlightColourId, theme::accentA.withAlpha (0.4f));
     setColour (TextEditor::outlineColourId, theme::outline);
     setColour (CaretComponent::caretColourId, theme::text);
+    setDefaultSansSerifTypeface (theme::uiTypeface (false));
 }
 
 void TwinLookAndFeel::drawRotarySlider (Graphics& g, int x, int y, int w, int h, float pos, float start, float end, Slider& s)
@@ -346,7 +356,7 @@ void Panel::paint (Graphics& g)
     g.fillRect (Rectangle<float> (h.getX(), h.getY() + 4, 3.0f, h.getHeight() - 8));
     g.setColour (theme::text);
     g.setFont (theme::font (12.0f, true));
-    g.drawText (title.toUpperCase(), h.withTrimmedLeft (10).withTrimmedRight (30), Justification::centredLeft);
+    g.drawFittedText (title.toUpperCase(), h.withTrimmedLeft (10).withTrimmedRight (30).toNearestInt(), Justification::centredLeft, 1, 0.8f);
 }
 
 void Panel::resized()

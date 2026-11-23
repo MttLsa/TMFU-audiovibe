@@ -1,4 +1,7 @@
 // Offline test harness: renders audio through the processor, checks presets / FX / Legacy import, snapshots the GUI.
+#include "dsp/BeltStretch.h"
+#include "PatternImport.h"
+#include "dsp/KeyAnalysis.h"
 #include "../Source/PluginProcessor.h"
 #include "../Source/PluginEditor.h"
 #include "../Source/Presets.h"
@@ -178,20 +181,70 @@ int main (int argc, char** argv)
 
     // ---------------------------------------------------------------- mix / filter cases
     {
+        // master filters: mode 0 = HP, 1 = BP, 2 = LP at 'cutoff'; -1 = all off
         struct Case { const char* name; float xfade; float cutoff; int mode; float res; };
-        const Case cases[] = { { "A_only", 0, 20000, 2, 0 }, { "B_only", 100, 20000, 2, 0 }, { "mix50", 50, 20000, 2, 0 },
+        const Case cases[] = { { "A_only", 0, 20000, -1, 0 }, { "B_only", 100, 20000, -1, 0 }, { "mix50", 50, 20000, -1, 0 },
                                { "lp_800_res70", 50, 800, 2, 70 }, { "hp_2k", 50, 2000, 0, 30 }, { "bp_1k_res100", 50, 1000, 1, 100 } };
         for (auto& c : cases)
         {
             TwinboxProcessor p;
             waitLibrary (p);
-            setP (p, params::gRun, 1); setP (p, params::gXfade, c.xfade); setP (p, params::gCutoff, c.cutoff);
-            setP (p, params::gMode, (float) c.mode); setP (p, params::gRes, c.res);
+            setP (p, params::gRun, 1); setP (p, params::gXfade, c.xfade); setP (p, params::gRes, c.res);
+            if (c.mode == 0) { setP (p, params::gHpOn, 1); setP (p, params::gHp, c.cutoff); }
+            if (c.mode == 1) { setP (p, params::gBpOn, 1); setP (p, params::gBp, c.cutoff); }
+            if (c.mode == 2) { setP (p, params::gLpOn, 1); setP (p, params::gLp, c.cutoff); }
             setP (p, params::aFill, 1);
             auto st = render (p, 6.0, outDir.getChildFile (String ("render_") + c.name + ".wav"));
             report (String ("render ") + c.name, st.nans == 0 && st.peak > 0.01f,
                     "peak " + String (Decibels::gainToDecibels (st.peak), 1) + " dBFS");
         }
+    }
+
+    // ---------------------------------------------------------------- master HP / BP / LP (mirrored) + multi-out
+    {
+        auto rms = [] (TwinboxProcessor& q, std::function<void()> setup) -> double
+        {
+            setP (q, params::gRun, 1); setP (q, params::gXfade, 50);
+            setup();
+            return render (q, 5.0).rms;
+        };
+        auto mk = [] { auto q = std::make_unique<TwinboxProcessor>(); waitLibrary (*q); return q; };
+        auto p0 = mk(); const double off = rms (*p0, [] {});
+        auto p1 = mk(); const double open = rms (*p1, [&] { for (auto* id : { params::gHpOn, params::gLpOn }) setP (*p1, id, 1);
+                                                            setP (*p1, params::gHp, 20); setP (*p1, params::gLp, 20000); });
+        auto p2 = mk(); const double hpClosed = rms (*p2, [&] { setP (*p2, params::gHpOn, 1); setP (*p2, params::gHp, 4000); });
+        auto p3 = mk(); const double lpClosed = rms (*p3, [&] { setP (*p3, params::gLpOn, 1); setP (*p3, params::gLp, 150); });
+        auto p4 = mk(); const double both = rms (*p4, [&] { setP (*p4, params::gHpOn, 1); setP (*p4, params::gLpOn, 1);
+                                                            setP (*p4, params::gHp, 300); setP (*p4, params::gLp, 3000); });
+        auto db = [&] (double x) { return Decibels::gainToDecibels ((float) (x / off)); };
+        report ("master HP / BP / LP (mirrored)", std::abs (db (open)) < 0.1 && db (hpClosed) < -6.0 && db (lpClosed) < -1.5 && db (both) < -1.0 && db (both) > -20.0,
+                "HP 20 Hz + LP 20 kHz on: " + String (db (open), 2) + " dB (transparent); HP 4 kHz " + String (db (hpClosed), 1)
+                + " dB; LP 150 Hz " + String (db (lpClosed), 1) + " dB; HP 300 + LP 3k " + String (db (both), 1) + " dB");
+
+        // multi-out: two stereo outputs, A on the main one, B on output 2
+        auto multiRender = [] (float aLevel, float bLevel) -> std::pair<double, double>
+        {
+            TwinboxProcessor q; waitLibrary (q);
+            auto layout = q.getBusesLayout();
+            layout.outputBuses.getReference (1) = AudioChannelSet::stereo();
+            const bool okLayout = q.setBusesLayout (layout);
+            setP (q, params::gMulti, 1); setP (q, params::gRun, 1); setP (q, params::gXfade, 50);
+            setP (q, params::aLevel, aLevel); setP (q, params::b (params::kick, params::lv::gain), bLevel);
+            setP (q, params::bGain, bLevel);
+            q.prepareToPlay (48000, 512);
+            AudioBuffer<float> buf (4, 512); MidiBuffer m;
+            double e1 = 0, e2 = 0;
+            for (int b2 = 0; b2 < 48000 * 4 / 512; ++b2)
+            {
+                q.processBlock (buf, m);
+                for (int i = 0; i < 512; ++i) { e1 += buf.getSample (0, i) * buf.getSample (0, i); e2 += buf.getSample (2, i) * buf.getSample (2, i); }
+            }
+            return { okLayout ? std::sqrt (e1) : -1.0, std::sqrt (e2) };
+        };
+        const auto onlyB = multiRender (-60, 0);     // Section A silenced -> main output ~ silent, output 2 plays
+        const auto onlyA = multiRender (0, -60);     // Section B silenced -> output 2 ~ silent, main plays
+        report ("multi-out (A main, B output 2)", onlyB.first >= 0 && onlyB.first < onlyB.second * 0.05 && onlyA.second < onlyA.first * 0.05 && onlyA.first > 0.1,
+                "A off: main " + String (onlyB.first, 3) + " / out2 " + String (onlyB.second, 3) + "; B off: main " + String (onlyA.first, 3) + " / out2 " + String (onlyA.second, 3));
     }
 
     // ---------------------------------------------------------------- every xFx mode + FX on
@@ -221,7 +274,7 @@ int main (int argc, char** argv)
             waitLibrary (p);
             setP (p, params::gRun, 1); setP (p, params::gXfade, 100); setP (p, params::bDirt, dirt);
             const int bs = 512; p.setPlayConfigDetails (0, 2, 48000, bs); p.prepareToPlay (48000, bs);
-            out.setSize (2, 48000 * 3); AudioBuffer<float> buf (2, bs); MidiBuffer m;
+            out.setSize (2, 48000 * 3, false, true); AudioBuffer<float> buf (2, bs); MidiBuffer m;   // cleared: the tail is not a full block
             for (int pos = 0; pos + bs <= out.getNumSamples(); pos += bs)
             {
                 p.processBlock (buf, m);
@@ -660,6 +713,47 @@ int main (int argc, char** argv)
                 String (pitched) + "/" + String (tieSet->size()) + " pitched, " + String (onC) + " on C; basses on C: " + String (bassOnC) + "/" + String (basses)
                 + "; non bass/chord samples: " + String (other));
 
+        // 2b) Groovulation key analysis on the factory Belt folder: every sample gets a key, every bass is rooted on C
+        //     (the C minor chords are often read in a relative key with the same notes, e.g. Cm7 -> D# maj)
+        {
+            int keyed = 0, basses = 0, bassOnC = 0, chordsInCMinor = 0, chords = 0;
+            for (int i = 0; i < tieSet->size(); ++i)
+            {
+                const auto& smp = tieSet->samples[(size_t) i];
+                if (! smp->hasKey || smp->key.keyRoot < 0) continue;
+                ++keyed;
+                const String nm = tieSet->names[i];
+                if (nm.contains ("Bass") || nm.contains ("Sub")) { ++basses; if (smp->key.keyRoot == 0) ++bassOnC; }
+                else if (! nm.contains ("sus"))   // (a suspended chord has no minor third: any reading is fine)
+                {
+                    ++chords;
+                    // the detected key shares at least 6 of 7 notes with C minor (C minor itself or a relative / modal neighbour)
+                    const auto a = params::scaleMask (smp->key.keyRoot, smp->key.minor ? 1 : 0), b = params::scaleMask (0, 1);
+                    int common = 0; for (int k = 0; k < 12; ++k) if (a[(size_t) k] && b[(size_t) k]) ++common;
+                    if (common >= 6) ++chordsInCMinor;
+                }
+            }
+            report ("Belt key analysis (Groovulation)", keyed == tieSet->size() && bassOnC == basses && chordsInCMinor == chords,
+                    String (keyed) + "/" + String (tieSet->size()) + " with a key; basses rooted on C " + String (bassOnC) + "/" + String (basses)
+                    + "; chords in the C minor family " + String (chordsInCMinor) + "/" + String (chords));
+        }
+        // 2c) Signalsmith Stretch pitch shift: same length, pitch moved, attack in place
+        {
+            Sample s; s.sourceRate = 44100;
+            for (int i = 0; i < 44100; ++i) s.L.push_back ((float) (0.5 * std::sin (2 * MathConstants<double>::pi * 220.0 * i / 44100.0) * (i < 22050 ? 1.0 : 0.0)));
+            const auto t0 = Time::getMillisecondCounterHiRes();
+            auto shifted = BeltStretch::render (s, 3.0f);
+            const double ms = Time::getMillisecondCounterHiRes() - t0;
+            float c1, c2; const float before = SampleLibrary::detectPitch (s, c1), after = SampleLibrary::detectPitch (*shifted, c2);
+            // energy in the second half (should stay near zero: duration kept, nothing smeared far after the note)
+            double eFirst = 0, eLate = 0;
+            for (int i = 0; i < 22050; ++i) eFirst += shifted->L[(size_t) i] * shifted->L[(size_t) i];
+            for (int i = 26460; i < 44100; ++i) eLate += shifted->L[(size_t) i] * shifted->L[(size_t) i];
+            report ("Belt pitch shift (Signalsmith Stretch)", shifted->length() == s.length() && std::abs (after - before - 3.0f) < 0.15f && eLate < eFirst * 0.01,
+                    "A3 -> " + SampleLibrary::noteName (after) + " in " + String (ms, 1) + " ms, length " + String (shifted->length()) + " samples (same), energy after the note "
+                    + String (Decibels::gainToDecibels ((float) (eLate / (eFirst + 1e-12))), 1) + " dB");
+        }
+
         // 3) SCALE: play a pitched sample, measure the output pitch
         auto renderAudition = [&] (int idx, double seconds) -> float
         {
@@ -683,10 +777,30 @@ int main (int argc, char** argv)
         setP (p, params::b (params::tie, params::lv::scale), 1);
         setP (p, params::bScaleRoot, 2); setP (p, params::bScaleType, 0);           // D Major: C is not in the scale -> C#
         const float scaled = renderAudition (idx, 0.6);
+        // the scale correction is rendered in the background with Signalsmith Stretch and then used by the voice
+        {
+            // chords / harmonic material: Groovulation scale logic + stretched copy; single notes: note-based logic, no copy
+            int chordIdx = -1;
+            for (int i = 0; i < tieSet->size(); ++i) if (tieSet->names[i].contains ("Strings Cm7")) chordIdx = i;
+            const auto& ck = tieSet->samples[(size_t) chordIdx]->key;
+            float semisS = 0, corrS = 0; int noteS = 0;
+            const bool keyed = p.lime.beltScale (*tieSet->samples[(size_t) chordIdx], 0.0f, semisS, corrS, noteS);
+            const int expectShift = params::bestShift (ck.chroma, ck.keyRoot, 2, 0);
+            SamplePtr rendered;
+            for (int i = 0; i < 2000 && (rendered = p.lime.beltRendered (chordIdx, corrS)) == nullptr; ++i) Thread::sleep (10);
+            Thread::sleep (100);
+            const bool singleNoCopy = keyanalysis::singleTone (tieSet->samples[(size_t) idx]->key) && ! keyanalysis::singleTone (ck)
+                                      && p.lime.beltRendered (idx, 0.0f) == nullptr;
+            report ("Belt SCALE: chords stretched, single notes note-based", keyed && rendered != nullptr && std::abs (corrS) > 0.5f
+                                                      && rendered->length() == tieSet->samples[(size_t) chordIdx]->length() && singleNoCopy,
+                    "Strings Cm7 (" + keyanalysis::keyName (ck.keyRoot, ck.minor) + ") -> D Major: shift " + String (expectShift) + ", correction "
+                    + String (corrS, 2) + " st rendered (same length); Deep Sub C = single note, no stretched copy");
+        }
         setP (p, params::b (params::tie, params::lv::scale), 0);
         p.library.setSampleOffset (SampleLibrary::tie, idx, 5.0f);                  // MANUAL +5 st
         const float manual = renderAudition (idx, 0.6);
         p.library.setSampleOffset (SampleLibrary::tie, idx, 0.0f);
+        // single note (no harmony): note-based SCALE, nearest scale note (C -> C#)
         const bool okScale = std::abs (scaled - (float) params::quantizeToScale (src, 2, 0)) < 0.35f && std::abs (scaled - src) > 0.5f;
         const bool okManual = std::abs (manual - (src + 5.0f)) < 0.35f;
         report ("SCALE + MANUAL pitch (measured)", okScale && okManual,
@@ -695,7 +809,7 @@ int main (int argc, char** argv)
         // 3b) key from file name: parser + measured effect
         {
             struct C { const char* name; float expect; };
-            const C cases[] { { "pad chord Db", 61 }, { "T09 Rhodes Cm9", 60 }, { "Bass_F#2", 54 }, { "Kick C1", 36 }, { "La minore", 57 },
+            const C cases[] { { "pad chord Db", 61 }, { "T09 Keys Cm9", 60 }, { "Bass_F#2", 54 }, { "Kick C1", 36 }, { "La minore", 57 },
                               { "Sol# lead", 56 }, { "Am7 stab", 57 }, { "120bpm Ebmaj7", 63 }, { "loop_Bb", 58 }, { "pad chord db", 61 },
                               { "Kick", -1 }, { "T05 Dub Chord m7", -1 }, { "Cello", -1 }, { "Glass Bell", -1 }, { "Sub Bass", -1 }, { "Remix", -1 } };
             String fails;
@@ -707,7 +821,7 @@ int main (int argc, char** argv)
             report ("key from file name: parser", fails.isEmpty(), fails.isEmpty() ? String ("16 names parsed correctly") : fails);
 
             // user folder with a 440 Hz tone deliberately named "Db": NAME off -> A4 stays A (C Major); NAME on -> Db -> D (+1)
-            auto dir = File::getSpecialLocation (File::tempDirectory).getChildFile ("twinbox_name_test");
+            auto dir = File::getSpecialLocation (File::tempDirectory).getChildFile ("dualbox_name_test");
             dir.deleteRecursively(); dir.createDirectory();
             {
                 AudioBuffer<float> tone (1, 44100);
@@ -726,8 +840,9 @@ int main (int argc, char** argv)
             const float onPitch = renderAudition (0, 0.6);
             setP (p, params::b (params::tie, params::lv::nameKey), 0);
             setP (p, params::b (params::tie, params::lv::scale), 0);
-            p.library.setSource (SampleLibrary::tie, SampleLibrary::twinbox);
+            p.library.setSource (SampleLibrary::tie, SampleLibrary::factory);
             Thread::sleep (30); while (p.library.isLoading()) Thread::sleep (5);
+            // single tone: note-based SCALE. NAME off: A4 stays A (C Major); NAME on: "Db" -> nearest scale note D (+1)
             report ("key from file name: measured", std::abs (offPitch - 69.0f) < 0.35f && std::abs (onPitch - 70.0f) < 0.35f,
                     "A4 tone named 'Db', C Major: NAME off " + SampleLibrary::noteName (offPitch) + ", NAME on " + SampleLibrary::noteName (onPitch));
             dir.deleteRecursively();
@@ -735,7 +850,7 @@ int main (int argc, char** argv)
 
         // 3c) Tie lane: column height selects the sample (notch 1 = bottom of the list = last file)
         {
-            auto dir = File::getSpecialLocation (File::tempDirectory).getChildFile ("twinbox_height_test");
+            auto dir = File::getSpecialLocation (File::tempDirectory).getChildFile ("dualbox_height_test");
             dir.deleteRecursively(); dir.createDirectory();
             const double freqs[] { 440.0, 523.25, 659.26 };   // "1 tone" = top of the list ... "3 tone" = bottom
             for (int i = 0; i < 3; ++i)
@@ -769,7 +884,7 @@ int main (int argc, char** argv)
             const float bottom = playStep (1.0f / 3.0f), top = playStep (1.0f);
             setP (p, params::b (params::tie, params::lv::vel), 0);                    // VEL = -- : height is velocity, WAV knob plays
             const float velMode = playStep (1.0f / 3.0f);
-            p.library.setSource (SampleLibrary::tie, SampleLibrary::twinbox);
+            p.library.setSource (SampleLibrary::tie, SampleLibrary::factory);
             Thread::sleep (30); while (p.library.isLoading()) Thread::sleep (5);
             dir.deleteRecursively();
             report ("Tie column height selects sample", std::abs (bottom - 76.0f) < 0.4f && std::abs (top - 69.0f) < 0.4f && std::abs (velMode - 72.0f) < 0.4f,
@@ -810,13 +925,13 @@ int main (int argc, char** argv)
                 + "/" + String (open) + " T" + String (counts[3]) + " P" + String (counts[4]));
         TwinboxProcessor p;
         {   // analysis time of the 128 Legacy Tie samples (cache removed -> full analysis)
-            SampleLibrary::folderFor (SampleLibrary::tie, SampleLibrary::legacy).getChildFile (".twinbox_pitch.txt").deleteFile();
+            SampleLibrary::folderFor (SampleLibrary::tie, SampleLibrary::legacy).getChildFile (".dualbox_pitch.txt").deleteFile();
             const auto t0 = Time::getMillisecondCounterHiRes();
             p.library.setSource (SampleLibrary::tie, SampleLibrary::legacy);
             Thread::sleep (20);
             while (p.library.isLoading()) Thread::sleep (5);
             const auto t1 = Time::getMillisecondCounterHiRes();
-            p.library.setSource (SampleLibrary::tie, SampleLibrary::twinbox); while (p.library.isLoading()) Thread::sleep (5);
+            p.library.setSource (SampleLibrary::tie, SampleLibrary::factory); while (p.library.isLoading()) Thread::sleep (5);
             p.library.setSource (SampleLibrary::tie, SampleLibrary::legacy); Thread::sleep (20); while (p.library.isLoading()) Thread::sleep (5);
             const auto t2 = Time::getMillisecondCounterHiRes();
             auto set = p.library.set (SampleLibrary::tie); int pitched = 0; for (auto& sm : set->samples) if (sm->pitch >= 0) ++pitched;
@@ -827,6 +942,141 @@ int main (int argc, char** argv)
         setP (p, params::gRun, 1); setP (p, params::gXfade, 100);
         auto st = render (p, 6.0, outDir.getChildFile ("render_B_legacy.wav"));
         report ("render with Legacy samples", st.nans == 0 && st.peak > 0.01f, "peak " + String (Decibels::gainToDecibels (st.peak), 1) + " dBFS");
+    }
+
+    // ---------------------------------------------------------------- loudness: Section A vs Section B (default patterns)
+    {
+        auto measure = [] (TwinboxProcessor& q, float xfade) -> std::pair<float, float>   // (RMS dBFS, peak dBFS) before the safety limiter
+        {
+            setP (q, params::gMaster, -30); setP (q, params::gXfade, xfade); setP (q, params::gRun, 1);
+            const auto st = render (q, 8.0);
+            return { Decibels::gainToDecibels ((float) st.rms) + 30.0f, Decibels::gainToDecibels (st.peak) + 30.0f };
+        };
+        TwinboxProcessor pa; waitLibrary (pa);
+        const auto A = measure (pa, 0);
+        TwinboxProcessor pb; waitLibrary (pb);
+        const auto Bm = measure (pb, 100);
+        TwinboxProcessor pi; waitLibrary (pi);
+        PatternImport::run (pi, File (__FILE__).getParentDirectory().getChildFile ("data/example.mtpreset"), 0, 0);
+        setP (pi, params::aPattern, 0);
+        const auto I = measure (pi, 0);
+        // 50 / 50 mix with Master at 0 dB: real plug-in output (default and imported kit)
+        auto mixPeak = [] (TwinboxProcessor& q) { setP (q, params::gMaster, 0); setP (q, params::gXfade, 50); setP (q, params::gRun, 1);
+                                                  return Decibels::gainToDecibels (render (q, 8.0).peak); };
+        TwinboxProcessor pm; waitLibrary (pm);
+        const float mixDefault = mixPeak (pm);
+        TwinboxProcessor pm2; waitLibrary (pm2);
+        PatternImport::run (pm2, File (__FILE__).getParentDirectory().getChildFile ("data/example.mtpreset"), 0, 0);
+        setP (pm2, params::aPattern, 0);
+        const float mixImported = mixPeak (pm2);
+        float maxImported = -100.0f;
+        for (int ch = 0; ch < 8; ++ch) maxImported = jmax (maxImported, Decibels::gainToDecibels (PatternImport::channelPeak (pi, ch)));
+        report ("loudness A vs B, 50 % mix never above 0 dBFS",
+                std::abs (A.first - Bm.first) < 2.0f && A.second < -1.0f && I.second < -0.9f && mixDefault < -1.0f && mixImported < -1.0f
+                && maxImported <= PatternImport::maxChannelPeakDb + 0.2f,
+                "RMS A " + String (A.first, 1) + " / B " + String (Bm.first, 1) + " dBFS; peak A " + String (A.second, 1) + ", B " + String (Bm.second, 1)
+                + ", imported kit A " + String (I.second, 1) + " (RMS " + String (I.first, 1) + "); 50 % mix peak " + String (mixDefault, 1)
+                + " / imported " + String (mixImported, 1) + " dBFS");
+    }
+
+    // ---------------------------------------------------------------- IMPORT PATTERN (Section A)
+    {
+        TwinboxProcessor p;
+        const String preset = R"TXT(/* drum preset */
+Tempo: 124bpm
+Swing: 18%
+DrumPatches: {
+	1: {
+		Name: "BD Test"
+		OscWave: Sine
+		OscFreq: 52.0Hz
+		OscDcy: 0.35s
+		ModMode: Decay
+		ModRate: 100.00ms
+		ModAmt: +24.00sm
+		NFilMode: HP
+		NFilFrq: 2.5kHz
+		NFilQ: 1.50
+		NStereo: On
+		NEnvMode: Linear
+		NEnvAtk: 0.00ms
+		NEnvDcy: 40.00ms
+		Mix: 80.00/20.00
+		DistAmt: 25.00
+		EQFreq: 632.46Hz
+		EQGain: +3.00dB
+		Level: -2.00dB
+		Pan: -20.00
+		OscVel: 50.00%
+		NVel: 120.00%
+		ModVel: 10.00%
+	}
+	2: {
+		Name: "SD Test"
+		OscWave: Triangle
+		OscFreq: 190Hz
+		Mix: 40/60
+	}
+}
+Patterns: {
+	a: {
+		Length: 16
+		1: { Triggers: "#---#---#---#---"  Accents: "#-------#-------"  Fills: "--------------#-" }
+		2: { Triggers: "----#-------#---" }
+	}
+	c: {
+		Length: 12
+		1: { Triggers: "#--#--#--#--" }
+	}
+}
+)TXT";
+        const auto r1 = PatternImport::runText (p, preset, 0, 0);
+        auto val = [&] (const String& id) { return p.apvts.getRawParameterValue (id)->load(); };
+        auto& A = p.micro.pattern (0); auto& C = p.micro.pattern (2);
+        const bool okPatch = std::abs (val (params::a (0, params::mt::oscFreq)) - 52.0f) < 0.6f && std::abs (val (params::a (0, params::mt::oscDcy)) - 350.0f) < 5.0f
+                          && (int) val (params::a (0, params::mt::nMode)) == 2 && std::abs (val (params::a (0, params::mt::nFreq)) - 2500.0f) < 30.0f
+                          && (int) val (params::a (0, params::mt::nEnv)) == 1 && std::abs (val (params::a (0, params::mt::mix)) - 20.0f) < 0.6f
+                          && std::abs (val (params::a (0, params::mt::pmRate)) - 50.0f) < 0.6f && std::abs (val (params::a (0, params::mt::pan)) + 20.0f) < 0.6f
+                          && (int) val (params::a (1, params::mt::oscWave)) == 1 && std::abs (val (params::a (1, params::mt::mix)) - 60.0f) < 0.6f
+                          && p.channelName (0) == "BD Test" && p.channelName (1) == "SD Test";
+        const bool okPat = A.length.load() == 16 && C.length.load() == 12
+                        && A.steps[0][0].load() == (MicroEngine::trig | MicroEngine::accent) && A.steps[0][4].load() == MicroEngine::trig
+                        && (A.steps[0][14].load() & MicroEngine::fill) && A.steps[1][4].load() == MicroEngine::trig && A.steps[1][0].load() == 0
+                        && C.steps[0][3].load() == MicroEngine::trig && std::abs (val (params::aSwing) - 18.0f) < 0.6f;
+        // single pattern file into slot E, single drum into channel 4
+        const auto r2 = PatternImport::runText (p, "Pattern: {\n Length: 8\n 3: { Triggers: \"x-x-x-x-\" }\n}\n", 4, 0);
+        const auto r3 = PatternImport::runText (p, "Name: \"Perc\"\nOscFreq: 330Hz\nOscWave: Saw\n", 0, 3);
+        const auto r4 = PatternImport::runText (p, "nothing useful here", 0, 0);
+        const bool okSingle = r2.patterns == 1 && p.micro.pattern (4).length.load() == 8 && p.micro.pattern (4).steps[2][2].load() == MicroEngine::trig
+                           && r3.patches == 1 && std::abs (val (params::a (3, params::mt::oscFreq)) - 330.0f) < 3.0f && p.channelName (3) == "Perc" && ! r4.ok;
+        // real example files (tests/data): a preset with 8 patches + 12 patterns and a single drum file
+        {
+            TwinboxProcessor q;
+            auto val2 = [&] (const String& id) { return q.apvts.getRawParameterValue (id)->load(); };
+            const auto dataDir = File (__FILE__).getParentDirectory().getChildFile ("data");
+            const auto rp = PatternImport::run (q, dataDir.getChildFile ("example.mtpreset"), 0, 0);
+            auto& PA = q.micro.pattern (0); auto& PB = q.micro.pattern (1);
+            using M = MicroEngine;
+            const bool okP = rp.patches == 8 && rp.patterns == 12 && q.channelName (0) == "AC BD Back1" && q.channelName (6) == "AC HH Back"
+                && std::abs (val2 (params::a (0, params::mt::oscFreq)) - 84.34f) < 0.5f && std::abs (val2 (params::a (0, params::mt::oscDcy)) - 829.1f) < 5.0f
+                && (int) val2 (params::a (6, params::mt::nMode)) == 2 && (int) val2 (params::a (1, params::mt::nEnv)) == 2
+                && std::abs (val2 (params::a (1, params::mt::mix)) - 5.0f) < 0.6f && std::abs (val2 (params::a (2, params::mt::pmAmt)) + 48.0f) < 0.5f
+                && (int) val2 (params::a (2, params::mt::oscWave)) == 2 && (int) val2 (params::a (2, params::mt::pmMode)) == 1
+                && std::abs (val2 (params::a (6, params::mt::pan)) + 24.96f) < 0.5f && val2 (params::a (4, params::mt::nStereo)) > 0.5f
+                && val2 (params::a (7, params::mt::mute)) > 0.5f && val2 (params::a (0, params::mt::mute)) < 0.5f
+                && (int) val2 (params::aPattern) == 1 && (int) val2 (params::aFillRate) == 1 && std::abs (val2 (params::aSwing) - 20.2f) < 0.6f
+                && PA.length.load() == 16 && PA.steps[0][0].load() == (M::trig | M::accent) && PA.steps[0][3].load() == M::trig
+                && PA.steps[0][1].load() == 0 && PA.steps[0][10].load() == (M::trig | M::accent) && PA.steps[6][4].load() == 0
+                && PA.steps[6][5].load() == (M::trig | M::accent) && PA.steps[4][15].load() == 0 && PB.steps[2][7].load() == M::trig;
+            const auto rd = PatternImport::run (q, dataDir.getChildFile ("example.mtdrum"), 0, 3);
+            const bool okD = rd.patches == 1 && rd.patterns == 0 && q.channelName (3) == "AC BD Back1"
+                && std::abs (val2 (params::a (3, params::mt::oscFreq)) - 84.34f) < 0.5f && std::abs (val2 (params::a (3, params::mt::eqGain)) - 22.5f) < 0.3f
+                && std::abs (val2 (params::a (3, params::mt::velNoise)) - 29.8f) < 0.3f;
+            report ("IMPORT PATTERN (real preset + drum files)", okP && okD, rp.message + " / " + rd.message
+                    + (okP ? "" : " [preset values wrong]") + (okD ? "" : " [drum values wrong]"));
+        }
+        report ("IMPORT PATTERN (preset / pattern / drum)", r1.ok && r1.patches == 2 && r1.patterns == 2 && okPatch && okPat && okSingle,
+                r1.message + " " + r2.message + " " + r3.message + (okPatch ? "" : " [patch values wrong]") + (okPat ? "" : " [pattern wrong]") + (okSingle ? "" : " [single files wrong]"));
     }
 
     // ---------------------------------------------------------------- GUI snapshots
@@ -892,7 +1142,7 @@ int main (int argc, char** argv)
                     + String ((int) std::round (next * n)) + ", Delete -> " + String (deleted));
         }
         {   // factory library upgraded (old v2 files removed, new v3 files installed)
-            const auto k = SampleLibrary::folderFor (SampleLibrary::kick, SampleLibrary::twinbox);
+            const auto k = SampleLibrary::folderFor (SampleLibrary::kick, SampleLibrary::factory);
             const bool ok = ! k.getChildFile ("K01 Rumble Core.wav").existsAsFile() && k.getChildFile ("K01 Tek Rumble Deep.wav").existsAsFile()
                          && SampleLibrary::namesIn (k).size() == 48;
             report ("factory library upgrade", ok, String (SampleLibrary::namesIn (k).size()) + " kicks, old files removed: " + String (! k.getChildFile ("K01 Rumble Core.wav").existsAsFile() ? "yes" : "no"));

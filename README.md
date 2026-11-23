@@ -1,28 +1,59 @@
-# TWINBOX — groovebox ibrida VST3 / AU (v2.14)
+# DUALBOX — groovebox ibrida VST3 / AU (v2.17)
+
+> Dalla v2.15 il plugin si chiama **DUALBOX** (prima *Twinbox*). L'installer rimuove le vecchie copie
+> `Twinbox.component` / `Twinbox.vst3`; i campioni stanno ora in `…/Dualbox/Samples`.
 
 > Nello stesso repository: **[FamPat](FamPat/README.md)** (famous patches), player di 200 suoni di synth famosi 1963–2023 ricreati con i circuiti degli strumenti originali, ognuno legato al suo brano.
 > E **[MICROVIBE](Microvibe/README.md)**, plugin di glitch, texture, percussioni organiche ed effetti (tape, vinile, wobble, delay, reverb, Shepard) per minimal e microhouse, con matrice di modulazione, poliritmie e microtonalità.
 
-Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in un solo plugin:
+DUALBOX è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in un solo plugin:
 
-| Sezione | Architettura di riferimento | Contenuto |
-|---|---|---|
-| **A — Drum Synth** (in alto) | Sonic Charge **Microtonic** | 8 canali di percussioni sintetiche, 12 pattern (A–L) fino a **64 step** con Trigger / Accent / Fill, Swing, Fill Rate, Morph, **fino a 8 LFO** |
-| **B — Groovebox** (in basso) | NI Reaktor **Limelite 1.3** | 5 voci a campioni (Kick, Snare, Hat, **Belt**, **Capsule**), sequencer A–D fino a **64 step** con catena di pattern e motore **Remix**, effetti Filter / EQ / Delay / xFx (23 modi) / Mix / Out, **fino a 8 LFO**, pulsanti **NORM** e **MIDI** |
-| **GLOBAL CONTROL** (a destra, comprimibile) | — | Crossfader A↔B, filtro master **Cutoff** (manopola grande) HP/BP/LP + **Resonance**, Master, Tempo / Run |
+| Sezione | Contenuto |
+|---|---|
+| **A — Drum Synth** (in alto) | 8 canali di percussioni sintetiche, 12 pattern (A–L) fino a **64 step** con Trigger / Accent / Fill, Swing, Fill Rate, Morph, **fino a 8 LFO** |
+| **B — Groovebox** (in basso) | 5 voci a campioni (Kick, Snare, Hat, **Belt**, **Capsule**), sequencer A–D fino a **64 step** con catena di pattern e motore **Remix**, effetti Filter / EQ / Delay / xFx (23 modi) / Mix / Out, **fino a 8 LFO**, pulsanti **NORM** e **MIDI** |
+| **GLOBAL CONTROL** (a destra, comprimibile) | Crossfader A↔B, filtri master **HP / BP / LP** (ognuno on/off) + **Resonance**, Master, Tempo / Run, **MULTI OUT** |
 
-📖 **Manuale d'uso completo (PDF):** [docs/Twinbox_Manuale_v2.14.1.pdf](docs/Twinbox_Manuale_v2.14.1.pdf)
+📖 **Manuale d'uso completo (PDF):** [docs/DUALBOX_Manuale_v2.17.0.pdf](docs/DUALBOX_Manuale_v2.17.0.pdf)
 
 ![Interfaccia principale](docs/gui_main.png)
 
-> Microtonic è un marchio di Sonic Charge; Reaktor e Limelite sono marchi di Native Instruments. Twinbox è un progetto
-> indipendente che riprende l'*architettura* e l'organizzazione dei controlli di questi strumenti. Non contiene codice,
-> grafica o campioni originali. I campioni originali di Limelite si possono importare solo dal proprio file `.ens`
-> (vedi "Cartelle Legacy").
+
+## Licenze di terze parti
+
+I testi delle licenze dei componenti usati (JUCE, VST 3 SDK, Audio Unit SDK, Signalsmith Stretch, font Inter, codec, …) sono
+raccolti in `THIRD_PARTY_NOTICES.txt`, generato da `tools/make_notices.py` durante la creazione dell'installer e installato
+in `/Users/Shared/Dualbox` e dentro i bundle AU / VST3. I crediti dei campioni sono in
+[`resources/SAMPLE_CREDITS.md`](resources/SAMPLE_CREDITS.md).
+
+## Novità 2.17
+
+- **Filtri master HP / BP / LP**: nel pannello GLOBAL CONTROL la manopola grande del cutoff è sostituita da tre filtri in
+  serie, ognuno con il suo pulsante on/off e la sua manopola; chiusure speculari (HP aperto tutto a sinistra, LP aperto tutto
+  a destra), Resonance condivisa.
+- **MULTI OUT**: Sezione A sull'uscita principale e Sezione B sulla seconda uscita stereo del plugin (da attivare nella DAW).
+- L'importazione Legacy si apre con il pulsante **?** della Sezione B.
+- Campioni di fabbrica senza nomi di modelli di strumenti; licenze di terze parti in `THIRD_PARTY_NOTICES.txt`.
+
+## Novità 2.16.1
+
+- Volumi: con i pattern di default la Sezione A ha lo stesso volume della B (prima era circa 8 dB più forte). Ogni sezione è
+  limitata a −1 dBFS prima del mix: a qualsiasi posizione del crossfader l'uscita non supera mai 0 dBFS (Master a 0 dB).
+- IMPORT PATTERN abbassa automaticamente i suoni importati che sarebbero più forti del kit di fabbrica.
+
+## Novità 2.16
+
+- **Belt: analisi dei campioni e SCALE come in Groovulation.** Ogni campione viene analizzato per tonalità (maggiore / minore),
+  accordatura in cent, cromagramma e fondamentale. Con **SCALE**, accordi, pad e suoni armonici vengono trasposti per intero
+  nella scala con la stessa logica di Groovulation, con un pitch-shift di alta qualità (Signalsmith Stretch) che non cambia la
+  durata; i suoni singoli (una nota senza armonia, per esempio i bassi) vanno sulla nota della scala più vicina. Tune, melodie (VEL = tune), portamento e FM restano trasposizioni da campionatore sopra di essa.
+- **IMPORT PATTERN** nella Sezione A: importa un file di preset (.mtpreset: 8 suoni + pattern A–L), di pattern (.mtpattern:
+  nel pattern corrente) o di suono (.mtdrum: nel canale selezionato) dal tuo computer.
+- Font dell'interfaccia: **Inter**.
 
 ## Novità 2.14
 
-- Modulo **CLICK** nella Sezione A (sotto la lista dei canali): un campione di transiente suonato in layer con il **Kick** (canale 1). Cartella di fabbrica *Twinbox Click* con 12 click (beater, 909 attack, wood tick, felt thump, tape click...) oppure una tua cartella (📁). Controlli ON, scelta del campione, Gain, Tune, Decay, HP.
+- Modulo **CLICK** nella Sezione A (sotto la lista dei canali): un campione di transiente suonato in layer con il **Kick** (canale 1). Cartella di fabbrica *Dualbox Click* con 12 click (beater, classic attack, wood tick, felt thump, tape click...) oppure una tua cartella (📁). Controlli ON, scelta del campione, Gain, Tune, Decay, HP.
 
 ## Novità 2.13
 
@@ -46,16 +77,14 @@ Twinbox è uno strumento VST3/AU (JUCE 8, C++17) che unisce due drum machine in 
 
 ```
  A: 8 voci sintetiche ─► Level A ───────────────────────────────┐
-                                                               ├─► Mix A/B ─► Cutoff (HP/BP/LP + Res) ─► Master
+                                                               ├─► Mix A/B ─► HP ─► BP ─► LP (+ Res) ─► Master
  B: Kick Snare Hat Belt Capsule ─► Filter ─► EQ/Sat ──────┬─┘
                                    └─► Delay ─► xFx ─► FX Mix ┘ ─► Trash ─► Gain (= Level B) ─► NORM
 ```
 
 Il crossfader è lineare: al centro hai il 50 % di A e il 50 % di B.
 
-## Sezione B — fedele a Limelite 1.3
-
-Parametri, nomi e organizzazione vengono dall'analisi del file originale (dettagli in [`docs/limelite_analysis.md`](docs/limelite_analysis.md)).
+## Sezione B — Groovebox
 
 **SEQUENCER**
 - Pattern A–D.
@@ -119,11 +148,11 @@ Ogni sezione ha **fino a 8 LFO** (3 di default): i pulsanti **+** / **−** del 
 
 ## SCALE e intonazione dei campioni (Belt e Capsule)
 
-- Al caricamento di una cartella Twinbox **rileva l'intonazione di ogni campione** in background (algoritmo YIN). Il risultato è nota + cent, oppure "no pitch". Il risultato viene memorizzato in un file nascosto `.twinbox_pitch.txt` nella cartella. L'audio non si interrompe: i nuovi campioni entrano in uso solo a analisi finita (128 campioni Legacy in circa 0,4 s, poi 0,04 s grazie al file).
+- Al caricamento di una cartella Dualbox **rileva l'intonazione di ogni campione** in background (algoritmo YIN). Il risultato è nota + cent, oppure "no pitch". Il risultato viene memorizzato in un file nascosto `.dualbox_pitch.txt` nella cartella. L'audio non si interrompe: i nuovi campioni entrano in uso solo a analisi finita (128 campioni Legacy in circa 0,4 s, poi 0,04 s grazie al file).
 - **SCALE** nell'intestazione della sezione B: Root e Scala, condivisi da Belt e Capsule. Le scale sono le stesse del dispositivo Scale di Ableton Live.
 - **Tastiera**: clicca una colonna BELT, CAPSULE o MOD e usa le frecce. ↑ e ↓ cambiano il valore (con VEL = wav un campione alla volta, con ascolto e nome del campione); ← e → passano allo step precedente o successivo; Canc spegne lo step; Shift fa passi più grandi.
 - **Selezione del campione con l'altezza della colonna** (Belt e Capsule con VEL = **wav**): ogni tacca della colonna BELT/CAPSULE corrisponde a un campione della lista, indipendentemente dal knob WAV. La prima tacca dal basso è l'ultimo campione della lista, quella più in alto è il primo. Con le altre impostazioni di VEL l'altezza resta la velocity (V>A). Ogni modulo usa al massimo 128 campioni per cartella.
-- Il pulsante **NAME** di Belt e Capsule (presente anche nella finestra ♪) legge la tonalità **dal nome del file**. Esempi: "pad chord Db" → D♭, "Rhodes Cm9" → C, "Bass F#2" → F#2, "La minore" → A; sono riconosciuti C#/Db, sharp/flat, i nomi solfeggio Do…Si e l'ottava (C3 = 60). Serve per accordi e suoni che l'analisi audio non riesce a intonare. Se il nome non contiene una tonalità si usa l'analisi audio. Con NAME spento vale solo l'analisi audio.
+- Il pulsante **NAME** di Belt e Capsule (presente anche nella finestra ♪) legge la tonalità **dal nome del file**. Esempi: "pad chord Db" → D♭, "Keys Cm9" → C, "Bass F#2" → F#2, "La minore" → A; sono riconosciuti C#/Db, sharp/flat, i nomi solfeggio Do…Si e l'ottava (C3 = 60). Serve per accordi e suoni che l'analisi audio non riesce a intonare. Se il nome non contiene una tonalità si usa l'analisi audio. Con NAME spento vale solo l'analisi audio.
 - Il pulsante **SCALE** di Belt e Capsule porta ogni campione intonato sulla nota della scala più vicina. Con VEL = tune, le melodie delle corsie si muovono per gradi della scala.
 - Con SCALE spento si è in **modalità MANUAL**. L'icona **♪** apre la finestra con tutti i campioni della cartella: per ognuno ci sono la nota rilevata, un pulsante ▶ e un knob da −32 a +32 semitoni, indipendente dal Tune del modulo. Il knob agisce in tempo reale anche durante la riproduzione, e le impostazioni vengono salvate nel progetto.
 
@@ -133,20 +162,20 @@ Ogni sampler (Kick, Snare, Hat, Belt, Capsule) ha la manopola **WAV** e un menu 
 
 | Pulsante | Cartella |
 |---|---|
-| **TWB** | `Twinbox Kick`, `Twinbox Snare`, … (libreria di fabbrica v5: 48 kick puliti, 48 snare e clap morbidi, 32 coppie di hat, 46 Belt con **solo bassi e accordi, tutti in Do** (bassi accordati su Do, accordi della famiglia Do minore), 66 Capsule con **tom 808 e 909 Hi/Mid/Low, conga 808 Hi/Mid/Low**, conga, bongo, tom, darbuka, cajon, claves, log drum, snare morbide e dissonant hit; una parte dei campioni viene da librerie gratuite CC0 / Public Domain, vedi [`resources/SAMPLE_CREDITS.md`](resources/SAMPLE_CREDITS.md); installata al primo avvio e aggiornata automaticamente quando esce una nuova libreria, senza toccare i file tuoi) |
-| **LEG** | `Legacy Kick`, `Legacy Snare`, … (campioni originali di Limelite, vedi sotto) |
+| **DBX** | `Dualbox Kick`, `Dualbox Snare`, … (libreria di fabbrica v5: 48 kick puliti, 48 snare e clap morbidi, 32 coppie di hat, 46 Belt con **solo bassi e accordi, tutti in Do** (bassi accordati su Do, accordi della famiglia Do minore), 66 Capsule con **tom analogici e classici Hi/Mid/Low, conga analogiche Hi/Mid/Low**, conga, bongo, tom, darbuka, cajon, claves, log drum, snare morbide e dissonant hit; una parte dei campioni viene da librerie gratuite CC0 / Public Domain, vedi [`resources/SAMPLE_CREDITS.md`](resources/SAMPLE_CREDITS.md); installata al primo avvio e aggiornata automaticamente quando esce una nuova libreria, senza toccare i file tuoi) |
+| **LEG** | `Legacy Kick`, `Legacy Snare`, … (campioni importati con il pulsante ?, vedi sotto) |
 | **📁** | una cartella a tua scelta, impostabile per ogni modulo e salvata col progetto |
 
 Posizione delle cartelle:
-- macOS: `/Users/Shared/Twinbox/Samples`
-- Windows: `C:\Users\Public\Documents\Twinbox\Samples`
-- Linux: `~/Documents/Twinbox/Samples`
+- macOS: `/Users/Shared/Dualbox/Samples`
+- Windows: `C:\Users\Public\Documents\Dualbox\Samples`
+- Linux: `~/Documents/Dualbox/Samples`
 
 Per l'Hat, se esiste `open/<stesso nome>.wav` dentro la cartella, viene usato per l'hat aperto.
 
-### Cartelle Legacy (omaggio a Limelite)
+### Cartelle Legacy
 
-Premi **IMPORT LEGACY** nella sezione B e seleziona il **tuo** file `Limelite 1.3.ens`. Twinbox estrae le 6 mappe di campioni originali nelle cartelle `Legacy *`, con i nomi originali:
+Premi il pulsante **?** (IMPORT LEGACY) nella sezione B e seleziona un file di ensemble (`.ens`) di tua proprietà. DUALBOX ne estrae le mappe di campioni nelle cartelle `Legacy *`, con i nomi originali:
 - Kick 128 campioni;
 - Snare 128;
 - Hat 127 chiusi + 127 aperti, abbinati;
@@ -157,7 +186,7 @@ I campioni restano solo sul tuo computer.
 
 ## Preset di genere: 128 per sezione
 
-Ogni sezione ha un pulsante **BROWSER**. I preset sono 16 per ciascuno degli 8 generi: Techno, Minimal, Microhouse, Rominimal, House, Tech House, Deep House, Breakbeat. Per ogni genere 8 sono **SIMPLE** (8 groove essenziali tutti diversi: per House, Techno e Tech House sono i groove classici del genere, cioè cassa in quattro, clap su 2 e 4, open hat in levare, shaker sui sedicesimi, hat a sedicesimi con accenti, percussioni 3+3+2, tom fra le casse, rullata di snare come fill; per Minimal, Microhouse e Rominimal: percussioni su 2 e 4, hat in levare con swing, hat chiusi a ottavi in stile electro, micro-percussioni, rimshot e conga a bassa velocity fra i tempi, tom intonati ipnotici, basso che rotola) e 8 **COMPLEX** (poliritmi, ghost note, variazioni). Kit e suoni sono costruiti sui riferimenti di ogni genere: per esempio CVO e Alarico per la Techno, Jan Jelinek e Farben per la Minimal, Villalobos e Zavor per la Microhouse, Barac e Sublee per la Rominimal, Kerri Chandler per la House, Adonis e Kevin Saunderson per la Tech House, Mr G e DJ Koze per la Deep House, Silicon Scally per la Breakbeat (electro).
+Ogni sezione ha un pulsante **BROWSER**. I preset sono 16 per ciascuno degli 8 generi: Techno, Minimal, Microhouse, Rominimal, House, Tech House, Deep House, Breakbeat. Per ogni genere 8 sono **SIMPLE** (8 groove essenziali tutti diversi: per House, Techno e Tech House sono i groove classici del genere, cioè cassa in quattro, clap su 2 e 4, open hat in levare, shaker sui sedicesimi, hat a sedicesimi con accenti, percussioni 3+3+2, tom fra le casse, rullata di snare come fill; per Minimal, Microhouse e Rominimal: percussioni su 2 e 4, hat in levare con swing, hat chiusi a ottavi in stile electro, micro-percussioni, rimshot e conga a bassa velocity fra i tempi, tom intonati ipnotici, basso che rotola) e 8 **COMPLEX** (poliritmi, ghost note, variazioni). Kit e suoni seguono il carattere di ogni genere.
 
 - **Sezione A**: kit di 8 drum patch con nomi + pattern (fino a 64 step), swing e fill rate. Il pattern viene caricato nello slot corrente.
 - **Sezione B**: snapshot completo (campioni, voci, effetti, lunghezze, swing, Remix) + pattern A–D.
@@ -166,7 +195,7 @@ Ogni sezione ha un pulsante **BROWSER**. I preset sono 16 per ciascuno degli 8 g
 - Nessun preset usa drive/saturazione sulle voci. Nella Tech House l'acid compare solo in 2 preset su 16.
 - Caricare un preset non cambia mai lo stato acceso/spento dei moduli .
 
-Il Rominimal segue i riferimenti indicati (Villalobos, Bauch, Barac, Ohm Hourani, Sublee, Zavor, 118–130 BPM):
+I preset Rominimal (118–130 BPM) hanno queste caratteristiche:
 - groove lunghi da 32 o 64 step;
 - poca snare;
 - percussioni legnose fuori griglia;
@@ -184,8 +213,8 @@ Il Rominimal segue i riferimenti indicati (Villalobos, Bauch, Barac, Ohm Hourani
 
 ## Se l'AU non compare
 
-- L'installer mette l'AU in `/Library/Audio/Plug-Ins/Components/Twinbox.component` e il VST3 in `/Library/Audio/Plug-Ins/VST3/Twinbox.vst3`. Nella finestra "Tipo di installazione" (Personalizza) entrambe le voci devono essere spuntate.
-- Se hai copie vecchie di `Twinbox.component` in altre cartelle (per esempio `~/Library/Audio/Plug-Ins/Components`), cancellale.
+- L'installer mette l'AU in `/Library/Audio/Plug-Ins/Components/DUALBOX.component` e il VST3 in `/Library/Audio/Plug-Ins/VST3/DUALBOX.vst3`. Nella finestra "Tipo di installazione" (Personalizza) entrambe le voci devono essere spuntate.
+- Se hai copie vecchie di `DUALBOX.component` o `Twinbox.component` in altre cartelle (per esempio `~/Library/Audio/Plug-Ins/Components`), cancellale.
 - Ableton Live (anche Live 9): Preferenze → File/Cartelle → **Usa Audio Units** attivo, poi **Rescan** (o riavvia Live). Logic: Plug-in Manager → *Reset & Rescan*.
 
 ## Compilazione
@@ -205,22 +234,22 @@ JUCE 8.0.4 viene scaricato in automatico.
 Il workflow `.github/workflows/build.yml`:
 - compila le tre piattaforme;
 - su macOS verifica l'AU con `auval`;
-- produce l'installer **`Twinbox-2.14.1-macOS.pkg`** (artifact `Twinbox-macOS-Installer`).
+- produce l'installer **`DUALBOX-2.15.0-macOS.pkg`** (artifact `DUALBOX-macOS-Installer`).
 
 Gli script che generano campioni e preset (`resources/`) sono `tools/gen_samples.py` e `tools/gen_presets.py`.
 
 ### Test
 
 ```bash
-cmake -B build -DTWINBOX_BUILD_TESTS=ON
+cmake -B build -DDUALBOX_BUILD_TESTS=ON
 ```
 
 ```bash
-cmake --build build --target TwinboxTest
+cmake --build build --target DualboxTest
 ```
 
 ```bash
-xvfb-run ./build/TwinboxTest_artefacts/Release/TwinboxTest ./out [percorso/Limelite 1.3.ens] [fuzz]
+xvfb-run ./build/DualboxTest_artefacts/Release/DualboxTest ./out [percorso/file.ens] [fuzz]
 ```
 
 Cosa controlla il test:
@@ -235,6 +264,5 @@ L'opzione `fuzz` imposta parametri a caso, a frequenze di campionamento e dimens
 
 ## Note e limiti
 
-- **EXT / FX** di Limelite (ingresso audio esterno, modalità solo-effetto) non sono implementati: il plugin è uno strumento senza ingresso audio.
-- I 127 schemi di Remix e alcune curve dei parametri sono ricostruzioni: le tabelle numeriche originali non sono leggibili dal file.
-- Su **Linux**, pluginval va saltuariamente in crash nel proprio codice di hosting VST3 (run loop Linux dell'host, nessun frame nel codice di Twinbox). Il plugin compilato con AddressSanitizer passa sempre la validazione.
+- Il plugin è uno strumento senza ingresso audio (nessuna modalità effetto su segnale esterno).
+- Su **Linux**, pluginval va saltuariamente in crash nel proprio codice di hosting VST3 (run loop Linux dell'host, nessun frame nel codice di DUALBOX). Il plugin compilato con AddressSanitizer passa sempre la validazione.

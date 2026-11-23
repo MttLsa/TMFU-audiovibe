@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <atomic>
+#include "KeyAnalysis.h"
 
 // One audio sample in memory (mono or stereo, de-interleaved).
 struct Sample
@@ -16,6 +17,9 @@ struct Sample
     float pitch = -1.0f;                  // detected fundamental as MIDI note (69 = A4); -1 = no clear pitch
     float pitchConf = 0.0f;               // 0..1
     float namePitch = -1.0f;              // key read from the file name (MIDI note), -1 = no key in the name
+    // Belt: full tonal analysis (same as Groovulation): key, mode, tuning, chroma, fundamental, key from the name
+    keyanalysis::Result key;
+    bool hasKey = false;
     int length() const noexcept { return (int) L.size(); }
     bool stereo() const noexcept { return ! R.empty(); }
 };
@@ -37,17 +41,17 @@ using SampleSetPtr = std::shared_ptr<const SampleSet>;
 // -------------------------------------------------------------------------------------------------
 //  Folder based sample management for the Section B samplers.
 //
-//  <root>/Twinbox Kick, Twinbox Snare, Twinbox Hat, Twinbox Tie, Twinbox Pod   (factory, installed on first run)
-//  <root>/Legacy Kick,  Legacy Snare,  Legacy Hat,  Legacy Tie,  Legacy Pod     (filled by the Limelite importer)
+//  <root>/Dualbox Kick, Dualbox Snare, Dualbox Hat, Dualbox Belt, Dualbox Capsule, Dualbox Click   (factory, installed on first run)
+//  <root>/Legacy Kick,  Legacy Snare,  Legacy Hat,  Legacy Tie,  Legacy Pod     (filled by IMPORT LEGACY)
 //  or any user folder per module.
-//  <root> = macOS /Users/Shared/Twinbox/Samples, Windows C:\Users\Public\Documents\Twinbox\Samples,
-//           Linux ~/Documents/Twinbox/Samples
+//  <root> = macOS /Users/Shared/Dualbox/Samples, Windows C:\Users\Public\Documents\Dualbox\Samples,
+//           Linux ~/Documents/Dualbox/Samples
 // -------------------------------------------------------------------------------------------------
 class SampleLibrary : public juce::ChangeBroadcaster
 {
 public:
     enum Module { kick = 0, snare, hat, tie, pod, click, numModules };   // click = Section A kick transient layer
-    enum Source { twinbox = 0, legacy, user, numSources };
+    enum Source { factory = 0, legacy, user, numSources };
 
     SampleLibrary();
     ~SampleLibrary() override;
@@ -80,7 +84,7 @@ public:
     // pitch detection (YIN); returns MIDI note or -1 when the sample has no clear pitch
     static float detectPitch (const Sample& s, float& confidence);
     static juce::String noteName (float midi);   // "C#3 +12c"
-    // key from a file name ("pad chord Db", "Rhodes Cm9", "Bass_F#2", "La minore"); returns MIDI note or -1.
+    // key from a file name ("pad chord Db", "Keys Cm9", "Bass_F#2", "La minore"); returns MIDI note or -1.
     // Without an octave in the name the note is placed in the octave closest to 'nearPitch' (or around C3 = 60).
     static float pitchFromName (const juce::String& name, float nearPitch = -1.0f);
 
@@ -102,8 +106,8 @@ private:
 };
 
 // -------------------------------------------------------------------------------------------------
-//  Imports the original sample maps from a user's own "Limelite 1.3.ens" into the Legacy folders.
-//  Nothing from the original ensemble is shipped with Twinbox.
+//  Imports the sample maps of an ensemble file (.ens) owned by the user into the Legacy folders.
+//  Nothing from the original ensemble is shipped with DUALBOX.
 // -------------------------------------------------------------------------------------------------
 struct LegacyImporter
 {
