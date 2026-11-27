@@ -2,7 +2,7 @@
 
 Mixer di loop e campioni a 12 moduli, nello stile di Twinbox con i colori di un MPC 60 vintage.
 
-📖 **Manuale d'uso (PDF):** [docs/Groovulation_Manuale_v1.1.8.pdf](docs/Groovulation_Manuale_v1.1.8.pdf)
+📖 **Manuale d'uso (PDF):** [docs/Groovulation_Manuale_v1.2.0.pdf](docs/Groovulation_Manuale_v1.2.0.pdf)
 
 | Sezione | Moduli |
 |---|---|
@@ -36,7 +36,7 @@ Mixer di loop e campioni a 12 moduli, nello stile di Twinbox con i colori di un 
 - **MANUAL** (default): i loop suonano alla loro intonazione originale, al tempo del progetto.
 - **SCALE**: Bass, Melodic, Vocals (e Custom se intonato) vengono trasposti nella scala scelta (stessa lista del
   device Scale di Ableton). PITCH funziona ancora: il risultato va sulla nota più vicina della scala.
-- **RAW**: tempo e intonazione originali; PITCH e TEMPO restano manuali.
+- **RAW**: tempo e intonazione originali; PITCH resta manuale.
 
 ## Motore audio
 - **Time-stretch / pitch-shift polifonico ad alta qualità** (Signalsmith Stretch, classe "Complex Pro") per tutti
@@ -48,9 +48,13 @@ Mixer di loop e campioni a 12 moduli, nello stile di Twinbox con i colori di un 
 
 ## Ogni modulo
 Display LCD con waveform ad alta risoluzione e zoom (rotella / pinch = zoom sul puntatore, shift+rotella o barra = scorri, − + FIT; zoomando a fondo si vedono i singoli campioni), griglia 1/1 … 1/64 con terzine fino a 1/48, lunghezza in step di griglia per le poliritmie), GAIN (−6 dB di default),
-PAN, ADSR, VOL.A (automazione di volume disegnata sul display), PITCH ±32 semitoni (risoluzione 0,001) e TEMPO
-(0,5×–2×, risoluzione 0,00001), SLICE con fade di 0,5 ms: i marcatori S / E si muovono al millisecondo (SNAP MS: shift = 0,1 ms, frecce ← → = ±1 ms, shift ±0,1 ms, alt/cmd ±10 ms) oppure sulla griglia (SNAP GRID); con LOOP la parte tra S ed E si ripete di continuo (crossfade di 5 ms), filtro LP/BP/HP (cutoff a risoluzione continua, senza
-zipper), DIRT, DELAY, REVERB, **3 LFO** (destinazioni: gain, pan, pitch, **tempo**, cutoff, resonance, dirt, delay,
+PAN, ADSR, VOL.A (automazione di volume disegnata sul display), PITCH ±32 semitoni (risoluzione 0,001),
+SLICE con fade di 0,5 ms: i marcatori S / E si muovono al millisecondo (SNAP MS: shift = 0,1 ms, frecce ← → = ±1 ms, shift ±0,1 ms, alt/cmd ±10 ms) oppure sulla griglia (SNAP GRID); con LOOP la parte tra S ed E si ripete di continuo (crossfade di 5 ms).
+Spostare S / E o cambiare GRID mentre suona non fa click (gate ammorbidito e crossfade di 20 ms tra due voci); spegnendo SLICE si spegne anche LOOP.
+**LOOP MARKERS** (LS / LE, bandierine in basso nel display): la riproduzione si ripete tra i due marker, in modo normale e in SLICE.
+**CUTOFF**: tre filtri indipendenti HP → BP → LP, ognuno con ON e la sua RES; HP e LP si chiudono e si aprono in modo speculare (scala logaritmica 20 Hz–20 kHz),
+**CHORUS** (stesso DSP di CHROMA5YNTH: Chorus I / II, Dimension 1–4, Custom con Rate / Depth, Mix), **WIDTH** (0 % = mono, 100 % = invariato, fino a 400 %) e **MONO**,
+DIRT, DELAY, REVERB, **3 LFO** (destinazioni: gain, pan, pitch, **tempo**, cutoff, resonance, dirt, delay,
 reverb, slice e **Loop**), LOOP SELECT, SIMILAR, TYPE.
 
 **LFO → Loop**: il modulo precarica in RAM fino a 8 loop simili (massimo 8 battute) e a ogni passo della griglia l'LFO
@@ -58,11 +62,12 @@ sceglie quale suonare, con crossfade. Non legge dal disco durante la riproduzion
 
 ## Master
 - **GLOBAL SWING**: ON + quantità (1/8 o 1/16), in tempo reale.
-- **CUTOFF**: HP | BP | LP (HP e LP speculari) + RES.
+- **CUTOFF**: HP → BP → LP indipendenti, ognuno con ON e RES; HP e LP speculari; il suono segue i knob senza ritardi.
+- **UNDO / REDO** (barra in alto, Cmd+Z / Shift+Cmd+Z): un passo per ogni gesto su un controllo.
 - **Livello**: −6 dB di headroom sul bus e un soft clipper di sicurezza.
 - **REMIX**:
   - **Beat Repeat**: Interval, Offset, Grid, Chance, Length, Variation, Decay, Pitch, Pitch Decay, Volume,
-    modalità Mix / Insert, crossfade di 2 ms.
+    modalità Mix / Insert (il pulsante selezionato è chiaro), crossfade di 2 ms.
   - **TAPE MACHINE**: trascini le bobine; STOP, START, WOBBLE, PULL (strappo del nastro: rewind lungo con pitch che
     scende lentamente), REWIND (2 s, fade-out di 60 ms).
   - **VINYL**: START/STOP, 33/45 e pitch fader ±8 % come un giradischi vero (velocità e intonazione insieme);
@@ -76,6 +81,11 @@ sceglie quale suonare, con crossfade. Non legge dal disco durante la riproduzion
 - In entrambi i casi un pannello permette di trascinare tutti i file in Ableton Live o Logic (una traccia per file).
   In alternativa ci sono 12 uscite separate (multi-out).
 
+## Multi-out
+- 12 uscite stereo separate (Kick … FX) oltre a quella principale, attive di default.
+- Per ogni modulo **OUTPUT** (pannello Gain / Pan): **MAIN** = mix principale, **SEP** = solo la sua uscita separata,
+  **BOTH** = entrambe. Le uscite separate escono dopo gli effetti del modulo, senza cutoff / Beat Repeat / deck / volume del master.
+
 ## Limiti
 - Saturn 2, RAUM e i device di Ableton sono proprietari: DIRT, REVERB, Beat Repeat e Groove sono implementazioni
   originali che seguono lo stesso comportamento, ma non sono identiche.
@@ -84,7 +94,7 @@ sceglie quale suonare, con crossfade. Non legge dal disco durante la riproduzion
 ## Build
 ```
 cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release
-./packaging/macos/make_pkg.sh 1.1.11        # installer .pkg (macOS)
+./packaging/macos/make_pkg.sh 1.2.0        # installer .pkg (macOS)
 cmake -B build -DGROOV_BUILD_TESTS=ON && cmake --build build --target GroovulationTest   # test offline
 ```
 Su GitHub l'installer viene costruito automaticamente (workflow `groovulation`).

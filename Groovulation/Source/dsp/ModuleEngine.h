@@ -20,14 +20,17 @@ struct ModuleParams
 {
     bool on = true;
     float gainDb = -6, pan = 0, atkMs = 0, decMs = 500, sus = 1, relMs = 0;
-    float pitch = 0, tempo = 1;
-    int ftype = 0; float cut = 20000, res = 0.1f, dirt = 0;
+    float pitch = 0, tempo = 1;   // tempo: always 1 (the TEMPO knob was removed; LFO -> Tempo still works)
+    fx::TriFilterParams filt; float dirt = 0;
+    bool chOn = false; int chMode = 0; float chRate = 0.6f, chDepth = 0.5f, chMix = 0.5f;
+    float width = 1.0f; bool mono = false;
     int dtime = 8; float dfb = 0.35f, dmix = 0; bool dpp = false;
     float rsize = 0.5f, rdecay = 2, rdamp = 0.4f, rpre = 10, rmix = 0;
     int lfoRate[lb::numLfos] { 10, 10, 10 }, lfoShape[lb::numLfos] {}, lfoTarget[lb::numLfos] {}; float lfoDepth[lb::numLfos] {};
     int grid = 5, steps = 0;
     bool slice = false; float sStart = 0, sEnd = 1; bool fade = true; bool volA = false;
     bool slLoop = false;   // SLICE LOOP: repeat the part between the markers
+    bool lmOn = false; float lmStart = 0, lmEnd = 1;   // LOOP markers (normal and SLICE mode)
     bool usesLoopLfo() const { for (int k = 0; k < lb::numLfos; ++k) if (lfoTarget[k] == lb::tLoop && std::abs (lfoDepth[k]) > 0.0005f) return true; return false; }
 };
 
@@ -79,15 +82,26 @@ public:
 
 private:
     using Stretch = signalsmith::stretch::SignalsmithStretch<float, void>;
+    // region mapping: region length + optional loop (SLICE LOOP or LOOP markers) in region beats
+    struct Map
+    {
+        double region = 4.0; bool looping = false; double A = 0.0, len = 0.0;
+        bool differs (const Map& o) const
+        {
+            return looping != o.looping || std::abs (region - o.region) > 1.0e-9
+                || (looping && (std::abs (A - o.A) > 1.0e-6 || std::abs (len - o.len) > 1.0e-6));
+        }
+    };
     struct Voice
     {
         LoopPtr loop;
         std::unique_ptr<Stretch> st;
         double feedBeat = 0.0; bool needSeek = true; float semisSm = 0.0f; bool semisInit = false;
+        Map map; bool mapInit = false;   // how the region is read (fixed for the life of the voice: changes crossfade)
     };
-    void renderVoice (Voice& v, float* l, float* r, int s0, int m, const ModuleParams& p, const BlockContext& ctx, float semis, double region);
-    void renderComplex (Voice& v, float* l, float* r, int s0, int m, float semis, double region, const BlockContext& ctx);
-    void readSource (const LoopData& L, double startBeat, int count, double bps, double region, float* l, float* r) const;
+    void renderVoice (Voice& v, float* l, float* r, int s0, int m, const BlockContext& ctx, float semis);
+    void renderComplex (Voice& v, float* l, float* r, int s0, int m, float semis, const BlockContext& ctx);
+    void readSource (const LoopData& L, const Map& map, double startBeat, int count, double bps, float* l, float* r) const;
     double loopBeat (double q, const LoopData& L, const BlockContext& ctx) const;
     float lfoValue (int idx, double ppq, const ModuleParams& p);
     void switchTo (LoopPtr l);
@@ -103,16 +117,17 @@ private:
     PoolPtr pool;
     // musical position: q = ppq + offset (offset grows when TEMPO / LFO / turntable speed differ from 1)
     double offset = 0.0;
-    bool slOn = false; double slA = 0.0, slL = 0.0;   // SLICE LOOP (region beats)
+    float gateSm = 1.0f;          // slice gate, slew limited (moving markers / GRID never click)
     float swingSm = 0.0f;
     std::vector<double> qArr;
     std::vector<float> tmpL, tmpR, inL, inR;
     double lastLoopStep = -1.0;
     // fx
-    fx::Svf svf[2];
-    float logCutSm = std::log (20000.0f), resSm = 0.1f, gainSm = 0.5f, panSm = 0.0f;
-    bool filterActive = false;
+    fx::TriFilter filter;
+    float gainSm = 0.5f, panSm = 0.0f;
     fx::GentleSat dirt;
+    fx::Chorus chorus;
+    fx::StereoUtility utility;
     fx::SyncDelay delay;
     fx::FdnReverb reverb;
     long long shCycle[lb::numLfos] { -1, -1, -1 }; float shVal[lb::numLfos] {};

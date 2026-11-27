@@ -106,8 +106,11 @@ public:
     void mouseDown (const juce::MouseEvent&) override;
     void setCaption (const juce::String& c) { caption = c; }
     void setAccent (juce::Colour c) { accent = c; repaint(); }
+    // inverted look: the selected cell is light, the others grey / dark
+    void setInverted (bool i) { inverted = i; repaint(); }
 private:
     juce::Colour accent;
+    bool inverted = false;
     juce::String caption;
     juce::StringArray labels;
     int index = 0;

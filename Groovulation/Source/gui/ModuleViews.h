@@ -29,14 +29,19 @@ private:
     void setParam (const char* name, float v);
     double regionBeats() const;
     double regionMs() const;                 // length of the loop region in milliseconds at the current tempo
-    void setSliceMs (bool start, double ms);
+    void setSliceMs (bool start, double ms) { setMarkerMs (start ? 0 : 1, ms); }
+    // markers: 0 = slice S, 1 = slice E, 2 = loop LS, 3 = loop LE
+    static const char* markerId (int k) { static const char* n[] { "sstart", "send", "lmStart", "lmEnd" }; return n[k & 3]; }
+    void setMarkerMs (int k, double ms);
+    void setMarkerPos (int k, float pos);
+    int markerAt (juce::Point<float> p) const;   // -1 = none
     juce::Rectangle<float> plot() const;
     float xToPos (float x) const;
     float posToX (float p) const;
     float yToVol (float y) const;
     float volToY (float v) const;
     int hitVolPoint (juce::Point<float> p) const;
-    enum Drag { none, sliceStart, sliceEnd, volPoint };
+    enum Drag { none, sliceStart, sliceEnd, loopStart, loopEnd, volPoint };   // sliceStart + k = marker k
 
     GroovulationProcessor& proc;
     int module;
@@ -59,7 +64,7 @@ private:
     juce::TextButton zIn { "+" }, zOut { "-" }, zFit { "FIT" };
     bool draggingScroll = false;
     juce::Rectangle<float> scrollBar() const;
-    int lastMarker = 0;                      // 0 = S, 1 = E (arrow keys nudge it)
+    int lastMarker = 0;                      // marker index (arrow keys nudge it)
     float dragStartPos = 0.0f, dragStartX = 0.0f;
     float lastPos = -1.0f;
 };
@@ -116,24 +121,27 @@ private:
     int module = 0;
     WaveDisplay display;
     // toolbar
-    Segmented grid, keySrc, ftype, slsnap;
+    Segmented grid, keySrc, slsnap, outSel;
     juce::TextButton lenMinus { "-" }, lenPlus { "+" }, lenOrig { "ORIG" }, volReset { "RESET VOL" };
-    Toggle slice { "SLICE" }, slLoop { "LOOP" }, fade { "FADE 0.5ms" }, volA { "VOL.A" }, dpp { "PING-PONG" };
+    Toggle slice { "SLICE" }, slLoop { "LOOP" }, lmOn { "LOOP MARKERS" }, fade { "FADE 0.5ms" }, volA { "VOL.A" }, dpp { "PING-PONG" },
+           hpOn { "HP" }, bpOn { "BP" }, lpOn { "LP" }, chOn { "ON" }, mono { "MONO" };
     juce::TextButton prev { "<" }, next { ">" }, rnd { "RND" }, sim { "SIMILAR" }, clear { "CLEAR" };
     FloppyButton floppy;
     std::unique_ptr<juce::FileChooser> chooser;
     juce::ComboBox browser;
     std::vector<int> browserIndices;
     // panels
-    Panel pAmp { "Gain / Pan", theme::red }, pAdsr { "ADSR", theme::red }, pPitch { "Pitch / Tempo", theme::red },
+    Panel pAmp { "Gain / Pan", theme::red }, pAdsr { "ADSR", theme::red }, pPitch { "Pitch", theme::red },
+          pChorus { "Chorus", theme::red }, pUtil { "Width", theme::red },
           pFilter { "Cutoff", theme::red }, pDirt { "Dirt", theme::red }, pDelay { "Delay", theme::red },
           pReverb { "Reverb", theme::red }, pLfo1 { "LFO 1", theme::red }, pLfo2 { "LFO 2", theme::red }, pLfo3 { "LFO 3", theme::red };
     Knob gain { "Gain" }, pan { "Pan" }, atk { "A" }, dec { "D" }, sus { "S" }, rel { "R" },
-         pitch { "Pitch" }, tempo { "Tempo" }, cut { "Cutoff" }, res { "Res" }, dirt { "Dirt" },
+         pitch { "Pitch" }, hpCut { "HP Freq" }, hpRes { "Res" }, bpCut { "BP Freq" }, bpRes { "Res" }, lpCut { "LP Freq" }, lpRes { "Res" },
+         dirt { "Dirt" }, chRate { "Rate" }, chDepth { "Depth" }, chMix { "Mix" }, width { "Width" },
          dtime { "Time" }, dfb { "Feedback" }, dmix { "Mix" }, rsize { "Size" }, rdecay { "Decay" }, rdamp { "Damp" },
          rpre { "Predelay" }, rmix { "Mix" }, l1rate { "Rate" }, l1depth { "Depth" }, l2rate { "Rate" }, l2depth { "Depth" },
          l3rate { "Rate" }, l3depth { "Depth" };
-    juce::ComboBox l1shape, l1target, l2shape, l2target, l3shape, l3target;
+    juce::ComboBox l1shape, l1target, l2shape, l2target, l3shape, l3target, chMode;
     std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>> comboAtt;
     LoopPtr shownLoop;
     juce::String infoLine;

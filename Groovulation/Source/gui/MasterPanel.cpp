@@ -6,19 +6,26 @@ MasterPanel::MasterPanel (GroovulationProcessor& p) : proc (p)
 {
     for (auto* c : std::initializer_list<Component*> { &pMaster, &pSwing, &pCut, &pBr, &pDeck }) addAndMakeVisible (c);
     auto& s = proc.apvts;
-    master.attach (s, "master"); swing.attach (s, "swing"); hp.attach (s, "mHp"); bp.attach (s, "mBp"); lp.attach (s, "mLp"); mres.attach (s, "mRes");
+    master.attach (s, "master"); swing.attach (s, "swing"); hp.attach (s, "mHp"); bp.attach (s, "mBpCut"); lp.attach (s, "mLp");
+    hpRes.attach (s, "mHpRes"); bpRes.attach (s, "mBpRes"); lpRes.attach (s, "mLpRes");
+    hpOn.attach (s, "mHpOn"); bpOn.attach (s, "mBpOn"); lpOn.attach (s, "mLpOn");
+    hp.setCaption ("HP Freq"); bp.setCaption ("BP Freq"); lp.setCaption ("LP Freq");
     brInterval.attach (s, "brInterval"); brOffset.attach (s, "brOffset"); brGrid.attach (s, "brGrid"); brChance.attach (s, "brChance");
     brGate.attach (s, "brGate"); brVar.attach (s, "brVar"); brDecay.attach (s, "brDecay"); brPitch.attach (s, "brPitch");
     brPDecay.attach (s, "brPDecay"); brVol.attach (s, "brVol"); deckCtl.attach (s, "deckCtl");
-    swingOn.attach (s, "swingOn"); brOn.attach (s, "brOn"); brNoTrip.attach (s, "brNoTrip");
+    swingOn.attach (s, "swingOn"); brOn.attach (s, "brOn");
     swingGrid.attach (s, "swingGrid"); brMode.attach (s, "brMode");
-    for (auto* k : { &master, &swing, &hp, &bp, &lp, &mres, &brInterval, &brOffset, &brGrid, &brChance, &brGate, &brVar, &brDecay,
+    swingGrid.setInverted (true); brMode.setInverted (true);
+    for (auto* k : { &master, &swing, &hp, &bp, &lp, &hpRes, &bpRes, &lpRes, &brInterval, &brOffset, &brGrid, &brChance, &brGate, &brVar, &brDecay,
                      &brPitch, &brPDecay, &brVol, &deckCtl })
         addAndMakeVisible (k);
-    for (auto* c : std::initializer_list<Component*> { &swingOn, &brOn, &brNoTrip, &swingGrid, &brMode, &tapeBtn, &vinylBtn }) addAndMakeVisible (c);
-    hp.slider.setTooltip ("High-pass: turn right to close (mirror of LP)");
-    lp.slider.setTooltip ("Low-pass: turn left to close (mirror of HP)");
-    bp.slider.setTooltip ("Band-pass centre: fully left = off");
+    for (auto* c : std::initializer_list<Component*> { &swingOn, &brOn, &hpOn, &bpOn, &lpOn, &swingGrid, &brMode, &tapeBtn, &vinylBtn }) addAndMakeVisible (c);
+    hp.slider.setTooltip ("Passa-alto: a sinistra aperto, girando a destra chiude (speculare al LP)");
+    lp.slider.setTooltip ("Passa-basso: a destra aperto, girando a sinistra chiude (speculare all'HP)");
+    bp.slider.setTooltip ("Passa-banda: frequenza centrale");
+    hpOn.setTooltip ("Attiva / disattiva il passa-alto del master");
+    bpOn.setTooltip ("Attiva / disattiva il passa-banda del master");
+    lpOn.setTooltip ("Attiva / disattiva il passa-basso del master");
     swingOn.setTooltip ("Global swing, live: drums are re-timed slice by slice (groove), the other modules with a smooth time warp");
     deckCtl.slider.setTooltip ("HAND: a hand on the tape / record for MIDI controllers and automation. Centre = off, left = slow down, stop, reverse, right = push faster (x3)");
     tapeBtn.onClick = [this] { if (onOpenDeck) onOpenDeck (1); };
@@ -46,16 +53,15 @@ void MasterPanel::resized()
 {
     auto r = getLocalBounds();
     const int H = r.getHeight();
-    pMaster.setBounds (r.removeFromTop (H * 17 / 100).withTrimmedBottom (6));
-    pSwing.setBounds (r.removeFromTop (H * 18 / 100).withTrimmedBottom (6));
-    pCut.setBounds (r.removeFromTop (H * 18 / 100).withTrimmedBottom (6));
+    pMaster.setBounds (r.removeFromTop (H * 15 / 100).withTrimmedBottom (6));
+    pSwing.setBounds (r.removeFromTop (H * 16 / 100).withTrimmedBottom (6));
+    pCut.setBounds (r.removeFromTop (H * 22 / 100).withTrimmedBottom (6));
     pBr.setBounds (r.removeFromTop (H * 32 / 100).withTrimmedBottom (6));
     pDeck.setBounds (r);
     auto in = [] (Panel& p) { return p.getBounds().withTrimmedTop (Panel::headerH + 2).reduced (6, 3); };
     {
         auto a = in (pMaster); a.removeFromRight (46);
-        master.setBounds (a.removeFromLeft (a.getWidth() / 2));
-        mres.setBounds (a);
+        master.setBounds (a);
     }
     {
         auto a = in (pSwing);
@@ -64,12 +70,24 @@ void MasterPanel::resized()
         swingGrid.setBounds (left.withSizeKeepingCentre (left.getWidth() - 20, 24));
         swing.setBounds (a);
     }
-    layoutRow (in (pCut), { &hp, &bp, &lp });
+    {
+        auto a = in (pCut);
+        const int cw = a.getWidth() / 3;
+        Toggle* tg[3] { &hpOn, &bpOn, &lpOn };
+        Knob* fk[3] { &hp, &bp, &lp };
+        Knob* rk[3] { &hpRes, &bpRes, &lpRes };
+        for (int k = 0; k < 3; ++k)
+        {
+            auto col = (k < 2 ? a.removeFromLeft (cw) : a).reduced (3, 0);
+            tg[k]->setBounds (col.removeFromTop (22).reduced (6, 1));
+            layoutRow (col, { fk[k], rk[k] });
+        }
+    }
     {
         auto a = in (pBr);
         auto top = a.removeFromTop (26);
         brOn.setBounds (top.removeFromLeft (60).reduced (2, 1));
-        brNoTrip.setBounds (top.removeFromRight (110).reduced (2, 1));
+        top.removeFromRight (60);
         brMode.setBounds (top.reduced (8, 1));
         layoutRow (a.removeFromTop (a.getHeight() / 2), { &brInterval, &brOffset, &brGrid, &brChance, &brGate });
         layoutRow (a, { &brVar, &brDecay, &brPitch, &brPDecay, &brVol });

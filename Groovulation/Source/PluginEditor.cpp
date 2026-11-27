@@ -85,7 +85,7 @@ MainView::MainView (GroovulationProcessor& p) : proc (p), editor (p), master (p)
     addAndMakeVisible (editor);
     addAndMakeVisible (master);
     master.onOpenDeck = [this] (int t) { openDeck (t); };
-    for (auto* c : std::initializer_list<Component*> { &menu, &randomAll, &print, &exportBtn, &scaleOn, &raw, &run, &scaleRoot, &scaleType, &bpm })
+    for (auto* c : std::initializer_list<Component*> { &menu, &undo, &redo, &randomAll, &print, &exportBtn, &scaleOn, &raw, &run, &scaleRoot, &scaleType, &bpm })
         addAndMakeVisible (c);
     scaleOn.attach (p.apvts, "scaleOn");
     raw.attach (p.apvts, "raw");
@@ -106,6 +106,13 @@ MainView::MainView (GroovulationProcessor& p) : proc (p), editor (p), master (p)
     print.setTooltip ("PRINT: every loop as Groovulation plays it (processed) -> PRINT/<snapshot>/<Module> - <snapshot>.wav, then drag them into the DAW");
     exportBtn.setTooltip ("EXPORT: the ORIGINAL loops, unprocessed -> PRINT/<snapshot>/<Module> - <snapshot> (original), then drag them into the DAW");
     menu.onClick = [this] { showMenu(); };
+    undo.onClick = [this] { proc.undoManager.undo(); updateUndoButtons(); };
+    redo.onClick = [this] { proc.undoManager.redo(); updateUndoButtons(); };
+    undo.setTooltip ("Annulla l'ultima modifica (Cmd+Z)");
+    redo.setTooltip ("Ripristina la modifica annullata (Shift+Cmd+Z)");
+    for (auto* b : { &undo, &redo }) b->setWantsKeyboardFocus (false);
+    addMouseListener (this, true);
+    setWantsKeyboardFocus (true);
     randomAll.onClick = [this] { proc.randomAll(); };
     print.onClick = [this] { startPrint(); };
     exportBtn.onClick = [this] { startExport(); };
@@ -132,8 +139,33 @@ void MainView::openDeck (int type)
     deckWindow = std::make_unique<DeckWindow> (proc, type, [this] { MessageManager::callAsync ([sp = SafePointer<MainView> (this)] { if (sp) sp->deckWindow.reset(); }); });
 }
 
+void MainView::mouseDown (const MouseEvent& e)
+{
+    // every new mouse gesture on a control starts a new undo step (UNDO / REDO buttons excluded)
+    if (e.eventComponent != &undo && e.eventComponent != &redo) proc.undoManager.beginNewTransaction();
+}
+
+bool MainView::keyPressed (const KeyPress& k)
+{
+    if (k.getModifiers().isCommandDown() && (k.getKeyCode() == 'Z' || k.getKeyCode() == 'z' || k.getKeyCode() == 'Y' || k.getKeyCode() == 'y'))
+    {
+        const bool isRedo = k.getModifiers().isShiftDown() || k.getKeyCode() == 'Y' || k.getKeyCode() == 'y';
+        if (isRedo) proc.undoManager.redo(); else proc.undoManager.undo();
+        updateUndoButtons();
+        return true;
+    }
+    return false;
+}
+
+void MainView::updateUndoButtons()
+{
+    undo.setEnabled (proc.undoManager.canUndo());
+    redo.setEnabled (proc.undoManager.canRedo());
+}
+
 void MainView::timerCallback()
 {
+    updateUndoButtons();
     phase += 1.0 / 30.0;
     level = proc.masterLevel();
     String s;
@@ -255,7 +287,7 @@ void MainView::paint (Graphics& g)
     g.setFont (theme::font (11.0f));
     g.drawText ("loop mixer  v" + String (JucePlugin_VersionString), Rectangle<float> (tx + 40.0f, bar.getY(), 120.0f, bar.getHeight()), Justification::centredLeft);
     // LCD
-    lcdArea = Rectangle<float> (tx + 150.0f, bar.getY() + 4.0f, jmax (200.0f, (float) menu.getX() - 12.0f - (tx + 150.0f)), bar.getHeight() - 8.0f);
+    lcdArea = Rectangle<float> (tx + 150.0f, bar.getY() + 4.0f, jmax (200.0f, (float) undo.getX() - 12.0f - (tx + 150.0f)), bar.getHeight() - 8.0f);
     drawLcd (g, lcdArea);
     g.setColour (theme::lcdInk);
     g.setFont (theme::mono (14.0f, true));
@@ -295,7 +327,9 @@ void MainView::resized()
     scaleRoot.setBounds (bar.removeFromRight (56)); bar.removeFromRight (4);
     scaleOn.setBounds (bar.removeFromRight (70)); bar.removeFromRight (12);
     randomAll.setBounds (bar.removeFromRight (96)); bar.removeFromRight (6);
-    menu.setBounds (bar.removeFromRight (64));
+    menu.setBounds (bar.removeFromRight (64)); bar.removeFromRight (12);
+    redo.setBounds (bar.removeFromRight (60)); bar.removeFromRight (4);
+    undo.setBounds (bar.removeFromRight (60));
 
     // module strips: 5 drums | custom | bass | 3 melodic | vocals, fx
     const int gap = 5, sectionGap = 14;

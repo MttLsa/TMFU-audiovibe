@@ -32,6 +32,7 @@ public:
     void getStateInformation (juce::MemoryBlock&) override;
     void setStateInformation (const void*, int) override;
 
+    juce::UndoManager undoManager { 30000, 60 };   // UNDO / REDO of every parameter (one step per gesture)
     juce::AudioProcessorValueTreeState apvts;
     juce::SharedResourcePointer<LoopLibrary> library;
     juce::ValueTree uiState { "UI" };
@@ -117,10 +118,9 @@ private:
     bool stateRestored = false;
 
     juce::AudioBuffer<float> modBuf;
-    fx::Svf mHp[2], mBp[2], mLp[2];
-    float hpSm = 20, lpSm = 20000, bpSm = 0;
+    fx::TriFilter masterFilter;
     fx::BeatRepeat beatRepeat;
 
-    std::array<std::array<std::atomic<float>*, 48>, lb::numModules> mp {};   // raw parameter pointers per module
+    std::array<std::array<std::atomic<float>*, 64>, lb::numModules> mp {};   // raw parameter pointers per module
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GroovulationProcessor)
 };

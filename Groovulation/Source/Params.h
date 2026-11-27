@@ -73,6 +73,12 @@ namespace lb
         return s;
     }
 
+    inline const juce::StringArray& chorusModes()
+    {
+        static juce::StringArray s { "Chorus I", "Chorus II", "Dimension 1", "Dimension 2", "Dimension 3", "Dimension 4", "Custom" };
+        return s;
+    }
+
     juce::AudioProcessorValueTreeState::ParameterLayout createLayout();
 
     // master section

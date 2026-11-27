@@ -57,9 +57,11 @@ void ModuleEngine::prepare (double sampleRate, int maxBlock)
     inL.assign ((size_t) maxIn, 0.0f); inR.assign ((size_t) maxIn, 0.0f);
     tmpL.assign ((size_t) maxBlock + 64, 0.0f); tmpR.assign ((size_t) maxBlock + 64, 0.0f);
     qArr.assign ((size_t) maxBlock + 64, 0.0);
-    for (auto& s : svf) s.reset();
-    filterActive = false;
+    filter.prepare (sr);
+    gateSm = 1.0f;
     dirt.prepare (sr);
+    chorus.prepare (sr);
+    utility.prepare (sr);
     delay.prepare (sr, (int) (sr * 6.0));
     reverb.prepare (sr);
 }
@@ -78,7 +80,7 @@ void ModuleEngine::switchTo (LoopPtr l)
 void ModuleEngine::assign (Voice& v, LoopPtr l)
 {
     v.loop = std::move (l);
-    v.needSeek = true; v.semisInit = false;
+    v.needSeek = true; v.semisInit = false; v.mapInit = false;
 }
 
 void ModuleEngine::setLoop (LoopPtr l)
@@ -116,8 +118,9 @@ double ModuleEngine::loopBeat (double q, const LoopData& L, const BlockContext& 
     return ctx.raw ? q * L.bpm / jmax (1.0, ctx.bpm) : q;
 }
 
-void ModuleEngine::readSource (const LoopData& L, double startBeat, int count, double bps, double region, float* l, float* r) const
+void ModuleEngine::readSource (const LoopData& L, const Map& map, double startBeat, int count, double bps, float* l, float* r) const
 {
+    const double region = map.region;
     const int N = L.numSamples();
     const double loopBeats = jmax (1, L.beats);
     const float* a = L.audio.getReadPointer (0);
@@ -132,8 +135,9 @@ void ModuleEngine::readSource (const LoopData& L, double startBeat, int count, d
         outL = a[i0] + f * (a[i1] - a[i0]);
         outR = b[i0] + f * (b[i1] - b[i0]);
     };
-    // SLICE LOOP: only the part between the markers, repeated; 5 ms crossfade into the start at every repeat
-    const bool looping = slOn && slL > 1.0e-6;
+    // SLICE LOOP / LOOP markers: only the part between the markers, repeated; 5 ms crossfade into the start at every repeat
+    const double slA = map.A, slL = map.len;
+    const bool looping = map.looping && slL > 1.0e-6;
     const double xf = looping ? jmin (slL * 0.25, 0.005 * loopBeats * sr / jmax (1, N)) : 0.0;
     for (int k = 0; k < count; ++k)
     {
@@ -173,7 +177,7 @@ float ModuleEngine::lfoValue (int k, double ppq, const ModuleParams& p)
 }
 
 //==============================================================================
-void ModuleEngine::renderComplex (Voice& v, float* outL, float* outR, int s0, int m, float semis, double region, const BlockContext& ctx)
+void ModuleEngine::renderComplex (Voice& v, float* outL, float* outR, int s0, int m, float semis, const BlockContext& ctx)
 {
     const auto& L = *v.loop;
     const double loopBeats = jmax (1, L.beats);
@@ -193,7 +197,7 @@ void ModuleEngine::renderComplex (Voice& v, float* outL, float* outR, int s0, in
     auto seek = [&]
     {
         const int seekLen = jmin ((int) inL.size(), v.st->blockSamples() + v.st->intervalSamples());
-        readSource (L, procA - seekLen * bps, seekLen, bps, region, inL.data(), inR.data());
+        readSource (L, v.map, procA - seekLen * bps, seekLen, bps, inL.data(), inR.data());
         v.st->reset();
         v.st->seek (ins, seekLen, 1.0);
         v.feedBeat = procA;
@@ -206,7 +210,7 @@ void ModuleEngine::renderComplex (Voice& v, float* outL, float* outR, int s0, in
     const double jump = 0.25 * sr;
     if (want < -jump || want > jump) { seek(); ++reseeks; want = (procB - v.feedBeat) / bps; }
     const int count = jlimit (0, jmin ((int) inL.size(), m * 8), (int) std::lround (want));
-    readSource (L, v.feedBeat, count, bps, region, inL.data(), inR.data());
+    readSource (L, v.map, v.feedBeat, count, bps, inL.data(), inR.data());
     v.feedBeat += count * bps;
     if (! v.semisInit) { v.semisSm = semis; v.semisInit = true; }
     v.semisSm += (semis - v.semisSm) * 0.2f;   // ~3 ms glide at control rate: no steps when moving PITCH
@@ -215,10 +219,10 @@ void ModuleEngine::renderComplex (Voice& v, float* outL, float* outR, int s0, in
     v.st->process (ins, count, outs, m);
 }
 
-void ModuleEngine::renderVoice (Voice& v, float* l, float* r, int s0, int m, const ModuleParams&, const BlockContext& ctx, float semis, double region)
+void ModuleEngine::renderVoice (Voice& v, float* l, float* r, int s0, int m, const BlockContext& ctx, float semis)
 {
     if (v.loop == nullptr || v.loop->numSamples() < 64) { std::fill (l + s0, l + s0 + m, 0.0f); std::fill (r + s0, r + s0 + m, 0.0f); return; }
-    renderComplex (v, l, r, s0, m, semis, region, ctx);
+    renderComplex (v, l, r, s0, m, semis, ctx);
 }
 
 //==============================================================================
@@ -280,20 +284,43 @@ void ModuleEngine::process (float* outL, float* outR, int n, const BlockContext&
             }
             if (pendingSwitch != nullptr && xfade >= 1.0f) { auto l = std::move (pendingSwitch); pendingSwitch = nullptr; switchTo (std::move (l)); }
 
-            const auto& L = *voices[active].loop;
-            const double region = regionBeats (L, p);
             float sl0 = jlimit (0.0f, 1.0f, p.sStart + 0.25f * mod[lb::tSliceStart]);
             float sl1 = jlimit (0.0f, 1.0f, p.sEnd + 0.25f * mod[lb::tSliceEnd]);
             if (sl1 < sl0 + 0.002f) sl1 = jmin (1.0f, sl0 + 0.002f);
-            slOn = p.slice && p.slLoop;
-            slA = sl0 * region; slL = (sl1 - sl0) * region;
+            float lm0 = jlimit (0.0f, 1.0f, p.lmStart), lm1 = jlimit (0.0f, 1.0f, p.lmEnd);
+            if (lm1 < lm0 + 0.002f) lm1 = jmin (1.0f, lm0 + 0.002f);
+            const bool sliceLoop = p.slice && p.slLoop;
+            const bool markerLoop = ! sliceLoop && p.lmOn;
+            // region mapping wanted now; a change (markers moved, GRID / LENGTH changed, loop on / off) is never
+            // applied to the running voice: the new mapping starts on the second voice and crossfades in (20 ms)
+            auto mapFor = [&] (const LoopData& LL)
+            {
+                Map mp; mp.region = regionBeats (LL, p);
+                mp.looping = sliceLoop || markerLoop;
+                const float a = sliceLoop ? sl0 : lm0, b = sliceLoop ? sl1 : lm1;
+                mp.A = a * mp.region; mp.len = (b - a) * mp.region;
+                return mp;
+            };
+            {
+                auto& av = voices[active];
+                const Map want = mapFor (*av.loop);
+                if (! av.mapInit || av.needSeek) { av.map = want; av.mapInit = true; }
+                else if (av.map.differs (want) && xfade >= 1.0f && pendingSwitch == nullptr) switchTo (av.loop);
+                auto& nv = voices[active];
+                if (! nv.mapInit) { nv.map = mapFor (*nv.loop); nv.mapInit = true; }
+            }
+            const auto& L = *voices[active].loop;
+            const Map& map = voices[active].map;
+            const double region = map.region;
+            const bool slOn = map.looping && map.len > 1.0e-9;
+            const double slA = map.A, slL = map.len;
             const float semis = jlimit (-48.0f, 48.0f, cx.semitones + 12.0f * mod[lb::tPitch] + 12.0f * (float) std::log2 (cx.rateMul));
-            renderVoice (voices[active], outL, outR, s0, m, p, cx, semis, region);
+            renderVoice (voices[active], outL, outR, s0, m, cx, semis);
             if (xfade < 1.0f)
             {
                 auto& old = voices[1 - active];
-                const double oregion = old.loop != nullptr ? regionBeats (*old.loop, p) : region;
-                renderVoice (old, tmpL.data(), tmpR.data(), s0, m, p, cx, semis, oregion);
+                if (old.loop != nullptr && ! old.mapInit) { old.map = mapFor (*old.loop); old.mapInit = true; }
+                renderVoice (old, tmpL.data(), tmpR.data(), s0, m, cx, semis);
                 const float inc = (float) (1.0 / (0.02 * sr));
                 for (int i = s0; i < s0 + m; ++i)
                 {
@@ -309,6 +336,7 @@ void ModuleEngine::process (float* outL, float* outR, int n, const BlockContext&
             const double regionSamples = region / jmax (1.0e-12, cx.raw ? bpo * L.bpm / jmax (1.0, cx.bpm) : bpo);
             const double regionSec = regionSamples / sr;
             const double fadePh = (0.0005 * sr) / jmax (1.0, regionSamples);   // 0.5 ms slice fades
+            const float gateStep = (float) (1.0 / (0.001 * sr));              // the gate never moves faster than 1 ms
             ignoreUnused (loopBeats);
             for (int i = s0; i < s0 + m; ++i)
             {
@@ -316,15 +344,17 @@ void ModuleEngine::process (float* outL, float* outR, int n, const BlockContext&
                 // in SLICE LOOP the timeline runs around the slice: ADSR, VOL.A and the playhead follow it
                 const double ph = slOn ? (slA + posMod (U, jmax (1.0e-9, slL))) / region : posMod (U, region) / region;
                 if (i == 0) playPos = (float) ph;
-                float g = 1.0f;
+                float gt = 1.0f;
                 double segA = 0.0, segB = 1.0;
-                if (slOn) { segA = sl0; segB = sl1; }
-                else if (p.slice)
+                if (slOn) { segA = slA / region; segB = (slA + slL) / region; }
+                if (p.slice && ! sliceLoop)
                 {
                     segA = sl0; segB = sl1;
-                    if (p.fade) g = (float) (jlimit (0.0, 1.0, (ph - sl0) / fadePh) * jlimit (0.0, 1.0, (sl1 - ph) / fadePh));
-                    else g = (ph >= sl0 && ph < sl1) ? 1.0f : 0.0f;
+                    if (p.fade) gt = (float) (jlimit (0.0, 1.0, (ph - sl0) / fadePh) * jlimit (0.0, 1.0, (sl1 - ph) / fadePh));
+                    else gt = (ph >= sl0 && ph < sl1) ? 1.0f : 0.0f;
                 }
+                gateSm = gt > gateSm ? jmin (gt, gateSm + gateStep) : jmax (gt, gateSm - gateStep);
+                float g = gateSm;
                 if (useAdsr && g > 0.0f)
                 {
                     const double tIn = (ph - segA) * regionSec, tOut = (segB - ph) * regionSec;
@@ -352,36 +382,21 @@ void ModuleEngine::process (float* outL, float* outR, int n, const BlockContext&
             }
         }
 
-        // ---- filter: per-sample smoothed (log) cutoff, coefficients every 4 samples -> no zipper / glitches
+        // ---- cutoff: HP -> BP -> LP (independent, each with ON and resonance; per-sample smoothing)
         {
-            const float cutT = std::log (jlimit (20.0f, 20000.0f, p.cut * std::pow (2.0f, 4.0f * mod[lb::tCutoff])));
-            const float resT = jlimit (0.0f, 1.0f, p.res + 0.5f * mod[lb::tRes]);
-            const float lo = std::log (21.0f), hi = std::log (19800.0f);
-            const bool wantBypass = (p.ftype == 0 && cutT >= hi && logCutSm >= hi - 0.01f) || (p.ftype == 2 && cutT <= lo && logCutSm <= lo + 0.01f);
-            if (wantBypass) { if (filterActive) { svf[0].reset(); svf[1].reset(); filterActive = false; } logCutSm = cutT; resSm = resT; }
-            else
-            {
-                filterActive = true;
-                for (int i = s0; i < s0 + m; ++i)
-                {
-                    logCutSm += (cutT - logCutSm) * smoothK;
-                    resSm += (resT - resSm) * smoothK;
-                    if (((i - s0) & 3) == 0)
-                    {
-                        const double q = 0.5 + resSm * resSm * 12.0;
-                        svf[0].set (sr, std::exp (logCutSm), q); svf[1].set (sr, std::exp (logCutSm), q);
-                    }
-                    outL[i] = svf[0].process (outL[i], p.ftype);
-                    outR[i] = svf[1].process (outR[i], p.ftype);
-                }
-            }
+            fx::TriFilterParams fp = p.filt;
+            const float cm = std::pow (2.0f, 4.0f * mod[lb::tCutoff]);
+            for (int k = 0; k < 3; ++k) { fp.freq[k] = jlimit (20.0f, 20000.0f, fp.freq[k] * cm); fp.res[k] = jlimit (0.0f, 1.0f, fp.res[k] + 0.5f * mod[lb::tRes]); }
+            filter.process (outL + s0, outR + s0, m, fp);
         }
         // ---- dirt, delay, reverb
         dirt.process (outL + s0, outR + s0, m, jlimit (0.0f, 1.0f, p.dirt + 0.5f * mod[lb::tDirt]));
+        chorus.process (outL + s0, outR + s0, m, p.chOn, p.chMode, p.chRate, p.chDepth, p.chMix);
         const double dSamples = lb::syncBeats (p.dtime) * 60.0 / jmax (20.0, ctx.bpm) * sr;
         delay.process (outL + s0, outR + s0, m, dSamples, jlimit (0.0f, 0.95f, p.dfb + 0.5f * mod[lb::tDelayFb]),
                        jlimit (0.0f, 1.0f, p.dmix + 0.5f * mod[lb::tDelayMix]), p.dpp);
         reverb.process (outL + s0, outR + s0, m, p.rsize, p.rdecay, p.rdamp, p.rpre, jlimit (0.0f, 1.0f, p.rmix + 0.5f * mod[lb::tReverbMix]));
+        utility.process (outL + s0, outR + s0, m, p.width, p.mono);
         // ---- gain / pan
         const float gainT = (p.on ? fx::dbToGain (p.gainDb) : 0.0f) * jmax (0.0f, 1.0f + mod[lb::tGain]);
         const float panT = jlimit (-1.0f, 1.0f, p.pan + mod[lb::tPan]);

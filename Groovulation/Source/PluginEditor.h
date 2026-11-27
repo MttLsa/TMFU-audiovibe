@@ -33,7 +33,10 @@ public:
     void resized() override;
     static constexpr int designW = 1840, designH = 1000;
     void selectModule (int m);
+    bool keyPressed (const juce::KeyPress&) override;
+    void mouseDown (const juce::MouseEvent&) override;   // (listens to every child: one undo step per gesture)
 private:
+    void updateUndoButtons();
     void timerCallback() override;
     void showMenu();
     void startPrint();
@@ -46,7 +49,7 @@ private:
     std::vector<std::unique_ptr<ModuleStrip>> strips;
     ModuleEditor editor;
     MasterPanel master;
-    juce::TextButton menu { "MENU" }, randomAll { "RANDOM ALL" }, print { "PRINT" }, exportBtn { "EXPORT" };
+    juce::TextButton menu { "MENU" }, randomAll { "RANDOM ALL" }, print { "PRINT" }, exportBtn { "EXPORT" }, undo { "UNDO" }, redo { "REDO" };
     Toggle scaleOn { "SCALE", theme::amber }, raw { "RAW", theme::red }, run { "RUN", theme::lcdDim };
     juce::ComboBox scaleRoot, scaleType;
     juce::Slider bpm;

@@ -257,9 +257,10 @@ void Segmented::paint (Graphics& g)
     for (int i = 0; i < n; ++i)
     {
         auto cell = Rectangle<float> (r.getX() + r.getWidth() * i / n, r.getY(), r.getWidth() / n, r.getHeight()).reduced (0.75f);
-        g.setColour (i == index ? accent : theme::panel2);
+        const bool sel = i == index;
+        g.setColour (inverted ? (sel ? theme::white : theme::master.darker (0.25f)) : (sel ? accent : theme::panel2));
         g.fillRoundedRectangle (cell, 2.0f);
-        g.setColour (i == index ? theme::white : theme::text);
+        g.setColour (inverted ? (sel ? theme::text : theme::headerText.withAlpha (0.75f)) : (sel ? theme::white : theme::text));
         g.setFont (theme::font (jlimit (9.5f, 13.0f, cell.getHeight() * 0.55f), i == index));
         g.drawFittedText (labels[i], cell.toNearestInt().reduced (1, 0), Justification::centred, 1, 0.55f);
     }
