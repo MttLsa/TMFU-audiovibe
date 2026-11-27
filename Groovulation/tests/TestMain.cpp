@@ -346,13 +346,17 @@ int main (int argc, char** argv)
     {
         setP (*proc, lb::pid (m, "slice"), 1); setP (*proc, lb::pid (m, "sstart"), 0.25f); setP (*proc, lb::pid (m, "send"), 0.75f);
         setP (*proc, lb::pid (m, "dirt"), 0.5f); setP (*proc, lb::pid (m, "dmix"), 0.3f);
-        setP (*proc, lb::pid (m, "rmix"), 0.3f); setP (*proc, lb::pid (m, "cut"), 3000.0f); setP (*proc, lb::pid (m, "pitch"), 3.5f);
+        setP (*proc, lb::pid (m, "rmix"), 0.3f); setP (*proc, lb::pid (m, "lpOn"), 1); setP (*proc, lb::pid (m, "lpCut"), 3000.0f); setP (*proc, lb::pid (m, "pitch"), 3.5f);
+        setP (*proc, lb::pid (m, "hpOn"), 1); setP (*proc, lb::pid (m, "hpCut"), 80.0f); setP (*proc, lb::pid (m, "bpOn"), 1);
+        setP (*proc, lb::pid (m, "chOn"), 1); setP (*proc, lb::pid (m, "chMode"), (float) (m % 7)); setP (*proc, lb::pid (m, "width"), 1.5f);
+        setP (*proc, lb::pid (m, "lmOn"), 1); setP (*proc, lb::pid (m, "lmStart"), 0.1f); setP (*proc, lb::pid (m, "lmEnd"), 0.8f);
         setP (*proc, lb::pid (m, "lfo1target"), (float) lb::tCutoff); setP (*proc, lb::pid (m, "lfo1depth"), 0.5f);
         setP (*proc, lb::pid (m, "steps"), 7); setP (*proc, lb::pid (m, "grid"), 5); setP (*proc, lb::pid (m, "atk"), 20.0f); setP (*proc, lb::pid (m, "rel"), 50.0f);
     }
     setP (*proc, "swingOn", 1); setP (*proc, "swing", 0.6f);
     setP (*proc, "brOn", 1); setP (*proc, "brInterval", 3); setP (*proc, "brChance", 1.0f); setP (*proc, "brGate", 4);
-    setP (*proc, "mHp", 120.0f); setP (*proc, "mBp", 0.5f); setP (*proc, "mLp", 9000.0f);
+    setP (*proc, "mHpOn", 1); setP (*proc, "mBpOn", 1); setP (*proc, "mLpOn", 1);
+    setP (*proc, "mHp", 120.0f); setP (*proc, "mBpCut", 900.0f); setP (*proc, "mLp", 9000.0f);
     st = render (*proc, ph, 6.0, outDir.getChildFile ("all_features.wav"));
     check (st.nans == 0 && st.peak > 0.005f && st.peak < 8.0f, "all module features + swing + beat repeat + master cutoff");
     setP (*proc, "deck", 1);
@@ -371,11 +375,14 @@ int main (int argc, char** argv)
             for (int m = 0; m < lb::numModules; ++m)
             {
                 setP (*proc, lb::pid (m, "solo"), 0); setP (*proc, lb::pid (m, "slice"), 0); setP (*proc, lb::pid (m, "dirt"), 0);
-                setP (*proc, lb::pid (m, "dmix"), 0); setP (*proc, lb::pid (m, "rmix"), 0); setP (*proc, lb::pid (m, "cut"), 20000.0f);
+                setP (*proc, lb::pid (m, "dmix"), 0); setP (*proc, lb::pid (m, "rmix"), 0); setP (*proc, lb::pid (m, "lpCut"), 20000.0f);
+                for (auto* f : { "hpOn", "bpOn", "lpOn", "chOn", "mono", "lmOn" }) setP (*proc, lb::pid (m, f), 0);
+                setP (*proc, lb::pid (m, "width"), 1.0f);
                 setP (*proc, lb::pid (m, "pitch"), 0); setP (*proc, lb::pid (m, "steps"), 0); setP (*proc, lb::pid (m, "atk"), 0); setP (*proc, lb::pid (m, "rel"), 0);
                 setP (*proc, lb::pid (m, "lfo1depth"), 0); setP (*proc, lb::pid (m, "lfo2depth"), 0); setP (*proc, lb::pid (m, "lfo3depth"), 0);
             }
-            setP (*proc, "swingOn", 0); setP (*proc, "brOn", 0); setP (*proc, "mHp", 20.0f); setP (*proc, "mBp", 0.0f); setP (*proc, "mLp", 20000.0f);
+            setP (*proc, "swingOn", 0); setP (*proc, "brOn", 0); setP (*proc, "mHp", 20.0f); setP (*proc, "mLp", 20000.0f);
+            setP (*proc, "mHpOn", 0); setP (*proc, "mBpOn", 0); setP (*proc, "mLpOn", 0);
             setP (*proc, "deck", 0); setP (*proc, "scaleOn", 0); setP (*proc, "raw", 0);
         };
         auto renderBuf = [&] (double secs)
@@ -529,17 +536,76 @@ int main (int argc, char** argv)
             check (br < base * 2.5f, "beat repeat: no clicks at the repeat boundaries");
             // 3) cutoff with a fast LFO: no zipper / glitches
             // reference: the filter standing still at the most open point the LFO reaches (800 Hz x 2^2 = 3.2 kHz)
-            setP (*proc, lb::pid (lb::pad, "cut"), 3200.0f); setP (*proc, lb::pid (lb::pad, "res"), 0.4f);
+            setP (*proc, lb::pid (lb::pad, "lpOn"), 1);
+            setP (*proc, lb::pid (lb::pad, "lpCut"), 3200.0f); setP (*proc, lb::pid (lb::pad, "lpRes"), 0.4f);
             const float still = clickiness (renderBuf (3.0), 48000);
-            setP (*proc, lb::pid (lb::pad, "cut"), 800.0f);
+            setP (*proc, lb::pid (lb::pad, "lpCut"), 800.0f);
             setP (*proc, lb::pid (lb::pad, "lfo1target"), (float) lb::tCutoff); setP (*proc, lb::pid (lb::pad, "lfo1depth"), 0.5f); setP (*proc, lb::pid (lb::pad, "lfo1rate"), 4.0f);
             const float lfo = clickiness (renderBuf (3.0), 48000);
             std::cout << "  info click index filter: static " << still << ", fast LFO " << lfo << "\n";
             check (lfo < still * 1.5f, "cutoff LFO (fast 1/16 sweep): smooth, no zipper");
-            setP (*proc, lb::pid (lb::pad, "lfo1depth"), 0.0f); setP (*proc, lb::pid (lb::pad, "cut"), 20000.0f); setP (*proc, lb::pid (lb::pad, "res"), 0.1f);
+            setP (*proc, lb::pid (lb::pad, "lfo1depth"), 0.0f); setP (*proc, lb::pid (lb::pad, "lpCut"), 20000.0f); setP (*proc, lb::pid (lb::pad, "lpRes"), 0.1f);
+            setP (*proc, lb::pid (lb::pad, "lpOn"), 0);
+            // 4) SLICE: markers moved while playing, GRID changed while in SLICE, SLICE LOOP / LOOP markers moved: no clicks
+            {
+                const double srr = 48000.0; const int bs = 512;
+                AudioBuffer<float> buf (2 + 2 * lb::numModules, bs), outB (1, (int) (srr * 4.0));
+                MidiBuffer midi;
+                auto runMoving = [&] (std::function<void (double)> change)
+                {
+                    for (int pos = 0; pos + bs <= outB.getNumSamples(); pos += bs)
+                    {
+                        ph.ppq = pos / srr * ph.bpm / 60.0;
+                        change (pos / srr);
+                        proc->processBlock (buf, midi);
+                        outB.copyFrom (0, pos, buf, 0, 0, bs);
+                    }
+                    return clickiness (outB, 4800);
+                };
+                auto sp = [&] (const char* n, float v) { setP (*proc, lb::pid (lb::pad, n), v); };
+                // a) slice gate, markers moving across the playhead
+                sp ("slice", 1); sp ("sstart", 0.25f); sp ("send", 0.75f); sp ("steps", 8); sp ("grid", 3);
+                const float gateStill = clickiness (renderBuf (4.0), 4800);
+                const float gateMove = runMoving ([&] (double t) { sp ("sstart", 0.25f + 0.2f * (float) std::sin (t * 2.3)); sp ("send", 0.75f + 0.2f * (float) std::sin (t * 1.7)); });
+                // b) GRID changes while in SLICE (the region length changes)
+                const float gridMove = runMoving ([&] (double t) { sp ("grid", ((int) (t * 3.0)) % 2 == 0 ? 3.0f : 5.0f); });
+                sp ("grid", 3);
+                std::cout << "  info click index slice: still " << gateStill << ", markers moving " << gateMove << ", grid changing " << gridMove << "\n";
+                check (gateMove < gateStill * 1.5f, "SLICE: moving S / E while playing makes no clicks");
+                check (gridMove < gateStill * 1.5f, "SLICE: changing GRID while playing makes no clicks");
+                // c) SLICE LOOP with moving markers, LOOP markers moving
+                sp ("slloop", 1);
+                const float loopStill = clickiness (renderBuf (4.0), 4800);
+                const float loopMove = runMoving ([&] (double t) { sp ("sstart", 0.25f + 0.15f * (float) std::sin (t * 2.3)); });
+                sp ("slloop", 0); sp ("slice", 0); sp ("sstart", 0.0f); sp ("send", 1.0f);
+                sp ("lmOn", 1); sp ("lmStart", 0.2f); sp ("lmEnd", 0.7f);
+                const float lmStill = clickiness (renderBuf (4.0), 4800);
+                const float lmMove = runMoving ([&] (double t) { sp ("lmEnd", 0.7f + 0.2f * (float) std::sin (t * 2.1)); });
+                sp ("lmOn", 0); sp ("lmStart", 0.0f); sp ("lmEnd", 1.0f); sp ("steps", 0);
+                std::cout << "  info click index loop: slice loop still " << loopStill << " moving " << loopMove << ", loop markers still " << lmStill << " moving " << lmMove << "\n";
+                check (loopMove < loopStill * 1.5f, "SLICE LOOP: moving the markers while playing makes no clicks");
+                check (lmMove < lmStill * 1.5f, "LOOP markers: moving them while playing makes no clicks");
+            }
             setP (*proc, lb::pid (lb::pad, "solo"), 0);
         }
         resetAll();
+    }
+
+    // ---- UNDO / REDO
+    {
+        auto* g = proc->apvts.getRawParameterValue (lb::pid (lb::bass, "gain"));
+        setP (*proc, lb::pid (lb::bass, "gain"), -6.0f); pump (300);
+        proc->undoManager.clearUndoHistory();
+        proc->undoManager.beginNewTransaction();
+        setP (*proc, lb::pid (lb::bass, "gain"), -20.0f); pump (300);
+        const float changed = g->load();
+        proc->undoManager.undo(); pump (100);
+        const float undone = g->load();
+        proc->undoManager.redo(); pump (100);
+        const float redone = g->load();
+        std::cout << "  info undo: " << changed << " -> " << undone << " -> " << redone << "\n";
+        check (std::abs (undone + 6.0f) < 0.01f && std::abs (redone + 20.0f) < 0.01f, "UNDO / REDO restore parameter values");
+        setP (*proc, lb::pid (lb::bass, "gain"), -6.0f);
     }
 
     // ---- CUSTOM: load a file from anywhere, LFO -> Tempo and LFO -> Loop

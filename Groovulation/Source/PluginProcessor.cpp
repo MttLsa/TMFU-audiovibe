@@ -6,11 +6,16 @@ using namespace juce;
 
 namespace
 {
-    enum P { pOn, pSolo, pGain, pPan, pAtk, pDec, pSus, pRel, pPitch, pTempo, pFtype, pCut, pRes, pDirt,
+    enum P { pOn, pSolo, pGain, pPan, pAtk, pDec, pSus, pRel, pPitch,
+             pHpOn, pHpCut, pHpRes, pBpOn, pBpCut, pBpRes, pLpOn, pLpCut, pLpRes, pDirt,
+             pChOn, pChMode, pChRate, pChDepth, pChMix, pWidth, pMono, pLmOn, pLmStart, pLmEnd,
              pDtime, pDfb, pDmix, pDpp, pRsize, pRdecay, pRdamp, pRpre, pRmix,
              pL1rate, pL1shape, pL1depth, pL1target, pL2rate, pL2shape, pL2depth, pL2target, pL3rate, pL3shape, pL3depth, pL3target,
              pGrid, pSteps, pSlice, pSstart, pSend, pFade, pVola, pKeysrc, pSlLoop, pCount };
-    const char* const pNames[pCount] { "on", "solo", "gain", "pan", "atk", "dec", "sus", "rel", "pitch", "tempo", "ftype", "cut", "res", "dirt",
+    static_assert (pCount <= 64, "raise the size of GroovulationProcessor::mp");
+    const char* const pNames[pCount] { "on", "solo", "gain", "pan", "atk", "dec", "sus", "rel", "pitch",
+        "hpOn", "hpCut", "hpRes", "bpOn", "bpCut", "bpRes", "lpOn", "lpCut", "lpRes", "dirt",
+        "chOn", "chMode", "chRate", "chDepth", "chMix", "width", "mono", "lmOn", "lmStart", "lmEnd",
         "dtime", "dfb", "dmix", "dpp", "rsize", "rdecay", "rdamp", "rpre", "rmix",
         "lfo1rate", "lfo1shape", "lfo1depth", "lfo1target", "lfo2rate", "lfo2shape", "lfo2depth", "lfo2target",
         "lfo3rate", "lfo3shape", "lfo3depth", "lfo3target",
@@ -28,7 +33,7 @@ AudioProcessor::BusesProperties GroovulationProcessor::makeBuses()
 }
 
 GroovulationProcessor::GroovulationProcessor()
-    : AudioProcessor (makeBuses()), apvts (*this, nullptr, "PARAMS", lb::createLayout())
+    : AudioProcessor (makeBuses()), apvts (*this, &undoManager, "PARAMS", lb::createLayout())
 {
     for (int m = 0; m < lb::numModules; ++m)
     {
@@ -70,7 +75,7 @@ void GroovulationProcessor::prepareToPlay (double sampleRate, int samplesPerBloc
     sr = sampleRate; maxBlock = jmax (16, samplesPerBlock);
     for (auto& e : engines) e.prepare (sr, maxBlock);
     modBuf.setSize (2, maxBlock);
-    for (auto* f : { mHp, mBp, mLp }) { f[0].reset(); f[1].reset(); }
+    masterFilter.prepare (sr);
     beatRepeat.prepare (sr);
     deck.prepare (sr);
     setLatencySamples (0);
@@ -94,8 +99,14 @@ ModuleParams GroovulationProcessor::readParams (int m) const
     ModuleParams p;
     p.on = v (pOn) > 0.5f; p.gainDb = v (pGain); p.pan = v (pPan);
     p.atkMs = v (pAtk); p.decMs = v (pDec); p.sus = v (pSus); p.relMs = v (pRel);
-    p.pitch = v (pPitch); p.tempo = v (pTempo);
-    p.ftype = (int) v (pFtype); p.cut = v (pCut); p.res = v (pRes); p.dirt = v (pDirt);
+    p.pitch = v (pPitch); p.tempo = 1.0f;
+    p.filt.on[0] = v (pHpOn) > 0.5f; p.filt.freq[0] = v (pHpCut); p.filt.res[0] = v (pHpRes);
+    p.filt.on[1] = v (pBpOn) > 0.5f; p.filt.freq[1] = v (pBpCut); p.filt.res[1] = v (pBpRes);
+    p.filt.on[2] = v (pLpOn) > 0.5f; p.filt.freq[2] = v (pLpCut); p.filt.res[2] = v (pLpRes);
+    p.dirt = v (pDirt);
+    p.chOn = v (pChOn) > 0.5f; p.chMode = (int) v (pChMode); p.chRate = v (pChRate); p.chDepth = v (pChDepth); p.chMix = v (pChMix);
+    p.width = v (pWidth); p.mono = v (pMono) > 0.5f;
+    p.lmOn = v (pLmOn) > 0.5f; p.lmStart = v (pLmStart); p.lmEnd = v (pLmEnd);
     p.dtime = (int) v (pDtime); p.dfb = v (pDfb); p.dmix = v (pDmix); p.dpp = v (pDpp) > 0.5f;
     p.rsize = v (pRsize); p.rdecay = v (pRdecay); p.rdamp = v (pRdamp); p.rpre = v (pRpre); p.rmix = v (pRmix);
     p.lfoRate[0] = (int) v (pL1rate); p.lfoShape[0] = (int) v (pL1shape); p.lfoDepth[0] = v (pL1depth); p.lfoTarget[0] = (int) v (pL1target);
@@ -206,26 +217,16 @@ void GroovulationProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
         FloatVectorOperations::add (mainR, r, n);
     }
 
-    // ---------------- master: cutoff (HP | BP | LP)
+    // ---------------- master: cutoff HP -> BP -> LP (independent, each with ON and resonance).
+    // Per-sample smoothing (~3 ms) and per-sample coefficients (was: one step per host block): the sound follows
+    // the knobs immediately, also on fast movements and with large host buffers.
     {
-        const float res = apvts.getRawParameterValue ("mRes")->load();
-        const double q = 0.6 + res * res * 10.0;
-        hpSm += (apvts.getRawParameterValue ("mHp")->load() - hpSm) * 0.3f;
-        lpSm += (apvts.getRawParameterValue ("mLp")->load() - lpSm) * 0.3f;
-        bpSm += (apvts.getRawParameterValue ("mBp")->load() - bpSm) * 0.3f;
-        const bool hpOn = hpSm > 21.0f, lpOn = lpSm < 19800.0f, bpOn = bpSm > 0.002f;
-        if (hpOn) { mHp[0].set (sr, hpSm, q); mHp[1].set (sr, hpSm, q); }
-        if (lpOn) { mLp[0].set (sr, lpSm, q); mLp[1].set (sr, lpSm, q); }
-        const float bpWet = jmin (1.0f, bpSm / 0.05f);
-        if (bpOn) { const double f = 60.0 * std::pow (8000.0 / 60.0, (double) bpSm); mBp[0].set (sr, f, 0.8 + res * 6.0); mBp[1].set (sr, f, 0.8 + res * 6.0); }
-        for (int i = 0; i < n; ++i)
-        {
-            float a = mainL[i], b = mainR[i];
-            if (hpOn) { a = mHp[0].process (a, 2); b = mHp[1].process (b, 2); }
-            if (bpOn) { a += (mBp[0].process (a, 1) - a) * bpWet; b += (mBp[1].process (b, 1) - b) * bpWet; }
-            if (lpOn) { a = mLp[0].process (a, 0); b = mLp[1].process (b, 0); }
-            mainL[i] = a; mainR[i] = b;
-        }
+        auto rv = [this] (const char* id) { return apvts.getRawParameterValue (id)->load(); };
+        fx::TriFilterParams fp;
+        fp.on[0] = rv ("mHpOn") > 0.5f; fp.freq[0] = rv ("mHp");    fp.res[0] = rv ("mHpRes");
+        fp.on[1] = rv ("mBpOn") > 0.5f; fp.freq[1] = rv ("mBpCut"); fp.res[1] = rv ("mBpRes");
+        fp.on[2] = rv ("mLpOn") > 0.5f; fp.freq[2] = rv ("mLp");    fp.res[2] = rv ("mLpRes");
+        masterFilter.process (mainL, mainR, n, fp);
     }
 
     // ---------------- remix: beat repeat, tape / vinyl deck
@@ -236,7 +237,6 @@ void GroovulationProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
         b.offsetBeats = apvts.getRawParameterValue ("brOffset")->load() * 0.25;
         if (b.offsetBeats >= b.intervalBeats) b.offsetBeats = std::fmod (b.offsetBeats, b.intervalBeats);
         b.gridBeats = lb::brGridBeats ((int) apvts.getRawParameterValue ("brGrid")->load());
-        b.noTriplets = apvts.getRawParameterValue ("brNoTrip")->load() > 0.5f;
         b.gateBeats = apvts.getRawParameterValue ("brGate")->load() * 0.25;
         b.variation = apvts.getRawParameterValue ("brVar")->load();
         b.chance = apvts.getRawParameterValue ("brChance")->load();
@@ -425,6 +425,13 @@ void GroovulationProcessor::changeListenerCallback (ChangeBroadcaster*)
 
 void GroovulationProcessor::timerCallback()
 {
+    // SLICE off -> SLICE LOOP off too (also when SLICE is switched off by automation / undo)
+    for (int m = 0; m < lb::numModules; ++m)
+        if (mp[(size_t) m][pSlice]->load() < 0.5f && mp[(size_t) m][pSlLoop]->load() > 0.5f)
+            if (auto* prm = apvts.getParameter (lb::pid (m, "slloop")))
+            {
+                prm->beginChangeGesture(); prm->setValueNotifyingHost (0.0f); prm->endChangeGesture();
+            }
     if (! started)
     {
         started = true;

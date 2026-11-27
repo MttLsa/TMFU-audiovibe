@@ -28,6 +28,7 @@ WaveDisplay::WaveDisplay (GroovulationProcessor& p, int m, bool inter) : proc (p
     if (interactive)
     {
         setTooltip ("SLICE: drag the S / E markers (SNAP ms: 1 ms steps, shift = 0.1 ms; arrow keys nudge the last marker: 1 ms, shift 0.1 ms, alt/cmd 10 ms).  "
+                    "LOOP MARKERS: drag LS / LE (flags at the bottom).  "
                     "VOL.A: click to add a point, drag to move, double-click to delete.");
         setWantsKeyboardFocus (true);
         for (auto* b : { &zIn, &zOut, &zFit }) { addAndMakeVisible (b); b->setWantsKeyboardFocus (false); }
@@ -54,30 +55,56 @@ double WaveDisplay::regionBeats() const
 double WaveDisplay::regionMs() const
 {
     auto l = proc.currentLoop (module);
-    const double tempo = jmax (0.01f, param ("tempo"));
+    const double tempo = 1.0;
     const bool raw = proc.apvts.getRawParameterValue ("raw")->load() > 0.5f;
     const double bpm = raw && l != nullptr ? l->bpm : jmax (1.0, proc.currentBpm());
     return regionBeats() * 60000.0 / bpm / tempo;
 }
 
-void WaveDisplay::setSliceMs (bool start, double ms)
+void WaveDisplay::setMarkerMs (int k, double ms)
 {
     const double R = jmax (1.0e-6, regionMs());
     const float p = (float) jlimit (0.0, 1.0, ms / R);
-    if (start) setParam ("sstart", jmin (p, param ("send") - (float) (0.1 / R)));
-    else setParam ("send", jmax (p, param ("sstart") + (float) (0.1 / R)));
+    if ((k & 1) == 0) setParam (markerId (k), jmin (p, param (markerId (k + 1)) - (float) (0.1 / R)));
+    else setParam (markerId (k), jmax (p, param (markerId (k - 1)) + (float) (0.1 / R)));
+}
+
+void WaveDisplay::setMarkerPos (int k, float pos)
+{
+    if ((k & 1) == 0) setParam (markerId (k), jmin (pos, param (markerId (k + 1)) - 0.002f));
+    else setParam (markerId (k), jmax (pos, param (markerId (k - 1)) + 0.002f));
+}
+
+// slice markers: whole height (upper half when the loop markers are on too), flags at the top;
+// loop markers: whole height (lower half when SLICE is on too), flags at the bottom
+int WaveDisplay::markerAt (Point<float> p) const
+{
+    const bool sliceOn = param ("slice") > 0.5f, loopOn = param ("lmOn") > 0.5f;
+    const auto r = plot();
+    const bool upper = p.y < r.getCentreY();
+    for (int k = 0; k < 4; ++k)
+    {
+        const bool isSlice = k < 2;
+        if (isSlice ? ! sliceOn : ! loopOn) continue;
+        const float dx = std::abs (p.x - posToX (param (markerId (k))));
+        const bool zoneOk = ! (sliceOn && loopOn) || (isSlice == upper);
+        const bool onFlag = isSlice ? p.y < r.getY() + 14 : p.y > r.getBottom() - 14;
+        if ((dx < 7 && zoneOk) || (onFlag && dx < 14)) return k;
+    }
+    return -1;
 }
 
 bool WaveDisplay::keyPressed (const KeyPress& k)
 {
-    if (! interactive || param ("slice") < 0.5f) return false;
+    if (! interactive) return false;
+    if (lastMarker < 2 ? param ("slice") < 0.5f : param ("lmOn") < 0.5f) return false;
     const int code = k.getKeyCode();
     if (code != KeyPress::leftKey && code != KeyPress::rightKey) return false;
     const auto mods = k.getModifiers();
     const double step = (mods.isShiftDown() ? 0.1 : (mods.isAltDown() || mods.isCommandDown() ? 10.0 : 1.0)) * (code == KeyPress::leftKey ? -1.0 : 1.0);
     const double R = regionMs();
-    const double cur = (lastMarker == 0 ? param ("sstart") : param ("send")) * R;
-    setSliceMs (lastMarker == 0, std::round ((cur + step) * 10.0) / 10.0);
+    const double cur = param (markerId (lastMarker)) * R;
+    setMarkerMs (lastMarker, std::round ((cur + step) * 10.0) / 10.0);
     repaint();
     return true;
 }
@@ -327,6 +354,47 @@ void WaveDisplay::paint (Graphics& g)
         g.drawText ("SLICE " + String ((s1 - s0) * Rms, 1) + " ms" + (param ("slsnap") < 0.5f ? "  (SNAP ms)" : "  (SNAP grid)") + (param ("slloop") > 0.5f ? "  LOOP" : ""),
                     r.reduced (4, 2).translated (0, 15), Justification::topLeft);
     }
+    // loop markers (LS / LE)
+    if (param ("lmOn") > 0.5f)
+    {
+        const float l0 = param ("lmStart"), l1 = param ("lmEnd");
+        const Colour lc (0xff1f4e8c);
+        g.setColour (theme::lcdBg.withAlpha (0.35f));
+        g.fillRect (Rectangle<float> (r.getX(), r.getY(), jmax (0.0f, posToX (l0) - r.getX()), r.getHeight()));
+        g.fillRect (Rectangle<float> (posToX (l1), r.getY(), jmax (0.0f, r.getRight() - posToX (l1)), r.getHeight()));
+        g.setColour (lc.withAlpha (0.5f));
+        g.fillRect (Rectangle<float> (posToX (l0), r.getBottom() - 3.0f, jmax (0.0f, posToX (l1) - posToX (l0)), 3.0f));
+        for (int k = 0; k < 2; ++k)
+        {
+            const float x = posToX (k == 0 ? l0 : l1);
+            g.setColour (lc);
+            g.drawLine (x, r.getY(), x, r.getBottom(), 2.0f);
+            if (interactive)
+            {
+                Path flag;
+                const float d = k == 0 ? 1.0f : -1.0f;
+                flag.addTriangle (x, r.getBottom(), x + d * 14.0f, r.getBottom(), x, r.getBottom() - 14.0f);
+                g.fillPath (flag);
+                g.setColour (theme::white);
+                g.setFont (theme::font (8.0f, true));
+                g.drawText (k == 0 ? "LS" : "LE", Rectangle<float> (k == 0 ? x : x - 11, r.getBottom() - 8, 11, 8), Justification::centred);
+            }
+        }
+        if (interactive)
+        {
+            const double Rms = regionMs();
+            g.setFont (theme::mono (11.5f, true));
+            for (int k = 0; k < 2; ++k)
+            {
+                const float pk = k == 0 ? l0 : l1;
+                const float x = posToX (pk);
+                auto box = Rectangle<float> (k == 0 ? x + 3.0f : x - 93.0f, r.getBottom() - 36.0f, 90.0f, 15.0f);
+                g.setColour (theme::lcdBg.withAlpha (0.85f)); g.fillRect (box);
+                g.setColour (lastMarker == k + 2 && hasKeyboardFocus (false) ? lc.brighter (0.3f) : lc);
+                g.drawText ((k == 0 ? "LS " : "LE ") + String (pk * Rms, 1) + " ms", box, k == 0 ? Justification::centredLeft : Justification::centredRight);
+            }
+        }
+    }
     // clip-gain automation
     if (volOn)
     {
@@ -391,8 +459,7 @@ int WaveDisplay::hitVolPoint (Point<float> p) const
 void WaveDisplay::mouseMove (const MouseEvent& e)
 {
     if (! interactive) return;
-    const bool sliceOn = param ("slice") > 0.5f;
-    const bool nearMarker = sliceOn && (std::abs (e.position.x - posToX (param ("sstart"))) < 7 || std::abs (e.position.x - posToX (param ("send"))) < 7);
+    const bool nearMarker = markerAt (e.position) >= 0;
     setMouseCursor (nearMarker ? MouseCursor::LeftRightResizeCursor
                                : (param ("vola") > 0.5f ? (hitVolPoint (e.position) >= 0 ? MouseCursor::DraggingHandCursor : MouseCursor::CrosshairCursor)
                                                         : MouseCursor::NormalCursor));
@@ -411,12 +478,8 @@ void WaveDisplay::mouseDown (const MouseEvent& e)
     }
     drag = none;
     const bool sliceOn = param ("slice") > 0.5f, volOn = param ("vola") > 0.5f;
-    if (sliceOn)
-    {
-        const float xs = posToX (param ("sstart")), xe = posToX (param ("send"));
-        if (std::abs (e.position.x - xs) < 7 || (e.position.y < plot().getY() + 14 && std::abs (e.position.x - xs) < 14)) drag = sliceStart;
-        else if (std::abs (e.position.x - xe) < 7 || (e.position.y < plot().getY() + 14 && std::abs (e.position.x - xe) < 14)) drag = sliceEnd;
-    }
+    const bool loopOn = param ("lmOn") > 0.5f;
+    if (const int hit = markerAt (e.position); hit >= 0) drag = (Drag) (sliceStart + hit);
     if (drag == none && volOn)
     {
         env = proc.volEnvelope (module);
@@ -431,20 +494,22 @@ void WaveDisplay::mouseDown (const MouseEvent& e)
         }
         drag = volPoint;
     }
-    if (drag == none && sliceOn)
+    if (drag == none && (sliceOn || loopOn))
     {
-        // click elsewhere: move the nearest marker there
+        // click elsewhere: move the nearest marker there (slice markers in the upper half, loop markers in the lower half)
         const float pos = xToPos (e.position.x);
-        drag = std::abs (pos - param ("sstart")) < std::abs (pos - param ("send")) ? sliceStart : sliceEnd;
-        lastMarker = drag == sliceStart ? 0 : 1;
-        if (param ("slsnap") < 0.5f) { setSliceMs (drag == sliceStart, std::round (pos * regionMs())); dragStartPos = pos; dragStartX = e.position.x; return; }
+        const int base = sliceOn && (! loopOn || e.position.y < plot().getCentreY()) ? 0 : 2;
+        const int k = std::abs (pos - param (markerId (base))) < std::abs (pos - param (markerId (base + 1))) ? base : base + 1;
+        drag = (Drag) (sliceStart + k);
+        lastMarker = k;
+        if (param ("slsnap") < 0.5f) { setMarkerMs (k, std::round (pos * regionMs())); dragStartPos = pos; dragStartX = e.position.x; return; }
         mouseDrag (e);
         return;
     }
-    if (drag == sliceStart || drag == sliceEnd)
+    if (drag >= sliceStart && drag <= loopEnd)
     {
-        lastMarker = drag == sliceStart ? 0 : 1;
-        dragStartPos = drag == sliceStart ? param ("sstart") : param ("send");
+        lastMarker = drag - sliceStart;
+        dragStartPos = param (markerId (lastMarker));
         dragStartX = e.position.x;
     }
 }
@@ -461,7 +526,8 @@ void WaveDisplay::mouseDrag (const MouseEvent& e)
     const double R = regionBeats();
     auto l = proc.currentLoop (module);
     float pos = xToPos (e.position.x);
-    if ((drag == sliceStart || drag == sliceEnd) && param ("slsnap") < 0.5f)
+    const bool markerDrag = drag >= sliceStart && drag <= loopEnd;
+    if (markerDrag && param ("slsnap") < 0.5f)
     {
         // SNAP ms: free movement in 1 ms steps; shift = fine (10x slower, 0.1 ms steps)
         const bool fine = e.mods.isShiftDown();
@@ -469,7 +535,7 @@ void WaveDisplay::mouseDrag (const MouseEvent& e)
         const double p = dragStartPos + (e.position.x - dragStartX) / w * viewLen * (fine ? 0.1 : 1.0);
         const double stepMs = fine ? 0.1 : 1.0;
         const double Rms = regionMs();
-        setSliceMs (drag == sliceStart, std::round (jlimit (0.0, 1.0, p) * Rms / stepMs) * stepMs);
+        setMarkerMs (drag - sliceStart, std::round (jlimit (0.0, 1.0, p) * Rms / stepMs) * stepMs);
         repaint();
         return;
     }
@@ -478,8 +544,7 @@ void WaveDisplay::mouseDrag (const MouseEvent& e)
         const double gb = lb::gridBeats ((int) param ("grid"));
         pos = (float) (std::round (pos * R / gb) * gb / R);
     }
-    if (drag == sliceStart) setParam ("sstart", jmin (pos, param ("send") - 0.002f));
-    else if (drag == sliceEnd) setParam ("send", jmax (pos, param ("sstart") + 0.002f));
+    if (markerDrag) setMarkerPos (drag - sliceStart, pos);
     else if (drag == volPoint && dragIndex >= 0 && dragIndex < (int) env.size())
     {
         auto& p = env[(size_t) dragIndex];
@@ -642,9 +707,10 @@ ModuleEditor::ModuleEditor (GroovulationProcessor& p) : proc (p), display (p, 0,
 {
     display.setComponentID ("bigDisplay");
     addAndMakeVisible (display);
-    for (auto* c : std::initializer_list<Component*> { &grid, &keySrc, &ftype, &slsnap, &lenMinus, &lenPlus, &lenOrig, &volReset, &slice, &slLoop, &fade, &volA, &dpp,
+    for (auto* c : std::initializer_list<Component*> { &grid, &keySrc, &slsnap, &lenMinus, &lenPlus, &lenOrig, &volReset, &slice, &slLoop, &lmOn, &fade, &volA, &dpp,
+                                                       &hpOn, &bpOn, &lpOn, &chOn, &mono, &chMode,
                                                        &prev, &next, &rnd, &sim, &browser,
-                                                       &pAmp, &pAdsr, &pPitch, &pFilter, &pDirt, &pDelay, &pReverb, &pLfo1, &pLfo2, &pLfo3 })
+                                                       &pAmp, &pAdsr, &pPitch, &pFilter, &pDirt, &pDelay, &pReverb, &pLfo1, &pLfo2, &pLfo3, &pChorus, &pUtil })
         addAndMakeVisible (c);
     addChildComponent (floppy); addChildComponent (clear);
     floppy.onClick = [this]
@@ -656,12 +722,29 @@ ModuleEditor::ModuleEditor (GroovulationProcessor& p) : proc (p), display (p, 0,
         });
     };
     clear.onClick = [this] { proc.clearCustom(); };
-    for (auto* k : { &gain, &pan, &atk, &dec, &sus, &rel, &pitch, &tempo, &cut, &res, &dirt, &dtime, &dfb, &dmix,
-                     &rsize, &rdecay, &rdamp, &rpre, &rmix, &l1rate, &l1depth, &l2rate, &l2depth, &l3rate, &l3depth })
+    for (auto* k : { &gain, &pan, &atk, &dec, &sus, &rel, &pitch, &hpCut, &hpRes, &bpCut, &bpRes, &lpCut, &lpRes, &dirt, &dtime, &dfb, &dmix,
+                     &rsize, &rdecay, &rdamp, &rpre, &rmix, &l1rate, &l1depth, &l2rate, &l2depth, &l3rate, &l3depth, &chRate, &chDepth, &chMix, &width })
         addAndMakeVisible (k);
+    chMode.addItemList (lb::chorusModes(), 1);
+    chMode.setTooltip ("Chorus I / II: chorus BBD a due linee (lento / piu' veloce e profondo). Dimension 1-4: spaziale, senza vibrato. Custom: Rate e Depth liberi");
+    chOn.setTooltip ("Attiva / disattiva il chorus");
+    width.slider.setTooltip ("Ampiezza stereo: 0 % = mono, 100 % = invariato, fino a 400 %");
+    mono.setTooltip ("Somma il modulo in mono");
+    hpOn.setTooltip ("Attiva / disattiva il passa-alto");
+    bpOn.setTooltip ("Attiva / disattiva il passa-banda");
+    lpOn.setTooltip ("Attiva / disattiva il passa-basso");
+    hpCut.slider.setTooltip ("Passa-alto: a sinistra aperto, girando a destra chiude (speculare al LP)");
+    lpCut.slider.setTooltip ("Passa-basso: a destra aperto, girando a sinistra chiude (speculare all'HP)");
+    lmOn.setTooltip ("LOOP MARKERS: la riproduzione si ripete tra i marker LS e LE (in modo normale e in SLICE; trascina i marker in basso nel display)");
+    // SLICE off -> SLICE LOOP off
+    slice.onClick = [this]
+    {
+        if (! slice.getToggleState() && proc.apvts.getRawParameterValue (lb::pid (module, "slloop"))->load() > 0.5f)
+            setParamValue (proc, lb::pid (module, "slloop"), 0.0f);
+    };
     for (auto* c : { &l1shape, &l1target, &l2shape, &l2target, &l3shape, &l3target }) addAndMakeVisible (c);
     // the panels are backgrounds: keep them behind the selectors / toggles placed on them (LP|BP|HP, WARP, PING-PONG)
-    for (auto* pn : { &pAmp, &pAdsr, &pPitch, &pFilter, &pDirt, &pDelay, &pReverb, &pLfo1, &pLfo2, &pLfo3 }) pn->toBack();
+    for (auto* pn : { &pAmp, &pAdsr, &pPitch, &pFilter, &pDirt, &pDelay, &pReverb, &pLfo1, &pLfo2, &pLfo3, &pChorus, &pUtil }) pn->toBack();
     for (auto* c : { &l1shape, &l2shape, &l3shape }) c->addItemList (lb::lfoShapes(), 1);
     for (auto* c : { &l1target, &l2target, &l3target })
     {
@@ -670,7 +753,6 @@ ModuleEditor::ModuleEditor (GroovulationProcessor& p) : proc (p), display (p, 0,
     }
     keySrc.setCaption ("TYPE (key from)");
     grid.setCaption ("GRID");
-    ftype.setCaption ("");
 
     prev.onClick = [this] { proc.stepLoop (module, -1); };
     next.onClick = [this] { proc.stepLoop (module, 1); };
@@ -716,8 +798,14 @@ void ModuleEditor::attachAll()
     auto& s = proc.apvts;
     gain.attach (s, lb::pid (m, "gain")); pan.attach (s, lb::pid (m, "pan"));
     atk.attach (s, lb::pid (m, "atk")); dec.attach (s, lb::pid (m, "dec")); sus.attach (s, lb::pid (m, "sus")); rel.attach (s, lb::pid (m, "rel"));
-    pitch.attach (s, lb::pid (m, "pitch")); tempo.attach (s, lb::pid (m, "tempo"));
-    cut.attach (s, lb::pid (m, "cut")); res.attach (s, lb::pid (m, "res")); dirt.attach (s, lb::pid (m, "dirt"));
+    pitch.attach (s, lb::pid (m, "pitch"));
+    hpCut.attach (s, lb::pid (m, "hpCut")); hpRes.attach (s, lb::pid (m, "hpRes")); hpOn.attach (s, lb::pid (m, "hpOn"));
+    bpCut.attach (s, lb::pid (m, "bpCut")); bpRes.attach (s, lb::pid (m, "bpRes")); bpOn.attach (s, lb::pid (m, "bpOn"));
+    lpCut.attach (s, lb::pid (m, "lpCut")); lpRes.attach (s, lb::pid (m, "lpRes")); lpOn.attach (s, lb::pid (m, "lpOn"));
+    dirt.attach (s, lb::pid (m, "dirt"));
+    chOn.attach (s, lb::pid (m, "chOn")); chRate.attach (s, lb::pid (m, "chRate")); chDepth.attach (s, lb::pid (m, "chDepth")); chMix.attach (s, lb::pid (m, "chMix"));
+    width.attach (s, lb::pid (m, "width")); mono.attach (s, lb::pid (m, "mono"));
+    lmOn.attach (s, lb::pid (m, "lmOn"));
     dtime.attach (s, lb::pid (m, "dtime")); dfb.attach (s, lb::pid (m, "dfb")); dmix.attach (s, lb::pid (m, "dmix"));
     rsize.attach (s, lb::pid (m, "rsize")); rdecay.attach (s, lb::pid (m, "rdecay")); rdamp.attach (s, lb::pid (m, "rdamp"));
     rpre.attach (s, lb::pid (m, "rpre")); rmix.attach (s, lb::pid (m, "rmix"));
@@ -726,7 +814,6 @@ void ModuleEditor::attachAll()
     l3rate.attach (s, lb::pid (m, "lfo3rate")); l3depth.attach (s, lb::pid (m, "lfo3depth"));
     grid.attach (s, lb::pid (m, "grid"));
     keySrc.attach (s, lb::pid (m, "keysrc"), { "AUDIO", "FILE NAME" });
-    ftype.attach (s, lb::pid (m, "ftype"));
     slsnap.attach (s, lb::pid (m, "slsnap"), { "MS", "GRID" });
     slsnap.setTooltip ("SLICE markers: MS = move in milliseconds (shift = 0.1 ms, arrow keys nudge), GRID = snap to the grid");
     slice.attach (s, lb::pid (m, "slice")); slLoop.attach (s, lb::pid (m, "slloop")); fade.attach (s, lb::pid (m, "fade")); volA.attach (s, lb::pid (m, "vola")); dpp.attach (s, lb::pid (m, "dpp"));
@@ -737,6 +824,7 @@ void ModuleEditor::attachAll()
     comboAtt.push_back (std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (s, lb::pid (m, "lfo2target"), l2target));
     comboAtt.push_back (std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (s, lb::pid (m, "lfo3shape"), l3shape));
     comboAtt.push_back (std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (s, lb::pid (m, "lfo3target"), l3target));
+    comboAtt.push_back (std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment> (s, lb::pid (m, "chMode"), chMode));
 }
 
 void ModuleEditor::setModule (int m)
@@ -744,15 +832,15 @@ void ModuleEditor::setModule (int m)
     module = jlimit (0, lb::numModules - 1, m);
     display.setModule (module);
     const auto c = theme::sectionColour (module);
-    for (auto* k : { &gain, &pan, &atk, &dec, &sus, &rel, &pitch, &tempo, &cut, &res, &dirt, &dtime, &dfb, &dmix,
-                     &rsize, &rdecay, &rdamp, &rpre, &rmix, &l1rate, &l1depth, &l2rate, &l2depth, &l3rate, &l3depth })
+    for (auto* k : { &gain, &pan, &atk, &dec, &sus, &rel, &pitch, &hpCut, &hpRes, &bpCut, &bpRes, &lpCut, &lpRes, &dirt, &dtime, &dfb, &dmix,
+                     &rsize, &rdecay, &rdamp, &rpre, &rmix, &l1rate, &l1depth, &l2rate, &l2depth, &l3rate, &l3depth, &chRate, &chDepth, &chMix, &width })
         k->setAccent (c);
-    for (auto* p : { &pAmp, &pAdsr, &pPitch, &pFilter, &pDirt, &pDelay, &pReverb, &pLfo1, &pLfo2, &pLfo3 }) p->setAccent (c);
+    for (auto* p : { &pAmp, &pAdsr, &pPitch, &pFilter, &pDirt, &pDelay, &pReverb, &pLfo1, &pLfo2, &pLfo3, &pChorus, &pUtil }) p->setAccent (c);
     const bool isCustom = module == lb::custom;
     for (auto* b : std::initializer_list<Component*> { &prev, &next, &rnd, &sim, &browser }) b->setVisible (! isCustom);
     floppy.setVisible (isCustom); clear.setVisible (isCustom);
-    for (auto* sg : { &grid, &keySrc, &ftype, &slsnap }) sg->setAccent (c);
-    for (auto* t : { &slice, &slLoop, &fade, &volA, &dpp }) t->setColour (TextButton::buttonOnColourId, c);
+    for (auto* sg : { &grid, &keySrc, &slsnap }) sg->setAccent (c);
+    for (auto* t : { &slice, &slLoop, &lmOn, &fade, &volA, &dpp, &hpOn, &bpOn, &lpOn, &chOn, &mono }) t->setColour (TextButton::buttonOnColourId, c);
     attachAll();
     shownLoop = nullptr;
     refreshBrowser();
@@ -843,22 +931,23 @@ void ModuleEditor::resized()
     r.removeFromTop (44);
     // toolbar (two lines)
     auto tb = r.removeFromTop (40);
-    grid.setBounds (tb.removeFromLeft (370).withTrimmedBottom (2));
+    grid.setBounds (tb.removeFromLeft (330).withTrimmedBottom (2));
     tb.removeFromLeft (10);
     auto lenA = tb.removeFromLeft (130).withTrimmedTop (14).withTrimmedBottom (2);
     lenMinus.setBounds (lenA.removeFromLeft (32).reduced (1, 0));
     lenPlus.setBounds (lenA.removeFromLeft (32).reduced (1, 0));
     lenOrig.setBounds (lenA.reduced (1, 0));
     tb.removeFromLeft (10);
-    auto tg = tb.removeFromLeft (484).withTrimmedTop (14).withTrimmedBottom (2);
+    auto tg = tb.removeFromLeft (574).withTrimmedTop (14).withTrimmedBottom (2);
     slice.setBounds (tg.removeFromLeft (60).reduced (1, 0));
     slLoop.setBounds (tg.removeFromLeft (54).reduced (1, 0));
+    lmOn.setBounds (tg.removeFromLeft (110).reduced (1, 0));
     slsnap.setBounds (tg.removeFromLeft (96).reduced (2, 0));
     fade.setBounds (tg.removeFromLeft (90).reduced (1, 0));
     volA.setBounds (tg.removeFromLeft (70).reduced (1, 0));
     volReset.setBounds (tg.removeFromLeft (90).reduced (1, 0));
     tb.removeFromLeft (10);
-    keySrc.setBounds (tb.removeFromLeft (150).withTrimmedBottom (2));
+    keySrc.setBounds (tb.removeFromLeft (140).withTrimmedBottom (2));
     tb.removeFromLeft (10);
     auto ls = tb.withTrimmedTop (14).withTrimmedBottom (2);
     prev.setBounds (ls.removeFromLeft (28).reduced (1, 0));
@@ -891,16 +980,36 @@ void ModuleEditor::resized()
             x += (float) w;
         }
     };
-    place (row1, { { &pAmp, 2 }, { &pAdsr, 4 }, { &pPitch, 2 }, { &pFilter, 3 }, { &pDirt, 1 }, { &pDelay, 4 } });
-    place (row2, { { &pReverb, 5 }, { &pLfo1, 3 }, { &pLfo2, 3 }, { &pLfo3, 3 } });
+    place (row1, { { &pAmp, 2 }, { &pAdsr, 4 }, { &pPitch, 1 }, { &pFilter, 6 }, { &pDirt, 1 }, { &pUtil, 2 } });
+    place (row2, { { &pChorus, 4 }, { &pDelay, 3 }, { &pReverb, 5 }, { &pLfo1, 3 }, { &pLfo2, 3 }, { &pLfo3, 3 } });
     auto inP = [] (Panel& p) { return p.getBounds().withTrimmedTop (Panel::headerH + 2).reduced (4, 2); };
     layoutRow (inP (pAmp), { &gain, &pan });
     layoutRow (inP (pAdsr), { &atk, &dec, &sus, &rel });
-    layoutRow (inP (pPitch), { &pitch, &tempo });
+    layoutRow (inP (pPitch), { &pitch });
     {
         auto f = inP (pFilter);
-        ftype.setBounds (f.removeFromTop (22).reduced (6, 0));
-        layoutRow (f, { &cut, &res });
+        const int cw = f.getWidth() / 3;
+        Toggle* tg3[3] { &hpOn, &bpOn, &lpOn };
+        Knob* fk[3] { &hpCut, &bpCut, &lpCut };
+        Knob* rk[3] { &hpRes, &bpRes, &lpRes };
+        for (int k = 0; k < 3; ++k)
+        {
+            auto col = (k < 2 ? f.removeFromLeft (cw) : f).reduced (3, 0);
+            tg3[k]->setBounds (col.removeFromTop (22).withSizeKeepingCentre (jmin (80, col.getWidth()), 22));
+            layoutRow (col, { fk[k], rk[k] });
+        }
+    }
+    {
+        auto u = inP (pUtil);
+        mono.setBounds (u.removeFromBottom (22).withSizeKeepingCentre (jmin (80, u.getWidth()), 22));
+        layoutRow (u, { &width });
+    }
+    {
+        auto c = inP (pChorus);
+        auto top = c.removeFromTop (24);
+        chOn.setBounds (top.removeFromLeft (50).reduced (1, 1));
+        chMode.setBounds (top.reduced (4, 1));
+        layoutRow (c, { &chRate, &chDepth, &chMix });
     }
     layoutRow (inP (pDirt), { &dirt });
     {

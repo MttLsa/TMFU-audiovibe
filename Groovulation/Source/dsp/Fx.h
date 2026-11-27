@@ -30,6 +30,76 @@ namespace fx
         }
     };
 
+    // ---------------------------------------------------------------- CUTOFF: HP -> BP -> LP
+    // Three independent stereo TPT filters, each with ON (5 ms crossfade, off = no CPU) and its own resonance.
+    // Cutoff and resonance are smoothed per sample (~3 ms, log frequency) and the coefficients follow every
+    // sample while they move: the sound tracks the knob exactly, also on fast movements, without zipper noise.
+    struct TriFilterParams
+    {
+        bool on[3] { false, false, false };          // 0 HP, 1 BP, 2 LP
+        float freq[3] { 20.0f, 1000.0f, 20000.0f };
+        float res[3] { 0.1f, 0.3f, 0.1f };
+    };
+    class TriFilter
+    {
+    public:
+        void prepare (double sr);
+        void reset();
+        void process (float* L, float* R, int n, const TriFilterParams& p);
+        bool isActive() const { return wet[0] > 0.0f || wet[1] > 0.0f || wet[2] > 0.0f; }
+    private:
+        double fs = 44100.0;
+        float kSm = 0.01f, wetStep = 0.001f;
+        Svf f[3][2];
+        float logF[3] {}, resS[3] {}, curLogF[3] { -1, -1, -1 }, curRes[3] { -1, -1, -1 }, wet[3] {};
+        bool init[3] {};
+    };
+
+    // ---------------------------------------------------------------- CHORUS (port of the CHROMA5YNTH chorus)
+    // Chorus I/II: two BBD-style lines with inverted triangle LFOs, dark and slightly saturated.
+    // Dimension 1-4: mono-summed input, two shallow lines in antiphase cross-mixed so the pitch
+    // vibrato cancels in the sum (spatial widening without wobble). Custom: free Rate / Depth.
+    class Chorus
+    {
+    public:
+        enum Mode { chorusI = 0, chorusII, dim1, dim2, dim3, dim4, custom };
+        void prepare (double sr);
+        void reset();
+        void process (float* L, float* R, int n, bool on, int mode, float rateHz, float depth, float mix);
+    private:
+        struct Smoothed { float value = 0, target = 0, coeff = 0; float next() { value = target + (value - target) * coeff; return value; } };
+        struct OnePole { float g = 0, s = 0; void set (float f, float sr); float lp (float x) { const float v = (x - s) * g; const float y = v + s; s = y + v; return y; } };
+        float read (int line, float d) const;
+        float fs = 44100.0f;
+        std::vector<float> buf[2]; int mask = 0, w = 0;
+        OnePole tone[4];
+        double ph = 0.0;
+        Smoothed rate, depthMs, centreMs, mixS, phaseOff;
+        float onGain = 0.0f;
+        bool first = true;
+    };
+
+    // ---------------------------------------------------------------- UTILITY: stereo width + mono
+    // Mid / side: width 0 = mono, 1 = unchanged, up to 4 (400 %). MONO sums to mono. Smoothed (no clicks).
+    class StereoUtility
+    {
+    public:
+        void prepare (double sr) { k = 1.0f - (float) std::exp (-1.0 / (0.005 * sr)); wSm = 1.0f; }
+        void process (float* L, float* R, int n, float width, bool mono)
+        {
+            const float target = mono ? 0.0f : width;
+            if (std::abs (target - 1.0f) < 1.0e-4f && std::abs (wSm - 1.0f) < 1.0e-4f) { wSm = 1.0f; return; }
+            for (int i = 0; i < n; ++i)
+            {
+                wSm += (target - wSm) * k;
+                const float m = 0.5f * (L[i] + R[i]), s = 0.5f * (L[i] - R[i]) * wSm;
+                L[i] = m + s; R[i] = m - s;
+            }
+        }
+    private:
+        float k = 0.01f, wSm = 1.0f;
+    };
+
     // ---------------------------------------------------------------- DIRT: gentle saturation
     // Soft-knee curve (linear on quiet signals, rounds only the peaks), light even harmonics,
     // parallel blend and level compensation -> "gentle saturation" character.
@@ -84,7 +154,6 @@ namespace fx
     {
         double intervalBeats = 4, offsetBeats = 2, gridBeats = 0.25, gateBeats = 1;
         float variation = 0, chance = 1, decay = 0, pitch = 0, pitchDecay = 0, volume = 1;
-        bool noTriplets = false;
         int mode = 1;   // 0 Mix, 1 Insert, 2 Gate
     };
     class BeatRepeat

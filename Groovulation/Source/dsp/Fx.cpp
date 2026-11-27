@@ -31,6 +31,127 @@ void GentleSat::process (float* L, float* R, int n, float amount)
 }
 
 //==============================================================================
+void TriFilter::prepare (double sr)
+{
+    fs = sr;
+    kSm = 1.0f - (float) std::exp (-1.0 / (0.003 * sr));
+    wetStep = (float) (1.0 / (0.005 * sr));
+    reset();
+}
+
+void TriFilter::reset()
+{
+    for (int k = 0; k < 3; ++k) { f[k][0].reset(); f[k][1].reset(); wet[k] = 0.0f; init[k] = false; curLogF[k] = curRes[k] = -1.0f; }
+}
+
+void TriFilter::process (float* L, float* R, int n, const TriFilterParams& p)
+{
+    static const int mode[3] { 2, 1, 0 };   // Svf modes: HP, BP, LP
+    for (int k = 0; k < 3; ++k)
+    {
+        if (! p.on[k] && wet[k] <= 0.0f) { if (init[k]) { f[k][0].reset(); f[k][1].reset(); init[k] = false; } continue; }
+        const float tF = std::log (jlimit (20.0f, 20000.0f, p.freq[k])), tR = jlimit (0.0f, 1.0f, p.res[k]);
+        if (! init[k]) { logF[k] = tF; resS[k] = tR; init[k] = true; curLogF[k] = -1.0f; }
+        const float wT = p.on[k] ? 1.0f : 0.0f;
+        for (int i = 0; i < n; ++i)
+        {
+            if (logF[k] != tF) { logF[k] += (tF - logF[k]) * kSm; if (std::abs (tF - logF[k]) < 1.0e-5f) logF[k] = tF; }
+            if (resS[k] != tR) { resS[k] += (tR - resS[k]) * kSm; if (std::abs (tR - resS[k]) < 1.0e-5f) resS[k] = tR; }
+            if (logF[k] != curLogF[k] || resS[k] != curRes[k])
+            {
+                curLogF[k] = logF[k]; curRes[k] = resS[k];
+                const double q = k == 1 ? 0.6 + resS[k] * resS[k] * 14.0 : 0.707 + resS[k] * resS[k] * 11.3;
+                f[k][0].set (fs, std::exp ((double) logF[k]), q); f[k][1] = { f[k][0].g, f[k][0].k, f[k][0].a1, f[k][0].a2, f[k][0].a3, f[k][1].ic1, f[k][1].ic2 };
+            }
+            if (wet[k] != wT) wet[k] = jlimit (0.0f, 1.0f, wet[k] + (wT > wet[k] ? wetStep : -wetStep));
+            const float a = f[k][0].process (L[i], mode[k]), b = f[k][1].process (R[i], mode[k]);
+            L[i] += (a - L[i]) * wet[k];
+            R[i] += (b - R[i]) * wet[k];
+        }
+    }
+}
+
+//==============================================================================
+void Chorus::OnePole::set (float freq, float sr)
+{
+    const float t = std::tan ((float) kPi * jlimit (1.0f, 0.49f * sr, freq) / sr);
+    g = t / (1.0f + t);
+}
+
+void Chorus::prepare (double sr)
+{
+    fs = (float) sr;
+    int size = 4; while (size < (int) (0.06 * sr) + 8) size <<= 1;
+    for (auto& b : buf) b.assign ((size_t) size, 0.0f);
+    mask = size - 1;
+    const float c = (float) std::exp (-1.0 / (0.05 * sr));
+    for (auto* s : { &rate, &depthMs, &centreMs, &mixS, &phaseOff }) s->coeff = c;
+    reset();
+}
+
+void Chorus::reset()
+{
+    for (auto& b : buf) std::fill (b.begin(), b.end(), 0.0f);
+    for (auto& t : tone) t.s = 0.0f;
+    w = 0; ph = 0.0; onGain = 0.0f; first = true;
+}
+
+float Chorus::read (int line, float d) const
+{
+    d = jlimit (1.0f, (float) (mask - 3), d);
+    const int i = (int) d; const float fr = d - (float) i;
+    const auto& b = buf[line];
+    auto tap = [&] (int k) { return b[(size_t) ((w - 1 - k) & mask)]; };
+    const float xm1 = tap (i - 1), x0 = tap (i), x1 = tap (i + 1), x2 = tap (i + 2);
+    const float c1 = 0.5f * (x1 - xm1), c2 = xm1 - 2.5f * x0 + 2.0f * x1 - 0.5f * x2, c3 = 0.5f * (x2 - xm1) + 1.5f * (x0 - x1);
+    return ((c3 * fr + c2) * fr + c1) * fr + x0;
+}
+
+void Chorus::process (float* L, float* R, int n, bool on, int mode, float rateHz, float depth, float mix)
+{
+    if (! on && onGain <= 0.0f) { if (! first) reset(); return; }
+    float r = rateHz, dep = depth * 5.0f, centre = 8.0f, off = 0.5f;
+    switch (mode)
+    {
+        case chorusI:  r = 0.513f; dep = 1.6f; centre = 3.5f; break;
+        case chorusII: r = 0.863f; dep = 1.9f; centre = 3.5f; break;
+        case dim1: r = 0.25f; dep = 0.25f; centre = 6.0f; break;
+        case dim2: r = 0.25f; dep = 0.45f; centre = 6.0f; break;
+        case dim3: r = 0.25f; dep = 0.7f;  centre = 6.0f; break;
+        case dim4: r = 0.5f;  dep = 0.9f;  centre = 6.0f; break;
+        default: centre = jmax (centre, dep + 0.5f); break;
+    }
+    const bool bbd = mode != custom, dim = mode >= dim1 && mode <= dim4;
+    rate.target = r; depthMs.target = dep; centreMs.target = centre; mixS.target = mix; phaseOff.target = off;
+    for (auto& t : tone) t.set (bbd ? 9000.0f : 0.45f * fs, fs);
+    if (first) { for (auto* s : { &rate, &depthMs, &centreMs, &mixS, &phaseOff }) s->value = s->target; first = false; }
+    const float msToS = fs * 0.001f, onStep = 1.0f / (0.01f * fs);
+    auto tri = [] (double p) { const float x = (float) (p - std::floor (p)); return 4.0f * std::fabs (x - 0.5f) - 1.0f; };
+    auto sine = [] (double p) { return (float) std::sin (2.0 * kPi * (p - std::floor (p))); };
+    for (int i = 0; i < n; ++i)
+    {
+        const float rt = rate.next(), dp = depthMs.next(), ce = centreMs.next(), m = mixS.next(), po = phaseOff.next();
+        onGain = jlimit (0.0f, 1.0f, onGain + (on ? onStep : -onStep));
+        ph += rt / fs; ph -= std::floor (ph);
+        const float ma = bbd ? tri (ph) : sine (ph), mb = bbd ? tri (ph + po) : sine (ph + po);
+        const float inL = dim ? 0.5f * (L[i] + R[i]) : L[i];
+        const float inR = dim ? inL : R[i];
+        buf[0][(size_t) w] = inL; buf[1][(size_t) w] = inR; w = (w + 1) & mask;
+        float a = read (0, (ce + dp * ma) * msToS), b = read (1, (ce + dp * mb) * msToS);
+        if (bbd)
+        {
+            a = std::tanh (tone[1].lp (tone[0].lp (a)) * 1.2f) / 1.2f;
+            b = std::tanh (tone[3].lp (tone[2].lp (b)) * 1.2f) / 1.2f;
+        }
+        float wl = a, wr = b;
+        if (dim) { wl = a - 0.5f * b; wr = b - 0.5f * a; }
+        const float g = m * onGain;
+        L[i] += g * (wl - L[i]);
+        R[i] += g * (wr - R[i]);
+    }
+}
+
+//==============================================================================
 void SyncDelay::prepare (double sr, int maxSamples)
 {
     fs = sr; size = maxSamples + 4;
@@ -215,7 +336,6 @@ void BeatRepeat::process (float* L, float* R, int n, double ppq0, double pps, bo
                 {
                     int gi = 0; while (gi < 7 && grids[gi] < p.gridBeats - 1e-9) ++gi;
                     int ng = jmax (0, gi - 1 - rnd.nextInt (3));
-                    if (p.noTriplets && (ng == 1 || ng == 3)) ng = jmax (0, ng - 1);
                     chunkLen = jmax (32, (int) (grids[ng] / pps));
                 }
                 else chunkLen = jmax (32, (int) (p.gridBeats / pps));
