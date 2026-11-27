@@ -81,6 +81,11 @@ sceglie quale suonare, con crossfade. Non legge dal disco durante la riproduzion
 - In entrambi i casi un pannello permette di trascinare tutti i file in Ableton Live o Logic (una traccia per file).
   In alternativa ci sono 12 uscite separate (multi-out).
 
+## Multi-out
+- 12 uscite stereo separate (Kick … FX) oltre a quella principale, attive di default.
+- Per ogni modulo **OUTPUT** (pannello Gain / Pan): **MAIN** = mix principale, **SEP** = solo la sua uscita separata,
+  **BOTH** = entrambe. Le uscite separate escono dopo gli effetti del modulo, senza cutoff / Beat Repeat / deck / volume del master.
+
 ## Limiti
 - Saturn 2, RAUM e i device di Ableton sono proprietari: DIRT, REVERB, Beat Repeat e Groove sono implementazioni
   originali che seguono lo stesso comportamento, ma non sono identiche.

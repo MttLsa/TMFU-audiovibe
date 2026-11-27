@@ -11,7 +11,7 @@ namespace
              pChOn, pChMode, pChRate, pChDepth, pChMix, pWidth, pMono, pLmOn, pLmStart, pLmEnd,
              pDtime, pDfb, pDmix, pDpp, pRsize, pRdecay, pRdamp, pRpre, pRmix,
              pL1rate, pL1shape, pL1depth, pL1target, pL2rate, pL2shape, pL2depth, pL2target, pL3rate, pL3shape, pL3depth, pL3target,
-             pGrid, pSteps, pSlice, pSstart, pSend, pFade, pVola, pKeysrc, pSlLoop, pCount };
+             pGrid, pSteps, pSlice, pSstart, pSend, pFade, pVola, pKeysrc, pSlLoop, pOut, pCount };
     static_assert (pCount <= 64, "raise the size of GroovulationProcessor::mp");
     const char* const pNames[pCount] { "on", "solo", "gain", "pan", "atk", "dec", "sus", "rel", "pitch",
         "hpOn", "hpCut", "hpRes", "bpOn", "bpCut", "bpRes", "lpOn", "lpCut", "lpRes", "dirt",
@@ -19,7 +19,7 @@ namespace
         "dtime", "dfb", "dmix", "dpp", "rsize", "rdecay", "rdamp", "rpre", "rmix",
         "lfo1rate", "lfo1shape", "lfo1depth", "lfo1target", "lfo2rate", "lfo2shape", "lfo2depth", "lfo2target",
         "lfo3rate", "lfo3shape", "lfo3depth", "lfo3target",
-        "grid", "steps", "slice", "sstart", "send", "fade", "vola", "keysrc", "slloop" };
+        "grid", "steps", "slice", "sstart", "send", "fade", "vola", "keysrc", "slloop", "out" };
 
 }
 
@@ -27,7 +27,7 @@ AudioProcessor::BusesProperties GroovulationProcessor::makeBuses()
 {
     {
         auto b = BusesProperties().withOutput ("Main", AudioChannelSet::stereo(), true);
-        for (int m = 0; m < lb::numModules; ++m) b = b.withOutput (lb::moduleName (m), AudioChannelSet::stereo(), false);
+        for (int m = 0; m < lb::numModules; ++m) b = b.withOutput (lb::moduleName (m), AudioChannelSet::stereo(), true);   // active by default: the DAW lists them
         return b;
     }
 }
@@ -206,12 +206,18 @@ void GroovulationProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer
         applied[(size_t) m] = ctx.semitones;
         float* l = modBuf.getWritePointer (0); float* r = modBuf.getWritePointer (1);
         e.process (l, r, n, ctx, p);
-        // multi-out: a module with its own (enabled) output bus is routed there instead of the main mix
+        // multi-out: OUTPUT = Main (main mix), Separate (own stereo output only), Main + Separate.
+        // Without an enabled bus for the module (host without multi-out) it always goes to the main mix.
+        const int outMode = (int) mp[(size_t) m][pOut]->load();
         const int bus = m + 1;
-        if (bus < getBusCount (false) && getBus (false, bus) != nullptr && getBus (false, bus)->isEnabled())
+        if (outMode > 0 && bus < getBusCount (false) && getBus (false, bus) != nullptr && getBus (false, bus)->isEnabled())
         {
             auto aux = getBusBuffer (buffer, false, bus);
-            if (aux.getNumChannels() >= 2) { aux.copyFrom (0, 0, l, n); aux.copyFrom (1, 0, r, n); continue; }
+            if (aux.getNumChannels() >= 2)
+            {
+                aux.copyFrom (0, 0, l, n); aux.copyFrom (1, 0, r, n);
+                if (outMode == 1) continue;
+            }
         }
         FloatVectorOperations::add (mainL, l, n);
         FloatVectorOperations::add (mainR, r, n);

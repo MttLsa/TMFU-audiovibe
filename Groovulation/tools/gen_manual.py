@@ -318,7 +318,7 @@ S += bullets(["Rotella o pinch sul trackpad: zoom attorno al puntatore.",
 # 12
 S += [PageBreak(), H("I pannelli del modulo"),
       table([["Pannello", "Controlli"],
-             ["GAIN / PAN", "Volume del modulo (default −6 dB, doppio clic = −6 dB) e panorama."],
+             ["GAIN / PAN", "Volume del modulo (default −6 dB, doppio clic = −6 dB) e panorama. Sotto, OUTPUT: MAIN / SEP / BOTH (multi-out, capitolo 17)."],
              ["ADSR", "Inviluppo applicato a ogni giro del loop (o della slice, o del giro LS–LE): A attacco, D decadimento, S sustain, R release prima della fine."],
              ["PITCH", "PITCH ±32 semitoni con risoluzione di un millesimo di semitono, senza scalini udibili, grazie al time-stretch di alta qualità usato da tutti i moduli (sui drums con una finestra più corta per attacchi netti). Il knob TEMPO è stato tolto: i loop seguono sempre il tempo del progetto."],
              ["CUTOFF", "Tre filtri indipendenti in serie, nell'ordine HP → BP → LP. Ognuno ha il suo pulsante di accensione (HP, BP, LP), la sua frequenza (FREQ, 20 Hz – 20 kHz) e la sua risonanza (RES). Accendere o spegnere un filtro è una dissolvenza di 5 ms. HP e LP si aprono e chiudono in modo speculare: HP aperto tutto a sinistra e chiude girando a destra, LP aperto tutto a destra e chiude girando a sinistra, con la stessa scala (stesse ottave per lo stesso movimento)."],
@@ -393,10 +393,19 @@ S += [H("PRINT, EXPORT e snapshot"),
             "nome allo snapshot prima di stampare.")]
 # 17
 S += [H("Uscite separate (multi-out)"),
-      P("Oltre all'uscita principale, Groovulation ha 12 uscite stereo, una per modulo (Kick ... FX). Quando abiliti l'uscita di un modulo "
-        "nella DAW, quel modulo esce lì e non più nel mix principale, così puoi registrarlo o trattarlo su una traccia separata.")]
+      P("Oltre all'uscita principale, Groovulation ha 12 uscite stereo, una per modulo (Kick ... FX), attive di default. Dove va il suono "
+        "di ogni modulo lo decide il selettore <b>OUTPUT</b> nel pannello GAIN / PAN dell'editor:"),
+      table([["OUTPUT", "Dove esce il modulo"],
+             ["MAIN (default)", "Solo nel mix principale, come sempre."],
+             ["SEP", "Solo nella sua uscita separata (es. \"Kick\"): esce dal mix principale."],
+             ["BOTH", "In tutte e due: nel mix principale e nella sua uscita separata."]], [0.22, 0.78]),
+      Spacer(1, 4),
+      P("L'uscita separata contiene il modulo con tutti i suoi effetti (filtri, chorus, delay, reverb, width, gain, pan), ma senza la "
+        "sezione MASTER (cutoff master, Beat Repeat, Tape / Vinyl, volume master). Se la DAW non usa le uscite separate, il modulo "
+        "resta nel mix principale anche con SEP.")]
 S += bullets(["Logic Pro: inserisci Groovulation come strumento Multi-Output, poi usa il pulsante + del mixer per creare le tracce aux.",
-              "Ableton Live: crea tracce audio con input dalla traccia di Groovulation e scegli l'uscita del modulo (Kick, Snare...)."])
+              "Ableton Live (VST3 e AU): crea una traccia audio per ogni modulo; in \"Audio From\" scegli la traccia di Groovulation e, nel menu sotto, l'uscita del modulo (Kick, Snare...); metti Monitor su In. Poi nel modulo metti OUTPUT su SEP (o BOTH). Puoi registrare ogni modulo sulla sua traccia.",
+              "Logic Pro: dopo aver creato le aux, metti OUTPUT su SEP nei moduli che vuoi sulle tracce separate."])
 # 18
 S += [PageBreak(), H("Scorciatoie e consigli"),
       table([["Dove", "Gesto", "Effetto"],
@@ -429,7 +438,8 @@ S += [H("Novità della versione 1.2.0"),
              ["SLICE", "Spostare S / E o cambiare GRID mentre suona non fa più click o pop. Spegnendo SLICE si spegne anche LOOP."],
              ["LOOP MARKERS", "Nuovi marcatori LS / LE per far girare il loop tra due punti, in modo normale e in SLICE."],
              ["Pulsanti", "1/16 e 1/8 di GLOBAL SWING e Mix / Insert del Beat Repeat: il pulsante selezionato è chiaro, l'altro grigio scuro."],
-             ["Beat Repeat", "Tolto NO TRIPLETS."]], [0.2, 0.8])]
+             ["Beat Repeat", "Tolto NO TRIPLETS."],
+             ["Multi-out", "12 uscite separate attive di default e selettore OUTPUT (MAIN / SEP / BOTH) per ogni modulo."]], [0.2, 0.8])]
 # 20
 S += [H("Limiti noti e domande frequenti")]
 faq = [("Il plugin non suona.", "Premi Play nella DAW (o RUN con la DAW ferma). Controlla che i moduli siano ON e che non sia attivo un SOLO."),

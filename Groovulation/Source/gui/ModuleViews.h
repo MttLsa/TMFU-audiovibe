@@ -121,7 +121,7 @@ private:
     int module = 0;
     WaveDisplay display;
     // toolbar
-    Segmented grid, keySrc, slsnap;
+    Segmented grid, keySrc, slsnap, outSel;
     juce::TextButton lenMinus { "-" }, lenPlus { "+" }, lenOrig { "ORIG" }, volReset { "RESET VOL" };
     Toggle slice { "SLICE" }, slLoop { "LOOP" }, lmOn { "LOOP MARKERS" }, fade { "FADE 0.5ms" }, volA { "VOL.A" }, dpp { "PING-PONG" },
            hpOn { "HP" }, bpOn { "BP" }, lpOn { "LP" }, chOn { "ON" }, mono { "MONO" };

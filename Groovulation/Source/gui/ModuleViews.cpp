@@ -707,7 +707,7 @@ ModuleEditor::ModuleEditor (GroovulationProcessor& p) : proc (p), display (p, 0,
 {
     display.setComponentID ("bigDisplay");
     addAndMakeVisible (display);
-    for (auto* c : std::initializer_list<Component*> { &grid, &keySrc, &slsnap, &lenMinus, &lenPlus, &lenOrig, &volReset, &slice, &slLoop, &lmOn, &fade, &volA, &dpp,
+    for (auto* c : std::initializer_list<Component*> { &grid, &keySrc, &slsnap, &outSel, &lenMinus, &lenPlus, &lenOrig, &volReset, &slice, &slLoop, &lmOn, &fade, &volA, &dpp,
                                                        &hpOn, &bpOn, &lpOn, &chOn, &mono, &chMode,
                                                        &prev, &next, &rnd, &sim, &browser,
                                                        &pAmp, &pAdsr, &pPitch, &pFilter, &pDirt, &pDelay, &pReverb, &pLfo1, &pLfo2, &pLfo3, &pChorus, &pUtil })
@@ -753,6 +753,7 @@ ModuleEditor::ModuleEditor (GroovulationProcessor& p) : proc (p), display (p, 0,
     }
     keySrc.setCaption ("TYPE (key from)");
     grid.setCaption ("GRID");
+    outSel.setCaption ("OUTPUT");
 
     prev.onClick = [this] { proc.stepLoop (module, -1); };
     next.onClick = [this] { proc.stepLoop (module, 1); };
@@ -815,6 +816,9 @@ void ModuleEditor::attachAll()
     grid.attach (s, lb::pid (m, "grid"));
     keySrc.attach (s, lb::pid (m, "keysrc"), { "AUDIO", "FILE NAME" });
     slsnap.attach (s, lb::pid (m, "slsnap"), { "MS", "GRID" });
+    outSel.attach (s, lb::pid (m, "out"), { "MAIN", "SEP", "BOTH" });
+    outSel.setTooltip ("Multi-out: MAIN = mix principale, SEP = solo l'uscita stereo separata del modulo, BOTH = entrambe "
+                       "(le uscite separate non passano dagli effetti del master)");
     slsnap.setTooltip ("SLICE markers: MS = move in milliseconds (shift = 0.1 ms, arrow keys nudge), GRID = snap to the grid");
     slice.attach (s, lb::pid (m, "slice")); slLoop.attach (s, lb::pid (m, "slloop")); fade.attach (s, lb::pid (m, "fade")); volA.attach (s, lb::pid (m, "vola")); dpp.attach (s, lb::pid (m, "dpp"));
     comboAtt.clear();
@@ -839,7 +843,7 @@ void ModuleEditor::setModule (int m)
     const bool isCustom = module == lb::custom;
     for (auto* b : std::initializer_list<Component*> { &prev, &next, &rnd, &sim, &browser }) b->setVisible (! isCustom);
     floppy.setVisible (isCustom); clear.setVisible (isCustom);
-    for (auto* sg : { &grid, &keySrc, &slsnap }) sg->setAccent (c);
+    for (auto* sg : { &grid, &keySrc, &slsnap, &outSel }) sg->setAccent (c);
     for (auto* t : { &slice, &slLoop, &lmOn, &fade, &volA, &dpp, &hpOn, &bpOn, &lpOn, &chOn, &mono }) t->setColour (TextButton::buttonOnColourId, c);
     attachAll();
     shownLoop = nullptr;
@@ -983,7 +987,11 @@ void ModuleEditor::resized()
     place (row1, { { &pAmp, 2 }, { &pAdsr, 4 }, { &pPitch, 1 }, { &pFilter, 6 }, { &pDirt, 1 }, { &pUtil, 2 } });
     place (row2, { { &pChorus, 4 }, { &pDelay, 3 }, { &pReverb, 5 }, { &pLfo1, 3 }, { &pLfo2, 3 }, { &pLfo3, 3 } });
     auto inP = [] (Panel& p) { return p.getBounds().withTrimmedTop (Panel::headerH + 2).reduced (4, 2); };
-    layoutRow (inP (pAmp), { &gain, &pan });
+    {
+        auto a = inP (pAmp);
+        outSel.setBounds (a.removeFromBottom (36).reduced (4, 0));
+        layoutRow (a, { &gain, &pan });
+    }
     layoutRow (inP (pAdsr), { &atk, &dec, &sus, &rel });
     layoutRow (inP (pPitch), { &pitch });
     {

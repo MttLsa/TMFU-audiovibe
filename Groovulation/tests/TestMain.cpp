@@ -315,6 +315,7 @@ int main (int argc, char** argv)
     FakePlayHead ph;
     proc->setPlayHead (&ph);
     proc->setPlayConfigDetails (0, 2, 48000.0, 512);
+    proc->enableAllBuses();   // multi-out host: every output bus enabled
     proc->prepareToPlay (48000.0, 512);
     for (int i = 0; i < 100; ++i)
     {
@@ -589,6 +590,35 @@ int main (int argc, char** argv)
             setP (*proc, lb::pid (lb::pad, "solo"), 0);
         }
         resetAll();
+    }
+
+    // ---- MULTI-OUT: OUTPUT = Main / Separate / Main + Separate
+    {
+        const double srr = 48000.0; const int bs = 512;
+        AudioBuffer<float> buf (2 + 2 * lb::numModules, bs);
+        MidiBuffer midi;
+        auto run = [&] (int mode, float& mainPk, float& auxPk)
+        {
+            setP (*proc, lb::pid (lb::kick, "out"), (float) mode);
+            mainPk = auxPk = 0.0f;
+            for (int pos = 0; pos < (int) (srr * 2.0); pos += bs)
+            {
+                ph.ppq = pos / srr * ph.bpm / 60.0;
+                proc->processBlock (buf, midi);
+                if (pos < (int) (srr * 0.5)) continue;
+                mainPk = jmax (mainPk, buf.getMagnitude (0, 0, bs), buf.getMagnitude (1, 0, bs));
+                auxPk = jmax (auxPk, buf.getMagnitude (2, 0, bs), buf.getMagnitude (3, 0, bs));
+            }
+        };
+        setP (*proc, lb::pid (lb::kick, "solo"), 1);
+        float m0, a0, m1, a1, m2, a2;
+        run (0, m0, a0); run (1, m1, a1); run (2, m2, a2);
+        setP (*proc, lb::pid (lb::kick, "out"), 0); setP (*proc, lb::pid (lb::kick, "solo"), 0);
+        std::cout << "  info multi-out kick: main " << m0 << "/" << m1 << "/" << m2 << "  aux " << a0 << "/" << a1 << "/" << a2 << "\n";
+        check (proc->getBusCount (false) == 1 + lb::numModules && proc->getBus (false, 1)->isEnabled(), "multi-out: 12 separate stereo outputs, active by default");
+        check (m0 > 0.01f && a0 < 1.0e-6f, "multi-out: OUTPUT Main -> main mix only");
+        check (m1 < 1.0e-6f && a1 > 0.01f, "multi-out: OUTPUT Separate -> own output only");
+        check (m2 > 0.01f && a2 > 0.01f, "multi-out: OUTPUT Main + Separate -> both");
     }
 
     // ---- UNDO / REDO

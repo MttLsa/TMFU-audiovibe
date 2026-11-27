@@ -124,6 +124,8 @@ AudioProcessorValueTreeState::ParameterLayout lb::createLayout()
         add (std::make_unique<APC> (id ("slsnap"), n + "Slice Snap", StringArray { "ms", "Grid" }, 0));
         add (std::make_unique<APB> (id ("vola"), n + "Volume Automation", false));
         add (std::make_unique<APC> (id ("keysrc"), n + "Type (key source)", StringArray { "Audio", "File Name" }, 0));
+        // multi-out: Main mix / own stereo output (Separate) / both
+        add (std::make_unique<APC> (id ("out"), n + "Output", StringArray { "Main", "Separate", "Main + Separate" }, 0));
     }
 
     // ---------------- global
